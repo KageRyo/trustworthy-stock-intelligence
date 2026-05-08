@@ -1,11 +1,144 @@
 # Trustworthy Stock Intelligence
 
-A trustworthy multi-modal stock movement classification system that combines numerical time-series modeling, candlestick chart representation, moving-average features, uncertainty estimation, explainability, and real-time risk alerting.
+A research-oriented framework for explainable, calibrated, and uncertainty-aware stock risk early-warning.
 
-## Core Ideas
+This project does not aim to provide investment advice, automated trading, or exact stock price prediction.  
+Instead, it reformulates stock analysis as a future risk-event detection problem.
 
-- LSTM branch for OHLCV and MA5-based numerical features
-- Vision Transformer branch for candlestick chart representations
-- Dual MA5 representation as both numerical feature and visual overlay
-- Trustworthiness layer with calibration, uncertainty, and explainability
-- Risk-aware alerting through confidence-based decision rules
+## Research Focus
+
+Trustworthy Stock Intelligence studies whether stock risk warning models can issue reliable warnings under noisy and non-stationary market conditions. The core objective is not to maximize trading profit or predict the next closing price, but to detect future drawdown risk events early and explain why a warning is produced.
+
+The first milestone is:
+
+```text
+Milestone 1: TSI-Risk-v0
+```
+
+## Main Task
+
+```text
+Given historical market observations up to day t,
+predict whether a stock will experience a drawdown risk event within the next H trading days.
+```
+
+Initial setting:
+
+```text
+Universe: S&P 100
+Frequency: Daily
+Horizon: 5 trading days
+Risk event: future 5-day max drawdown <= -5%
+```
+
+## Inputs and Outputs
+
+Input:
+
+```text
+historical OHLCV
+technical indicators
+market index features
+```
+
+Output:
+
+```text
+future risk-event probability
+warning level
+calibrated confidence
+uncertainty estimate
+explanation factors
+```
+
+## Dataset Roadmap
+
+```text
+Demo: DJIA 30
+Main experiment v0: S&P 100
+Formal research v1: S&P 500
+Benchmark comparison: ACL18 / StockNet, CIKM18, BigData22
+```
+
+The first implementation phase focuses only on:
+
+```text
+S&P 100
+Daily OHLCV
+Technical indicators
+Market index
+5-day drawdown risk label
+```
+
+Yahoo Finance is used for pilot experiments. For formal research, higher-quality data sources such as WRDS/CRSP, Polygon, Tiingo, or official exchange data are preferred.
+
+## Research Scope
+
+This repository is a research codebase, not a stock application.
+
+In scope for Milestone 1:
+
+- leakage-free future drawdown risk labeling
+- walk-forward validation
+- baseline models: Logistic Regression, Random Forest, XGBoost
+- probability calibration
+- uncertainty-aware warning levels
+- alert-oriented evaluation
+- reproducible experiment documentation
+
+Out of scope for Milestone 1:
+
+- investment recommendation
+- automated trading
+- exact stock price prediction
+- dashboard
+- FastAPI service
+- real-time streaming
+- news NLP
+- LLM agents
+- RAG
+- full multimodal learning
+- high-frequency data
+- Taiwan stock data
+- Transformer-scale models
+
+## Repository Structure
+
+```text
+configs/dataset/     Dataset definitions for demo, v0, and v1 research settings.
+src/tsi/data/        Downloading, preprocessing, universe loading, and temporal splits.
+src/tsi/features/    Technical indicator feature generation.
+src/tsi/labeling/    Risk-event labeling and warning-level definitions.
+src/tsi/models/      Baseline warning models.
+src/tsi/trust/       Calibration, uncertainty, and explainability modules.
+src/tsi/evaluation/  Alert-oriented metrics, lead-time evaluation, and backtesting checks.
+docs/                Research definitions and experiment protocol.
+experiments/         Experiment notes and reports.
+notebooks/           Exploratory notebooks.
+scripts/             Command-line experiment entry points.
+tests/               Unit tests for leakage-sensitive logic.
+```
+
+## Evaluation Principles
+
+Accuracy alone is not sufficient for stock risk early-warning. The first milestone evaluates:
+
+```text
+Precision
+Recall
+F1
+AUC
+False Alarm Rate
+Miss Rate
+Brier Score
+Expected Calibration Error
+Lead Time
+Coverage
+Selective Risk
+```
+
+All evaluation should use temporal or walk-forward splits. Random train-test splits are not allowed for the main protocol.
+
+## Status
+
+This repository is currently in the research-definition phase. The first priority is to make the problem definition, labeling protocol, evaluation protocol, and reproducibility assumptions explicit before training models.
