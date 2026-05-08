@@ -106,6 +106,7 @@ Out of scope for Milestone 1:
 
 ```text
 configs/dataset/     Dataset definitions for demo, v0, and v1 research settings.
+data/                Local data artifact documentation; raw datasets are gitignored.
 src/tsi/data/        Downloading, preprocessing, universe loading, and temporal splits.
 src/tsi/features/    Technical indicator feature generation.
 src/tsi/labeling/    Risk-event labeling and warning-level definitions.
@@ -138,6 +139,20 @@ Selective Risk
 ```
 
 All evaluation should use temporal or walk-forward splits. Random train-test splits are not allowed for the main protocol.
+
+## Pilot Data Download
+
+Pilot S&P 100 and S&P 500 OHLCV downloads are implemented with `yfinance`.
+
+```bash
+/mnt/8tb_hdd/ryo/miniconda3/envs/stock/bin/python -m scripts.prepare_data \
+  --universe all \
+  --start 2015-01-01 \
+  --output-root data/raw \
+  --batch-size 50
+```
+
+Downloaded files are written under `data/raw/` and are intentionally excluded from git. See `docs/data_download.md` for details.
 
 ## Status
 
