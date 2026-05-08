@@ -1,0 +1,27 @@
+name: sp500_risk
+description: Formal v1 research universe for large-scale S&P 500 experiments.
+universe: S&P 500
+frequency: daily
+data_source:
+  pilot: Yahoo Finance
+  formal_research_preferred:
+    - WRDS/CRSP
+    - Polygon
+    - Tiingo
+    - official exchange data
+schema:
+  - date
+  - ticker
+  - open
+  - high
+  - low
+  - close
+  - adj_close
+  - volume
+label:
+  task: 5-day drawdown risk warning
+  horizon_trading_days: 5
+  future_max_drawdown_threshold: -0.05
+split:
+  protocol: walk-forward
+  random_split_allowed: false

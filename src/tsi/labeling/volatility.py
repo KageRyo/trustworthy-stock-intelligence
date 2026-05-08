@@ -1,0 +1,1 @@
+"""Volatility risk labeling interfaces."""

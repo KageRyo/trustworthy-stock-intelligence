@@ -1,0 +1,24 @@
+name: dj30_demo
+description: DJIA 30 pilot universe for smoke tests and small-scale demonstrations.
+universe: DJIA 30
+frequency: daily
+data_source:
+  pilot: Yahoo Finance
+  formal_research_preferred:
+    - WRDS/CRSP
+    - Polygon
+    - Tiingo
+    - official exchange data
+schema:
+  - date
+  - ticker
+  - open
+  - high
+  - low
+  - close
+  - adj_close
+  - volume
+label:
+  task: 5-day drawdown risk warning
+  horizon_trading_days: 5
+  future_max_drawdown_threshold: -0.05
