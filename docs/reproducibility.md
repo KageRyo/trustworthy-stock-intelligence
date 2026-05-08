@@ -78,6 +78,42 @@ source .venv/bin/activate
 pip install -e ".[dev,models,explainability]"
 ```
 
+The local GPU research environment on this machine is:
+
+```text
+/mnt/8tb_hdd/ryo/miniconda3/envs/stock
+```
+
+It is created with Python 3.11:
+
+```bash
+/mnt/8tb_hdd/ryo/miniconda3/bin/conda create -n stock python=3.11 -y
+```
+
+`pyproject.toml` is the canonical dependency definition for this repository. The recommended workflow is to use `uv` inside the `stock` environment:
+
+```bash
+/mnt/8tb_hdd/ryo/miniconda3/envs/stock/bin/pip install uv
+/mnt/8tb_hdd/ryo/miniconda3/envs/stock/bin/uv pip install \
+  --python /mnt/8tb_hdd/ryo/miniconda3/envs/stock/bin/python \
+  -e ".[dev,models,explainability,viz,notebooks,cli,data]"
+```
+
+Plain pip is also valid:
+
+```bash
+/mnt/8tb_hdd/ryo/miniconda3/envs/stock/bin/pip install -e ".[dev,models,explainability,viz,notebooks,cli,data]"
+```
+
+Install PyTorch with the CUDA wheel that matches the local NVIDIA driver/runtime. On this machine, `nvidia-smi` reports CUDA 12.8, so the pilot environment uses:
+
+```bash
+/mnt/8tb_hdd/ryo/miniconda3/envs/stock/bin/pip install torch torchvision torchaudio \
+  --index-url https://download.pytorch.org/whl/cu128
+```
+
+The `deep` extra records the Python package requirement, but explicit PyTorch CUDA installation is preferred for reproducibility on GPU machines.
+
 ## Reporting Standard
 
 Reports should distinguish:

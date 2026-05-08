@@ -12,21 +12,57 @@ dependencies = [
   "numpy>=1.26",
   "pandas>=2.1",
   "scikit-learn>=1.4",
+  "scipy>=1.10",
   "pyyaml>=6.0",
   "yfinance>=0.2",
   "lxml>=5.0",
+  "requests>=2.31",
+  "pydantic>=2.7",
+  "pydantic-settings>=2.3",
+  "pyarrow>=16.0",
+  "tqdm>=4.66",
+  "duckdb>=1.0",
+  "polars>=1.0",
 ]
 
 [project.optional-dependencies]
 models = [
   "xgboost>=2.0",
+  "lightgbm>=4.0",
+  "imbalanced-learn>=0.12",
+  "statsmodels>=0.14",
+  "optuna>=3.6",
 ]
 explainability = [
   "shap>=0.45",
 ]
+viz = [
+  "matplotlib>=3.8",
+  "seaborn>=0.13",
+  "plotly>=5.20",
+]
+notebooks = [
+  "jupyterlab>=4.2",
+  "notebook>=7.2",
+  "ipykernel>=6.29",
+]
+cli = [
+  "typer>=0.12",
+]
+data = [
+  "pandas-market-calendars>=4.4",
+  "ta>=0.11",
+]
+deep = [
+  "torch>=2.7",
+  "torchvision>=0.22",
+  "torchaudio>=2.7",
+  "tensorboard>=2.16",
+]
 dev = [
   "pytest>=8.0",
   "ruff>=0.4",
+  "uv>=0.11",
 ]
 
 [build-system]

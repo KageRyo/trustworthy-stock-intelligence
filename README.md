@@ -154,6 +154,27 @@ Pilot S&P 100 and S&P 500 OHLCV downloads are implemented with `yfinance`.
 
 Downloaded files are written under `data/raw/` and are intentionally excluded from git. See `docs/data_download.md` for details.
 
+## Environment
+
+This project uses `pyproject.toml` as the dependency definition. On this machine, the recommended setup is:
+
+```text
+conda for the Python 3.11 GPU environment
+uv for fast Python package installation
+explicit PyTorch CUDA wheel for RTX 4090 GPU support
+```
+
+The verified local environment is:
+
+```text
+/mnt/8tb_hdd/ryo/miniconda3/envs/stock
+Python 3.11.15
+PyTorch 2.11.0+cu128
+2 x NVIDIA GeForce RTX 4090 visible to PyTorch
+```
+
+See `docs/environment.md` for installation details.
+
 ## Status
 
 This repository is currently in the research-definition phase. The first priority is to make the problem definition, labeling protocol, evaluation protocol, and reproducibility assumptions explicit before training models.
