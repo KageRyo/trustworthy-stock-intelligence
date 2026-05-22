@@ -13,6 +13,7 @@ from tsi.data.split import build_walk_forward_splits
 from tsi.evaluation.metrics import classification_metrics
 from tsi.features.technical import DEFAULT_FEATURE_COLUMNS, build_technical_features
 from tsi.labeling.drawdown import add_future_drawdown_label
+from tsi.labeling.warning_level import assign_warning_levels, select_alert_threshold
 from tsi.models.logistic import LogisticRiskModel
 from tsi.trust.calibration import CalibrationMethod, fit_probability_calibrator
 
@@ -63,6 +64,12 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         choices=["none", "platt", "isotonic"],
         default="platt",
         help="Probability calibration method fit on the calibration window.",
+    )
+    parser.add_argument(
+        "--threshold-objective",
+        choices=["f1", "precision", "recall"],
+        default="f1",
+        help="Metric optimized on the calibration window when selecting alert thresholds.",
     )
     return parser.parse_args(argv)
 
@@ -138,9 +145,23 @@ def run_training(args: argparse.Namespace) -> dict[str, object]:
             calibration_labels,
             method=calibration_method,
         )
+        calibrated_calibration_probabilities = calibrator.predict(calibration_probabilities)
         calibrated_probabilities = calibrator.predict(probabilities)
+        threshold_selection = select_alert_threshold(
+            calibration_labels,
+            calibrated_calibration_probabilities,
+            objective=args.threshold_objective,
+        )
+        tuned_probabilities = calibrated_probabilities
+        tuned_threshold = threshold_selection.threshold
         raw_metrics = classification_metrics(test_labels, probabilities)
         calibrated_metrics = classification_metrics(test_labels, calibrated_probabilities)
+        tuned_metrics = classification_metrics(test_labels, tuned_probabilities, threshold=tuned_threshold)
+        warning_levels = assign_warning_levels(
+            tuned_probabilities,
+            alert_threshold=tuned_threshold,
+            watch_threshold=max(0.01, tuned_threshold * 0.5),
+        )
         prediction_rows.append(
             test_frame.loc[:, ["date", "ticker", "risk_label"]]
             .assign(
@@ -149,6 +170,8 @@ def run_training(args: argparse.Namespace) -> dict[str, object]:
                 risk_probability=probabilities,
                 calibrated_risk_probability=calibrated_probabilities,
                 calibration_method=calibration_method,
+                alert_threshold=tuned_threshold,
+                warning_level=warning_levels,
             )
             .reset_index(drop=True)
         )
@@ -166,13 +189,21 @@ def run_training(args: argparse.Namespace) -> dict[str, object]:
                 "train_rows": len(fold.train_index),
                 "calibration_rows": len(fold.calibration_index),
                 "test_rows": len(fold.test_index),
+                "threshold_selection": {
+                    "objective": threshold_selection.objective,
+                    "threshold": threshold_selection.threshold,
+                    "objective_value": threshold_selection.objective_value,
+                    "calibration_metrics": threshold_selection.metrics,
+                },
                 "raw_metrics": raw_metrics,
                 "calibrated_metrics": calibrated_metrics,
+                "tuned_metrics": tuned_metrics,
             }
         )
 
     raw_metric_names = list(fold_results[0]["raw_metrics"].keys()) if fold_results else []
     calibrated_metric_names = list(fold_results[0]["calibrated_metrics"].keys()) if fold_results else []
+    tuned_metric_names = list(fold_results[0]["tuned_metrics"].keys()) if fold_results else []
     summary = {
         "raw": {
             name: float(pd.Series([fold["raw_metrics"][name] for fold in fold_results]).mean(skipna=True))
@@ -184,6 +215,18 @@ def run_training(args: argparse.Namespace) -> dict[str, object]:
             )
             for name in calibrated_metric_names
         },
+        "tuned": {
+            name: float(pd.Series([fold["tuned_metrics"][name] for fold in fold_results]).mean(skipna=True))
+            for name in tuned_metric_names
+        },
+        "threshold": {
+            "mean": float(
+                pd.Series([fold["threshold_selection"]["threshold"] for fold in fold_results]).mean()
+            ),
+            "std": float(
+                pd.Series([fold["threshold_selection"]["threshold"] for fold in fold_results]).std()
+            ),
+        },
     }
 
     predictions = pd.concat(prediction_rows, ignore_index=True) if prediction_rows else pd.DataFrame()
@@ -194,6 +237,7 @@ def run_training(args: argparse.Namespace) -> dict[str, object]:
         "horizon": args.horizon,
         "drawdown_threshold": args.drawdown_threshold,
         "calibration_method": calibration_method,
+        "threshold_objective": args.threshold_objective,
         "fold_count": len(fold_results),
         "rows_after_filtering": len(training_frame),
         "folds": fold_results,

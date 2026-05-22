@@ -62,8 +62,10 @@ Mean fold-level results for the logistic baseline:
 | Variant | Precision | Recall | F1 | AUC | False Alarm Rate | Miss Rate | Brier | ECE |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | Raw logistic | 0.1436 | 0.4494 | 0.2100 | 0.6137 | 0.3077 | 0.5506 | 0.2321 | 0.3729 |
-| Logistic + Platt | 0.0589 | 0.0023 | 0.0044 | 0.6064 | 0.0008 | 0.9977 | 0.0928 | 0.0540 |
-| Logistic + Isotonic | 0.1545 | 0.0036 | 0.0069 | 0.6041 | 0.0010 | 0.9964 | 0.0925 | 0.0528 |
+| Logistic + Platt at 0.5 | 0.0589 | 0.0023 | 0.0044 | 0.6064 | 0.0008 | 0.9977 | 0.0928 | 0.0540 |
+| Logistic + Platt tuned on calibration | 0.1429 | 0.4594 | 0.2030 | 0.6064 | 0.3433 | 0.5406 | 0.0928 | 0.0540 |
+| Logistic + Isotonic at 0.5 | 0.1545 | 0.0036 | 0.0069 | 0.6041 | 0.0010 | 0.9964 | 0.0925 | 0.0528 |
+| Logistic + Isotonic tuned on calibration | 0.1435 | 0.4610 | 0.2055 | 0.6041 | 0.3399 | 0.5390 | 0.0925 | 0.0528 |
 
 Additional class-rate context:
 
@@ -72,6 +74,10 @@ Average test positive rate: 0.1029
 Raw logistic prediction rate at threshold 0.5: 0.3214
 Platt prediction rate at threshold 0.5: 0.0010
 Isotonic prediction rate at threshold 0.5: 0.0013
+Platt tuned prediction rate: 0.3554
+Isotonic tuned prediction rate: 0.3524
+Mean tuned Platt threshold: 0.1034
+Mean tuned Isotonic threshold: 0.1231
 ```
 
 Interpretation:
@@ -79,6 +85,7 @@ Interpretation:
 - The raw logistic model is moderately discriminative but badly overconfident.
 - Probability calibration sharply improves Brier Score and ECE.
 - A fixed alert threshold of 0.5 becomes too conservative after calibration.
+- Re-tuning the alert threshold on the calibration window restores useful recall and F1.
 - Calibration quality and warning decision quality must be evaluated separately.
 
 ## Current Pipeline

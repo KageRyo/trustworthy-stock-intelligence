@@ -44,11 +44,13 @@ walk-forward fold.
 
 S&P 100 pilot calibration results from the walk-forward logistic baseline:
 
-| Variant | AUC | Brier | ECE | Prediction Rate at 0.5 |
-| --- | ---: | ---: | ---: | ---: |
-| Raw logistic | 0.6137 | 0.2321 | 0.3729 | 0.3214 |
-| Platt scaling | 0.6064 | 0.0928 | 0.0540 | 0.0010 |
-| Isotonic regression | 0.6041 | 0.0925 | 0.0528 | 0.0013 |
+| Variant | AUC | Brier | ECE | F1 | Prediction Rate |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Raw logistic at 0.5 | 0.6137 | 0.2321 | 0.3729 | 0.2100 | 0.3214 |
+| Platt scaling at 0.5 | 0.6064 | 0.0928 | 0.0540 | 0.0044 | 0.0010 |
+| Platt scaling with tuned threshold | 0.6064 | 0.0928 | 0.0540 | 0.2030 | 0.3554 |
+| Isotonic regression at 0.5 | 0.6041 | 0.0925 | 0.0528 | 0.0069 | 0.0013 |
+| Isotonic regression with tuned threshold | 0.6041 | 0.0925 | 0.0528 | 0.2055 | 0.3524 |
 
 Key observation:
 
@@ -57,8 +59,11 @@ Key observation:
 - Using the same `0.5` threshold before and after calibration is not valid for
   warning decisions, because the calibrated probability scale becomes much more
   conservative.
+- Threshold tuning on the calibration window recovers useful alert behavior
+  while preserving the calibrated probability quality.
 
 Immediate follow-up:
 
-- evaluate calibrated thresholds on validation data only
 - define alert/watch/abstain rules instead of a single fixed threshold
+- compare threshold objectives beyond F1
+- add selective prediction metrics such as coverage and high-confidence precision

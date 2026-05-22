@@ -214,7 +214,13 @@ model
 risk_probability
 calibrated_risk_probability
 calibration_method
+alert_threshold
+warning_level
 ```
+
+By default, the training pipeline also selects an alert threshold on each
+calibration window using the chosen threshold objective. This separates
+probability calibration from downstream alert decisions.
 
 ## Evaluation
 
