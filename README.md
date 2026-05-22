@@ -175,6 +175,60 @@ PyTorch 2.11.0+cu128
 
 See `docs/environment.md` for installation details.
 
+## Baseline Training
+
+The repository now supports a minimal leakage-aware baseline pipeline:
+
+```text
+OHLCV CSV
+-> technical features
+-> future drawdown labels
+-> walk-forward split
+-> logistic regression baseline
+-> calibration on a dedicated calibration window
+-> fold-level evaluation
+```
+
+Example training run:
+
+```bash
+python -m scripts.train \
+  --input data/raw/sp100/ohlcv.csv \
+  --train-size 252 \
+  --calibration-size 63 \
+  --test-size 63 \
+  --calibration-method platt \
+  --output data/artifacts/sp100_logistic_summary.json \
+  --predictions-output data/artifacts/sp100_logistic_predictions.csv
+```
+
+The training summary JSON reports both raw and calibrated test metrics. The
+prediction CSV includes:
+
+```text
+date
+ticker
+risk_label
+fold_id
+model
+risk_probability
+calibrated_risk_probability
+calibration_method
+```
+
+## Evaluation
+
+Prediction artifacts can be re-evaluated independently:
+
+```bash
+python -m scripts.evaluate \
+  --input data/artifacts/sp100_logistic_predictions.csv \
+  --prob-col calibrated_risk_probability \
+  --output data/artifacts/sp100_logistic_eval.json
+```
+
 ## Status
 
-This repository is currently in the research-definition phase. The first priority is to make the problem definition, labeling protocol, evaluation protocol, and reproducibility assumptions explicit before training models.
+This repository now has a runnable pilot baseline for TSI-Risk-v0. The next
+priority is to compare raw and calibrated warnings on real S&P 100 pilot data,
+then write the first experiment reports with actual fold-level results.
