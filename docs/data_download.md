@@ -107,6 +107,7 @@ The repository does not commit:
 data/raw/
 data/interim/
 data/processed/
+data/artifacts/
 ```
 
 This avoids pushing large vendor-adjusted files to GitHub while preserving the exact commands needed to regenerate the pilot datasets.
