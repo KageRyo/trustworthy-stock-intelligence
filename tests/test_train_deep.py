@@ -50,6 +50,12 @@ def test_build_prediction_frame_matches_baseline_schema() -> None:
         metadata,
         labels=np.array([0.0, 1.0], dtype=np.float32),
         probabilities=np.array([0.25, 0.75], dtype=float),
+        calibrated_probabilities=np.array([0.2, 0.8], dtype=float),
+        calibration_method="platt",
+        uncertainty_scores=np.array([0.3, 0.4], dtype=float),
+        trust_scores=np.array([0.1, 0.6], dtype=float),
+        alert_threshold=0.7,
+        warning_levels=np.array(["no_alert", "alert"], dtype=object),
         fold_id=3,
         model_name="temporal_transformer",
     )
@@ -61,6 +67,14 @@ def test_build_prediction_frame_matches_baseline_schema() -> None:
         "fold_id",
         "model",
         "risk_probability",
+        "calibrated_risk_probability",
+        "calibration_method",
+        "uncertainty_score",
+        "trust_score",
+        "alert_threshold",
+        "warning_level",
     ]
     assert frame["risk_label"].tolist() == [0, 1]
     assert frame["risk_probability"].tolist() == [0.25, 0.75]
+    assert frame["calibrated_risk_probability"].tolist() == [0.2, 0.8]
+    assert frame["warning_level"].tolist() == ["no_alert", "alert"]

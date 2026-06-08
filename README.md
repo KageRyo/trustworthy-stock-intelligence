@@ -271,6 +271,12 @@ risk_label
 fold_id
 model
 risk_probability
+calibrated_risk_probability
+calibration_method
+uncertainty_score
+trust_score
+alert_threshold
+warning_level
 ```
 
 ## Status

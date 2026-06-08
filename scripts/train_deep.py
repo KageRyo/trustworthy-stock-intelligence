@@ -15,6 +15,7 @@ from scripts.train import prepare_training_frame
 from tsi.data.split import build_walk_forward_splits
 from tsi.evaluation.metrics import classification_metrics
 from tsi.features.technical import DEFAULT_FEATURE_COLUMNS
+from tsi.labeling.warning_level import select_alert_threshold
 from tsi.models.temporal_transformer import TemporalTransformerRiskModel
 from tsi.training.dataset import SequenceDataset, build_sequence_dataset
 from tsi.training.trainer import (
@@ -25,6 +26,10 @@ from tsi.training.trainer import (
     train_binary_sequence_model,
     transform_sequence_features,
 )
+from tsi.trust.calibration import CalibrationMethod, fit_probability_calibrator
+from tsi.trust.decision import TrustDecisionConfig, assign_trust_decisions
+from tsi.trust.trust_score import compute_trust_score
+from tsi.trust.uncertainty import binary_entropy_uncertainty, margin_uncertainty
 
 
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
@@ -47,6 +52,27 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--num-layers", type=int, default=2)
     parser.add_argument("--dim-feedforward", type=int, default=128)
     parser.add_argument("--dropout", type=float, default=0.1)
+    parser.add_argument(
+        "--calibration-method",
+        choices=["none", "platt", "isotonic"],
+        default="platt",
+        help="Probability calibration method fit on the calibration window.",
+    )
+    parser.add_argument(
+        "--threshold-objective",
+        choices=["f1", "precision", "recall"],
+        default="f1",
+        help="Metric optimized on the calibration window when selecting alert thresholds.",
+    )
+    parser.add_argument(
+        "--uncertainty-method",
+        choices=["entropy", "margin"],
+        default="entropy",
+        help="Uncertainty score used by the trust layer.",
+    )
+    parser.add_argument("--uncertainty-penalty", type=float, default=0.5)
+    parser.add_argument("--trust-threshold", type=float, default=0.5)
+    parser.add_argument("--uncertainty-threshold", type=float, default=0.8)
     parser.add_argument("--device", choices=["cuda", "cpu", "auto"], default="cuda")
     parser.add_argument(
         "--allow-cpu",
@@ -85,16 +111,28 @@ def build_prediction_frame(
     *,
     labels: np.ndarray,
     probabilities: np.ndarray,
+    calibrated_probabilities: np.ndarray,
+    calibration_method: str,
+    uncertainty_scores: np.ndarray,
+    trust_scores: np.ndarray,
+    alert_threshold: float,
+    warning_levels: np.ndarray,
     fold_id: int,
     model_name: str,
 ) -> pd.DataFrame:
-    """Build a prediction artifact compatible with the baseline CSV columns."""
+    """Build a prediction artifact with risk and trust-layer outputs."""
 
     return metadata.loc[:, ["date", "ticker"]].assign(
         risk_label=labels.astype(int),
         fold_id=fold_id,
         model=model_name,
         risk_probability=probabilities,
+        calibrated_risk_probability=calibrated_probabilities,
+        calibration_method=calibration_method,
+        uncertainty_score=uncertainty_scores,
+        trust_score=trust_scores,
+        alert_threshold=alert_threshold,
+        warning_level=warning_levels,
     )
 
 
@@ -108,6 +146,14 @@ def _build_model(args: argparse.Namespace, input_size: int) -> TemporalTransform
         dropout=args.dropout,
         max_sequence_length=args.lookback,
     )
+
+
+def _uncertainty_scores(probabilities: np.ndarray, *, method: str) -> np.ndarray:
+    if method == "entropy":
+        return binary_entropy_uncertainty(probabilities)
+    if method == "margin":
+        return margin_uncertainty(probabilities)
+    raise ValueError(f"Unsupported uncertainty method: {method}")
 
 
 def run_training(args: argparse.Namespace) -> dict[str, object]:
@@ -148,6 +194,7 @@ def run_training(args: argparse.Namespace) -> dict[str, object]:
         weight_decay=args.weight_decay,
         num_workers=args.num_workers,
     )
+    calibration_method: CalibrationMethod = args.calibration_method
 
     fold_results: list[dict[str, object]] = []
     prediction_rows: list[pd.DataFrame] = []
@@ -174,6 +221,13 @@ def run_training(args: argparse.Namespace) -> dict[str, object]:
             device=device,
             use_multi_gpu=not args.disable_multi_gpu,
         )
+        calibration_probabilities = predict_probabilities(
+            trained_model,
+            calibration_features,
+            batch_size=args.batch_size,
+            device=device,
+            num_workers=args.num_workers,
+        )
         probabilities = predict_probabilities(
             trained_model,
             test_features,
@@ -181,12 +235,58 @@ def run_training(args: argparse.Namespace) -> dict[str, object]:
             device=device,
             num_workers=args.num_workers,
         )
-        metrics = classification_metrics(test_dataset.y, probabilities)
+        calibrator = fit_probability_calibrator(
+            calibration_probabilities,
+            calibration_dataset.y,
+            method=calibration_method,
+        )
+        calibrated_calibration_probabilities = calibrator.predict(calibration_probabilities)
+        calibrated_probabilities = calibrator.predict(probabilities)
+        threshold_selection = select_alert_threshold(
+            calibration_dataset.y,
+            calibrated_calibration_probabilities,
+            objective=args.threshold_objective,
+        )
+        alert_threshold = threshold_selection.threshold
+        watch_threshold = max(0.01, alert_threshold * 0.5)
+        uncertainty_scores = _uncertainty_scores(
+            calibrated_probabilities,
+            method=args.uncertainty_method,
+        )
+        trust_scores = compute_trust_score(
+            calibrated_probabilities,
+            uncertainty_scores,
+            uncertainty_penalty=args.uncertainty_penalty,
+        )
+        warning_levels = assign_trust_decisions(
+            calibrated_probabilities=calibrated_probabilities,
+            uncertainty_scores=uncertainty_scores,
+            trust_scores=trust_scores,
+            config=TrustDecisionConfig(
+                alert_threshold=alert_threshold,
+                watch_threshold=watch_threshold,
+                trust_threshold=args.trust_threshold,
+                uncertainty_threshold=args.uncertainty_threshold,
+            ),
+        )
+        raw_metrics = classification_metrics(test_dataset.y, probabilities)
+        calibrated_metrics = classification_metrics(test_dataset.y, calibrated_probabilities)
+        tuned_metrics = classification_metrics(
+            test_dataset.y,
+            calibrated_probabilities,
+            threshold=alert_threshold,
+        )
         prediction_rows.append(
             build_prediction_frame(
                 test_dataset.metadata,
                 labels=test_dataset.y,
                 probabilities=probabilities,
+                calibrated_probabilities=calibrated_probabilities,
+                calibration_method=calibration_method,
+                uncertainty_scores=uncertainty_scores,
+                trust_scores=trust_scores,
+                alert_threshold=alert_threshold,
+                warning_levels=warning_levels,
                 fold_id=fold.fold_id,
                 model_name="temporal_transformer",
             )
@@ -214,14 +314,41 @@ def run_training(args: argparse.Namespace) -> dict[str, object]:
                     "train_loss": training_result.train_loss,
                     "validation_loss": training_result.validation_loss,
                 },
-                "metrics": metrics,
+                "threshold_selection": {
+                    "objective": threshold_selection.objective,
+                    "threshold": threshold_selection.threshold,
+                    "objective_value": threshold_selection.objective_value,
+                    "calibration_metrics": threshold_selection.metrics,
+                    "watch_threshold": watch_threshold,
+                    "trust_threshold": args.trust_threshold,
+                    "uncertainty_threshold": args.uncertainty_threshold,
+                },
+                "raw_metrics": raw_metrics,
+                "calibrated_metrics": calibrated_metrics,
+                "tuned_metrics": tuned_metrics,
             }
         )
 
-    metric_names = list(fold_results[0]["metrics"].keys()) if fold_results else []
+    raw_metric_names = list(fold_results[0]["raw_metrics"].keys()) if fold_results else []
+    calibrated_metric_names = list(fold_results[0]["calibrated_metrics"].keys()) if fold_results else []
+    tuned_metric_names = list(fold_results[0]["tuned_metrics"].keys()) if fold_results else []
     summary = {
-        name: float(pd.Series([fold["metrics"][name] for fold in fold_results]).mean(skipna=True))
-        for name in metric_names
+        "raw": {
+            name: float(pd.Series([fold["raw_metrics"][name] for fold in fold_results]).mean(skipna=True))
+            for name in raw_metric_names
+        },
+        "calibrated": {
+            name: float(
+                pd.Series([fold["calibrated_metrics"][name] for fold in fold_results]).mean(skipna=True)
+            )
+            for name in calibrated_metric_names
+        },
+        "tuned": {
+            name: float(
+                pd.Series([fold["tuned_metrics"][name] for fold in fold_results]).mean(skipna=True)
+            )
+            for name in tuned_metric_names
+        },
     }
     predictions = pd.concat(prediction_rows, ignore_index=True) if prediction_rows else pd.DataFrame()
     gpu_counts = [fold["training"]["gpu_count"] for fold in fold_results]
@@ -239,6 +366,14 @@ def run_training(args: argparse.Namespace) -> dict[str, object]:
             "num_layers": args.num_layers,
             "dim_feedforward": args.dim_feedforward,
             "dropout": args.dropout,
+        },
+        "trust_config": {
+            "calibration_method": calibration_method,
+            "threshold_objective": args.threshold_objective,
+            "uncertainty_method": args.uncertainty_method,
+            "uncertainty_penalty": args.uncertainty_penalty,
+            "trust_threshold": args.trust_threshold,
+            "uncertainty_threshold": args.uncertainty_threshold,
         },
         "training_config": {
             "epochs": args.epochs,
