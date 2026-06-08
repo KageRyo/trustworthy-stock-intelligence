@@ -255,6 +255,18 @@ This reports warning-level counts, alert precision/recall, false alarm and miss
 rates, coverage, selective risk, and trust/uncertainty summaries by warning
 level.
 
+Decision thresholds can be swept over an existing prediction CSV without
+retraining:
+
+```bash
+python -m scripts.sweep_warning_thresholds \
+  --input data/artifacts/sp100_transformer_predictions.csv \
+  --output data/artifacts/sp100_transformer_threshold_sweep.csv
+```
+
+Use this before dashboard work to compare alert/watch/abstain/no_alert
+distributions under different trust and uncertainty thresholds.
+
 ## Deep Training
 
 The first deep-learning entry point trains a Temporal Transformer on 60-day
@@ -270,6 +282,8 @@ python -m scripts.train_deep \
   --test-size 63 \
   --epochs 20 \
   --batch-size 256 \
+  --watch-threshold-ratio 0.8 \
+  --min-watch-threshold 0.05 \
   --output data/artifacts/sp100_transformer_summary.json \
   --predictions-output data/artifacts/sp100_transformer_predictions.csv
 ```
