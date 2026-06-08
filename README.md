@@ -243,6 +243,18 @@ python -m scripts.evaluate \
   --output data/artifacts/sp100_logistic_eval.json
 ```
 
+Trust-aware warning artifacts can be evaluated separately:
+
+```bash
+python -m scripts.evaluate_warnings \
+  --input data/artifacts/sp100_transformer_predictions.csv \
+  --output data/artifacts/sp100_transformer_warning_eval.json
+```
+
+This reports warning-level counts, alert precision/recall, false alarm and miss
+rates, coverage, selective risk, and trust/uncertainty summaries by warning
+level.
+
 ## Deep Training
 
 The first deep-learning entry point trains a Temporal Transformer on 60-day
