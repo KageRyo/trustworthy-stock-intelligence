@@ -267,6 +267,17 @@ python -m scripts.sweep_warning_thresholds \
 Use this before dashboard work to compare alert/watch/abstain/no_alert
 distributions under different trust and uncertainty thresholds.
 
+After training, warning evaluation, and threshold sweep, generate a Markdown
+experiment report:
+
+```bash
+python -m scripts.report_trust_experiment \
+  --summary data/artifacts/sp100_transformer_summary.json \
+  --warning-eval data/artifacts/sp100_transformer_warning_eval.json \
+  --threshold-sweep data/artifacts/sp100_transformer_threshold_sweep.csv \
+  --output experiments/005_temporal_transformer_trust/report.md
+```
+
 ## Deep Training
 
 The first deep-learning entry point trains a Temporal Transformer on 60-day

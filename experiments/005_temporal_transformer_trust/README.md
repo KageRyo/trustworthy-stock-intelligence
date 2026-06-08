@@ -74,3 +74,13 @@ alert_false_alarm_rate
 
 The immediate goal is to avoid watch rates near 100% and find a useful
 coverage versus alert-quality tradeoff.
+
+## Report Generation
+
+```bash
+python -m scripts.report_trust_experiment \
+  --summary experiments/005_temporal_transformer_trust/runs/platt_entropy_t05/summary.json \
+  --warning-eval experiments/005_temporal_transformer_trust/runs/platt_entropy_t05/warning_eval.json \
+  --threshold-sweep experiments/005_temporal_transformer_trust/runs/platt_entropy_t05/threshold_sweep.csv \
+  --output experiments/005_temporal_transformer_trust/report.md
+```
