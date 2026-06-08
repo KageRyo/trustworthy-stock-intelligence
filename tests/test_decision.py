@@ -4,7 +4,11 @@ from __future__ import annotations
 
 import numpy as np
 
-from tsi.trust.decision import TrustDecisionConfig, assign_trust_decisions
+from tsi.trust.decision import (
+    TrustDecisionConfig,
+    assign_trust_decisions,
+    compute_watch_threshold,
+)
 
 
 def test_trust_decision_rule_priority_matches_roadmap() -> None:
@@ -37,3 +41,16 @@ def test_trust_decision_rejects_watch_threshold_above_alert_threshold() -> None:
         assert "watch_threshold" in str(error)
     else:
         raise AssertionError("Expected ValueError for invalid thresholds")
+
+
+def test_compute_watch_threshold_never_exceeds_alert_threshold() -> None:
+    assert compute_watch_threshold(
+        0.1,
+        watch_threshold_ratio=0.8,
+        min_watch_threshold=0.05,
+    ) == 0.08000000000000002
+    assert compute_watch_threshold(
+        0.04,
+        watch_threshold_ratio=0.8,
+        min_watch_threshold=0.05,
+    ) == 0.04

@@ -33,6 +33,23 @@ class TrustDecisionConfig:
             raise ValueError("watch_threshold must be less than or equal to alert_threshold")
 
 
+def compute_watch_threshold(
+    alert_threshold: float,
+    *,
+    watch_threshold_ratio: float,
+    min_watch_threshold: float,
+) -> float:
+    """Compute a watch threshold that never exceeds the alert threshold."""
+
+    if not 0.0 <= alert_threshold <= 1.0:
+        raise ValueError("alert_threshold must be in [0, 1]")
+    if not 0.0 <= watch_threshold_ratio <= 1.0:
+        raise ValueError("watch_threshold_ratio must be in [0, 1]")
+    if not 0.0 <= min_watch_threshold <= 1.0:
+        raise ValueError("min_watch_threshold must be in [0, 1]")
+    return min(alert_threshold, max(min_watch_threshold, alert_threshold * watch_threshold_ratio))
+
+
 def assign_trust_decisions(
     *,
     calibrated_probabilities: np.ndarray,

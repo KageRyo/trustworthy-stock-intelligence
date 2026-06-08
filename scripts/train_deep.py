@@ -27,7 +27,11 @@ from tsi.training.trainer import (
     transform_sequence_features,
 )
 from tsi.trust.calibration import CalibrationMethod, fit_probability_calibrator
-from tsi.trust.decision import TrustDecisionConfig, assign_trust_decisions
+from tsi.trust.decision import (
+    TrustDecisionConfig,
+    assign_trust_decisions,
+    compute_watch_threshold,
+)
 from tsi.trust.trust_score import compute_trust_score
 from tsi.trust.uncertainty import binary_entropy_uncertainty, margin_uncertainty
 
@@ -73,6 +77,8 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--uncertainty-penalty", type=float, default=0.5)
     parser.add_argument("--trust-threshold", type=float, default=0.5)
     parser.add_argument("--uncertainty-threshold", type=float, default=0.8)
+    parser.add_argument("--watch-threshold-ratio", type=float, default=0.8)
+    parser.add_argument("--min-watch-threshold", type=float, default=0.05)
     parser.add_argument("--device", choices=["cuda", "cpu", "auto"], default="cuda")
     parser.add_argument(
         "--allow-cpu",
@@ -248,7 +254,11 @@ def run_training(args: argparse.Namespace) -> dict[str, object]:
             objective=args.threshold_objective,
         )
         alert_threshold = threshold_selection.threshold
-        watch_threshold = max(0.01, alert_threshold * 0.5)
+        watch_threshold = compute_watch_threshold(
+            alert_threshold,
+            watch_threshold_ratio=args.watch_threshold_ratio,
+            min_watch_threshold=args.min_watch_threshold,
+        )
         uncertainty_scores = _uncertainty_scores(
             calibrated_probabilities,
             method=args.uncertainty_method,
@@ -322,6 +332,8 @@ def run_training(args: argparse.Namespace) -> dict[str, object]:
                     "watch_threshold": watch_threshold,
                     "trust_threshold": args.trust_threshold,
                     "uncertainty_threshold": args.uncertainty_threshold,
+                    "watch_threshold_ratio": args.watch_threshold_ratio,
+                    "min_watch_threshold": args.min_watch_threshold,
                 },
                 "raw_metrics": raw_metrics,
                 "calibrated_metrics": calibrated_metrics,
@@ -374,6 +386,8 @@ def run_training(args: argparse.Namespace) -> dict[str, object]:
             "uncertainty_penalty": args.uncertainty_penalty,
             "trust_threshold": args.trust_threshold,
             "uncertainty_threshold": args.uncertainty_threshold,
+            "watch_threshold_ratio": args.watch_threshold_ratio,
+            "min_watch_threshold": args.min_watch_threshold,
         },
         "training_config": {
             "epochs": args.epochs,
