@@ -5,6 +5,16 @@ A research-oriented framework for explainable, calibrated, and uncertainty-aware
 This project does not aim to provide investment advice, automated trading, or exact stock price prediction.  
 Instead, it reformulates stock analysis as a future risk-event detection problem.
 
+## Side Project Direction
+
+The repository is also being extended into a complete trustworthy deep-learning
+stock risk alerting side project: calibrated prediction, uncertainty
+estimation, trust scoring, warning decisions, audit-ready outputs, dashboard,
+and a later Go API gateway around the Python ML core.
+
+See `docs/project_roadmap.md` for the implementation roadmap and
+engineering rules.
+
 ## Research Focus
 
 Trustworthy Stock Intelligence studies whether stock risk warning models can issue reliable warnings under noisy and non-stationary market conditions. The core objective is not to maximize trading profit or predict the next closing price, but to detect future drawdown risk events early and explain why a warning is produced.
