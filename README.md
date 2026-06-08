@@ -243,6 +243,36 @@ python -m scripts.evaluate \
   --output data/artifacts/sp100_logistic_eval.json
 ```
 
+## Deep Training
+
+The first deep-learning entry point trains a Temporal Transformer on 60-day
+feature windows. CUDA is required by default, and the script uses multiple GPUs
+through PyTorch `DataParallel` when more than one CUDA device is available.
+
+```bash
+python -m scripts.train_deep \
+  --input data/raw/sp100/ohlcv.csv \
+  --lookback 60 \
+  --train-size 252 \
+  --calibration-size 63 \
+  --test-size 63 \
+  --epochs 20 \
+  --batch-size 256 \
+  --output data/artifacts/sp100_transformer_summary.json \
+  --predictions-output data/artifacts/sp100_transformer_predictions.csv
+```
+
+The prediction CSV includes:
+
+```text
+date
+ticker
+risk_label
+fold_id
+model
+risk_probability
+```
+
 ## Status
 
 This repository now has a runnable pilot baseline for TSI-Risk-v0. The next
