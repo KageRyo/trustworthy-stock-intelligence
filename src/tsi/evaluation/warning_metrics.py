@@ -56,6 +56,14 @@ def _mean_by_level(values: np.ndarray, levels: np.ndarray) -> dict[str, float]:
     return result
 
 
+def _selective_risk(labels: np.ndarray, levels: np.ndarray, *, positive_levels: tuple[str, ...]) -> float:
+    covered_mask = np.isin(levels, ("alert", "watch"))
+    if not np.any(covered_mask):
+        return 0.0
+    predictions = np.isin(levels[covered_mask], positive_levels).astype(int)
+    return float(np.mean(predictions != labels[covered_mask]))
+
+
 def trust_warning_metrics(
     labels: np.ndarray,
     warning_levels: np.ndarray | Sequence[str],
@@ -94,6 +102,16 @@ def trust_warning_metrics(
         **_binary_alert_metrics(y_true, positive_mask),
         "coverage": float(covered_count / len(y_true)),
         "selective_risk": selective_risk,
+        "alert_only_selective_risk": _selective_risk(
+            y_true,
+            levels,
+            positive_levels=("alert",),
+        ),
+        "alert_or_watch_selective_risk": _selective_risk(
+            y_true,
+            levels,
+            positive_levels=("alert", "watch"),
+        ),
     }
 
     if trust_scores is not None:
