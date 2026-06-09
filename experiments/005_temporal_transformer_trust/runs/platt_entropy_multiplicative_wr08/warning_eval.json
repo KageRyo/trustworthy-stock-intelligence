@@ -1,0 +1,1225 @@
+{
+  "input": "experiments/005_temporal_transformer_trust/runs/platt_entropy_multiplicative_wr08/predictions.csv",
+  "label_col": "risk_label",
+  "warning_col": "warning_level",
+  "trust_col": "trust_score",
+  "uncertainty_col": "uncertainty_score",
+  "group_col": "fold_id",
+  "row_count": 250424,
+  "overall": {
+    "alert_count": 6247.0,
+    "alert_rate": 0.024945692106187904,
+    "watch_count": 117820.0,
+    "watch_rate": 0.4704820624221321,
+    "abstain_count": 0.0,
+    "abstain_rate": 0.0,
+    "no_alert_count": 126357.0,
+    "no_alert_rate": 0.50457224547168,
+    "alert_precision": 0.15575476228589724,
+    "alert_recall": 0.03772048846675712,
+    "alert_false_alarm_rate": 0.023478713790294217,
+    "alert_miss_rate": 0.9622795115332429,
+    "coverage": 0.49542775452832,
+    "selective_risk": 0.15735046386226798,
+    "alert_only_selective_risk": 0.15735046386226798,
+    "alert_or_watch_selective_risk": 0.8773162887794498,
+    "mean_trust_score_by_level": {
+      "alert": 0.20178823292731438,
+      "watch": 0.0930373416154756,
+      "no_alert": 0.04219730683671685
+    },
+    "mean_uncertainty_by_level": {
+      "alert": 0.964661941280221,
+      "watch": 0.5459574027199912,
+      "no_alert": 0.279010597116397
+    }
+  },
+  "by_group": [
+    {
+      "group": 0,
+      "row_count": 6174,
+      "metrics": {
+        "alert_count": 0.0,
+        "alert_rate": 0.0,
+        "watch_count": 725.0,
+        "watch_rate": 0.11742792355037253,
+        "abstain_count": 0.0,
+        "abstain_rate": 0.0,
+        "no_alert_count": 5449.0,
+        "no_alert_rate": 0.8825720764496274,
+        "alert_precision": 0.0,
+        "alert_recall": 0.0,
+        "alert_false_alarm_rate": 0.0,
+        "alert_miss_rate": 1.0,
+        "coverage": 0.11742792355037253,
+        "selective_risk": 0.15724137931034482,
+        "alert_only_selective_risk": 0.15724137931034482,
+        "alert_or_watch_selective_risk": 0.8427586206896551,
+        "mean_trust_score_by_level": {
+          "watch": 0.09705723038515912,
+          "no_alert": 0.029318349743158813
+        },
+        "mean_uncertainty_by_level": {
+          "watch": 0.5735763792756331,
+          "no_alert": 0.2043826879272125
+        }
+      }
+    },
+    {
+      "group": 1,
+      "row_count": 6174,
+      "metrics": {
+        "alert_count": 0.0,
+        "alert_rate": 0.0,
+        "watch_count": 1350.0,
+        "watch_rate": 0.21865889212827988,
+        "abstain_count": 0.0,
+        "abstain_rate": 0.0,
+        "no_alert_count": 4824.0,
+        "no_alert_rate": 0.7813411078717201,
+        "alert_precision": 0.0,
+        "alert_recall": 0.0,
+        "alert_false_alarm_rate": 0.0,
+        "alert_miss_rate": 1.0,
+        "coverage": 0.21865889212827988,
+        "selective_risk": 0.05333333333333334,
+        "alert_only_selective_risk": 0.05333333333333334,
+        "alert_or_watch_selective_risk": 0.9466666666666667,
+        "mean_trust_score_by_level": {
+          "watch": 0.07191152737795384,
+          "no_alert": 0.03881100326792432
+        },
+        "mean_uncertainty_by_level": {
+          "watch": 0.44340178774295697,
+          "no_alert": 0.2632744369331721
+        }
+      }
+    },
+    {
+      "group": 2,
+      "row_count": 6174,
+      "metrics": {
+        "alert_count": 0.0,
+        "alert_rate": 0.0,
+        "watch_count": 1606.0,
+        "watch_rate": 0.2601230968577907,
+        "abstain_count": 0.0,
+        "abstain_rate": 0.0,
+        "no_alert_count": 4568.0,
+        "no_alert_rate": 0.7398769031422092,
+        "alert_precision": 0.0,
+        "alert_recall": 0.0,
+        "alert_false_alarm_rate": 0.0,
+        "alert_miss_rate": 1.0,
+        "coverage": 0.2601230968577907,
+        "selective_risk": 0.06662515566625156,
+        "alert_only_selective_risk": 0.06662515566625156,
+        "alert_or_watch_selective_risk": 0.9333748443337484,
+        "mean_trust_score_by_level": {
+          "watch": 0.05011275651557668,
+          "no_alert": 0.026365244521895093
+        },
+        "mean_uncertainty_by_level": {
+          "watch": 0.3269379311811457,
+          "no_alert": 0.1890302766955474
+        }
+      }
+    },
+    {
+      "group": 3,
+      "row_count": 6174,
+      "metrics": {
+        "alert_count": 0.0,
+        "alert_rate": 0.0,
+        "watch_count": 516.0,
+        "watch_rate": 0.08357628765792031,
+        "abstain_count": 0.0,
+        "abstain_rate": 0.0,
+        "no_alert_count": 5658.0,
+        "no_alert_rate": 0.9164237123420796,
+        "alert_precision": 0.0,
+        "alert_recall": 0.0,
+        "alert_false_alarm_rate": 0.0,
+        "alert_miss_rate": 1.0,
+        "coverage": 0.08357628765792031,
+        "selective_risk": 0.09496124031007752,
+        "alert_only_selective_risk": 0.09496124031007752,
+        "alert_or_watch_selective_risk": 0.9050387596899225,
+        "mean_trust_score_by_level": {
+          "watch": 0.07444615347831618,
+          "no_alert": 0.031053009505974075
+        },
+        "mean_uncertainty_by_level": {
+          "watch": 0.4575138953341893,
+          "no_alert": 0.2175110699785235
+        }
+      }
+    },
+    {
+      "group": 4,
+      "row_count": 6174,
+      "metrics": {
+        "alert_count": 0.0,
+        "alert_rate": 0.0,
+        "watch_count": 436.0,
+        "watch_rate": 0.07061872367994818,
+        "abstain_count": 0.0,
+        "abstain_rate": 0.0,
+        "no_alert_count": 5738.0,
+        "no_alert_rate": 0.9293812763200519,
+        "alert_precision": 0.0,
+        "alert_recall": 0.0,
+        "alert_false_alarm_rate": 0.0,
+        "alert_miss_rate": 1.0,
+        "coverage": 0.07061872367994818,
+        "selective_risk": 0.10091743119266056,
+        "alert_only_selective_risk": 0.10091743119266056,
+        "alert_or_watch_selective_risk": 0.8990825688073395,
+        "mean_trust_score_by_level": {
+          "watch": 0.06260558543641358,
+          "no_alert": 0.021973775376010397
+        },
+        "mean_uncertainty_by_level": {
+          "watch": 0.39439362072306444,
+          "no_alert": 0.16238306279421794
+        }
+      }
+    },
+    {
+      "group": 5,
+      "row_count": 6174,
+      "metrics": {
+        "alert_count": 0.0,
+        "alert_rate": 0.0,
+        "watch_count": 756.0,
+        "watch_rate": 0.12244897959183673,
+        "abstain_count": 0.0,
+        "abstain_rate": 0.0,
+        "no_alert_count": 5418.0,
+        "no_alert_rate": 0.8775510204081632,
+        "alert_precision": 0.0,
+        "alert_recall": 0.0,
+        "alert_false_alarm_rate": 0.0,
+        "alert_miss_rate": 1.0,
+        "coverage": 0.12244897959183673,
+        "selective_risk": 0.082010582010582,
+        "alert_only_selective_risk": 0.082010582010582,
+        "alert_or_watch_selective_risk": 0.917989417989418,
+        "mean_trust_score_by_level": {
+          "watch": 0.06913584041132512,
+          "no_alert": 0.022744023759125633
+        },
+        "mean_uncertainty_by_level": {
+          "watch": 0.42962295225133385,
+          "no_alert": 0.16556481827991645
+        }
+      }
+    },
+    {
+      "group": 6,
+      "row_count": 6174,
+      "metrics": {
+        "alert_count": 0.0,
+        "alert_rate": 0.0,
+        "watch_count": 422.0,
+        "watch_rate": 0.06835114998380304,
+        "abstain_count": 0.0,
+        "abstain_rate": 0.0,
+        "no_alert_count": 5752.0,
+        "no_alert_rate": 0.9316488500161969,
+        "alert_precision": 0.0,
+        "alert_recall": 0.0,
+        "alert_false_alarm_rate": 0.0,
+        "alert_miss_rate": 1.0,
+        "coverage": 0.06835114998380304,
+        "selective_risk": 0.11611374407582939,
+        "alert_only_selective_risk": 0.11611374407582939,
+        "alert_or_watch_selective_risk": 0.8838862559241706,
+        "mean_trust_score_by_level": {
+          "watch": 0.047880147313133004,
+          "no_alert": 0.021816807110140377
+        },
+        "mean_uncertainty_by_level": {
+          "watch": 0.3146030923433152,
+          "no_alert": 0.16129540137073622
+        }
+      }
+    },
+    {
+      "group": 7,
+      "row_count": 6174,
+      "metrics": {
+        "alert_count": 0.0,
+        "alert_rate": 0.0,
+        "watch_count": 1497.0,
+        "watch_rate": 0.2424684159378037,
+        "abstain_count": 0.0,
+        "abstain_rate": 0.0,
+        "no_alert_count": 4677.0,
+        "no_alert_rate": 0.7575315840621963,
+        "alert_precision": 0.0,
+        "alert_recall": 0.0,
+        "alert_false_alarm_rate": 0.0,
+        "alert_miss_rate": 1.0,
+        "coverage": 0.2424684159378037,
+        "selective_risk": 0.19505678022712092,
+        "alert_only_selective_risk": 0.19505678022712092,
+        "alert_or_watch_selective_risk": 0.8049432197728791,
+        "mean_trust_score_by_level": {
+          "watch": 0.05716101911571393,
+          "no_alert": 0.027670832127944477
+        },
+        "mean_uncertainty_by_level": {
+          "watch": 0.36506544880157354,
+          "no_alert": 0.19737045760714453
+        }
+      }
+    },
+    {
+      "group": 8,
+      "row_count": 6174,
+      "metrics": {
+        "alert_count": 0.0,
+        "alert_rate": 0.0,
+        "watch_count": 6174.0,
+        "watch_rate": 1.0,
+        "abstain_count": 0.0,
+        "abstain_rate": 0.0,
+        "no_alert_count": 0.0,
+        "no_alert_rate": 0.0,
+        "alert_precision": 0.0,
+        "alert_recall": 0.0,
+        "alert_false_alarm_rate": 0.0,
+        "alert_miss_rate": 1.0,
+        "coverage": 1.0,
+        "selective_risk": 0.05490767735665695,
+        "alert_only_selective_risk": 0.05490767735665695,
+        "alert_or_watch_selective_risk": 0.9450923226433431,
+        "mean_trust_score_by_level": {
+          "watch": 0.11322277248471357
+        },
+        "mean_uncertainty_by_level": {
+          "watch": 0.6535057111871055
+        }
+      }
+    },
+    {
+      "group": 9,
+      "row_count": 6174,
+      "metrics": {
+        "alert_count": 0.0,
+        "alert_rate": 0.0,
+        "watch_count": 1342.0,
+        "watch_rate": 0.21736313573048266,
+        "abstain_count": 0.0,
+        "abstain_rate": 0.0,
+        "no_alert_count": 4832.0,
+        "no_alert_rate": 0.7826368642695173,
+        "alert_precision": 0.0,
+        "alert_recall": 0.0,
+        "alert_false_alarm_rate": 0.0,
+        "alert_miss_rate": 1.0,
+        "coverage": 0.21736313573048266,
+        "selective_risk": 0.1661698956780924,
+        "alert_only_selective_risk": 0.1661698956780924,
+        "alert_or_watch_selective_risk": 0.8338301043219076,
+        "mean_trust_score_by_level": {
+          "watch": 0.06856248194539302,
+          "no_alert": 0.02264904187175715
+        },
+        "mean_uncertainty_by_level": {
+          "watch": 0.42639247704320954,
+          "no_alert": 0.16527859117735288
+        }
+      }
+    },
+    {
+      "group": 10,
+      "row_count": 6174,
+      "metrics": {
+        "alert_count": 0.0,
+        "alert_rate": 0.0,
+        "watch_count": 3331.0,
+        "watch_rate": 0.5395205701328151,
+        "abstain_count": 0.0,
+        "abstain_rate": 0.0,
+        "no_alert_count": 2843.0,
+        "no_alert_rate": 0.460479429867185,
+        "alert_precision": 0.0,
+        "alert_recall": 0.0,
+        "alert_false_alarm_rate": 0.0,
+        "alert_miss_rate": 1.0,
+        "coverage": 0.5395205701328151,
+        "selective_risk": 0.2311618132692885,
+        "alert_only_selective_risk": 0.2311618132692885,
+        "alert_or_watch_selective_risk": 0.7688381867307115,
+        "mean_trust_score_by_level": {
+          "watch": 0.09650108934684236,
+          "no_alert": 0.06678343100845126
+        },
+        "mean_uncertainty_by_level": {
+          "watch": 0.5708311534499634,
+          "no_alert": 0.4172025143755809
+        }
+      }
+    },
+    {
+      "group": 11,
+      "row_count": 6174,
+      "metrics": {
+        "alert_count": 0.0,
+        "alert_rate": 0.0,
+        "watch_count": 6174.0,
+        "watch_rate": 1.0,
+        "abstain_count": 0.0,
+        "abstain_rate": 0.0,
+        "no_alert_count": 0.0,
+        "no_alert_rate": 0.0,
+        "alert_precision": 0.0,
+        "alert_recall": 0.0,
+        "alert_false_alarm_rate": 0.0,
+        "alert_miss_rate": 1.0,
+        "coverage": 1.0,
+        "selective_risk": 0.045513443472627146,
+        "alert_only_selective_risk": 0.045513443472627146,
+        "alert_or_watch_selective_risk": 0.9544865565273729,
+        "mean_trust_score_by_level": {
+          "watch": 0.13275418465636182
+        },
+        "mean_uncertainty_by_level": {
+          "watch": 0.7420092800165765
+        }
+      }
+    },
+    {
+      "group": 12,
+      "row_count": 6174,
+      "metrics": {
+        "alert_count": 0.0,
+        "alert_rate": 0.0,
+        "watch_count": 1728.0,
+        "watch_rate": 0.27988338192419826,
+        "abstain_count": 0.0,
+        "abstain_rate": 0.0,
+        "no_alert_count": 4446.0,
+        "no_alert_rate": 0.7201166180758017,
+        "alert_precision": 0.0,
+        "alert_recall": 0.0,
+        "alert_false_alarm_rate": 0.0,
+        "alert_miss_rate": 1.0,
+        "coverage": 0.27988338192419826,
+        "selective_risk": 0.10416666666666667,
+        "alert_only_selective_risk": 0.10416666666666667,
+        "alert_or_watch_selective_risk": 0.8958333333333334,
+        "mean_trust_score_by_level": {
+          "watch": 0.04565311752834776,
+          "no_alert": 0.03495969304059972
+        },
+        "mean_uncertainty_by_level": {
+          "watch": 0.3022223148582907,
+          "no_alert": 0.2409837313696865
+        }
+      }
+    },
+    {
+      "group": 13,
+      "row_count": 6217,
+      "metrics": {
+        "alert_count": 0.0,
+        "alert_rate": 0.0,
+        "watch_count": 6217.0,
+        "watch_rate": 1.0,
+        "abstain_count": 0.0,
+        "abstain_rate": 0.0,
+        "no_alert_count": 0.0,
+        "no_alert_rate": 0.0,
+        "alert_precision": 0.0,
+        "alert_recall": 0.0,
+        "alert_false_alarm_rate": 0.0,
+        "alert_miss_rate": 1.0,
+        "coverage": 1.0,
+        "selective_risk": 0.09924400836416278,
+        "alert_only_selective_risk": 0.09924400836416278,
+        "alert_or_watch_selective_risk": 0.9007559916358372,
+        "mean_trust_score_by_level": {
+          "watch": 0.05711719970596698
+        },
+        "mean_uncertainty_by_level": {
+          "watch": 0.36518903254667257
+        }
+      }
+    },
+    {
+      "group": 14,
+      "row_count": 6237,
+      "metrics": {
+        "alert_count": 0.0,
+        "alert_rate": 0.0,
+        "watch_count": 6237.0,
+        "watch_rate": 1.0,
+        "abstain_count": 0.0,
+        "abstain_rate": 0.0,
+        "no_alert_count": 0.0,
+        "no_alert_rate": 0.0,
+        "alert_precision": 0.0,
+        "alert_recall": 0.0,
+        "alert_false_alarm_rate": 0.0,
+        "alert_miss_rate": 1.0,
+        "coverage": 1.0,
+        "selective_risk": 0.02565335898669232,
+        "alert_only_selective_risk": 0.02565335898669232,
+        "alert_or_watch_selective_risk": 0.9743466410133077,
+        "mean_trust_score_by_level": {
+          "watch": 0.0755254069390139
+        },
+        "mean_uncertainty_by_level": {
+          "watch": 0.46362019254816617
+        }
+      }
+    },
+    {
+      "group": 15,
+      "row_count": 6237,
+      "metrics": {
+        "alert_count": 0.0,
+        "alert_rate": 0.0,
+        "watch_count": 24.0,
+        "watch_rate": 0.003848003848003848,
+        "abstain_count": 0.0,
+        "abstain_rate": 0.0,
+        "no_alert_count": 6213.0,
+        "no_alert_rate": 0.9961519961519961,
+        "alert_precision": 0.0,
+        "alert_recall": 0.0,
+        "alert_false_alarm_rate": 0.0,
+        "alert_miss_rate": 1.0,
+        "coverage": 0.003848003848003848,
+        "selective_risk": 0.25,
+        "alert_only_selective_risk": 0.25,
+        "alert_or_watch_selective_risk": 0.75,
+        "mean_trust_score_by_level": {
+          "watch": 0.02509058253755642,
+          "no_alert": 0.02314799400625992
+        },
+        "mean_uncertainty_by_level": {
+          "watch": 0.18224044338060574,
+          "no_alert": 0.17022765014747057
+        }
+      }
+    },
+    {
+      "group": 16,
+      "row_count": 6237,
+      "metrics": {
+        "alert_count": 6237.0,
+        "alert_rate": 1.0,
+        "watch_count": 0.0,
+        "watch_rate": 0.0,
+        "abstain_count": 0.0,
+        "abstain_rate": 0.0,
+        "no_alert_count": 0.0,
+        "no_alert_rate": 0.0,
+        "alert_precision": 0.15552348885682218,
+        "alert_recall": 1.0,
+        "alert_false_alarm_rate": 1.0,
+        "alert_miss_rate": 0.0,
+        "coverage": 1.0,
+        "selective_risk": 0.8444765111431778,
+        "alert_only_selective_risk": 0.8444765111431778,
+        "alert_or_watch_selective_risk": 0.8444765111431778,
+        "mean_trust_score_by_level": {
+          "alert": 0.20178654387996975
+        },
+        "mean_uncertainty_by_level": {
+          "alert": 0.964659302796946
+        }
+      }
+    },
+    {
+      "group": 17,
+      "row_count": 6237,
+      "metrics": {
+        "alert_count": 0.0,
+        "alert_rate": 0.0,
+        "watch_count": 2772.0,
+        "watch_rate": 0.4444444444444444,
+        "abstain_count": 0.0,
+        "abstain_rate": 0.0,
+        "no_alert_count": 3465.0,
+        "no_alert_rate": 0.5555555555555556,
+        "alert_precision": 0.0,
+        "alert_recall": 0.0,
+        "alert_false_alarm_rate": 0.0,
+        "alert_miss_rate": 1.0,
+        "coverage": 0.4444444444444444,
+        "selective_risk": 0.1323953823953824,
+        "alert_only_selective_risk": 0.1323953823953824,
+        "alert_or_watch_selective_risk": 0.8676046176046176,
+        "mean_trust_score_by_level": {
+          "watch": 0.10489447297541556,
+          "no_alert": 0.059625056250133805
+        },
+        "mean_uncertainty_by_level": {
+          "watch": 0.61050672084544,
+          "no_alert": 0.37845349286792174
+        }
+      }
+    },
+    {
+      "group": 18,
+      "row_count": 6244,
+      "metrics": {
+        "alert_count": 0.0,
+        "alert_rate": 0.0,
+        "watch_count": 6244.0,
+        "watch_rate": 1.0,
+        "abstain_count": 0.0,
+        "abstain_rate": 0.0,
+        "no_alert_count": 0.0,
+        "no_alert_rate": 0.0,
+        "alert_precision": 0.0,
+        "alert_recall": 0.0,
+        "alert_false_alarm_rate": 0.0,
+        "alert_miss_rate": 1.0,
+        "coverage": 1.0,
+        "selective_risk": 0.08840486867392697,
+        "alert_only_selective_risk": 0.08840486867392697,
+        "alert_or_watch_selective_risk": 0.9115951313260731,
+        "mean_trust_score_by_level": {
+          "watch": 0.07398903812256373
+        },
+        "mean_uncertainty_by_level": {
+          "watch": 0.45483732435866503
+        }
+      }
+    },
+    {
+      "group": 19,
+      "row_count": 6300,
+      "metrics": {
+        "alert_count": 0.0,
+        "alert_rate": 0.0,
+        "watch_count": 6043.0,
+        "watch_rate": 0.9592063492063492,
+        "abstain_count": 0.0,
+        "abstain_rate": 0.0,
+        "no_alert_count": 257.0,
+        "no_alert_rate": 0.04079365079365079,
+        "alert_precision": 0.0,
+        "alert_recall": 0.0,
+        "alert_false_alarm_rate": 0.0,
+        "alert_miss_rate": 1.0,
+        "coverage": 0.9592063492063492,
+        "selective_risk": 0.10872083402283635,
+        "alert_only_selective_risk": 0.10872083402283635,
+        "alert_or_watch_selective_risk": 0.8912791659771636,
+        "mean_trust_score_by_level": {
+          "watch": 0.07206468632473917,
+          "no_alert": 0.05349098443036461
+        },
+        "mean_uncertainty_by_level": {
+          "watch": 0.44406274612210045,
+          "no_alert": 0.345707867598218
+        }
+      }
+    },
+    {
+      "group": 20,
+      "row_count": 6300,
+      "metrics": {
+        "alert_count": 0.0,
+        "alert_rate": 0.0,
+        "watch_count": 2540.0,
+        "watch_rate": 0.4031746031746032,
+        "abstain_count": 0.0,
+        "abstain_rate": 0.0,
+        "no_alert_count": 3760.0,
+        "no_alert_rate": 0.5968253968253968,
+        "alert_precision": 0.0,
+        "alert_recall": 0.0,
+        "alert_false_alarm_rate": 0.0,
+        "alert_miss_rate": 1.0,
+        "coverage": 0.4031746031746032,
+        "selective_risk": 0.09685039370078741,
+        "alert_only_selective_risk": 0.09685039370078741,
+        "alert_or_watch_selective_risk": 0.9031496062992126,
+        "mean_trust_score_by_level": {
+          "watch": 0.08550843531891235,
+          "no_alert": 0.05878830149271024
+        },
+        "mean_uncertainty_by_level": {
+          "watch": 0.5112334193759922,
+          "no_alert": 0.37455586291684206
+        }
+      }
+    },
+    {
+      "group": 21,
+      "row_count": 6300,
+      "metrics": {
+        "alert_count": 0.0,
+        "alert_rate": 0.0,
+        "watch_count": 1740.0,
+        "watch_rate": 0.2761904761904762,
+        "abstain_count": 0.0,
+        "abstain_rate": 0.0,
+        "no_alert_count": 4560.0,
+        "no_alert_rate": 0.7238095238095238,
+        "alert_precision": 0.0,
+        "alert_recall": 0.0,
+        "alert_false_alarm_rate": 0.0,
+        "alert_miss_rate": 1.0,
+        "coverage": 0.2761904761904762,
+        "selective_risk": 0.06149425287356322,
+        "alert_only_selective_risk": 0.06149425287356322,
+        "alert_or_watch_selective_risk": 0.9385057471264368,
+        "mean_trust_score_by_level": {
+          "watch": 0.07824376902942501,
+          "no_alert": 0.04579957157422138
+        },
+        "mean_uncertainty_by_level": {
+          "watch": 0.47458882768649047,
+          "no_alert": 0.3029143696639229
+        }
+      }
+    },
+    {
+      "group": 22,
+      "row_count": 6300,
+      "metrics": {
+        "alert_count": 0.0,
+        "alert_rate": 0.0,
+        "watch_count": 4123.0,
+        "watch_rate": 0.6544444444444445,
+        "abstain_count": 0.0,
+        "abstain_rate": 0.0,
+        "no_alert_count": 2177.0,
+        "no_alert_rate": 0.34555555555555556,
+        "alert_precision": 0.0,
+        "alert_recall": 0.0,
+        "alert_false_alarm_rate": 0.0,
+        "alert_miss_rate": 1.0,
+        "coverage": 0.6544444444444445,
+        "selective_risk": 0.16177540625757944,
+        "alert_only_selective_risk": 0.16177540625757944,
+        "alert_or_watch_selective_risk": 0.8382245937424205,
+        "mean_trust_score_by_level": {
+          "watch": 0.052441652177723716,
+          "no_alert": 0.040952227579589405
+        },
+        "mean_uncertainty_by_level": {
+          "watch": 0.3394929228174101,
+          "no_alert": 0.27566906428735394
+        }
+      }
+    },
+    {
+      "group": 23,
+      "row_count": 6300,
+      "metrics": {
+        "alert_count": 0.0,
+        "alert_rate": 0.0,
+        "watch_count": 3137.0,
+        "watch_rate": 0.49793650793650795,
+        "abstain_count": 0.0,
+        "abstain_rate": 0.0,
+        "no_alert_count": 3163.0,
+        "no_alert_rate": 0.5020634920634921,
+        "alert_precision": 0.0,
+        "alert_recall": 0.0,
+        "alert_false_alarm_rate": 0.0,
+        "alert_miss_rate": 1.0,
+        "coverage": 0.49793650793650795,
+        "selective_risk": 0.26012113484220595,
+        "alert_only_selective_risk": 0.26012113484220595,
+        "alert_or_watch_selective_risk": 0.7398788651577941,
+        "mean_trust_score_by_level": {
+          "watch": 0.12215254392565857,
+          "no_alert": 0.07762054394728272
+        },
+        "mean_uncertainty_by_level": {
+          "watch": 0.6942785002254673,
+          "no_alert": 0.4740776201629557
+        }
+      }
+    },
+    {
+      "group": 24,
+      "row_count": 6300,
+      "metrics": {
+        "alert_count": 10.0,
+        "alert_rate": 0.0015873015873015873,
+        "watch_count": 3484.0,
+        "watch_rate": 0.553015873015873,
+        "abstain_count": 0.0,
+        "abstain_rate": 0.0,
+        "no_alert_count": 2806.0,
+        "no_alert_rate": 0.4453968253968254,
+        "alert_precision": 0.3,
+        "alert_recall": 0.002053388090349076,
+        "alert_false_alarm_rate": 0.001446579871874354,
+        "alert_miss_rate": 0.997946611909651,
+        "coverage": 0.5546031746031747,
+        "selective_risk": 0.271322266742988,
+        "alert_only_selective_risk": 0.271322266742988,
+        "alert_or_watch_selective_risk": 0.7298225529479107,
+        "mean_trust_score_by_level": {
+          "alert": 0.20284169175616223,
+          "watch": 0.1529103960053319,
+          "no_alert": 0.08336577070686695
+        },
+        "mean_uncertainty_by_level": {
+          "alert": 0.9663075632988753,
+          "watch": 0.8206964091191966,
+          "no_alert": 0.5027386865163815
+        }
+      }
+    },
+    {
+      "group": 25,
+      "row_count": 6300,
+      "metrics": {
+        "alert_count": 0.0,
+        "alert_rate": 0.0,
+        "watch_count": 6300.0,
+        "watch_rate": 1.0,
+        "abstain_count": 0.0,
+        "abstain_rate": 0.0,
+        "no_alert_count": 0.0,
+        "no_alert_rate": 0.0,
+        "alert_precision": 0.0,
+        "alert_recall": 0.0,
+        "alert_false_alarm_rate": 0.0,
+        "alert_miss_rate": 1.0,
+        "coverage": 1.0,
+        "selective_risk": 0.19777777777777777,
+        "alert_only_selective_risk": 0.19777777777777777,
+        "alert_or_watch_selective_risk": 0.8022222222222222,
+        "mean_trust_score_by_level": {
+          "watch": 0.14361201602068296
+        },
+        "mean_uncertainty_by_level": {
+          "watch": 0.7845687117863981
+        }
+      }
+    },
+    {
+      "group": 26,
+      "row_count": 6300,
+      "metrics": {
+        "alert_count": 0.0,
+        "alert_rate": 0.0,
+        "watch_count": 4298.0,
+        "watch_rate": 0.6822222222222222,
+        "abstain_count": 0.0,
+        "abstain_rate": 0.0,
+        "no_alert_count": 2002.0,
+        "no_alert_rate": 0.31777777777777777,
+        "alert_precision": 0.0,
+        "alert_recall": 0.0,
+        "alert_false_alarm_rate": 0.0,
+        "alert_miss_rate": 1.0,
+        "coverage": 0.6822222222222222,
+        "selective_risk": 0.12401116798510935,
+        "alert_only_selective_risk": 0.12401116798510935,
+        "alert_or_watch_selective_risk": 0.8759888320148906,
+        "mean_trust_score_by_level": {
+          "watch": 0.13650002375543147,
+          "no_alert": 0.09603597033690206
+        },
+        "mean_uncertainty_by_level": {
+          "watch": 0.7568969487695848,
+          "no_alert": 0.5685602763609839
+        }
+      }
+    },
+    {
+      "group": 27,
+      "row_count": 6300,
+      "metrics": {
+        "alert_count": 0.0,
+        "alert_rate": 0.0,
+        "watch_count": 2474.0,
+        "watch_rate": 0.3926984126984127,
+        "abstain_count": 0.0,
+        "abstain_rate": 0.0,
+        "no_alert_count": 3826.0,
+        "no_alert_rate": 0.6073015873015873,
+        "alert_precision": 0.0,
+        "alert_recall": 0.0,
+        "alert_false_alarm_rate": 0.0,
+        "alert_miss_rate": 1.0,
+        "coverage": 0.3926984126984127,
+        "selective_risk": 0.14591754244139046,
+        "alert_only_selective_risk": 0.14591754244139046,
+        "alert_or_watch_selective_risk": 0.8540824575586096,
+        "mean_trust_score_by_level": {
+          "watch": 0.09293422327030895,
+          "no_alert": 0.059303791678903865
+        },
+        "mean_uncertainty_by_level": {
+          "watch": 0.5527649441095138,
+          "no_alert": 0.3767644288203327
+        }
+      }
+    },
+    {
+      "group": 28,
+      "row_count": 6300,
+      "metrics": {
+        "alert_count": 0.0,
+        "alert_rate": 0.0,
+        "watch_count": 3491.0,
+        "watch_rate": 0.5541269841269841,
+        "abstain_count": 0.0,
+        "abstain_rate": 0.0,
+        "no_alert_count": 2809.0,
+        "no_alert_rate": 0.44587301587301587,
+        "alert_precision": 0.0,
+        "alert_recall": 0.0,
+        "alert_false_alarm_rate": 0.0,
+        "alert_miss_rate": 1.0,
+        "coverage": 0.5541269841269841,
+        "selective_risk": 0.0690346605557147,
+        "alert_only_selective_risk": 0.0690346605557147,
+        "alert_or_watch_selective_risk": 0.9309653394442853,
+        "mean_trust_score_by_level": {
+          "watch": 0.08750021193471766,
+          "no_alert": 0.057653316093279505
+        },
+        "mean_uncertainty_by_level": {
+          "watch": 0.52311139599142,
+          "no_alert": 0.36835746715172224
+        }
+      }
+    },
+    {
+      "group": 29,
+      "row_count": 6300,
+      "metrics": {
+        "alert_count": 0.0,
+        "alert_rate": 0.0,
+        "watch_count": 1671.0,
+        "watch_rate": 0.2652380952380952,
+        "abstain_count": 0.0,
+        "abstain_rate": 0.0,
+        "no_alert_count": 4629.0,
+        "no_alert_rate": 0.7347619047619047,
+        "alert_precision": 0.0,
+        "alert_recall": 0.0,
+        "alert_false_alarm_rate": 0.0,
+        "alert_miss_rate": 1.0,
+        "coverage": 0.2652380952380952,
+        "selective_risk": 0.15140634350688212,
+        "alert_only_selective_risk": 0.15140634350688212,
+        "alert_or_watch_selective_risk": 0.8485936564931179,
+        "mean_trust_score_by_level": {
+          "watch": 0.07277456948923726,
+          "no_alert": 0.03759461804271801
+        },
+        "mean_uncertainty_by_level": {
+          "watch": 0.44808579293356354,
+          "no_alert": 0.2560472447668163
+        }
+      }
+    },
+    {
+      "group": 30,
+      "row_count": 6300,
+      "metrics": {
+        "alert_count": 0.0,
+        "alert_rate": 0.0,
+        "watch_count": 1674.0,
+        "watch_rate": 0.26571428571428574,
+        "abstain_count": 0.0,
+        "abstain_rate": 0.0,
+        "no_alert_count": 4626.0,
+        "no_alert_rate": 0.7342857142857143,
+        "alert_precision": 0.0,
+        "alert_recall": 0.0,
+        "alert_false_alarm_rate": 0.0,
+        "alert_miss_rate": 1.0,
+        "coverage": 0.26571428571428574,
+        "selective_risk": 0.08064516129032258,
+        "alert_only_selective_risk": 0.08064516129032258,
+        "alert_or_watch_selective_risk": 0.9193548387096774,
+        "mean_trust_score_by_level": {
+          "watch": 0.09027267461567841,
+          "no_alert": 0.0642223073774816
+        },
+        "mean_uncertainty_by_level": {
+          "watch": 0.538768946600663,
+          "no_alert": 0.4037383387904894
+        }
+      }
+    },
+    {
+      "group": 31,
+      "row_count": 6300,
+      "metrics": {
+        "alert_count": 0.0,
+        "alert_rate": 0.0,
+        "watch_count": 478.0,
+        "watch_rate": 0.07587301587301587,
+        "abstain_count": 0.0,
+        "abstain_rate": 0.0,
+        "no_alert_count": 5822.0,
+        "no_alert_rate": 0.9241269841269841,
+        "alert_precision": 0.0,
+        "alert_recall": 0.0,
+        "alert_false_alarm_rate": 0.0,
+        "alert_miss_rate": 1.0,
+        "coverage": 0.07587301587301587,
+        "selective_risk": 0.2594142259414226,
+        "alert_only_selective_risk": 0.2594142259414226,
+        "alert_or_watch_selective_risk": 0.7405857740585774,
+        "mean_trust_score_by_level": {
+          "watch": 0.07928766536780162,
+          "no_alert": 0.0366913704930569
+        },
+        "mean_uncertainty_by_level": {
+          "watch": 0.4829203539291131,
+          "no_alert": 0.25038979281220297
+        }
+      }
+    },
+    {
+      "group": 32,
+      "row_count": 6312,
+      "metrics": {
+        "alert_count": 0.0,
+        "alert_rate": 0.0,
+        "watch_count": 1537.0,
+        "watch_rate": 0.2435044359949303,
+        "abstain_count": 0.0,
+        "abstain_rate": 0.0,
+        "no_alert_count": 4775.0,
+        "no_alert_rate": 0.7564955640050697,
+        "alert_precision": 0.0,
+        "alert_recall": 0.0,
+        "alert_false_alarm_rate": 0.0,
+        "alert_miss_rate": 1.0,
+        "coverage": 0.2435044359949303,
+        "selective_risk": 0.13793103448275862,
+        "alert_only_selective_risk": 0.13793103448275862,
+        "alert_or_watch_selective_risk": 0.8620689655172413,
+        "mean_trust_score_by_level": {
+          "watch": 0.09354595206856352,
+          "no_alert": 0.04507807175395703
+        },
+        "mean_uncertainty_by_level": {
+          "watch": 0.5554763345304884,
+          "no_alert": 0.2973761717955183
+        }
+      }
+    },
+    {
+      "group": 33,
+      "row_count": 6363,
+      "metrics": {
+        "alert_count": 0.0,
+        "alert_rate": 0.0,
+        "watch_count": 1926.0,
+        "watch_rate": 0.3026874115983027,
+        "abstain_count": 0.0,
+        "abstain_rate": 0.0,
+        "no_alert_count": 4437.0,
+        "no_alert_rate": 0.6973125884016973,
+        "alert_precision": 0.0,
+        "alert_recall": 0.0,
+        "alert_false_alarm_rate": 0.0,
+        "alert_miss_rate": 1.0,
+        "coverage": 0.3026874115983027,
+        "selective_risk": 0.14434060228452752,
+        "alert_only_selective_risk": 0.14434060228452752,
+        "alert_or_watch_selective_risk": 0.8556593977154725,
+        "mean_trust_score_by_level": {
+          "watch": 0.09180257665110086,
+          "no_alert": 0.04419066951385859
+        },
+        "mean_uncertainty_by_level": {
+          "watch": 0.5471479893004858,
+          "no_alert": 0.29172670331999917
+        }
+      }
+    },
+    {
+      "group": 34,
+      "row_count": 6363,
+      "metrics": {
+        "alert_count": 0.0,
+        "alert_rate": 0.0,
+        "watch_count": 1871.0,
+        "watch_rate": 0.29404369008329406,
+        "abstain_count": 0.0,
+        "abstain_rate": 0.0,
+        "no_alert_count": 4492.0,
+        "no_alert_rate": 0.705956309916706,
+        "alert_precision": 0.0,
+        "alert_recall": 0.0,
+        "alert_false_alarm_rate": 0.0,
+        "alert_miss_rate": 1.0,
+        "coverage": 0.29404369008329406,
+        "selective_risk": 0.17477284874398719,
+        "alert_only_selective_risk": 0.17477284874398719,
+        "alert_or_watch_selective_risk": 0.8252271512560129,
+        "mean_trust_score_by_level": {
+          "watch": 0.09045790044668163,
+          "no_alert": 0.05442353423777893
+        },
+        "mean_uncertainty_by_level": {
+          "watch": 0.5403813322799371,
+          "no_alert": 0.3498990534788109
+        }
+      }
+    },
+    {
+      "group": 35,
+      "row_count": 6363,
+      "metrics": {
+        "alert_count": 0.0,
+        "alert_rate": 0.0,
+        "watch_count": 1974.0,
+        "watch_rate": 0.3102310231023102,
+        "abstain_count": 0.0,
+        "abstain_rate": 0.0,
+        "no_alert_count": 4389.0,
+        "no_alert_rate": 0.6897689768976898,
+        "alert_precision": 0.0,
+        "alert_recall": 0.0,
+        "alert_false_alarm_rate": 0.0,
+        "alert_miss_rate": 1.0,
+        "coverage": 0.3102310231023102,
+        "selective_risk": 0.28216818642350555,
+        "alert_only_selective_risk": 0.28216818642350555,
+        "alert_or_watch_selective_risk": 0.7178318135764944,
+        "mean_trust_score_by_level": {
+          "watch": 0.10342125740139108,
+          "no_alert": 0.05806101055120992
+        },
+        "mean_uncertainty_by_level": {
+          "watch": 0.6051425623549114,
+          "no_alert": 0.3696266637684067
+        }
+      }
+    },
+    {
+      "group": 36,
+      "row_count": 6363,
+      "metrics": {
+        "alert_count": 0.0,
+        "alert_rate": 0.0,
+        "watch_count": 6363.0,
+        "watch_rate": 1.0,
+        "abstain_count": 0.0,
+        "abstain_rate": 0.0,
+        "no_alert_count": 0.0,
+        "no_alert_rate": 0.0,
+        "alert_precision": 0.0,
+        "alert_recall": 0.0,
+        "alert_false_alarm_rate": 0.0,
+        "alert_miss_rate": 1.0,
+        "coverage": 1.0,
+        "selective_risk": 0.07009272355807009,
+        "alert_only_selective_risk": 0.07009272355807009,
+        "alert_or_watch_selective_risk": 0.9299072764419299,
+        "mean_trust_score_by_level": {
+          "watch": 0.14186019020462032
+        },
+        "mean_uncertainty_by_level": {
+          "watch": 0.7805262922240253
+        }
+      }
+    },
+    {
+      "group": 37,
+      "row_count": 6363,
+      "metrics": {
+        "alert_count": 0.0,
+        "alert_rate": 0.0,
+        "watch_count": 5167.0,
+        "watch_rate": 0.8120383466918121,
+        "abstain_count": 0.0,
+        "abstain_rate": 0.0,
+        "no_alert_count": 1196.0,
+        "no_alert_rate": 0.18796165330818795,
+        "alert_precision": 0.0,
+        "alert_recall": 0.0,
+        "alert_false_alarm_rate": 0.0,
+        "alert_miss_rate": 1.0,
+        "coverage": 0.8120383466918121,
+        "selective_risk": 0.07470485775111284,
+        "alert_only_selective_risk": 0.07470485775111284,
+        "alert_or_watch_selective_risk": 0.9252951422488872,
+        "mean_trust_score_by_level": {
+          "watch": 0.056303290980893934,
+          "no_alert": 0.04748244918063662
+        },
+        "mean_uncertainty_by_level": {
+          "watch": 0.36080249773380324,
+          "no_alert": 0.312472713515767
+        }
+      }
+    },
+    {
+      "group": 38,
+      "row_count": 6363,
+      "metrics": {
+        "alert_count": 0.0,
+        "alert_rate": 0.0,
+        "watch_count": 5063.0,
+        "watch_rate": 0.7956938550997957,
+        "abstain_count": 0.0,
+        "abstain_rate": 0.0,
+        "no_alert_count": 1300.0,
+        "no_alert_rate": 0.2043061449002043,
+        "alert_precision": 0.0,
+        "alert_recall": 0.0,
+        "alert_false_alarm_rate": 0.0,
+        "alert_miss_rate": 1.0,
+        "coverage": 0.7956938550997957,
+        "selective_risk": 0.11238396207781948,
+        "alert_only_selective_risk": 0.11238396207781948,
+        "alert_or_watch_selective_risk": 0.8876160379221806,
+        "mean_trust_score_by_level": {
+          "watch": 0.06162236694628014,
+          "no_alert": 0.03964941293683199
+        },
+        "mean_uncertainty_by_level": {
+          "watch": 0.38878934427112477,
+          "no_alert": 0.2681986271685599
+        }
+      }
+    },
+    {
+      "group": 39,
+      "row_count": 6363,
+      "metrics": {
+        "alert_count": 0.0,
+        "alert_rate": 0.0,
+        "watch_count": 4915.0,
+        "watch_rate": 0.7724343862957724,
+        "abstain_count": 0.0,
+        "abstain_rate": 0.0,
+        "no_alert_count": 1448.0,
+        "no_alert_rate": 0.22756561370422757,
+        "alert_precision": 0.0,
+        "alert_recall": 0.0,
+        "alert_false_alarm_rate": 0.0,
+        "alert_miss_rate": 1.0,
+        "coverage": 0.7724343862957724,
+        "selective_risk": 0.17538148524923702,
+        "alert_only_selective_risk": 0.17538148524923702,
+        "alert_or_watch_selective_risk": 0.824618514750763,
+        "mean_trust_score_by_level": {
+          "watch": 0.0898260156940431,
+          "no_alert": 0.056911996275068516
+        },
+        "mean_uncertainty_by_level": {
+          "watch": 0.5359788084593959,
+          "no_alert": 0.3643239225159884
+        }
+      }
+    }
+  ]
+}
