@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
+from typing import Literal
+
 import numpy as np
+
+TrustScoreMethod = Literal["subtractive", "multiplicative"]
 
 
 def compute_trust_score(
@@ -10,14 +14,13 @@ def compute_trust_score(
     uncertainty_scores: np.ndarray,
     *,
     uncertainty_penalty: float = 0.5,
+    method: TrustScoreMethod = "subtractive",
 ) -> np.ndarray:
     """Compute trust score from calibrated probability and uncertainty.
 
-    The first version follows:
-
-    ```text
-    trust_score = calibrated_probability - lambda * uncertainty_score
-    ```
+    ``subtractive`` directly subtracts the uncertainty penalty. ``multiplicative``
+    scales calibrated risk probability by an uncertainty discount and is less
+    likely to collapse scores to zero when entropy uncertainty is high.
     """
 
     probabilities = np.asarray(calibrated_probabilities, dtype=float)
@@ -26,5 +29,10 @@ def compute_trust_score(
         raise ValueError("calibrated_probabilities and uncertainty_scores must have the same shape")
     if uncertainty_penalty < 0.0:
         raise ValueError("uncertainty_penalty must be non-negative")
-    scores = probabilities - (uncertainty_penalty * uncertainty)
+    if method == "subtractive":
+        scores = probabilities - (uncertainty_penalty * uncertainty)
+    elif method == "multiplicative":
+        scores = probabilities * (1.0 - (uncertainty_penalty * uncertainty))
+    else:
+        raise ValueError(f"Unsupported trust score method: {method}")
     return np.clip(scores, 0.0, 1.0)

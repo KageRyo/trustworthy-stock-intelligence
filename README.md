@@ -265,7 +265,17 @@ python -m scripts.sweep_warning_thresholds \
 ```
 
 Use this before dashboard work to compare alert/watch/abstain/no_alert
-distributions under different trust and uncertainty thresholds.
+distributions under different trust score methods, trust thresholds, and
+uncertainty thresholds.
+
+To diagnose why a warning policy produces too many or too few alerts, summarize
+probability, uncertainty, trust score, and threshold distributions:
+
+```bash
+python -m scripts.diagnose_predictions \
+  --input data/artifacts/sp100_transformer_predictions.csv \
+  --output data/artifacts/sp100_transformer_diagnostics.json
+```
 
 After training, warning evaluation, and threshold sweep, generate a Markdown
 experiment report:
@@ -295,6 +305,7 @@ python -m scripts.train_deep \
   --batch-size 256 \
   --watch-threshold-ratio 0.8 \
   --min-watch-threshold 0.05 \
+  --trust-score-method subtractive \
   --output data/artifacts/sp100_transformer_summary.json \
   --predictions-output data/artifacts/sp100_transformer_predictions.csv
 ```

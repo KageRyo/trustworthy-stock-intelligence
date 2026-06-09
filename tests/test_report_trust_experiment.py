@@ -36,6 +36,27 @@ def test_select_sweep_candidate_prefers_matching_coverage_band() -> None:
     assert candidate["coverage"] == 0.3
 
 
+def test_select_sweep_candidate_can_require_alerting_policy() -> None:
+    sweep = pd.DataFrame(
+        {
+            "coverage": [0.3, 0.4],
+            "selective_risk": [0.1, 0.2],
+            "alert_rate": [0.0, 0.02],
+        }
+    )
+
+    candidate = select_sweep_candidate(
+        sweep,
+        coverage_min=0.25,
+        coverage_max=0.5,
+        alert_rate_min=0.005,
+        sort_columns=("selective_risk",),
+        ascending=(True,),
+    )
+
+    assert candidate["alert_rate"] == 0.02
+
+
 def test_render_report_contains_core_sections() -> None:
     summary = {
         "model_config": {"d_model": 16},

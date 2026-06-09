@@ -85,15 +85,17 @@ This report summarizes a Temporal Transformer risk model with calibration, uncer
 
 ## Threshold Sweep Candidates
 
-| Policy | watch_threshold_ratio | trust_threshold | uncertainty_threshold | uncertainty_penalty | coverage | selective_risk | alert_or_watch_selective_risk | alert_precision | alert_false_alarm_rate | watch_rate | no_alert_rate |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| balanced | 0.8000 | 0.3000 | 0.5000 | 0.2500 | 0.4954 | 0.1227 | 0.8773 | 0.0000 | 0.0000 | 0.4954 | 0.4865 |
-| conservative | 0.6000 | 0.3000 | 0.5000 | 0.2500 | 0.6287 | 0.1130 | 0.8870 | 0.0000 | 0.0000 | 0.6287 | 0.3682 |
-| broad | 0.6000 | 0.3000 | 0.5000 | 0.2500 | 0.6287 | 0.1130 | 0.8870 | 0.0000 | 0.0000 | 0.6287 | 0.3682 |
+| Policy | trust_score_method | watch_threshold_ratio | trust_threshold | uncertainty_threshold | uncertainty_penalty | coverage | selective_risk | alert_or_watch_selective_risk | alert_precision | alert_false_alarm_rate | watch_rate | no_alert_rate |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| balanced | multiplicative | 0.8000 | 0.2000 | 0.5000 | 0.5000 | 0.4954 | 0.1574 | 0.8773 | 0.1558 | 0.0235 | 0.4705 | 0.4865 |
+| conservative | multiplicative | 0.6000 | 0.2000 | 0.5000 | 0.5000 | 0.6287 | 0.1403 | 0.8870 | 0.1558 | 0.0235 | 0.6038 | 0.3682 |
+| broad | multiplicative | 0.6000 | 0.1000 | 0.5000 | 0.5000 | 0.6287 | 0.3202 | 0.8870 | 0.1475 | 0.1756 | 0.4439 | 0.3682 |
 
 ## Observations
 
 - Interpret `alert` as the strongest warning and `watch` as lower-intensity monitoring.
+
+- The current subtractive trust score is overly conservative under entropy uncertainty when trust thresholds are high; compare multiplicative trust scoring before dashboard presentation.
 
 - Use threshold sweep candidates to choose a policy before dashboard presentation.
 

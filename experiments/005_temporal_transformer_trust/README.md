@@ -40,6 +40,7 @@ python -m scripts.train_deep \
   --batch-size 256 \
   --watch-threshold-ratio 0.8 \
   --min-watch-threshold 0.05 \
+  --trust-score-method subtractive \
   --output experiments/005_temporal_transformer_trust/runs/platt_entropy_t05/summary.json \
   --predictions-output experiments/005_temporal_transformer_trust/runs/platt_entropy_t05/predictions.csv
 ```
@@ -74,6 +75,19 @@ alert_false_alarm_rate
 
 The immediate goal is to avoid watch rates near 100% and find a useful
 coverage versus alert-quality tradeoff.
+
+## Prediction Diagnostics
+
+```bash
+python -m scripts.diagnose_predictions \
+  --input experiments/005_temporal_transformer_trust/runs/platt_entropy_t05/predictions.csv \
+  --output experiments/005_temporal_transformer_trust/runs/platt_entropy_t05/diagnostics.json
+```
+
+Use this when `alert_count` or `trust_score` distributions look suspicious.
+The first full run showed that subtractive entropy trust scoring can collapse
+scores to zero, so multiplicative trust scoring should be compared before
+dashboard work.
 
 ## Report Generation
 

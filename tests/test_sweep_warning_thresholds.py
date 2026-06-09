@@ -10,6 +10,7 @@ import pandas as pd
 from scripts.sweep_warning_thresholds import (
     assign_swept_warning_levels,
     parse_float_grid,
+    parse_string_grid,
     run_sweep,
 )
 
@@ -23,6 +24,20 @@ def test_parse_float_grid_rejects_empty_values() -> None:
         assert "must not be empty" in str(error)
     else:
         raise AssertionError("Expected ValueError for empty grid")
+
+
+def test_parse_string_grid_rejects_unknown_values() -> None:
+    assert parse_string_grid("subtractive, multiplicative", choices=("subtractive", "multiplicative")) == [
+        "subtractive",
+        "multiplicative",
+    ]
+
+    try:
+        parse_string_grid("unknown", choices=("subtractive", "multiplicative"))
+    except ValueError as error:
+        assert "Unsupported value" in str(error)
+    else:
+        raise AssertionError("Expected ValueError for unknown string grid value")
 
 
 def test_assign_swept_warning_levels_uses_ratio_and_trust_threshold() -> None:
@@ -58,9 +73,16 @@ def test_run_sweep_outputs_one_row_per_parameter_combination(tmp_path: Path) -> 
         trust_thresholds=[0.5],
         uncertainty_thresholds=[0.8],
         uncertainty_penalties=[0.5],
+        trust_score_methods=["subtractive", "multiplicative"],
         min_watch_threshold=0.05,
     )
 
-    assert len(results) == 2
-    assert results["watch_threshold_ratio"].tolist() == [0.75, 0.9]
+    assert len(results) == 4
+    assert results["watch_threshold_ratio"].tolist() == [0.75, 0.75, 0.9, 0.9]
+    assert results["trust_score_method"].tolist() == [
+        "subtractive",
+        "multiplicative",
+        "subtractive",
+        "multiplicative",
+    ]
     assert "coverage" in results.columns

@@ -35,6 +35,16 @@ def test_subset_sequence_dataset_uses_source_indices() -> None:
     assert subset.metadata["source_index"].tolist() == [10, 21]
 
 
+def test_parse_args_supports_trust_score_method() -> None:
+    args = train_deep.parse_args(["--input", "data.csv"])
+
+    assert args.trust_score_method == "subtractive"
+
+    args = train_deep.parse_args(["--input", "data.csv", "--trust-score-method", "multiplicative"])
+
+    assert args.trust_score_method == "multiplicative"
+
+
 def test_build_prediction_frame_matches_baseline_schema() -> None:
     metadata = pd.DataFrame(
         {

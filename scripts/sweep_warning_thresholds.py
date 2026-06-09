@@ -12,7 +12,7 @@ import pandas as pd
 
 from tsi.evaluation.warning_metrics import trust_warning_metrics
 from tsi.trust.decision import compute_watch_threshold
-from tsi.trust.trust_score import compute_trust_score
+from tsi.trust.trust_score import TrustScoreMethod, compute_trust_score
 
 
 def parse_float_grid(raw: str) -> list[float]:
@@ -22,6 +22,18 @@ def parse_float_grid(raw: str) -> list[float]:
     if not values:
         raise ValueError("float grid must not be empty")
     return [float(value) for value in values]
+
+
+def parse_string_grid(raw: str, *, choices: Sequence[str]) -> list[str]:
+    """Parse a comma-separated string grid and validate values."""
+
+    values = [value.strip() for value in raw.split(",") if value.strip()]
+    if not values:
+        raise ValueError("string grid must not be empty")
+    unsupported = [value for value in values if value not in choices]
+    if unsupported:
+        raise ValueError(f"Unsupported value: {', '.join(unsupported)}")
+    return values
 
 
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
@@ -36,6 +48,11 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--trust-thresholds", default="0.3,0.4,0.5,0.6,0.7")
     parser.add_argument("--uncertainty-thresholds", default="0.5,0.6,0.7,0.8,0.9")
     parser.add_argument("--uncertainty-penalties", default="0.25,0.5,0.75")
+    parser.add_argument(
+        "--trust-score-methods",
+        default="subtractive,multiplicative",
+        help="Comma-separated trust score methods to compare.",
+    )
     parser.add_argument("--min-watch-threshold", type=float, default=0.05)
     parser.add_argument("--print-rows", type=int, default=20, help="Rows to print after writing CSV.")
     return parser.parse_args(argv)
@@ -89,6 +106,7 @@ def run_sweep(
     trust_thresholds: Sequence[float],
     uncertainty_thresholds: Sequence[float],
     uncertainty_penalties: Sequence[float],
+    trust_score_methods: Sequence[TrustScoreMethod],
     min_watch_threshold: float,
     label_col: str = "risk_label",
     prob_col: str = "calibrated_risk_probability",
@@ -103,16 +121,18 @@ def run_sweep(
     alert_thresholds = predictions[alert_threshold_col].to_numpy(dtype=float)
 
     rows: list[dict[str, object]] = []
-    for ratio, trust_threshold, uncertainty_threshold, penalty in product(
+    for ratio, trust_threshold, uncertainty_threshold, penalty, method in product(
         watch_threshold_ratios,
         trust_thresholds,
         uncertainty_thresholds,
         uncertainty_penalties,
+        trust_score_methods,
     ):
         trust_scores = compute_trust_score(
             probabilities,
             uncertainty,
             uncertainty_penalty=float(penalty),
+            method=method,
         )
         warning_levels = assign_swept_warning_levels(
             calibrated_probabilities=probabilities,
@@ -141,6 +161,7 @@ def run_sweep(
                 "trust_threshold": float(trust_threshold),
                 "uncertainty_threshold": float(uncertainty_threshold),
                 "uncertainty_penalty": float(penalty),
+                "trust_score_method": method,
                 "min_watch_threshold": float(min_watch_threshold),
                 **flat_metrics,
             }
@@ -157,6 +178,10 @@ def main() -> None:
         trust_thresholds=parse_float_grid(args.trust_thresholds),
         uncertainty_thresholds=parse_float_grid(args.uncertainty_thresholds),
         uncertainty_penalties=parse_float_grid(args.uncertainty_penalties),
+        trust_score_methods=parse_string_grid(
+            args.trust_score_methods,
+            choices=("subtractive", "multiplicative"),
+        ),
         min_watch_threshold=args.min_watch_threshold,
         label_col=args.label_col,
         prob_col=args.prob_col,

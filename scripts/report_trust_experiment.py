@@ -47,12 +47,17 @@ def select_sweep_candidate(
     *,
     coverage_min: float,
     coverage_max: float,
+    alert_rate_min: float = 0.0,
     sort_columns: Sequence[str],
     ascending: Sequence[bool],
 ) -> dict[str, object]:
     """Select one threshold policy from a coverage band."""
 
     candidates = sweep[(sweep["coverage"] >= coverage_min) & (sweep["coverage"] <= coverage_max)]
+    if alert_rate_min > 0.0 and "alert_rate" in candidates.columns:
+        alerting_candidates = candidates[candidates["alert_rate"] >= alert_rate_min]
+        if not alerting_candidates.empty:
+            candidates = alerting_candidates
     if candidates.empty:
         candidates = sweep
     available = [
@@ -71,6 +76,7 @@ def select_sweep_candidate(
 
 def _candidate_table(candidates: dict[str, dict[str, object]]) -> str:
     keys = [
+        "trust_score_method",
         "watch_threshold_ratio",
         "trust_threshold",
         "uncertainty_threshold",
@@ -121,6 +127,7 @@ def render_report(
             threshold_sweep,
             coverage_min=0.25,
             coverage_max=0.50,
+            alert_rate_min=0.005,
             sort_columns=("selective_risk", "alert_false_alarm_rate"),
             ascending=(True, True),
         ),
@@ -128,6 +135,7 @@ def render_report(
             threshold_sweep,
             coverage_min=0.10,
             coverage_max=0.30,
+            alert_rate_min=0.005,
             sort_columns=("alert_precision", "alert_false_alarm_rate"),
             ascending=(False, True),
         ),
@@ -135,6 +143,7 @@ def render_report(
             threshold_sweep,
             coverage_min=0.50,
             coverage_max=0.70,
+            alert_rate_min=0.005,
             sort_columns=("alert_miss_rate", "selective_risk"),
             ascending=(True, True),
         ),
@@ -184,6 +193,11 @@ def render_report(
         _candidate_table(candidates),
         "## Observations",
         "- Interpret `alert` as the strongest warning and `watch` as lower-intensity monitoring.",
+        (
+            "- The current subtractive trust score is overly conservative under entropy "
+            "uncertainty when trust thresholds are high; compare multiplicative trust scoring "
+            "before dashboard presentation."
+        ),
         "- Use threshold sweep candidates to choose a policy before dashboard presentation.",
         "- Compare calibrated metrics against raw metrics before making warning policy claims.",
         "## Limitations",

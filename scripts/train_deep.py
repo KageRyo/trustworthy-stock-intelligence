@@ -32,7 +32,7 @@ from tsi.trust.decision import (
     assign_trust_decisions,
     compute_watch_threshold,
 )
-from tsi.trust.trust_score import compute_trust_score
+from tsi.trust.trust_score import TrustScoreMethod, compute_trust_score
 from tsi.trust.uncertainty import binary_entropy_uncertainty, margin_uncertainty
 
 
@@ -75,6 +75,12 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         help="Uncertainty score used by the trust layer.",
     )
     parser.add_argument("--uncertainty-penalty", type=float, default=0.5)
+    parser.add_argument(
+        "--trust-score-method",
+        choices=["subtractive", "multiplicative"],
+        default="subtractive",
+        help="Formula used to combine calibrated probability and uncertainty.",
+    )
     parser.add_argument("--trust-threshold", type=float, default=0.5)
     parser.add_argument("--uncertainty-threshold", type=float, default=0.8)
     parser.add_argument("--watch-threshold-ratio", type=float, default=0.8)
@@ -201,6 +207,7 @@ def run_training(args: argparse.Namespace) -> dict[str, object]:
         num_workers=args.num_workers,
     )
     calibration_method: CalibrationMethod = args.calibration_method
+    trust_score_method: TrustScoreMethod = args.trust_score_method
 
     fold_results: list[dict[str, object]] = []
     prediction_rows: list[pd.DataFrame] = []
@@ -267,6 +274,7 @@ def run_training(args: argparse.Namespace) -> dict[str, object]:
             calibrated_probabilities,
             uncertainty_scores,
             uncertainty_penalty=args.uncertainty_penalty,
+            method=trust_score_method,
         )
         warning_levels = assign_trust_decisions(
             calibrated_probabilities=calibrated_probabilities,
@@ -384,6 +392,7 @@ def run_training(args: argparse.Namespace) -> dict[str, object]:
             "threshold_objective": args.threshold_objective,
             "uncertainty_method": args.uncertainty_method,
             "uncertainty_penalty": args.uncertainty_penalty,
+            "trust_score_method": trust_score_method,
             "trust_threshold": args.trust_threshold,
             "uncertainty_threshold": args.uncertainty_threshold,
             "watch_threshold_ratio": args.watch_threshold_ratio,
