@@ -14,6 +14,9 @@ data/interim/
 data/processed/
 data/artifacts/
 
+# Experiment artifacts
+experiments/**/runs/**/predictions.csv
+
 # OS/editor
 .DS_Store
 .idea/
