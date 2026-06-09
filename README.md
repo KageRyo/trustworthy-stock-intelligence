@@ -327,6 +327,19 @@ alert_threshold
 warning_level
 ```
 
+## Dashboard
+
+The first dashboard is a local Streamlit viewer for trust experiment artifacts.
+
+```bash
+pip install -e ".[dashboard]"
+streamlit run dashboard/app.py
+```
+
+It reads the latest committed experiment summaries by default. Ticker-level
+timelines are shown when the local ignored `predictions.csv` exists in the run
+folder.
+
 ## Status
 
 This repository now has a runnable pilot baseline for TSI-Risk-v0. The next

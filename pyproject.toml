@@ -59,6 +59,9 @@ deep = [
   "torchaudio>=2.7",
   "tensorboard>=2.16",
 ]
+dashboard = [
+  "streamlit>=1.36",
+]
 dev = [
   "pytest>=8.0",
   "ruff>=0.4",
