@@ -107,3 +107,6 @@ When the file changes, it reloads the JSON into memory. If reload fails, the
 gateway keeps serving the last valid batch and exposes the error through
 `/health` and `/api/v1/status`.
 
+Python writes `latest_warnings.json` atomically through a temporary file and
+`os.replace`, so the gateway observes either the previous complete batch or the
+next complete batch.

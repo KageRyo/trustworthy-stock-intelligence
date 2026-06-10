@@ -378,6 +378,24 @@ If reload fails, it keeps serving the last valid batch and exposes the error in
 `/health` and `/api/v1/status`. See `docs/api/warning_api.md` for the API
 contract.
 
+## Local Demo Commands
+
+Common demo commands are collected in `Makefile`:
+
+```bash
+make predict-latest
+make api
+make dashboard
+make test-all
+```
+
+Override paths or binaries as needed:
+
+```bash
+GO=/mnt/8tb_hdd/ryo/miniconda3/envs/stock/bin/go make test-go
+MODEL_BUNDLE=data/artifacts/sp100_transformer_model_bundle make predict-latest
+```
+
 ## Dashboard
 
 The first dashboard is a local Streamlit viewer for trust experiment artifacts.
