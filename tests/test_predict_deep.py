@@ -21,6 +21,24 @@ def test_parse_args_defaults_to_auto_device() -> None:
 
     assert args.device == "auto"
     assert args.latest_only is False
+    assert args.json_output is None
+
+
+def test_parse_args_supports_json_output() -> None:
+    args = parse_args(
+        [
+            "--input",
+            "input.csv",
+            "--model-bundle",
+            "bundle",
+            "--output",
+            "out.csv",
+            "--json-output",
+            "warnings.json",
+        ]
+    )
+
+    assert str(args.json_output) == "warnings.json"
 
 
 def test_build_inference_frame_adds_dummy_labels_without_future_labeling() -> None:

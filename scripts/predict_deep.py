@@ -13,12 +13,14 @@ import torch
 from tsi.artifacts.model_bundle import load_model_bundle
 from tsi.features.technical import build_technical_features
 from tsi.models.temporal_transformer import TemporalTransformerRiskModel
+from tsi.serving.schema import build_prediction_batch, write_prediction_batch_json
 from tsi.training.dataset import SequenceDataset, build_sequence_dataset
 from tsi.training.trainer import (
     predict_probabilities,
     transform_sequence_features,
 )
 from tsi.trust.decision import TrustDecisionConfig, assign_trust_decisions
+from tsi.trust.reason_codes import build_reason_codes
 from tsi.trust.trust_score import compute_trust_score
 from tsi.trust.uncertainty import binary_entropy_uncertainty, margin_uncertainty
 
@@ -28,6 +30,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--input", type=Path, required=True, help="OHLCV CSV input.")
     parser.add_argument("--model-bundle", type=Path, required=True, help="Saved model bundle directory.")
     parser.add_argument("--output", type=Path, required=True, help="Prediction CSV output.")
+    parser.add_argument("--json-output", type=Path, default=None, help="Optional serving JSON output.")
     parser.add_argument("--batch-size", type=int, default=512)
     parser.add_argument("--num-workers", type=int, default=0)
     parser.add_argument("--device", choices=["auto", "cuda", "cpu"], default="auto")
@@ -224,16 +227,24 @@ def run_prediction(args: argparse.Namespace) -> pd.DataFrame:
         uncertainty_penalty=float(trust_config.get("uncertainty_penalty", 0.5)),
         method=trust_config.get("trust_score_method", "subtractive"),
     )
+    decision_config = TrustDecisionConfig(
+        alert_threshold=bundle.metadata.alert_threshold,
+        watch_threshold=bundle.metadata.watch_threshold,
+        trust_threshold=float(trust_config.get("trust_threshold", 0.5)),
+        uncertainty_threshold=float(trust_config.get("uncertainty_threshold", 0.8)),
+    )
     warning_levels = assign_trust_decisions(
         calibrated_probabilities=calibrated_probabilities,
         uncertainty_scores=uncertainty,
         trust_scores=trust_scores,
-        config=TrustDecisionConfig(
-            alert_threshold=bundle.metadata.alert_threshold,
-            watch_threshold=bundle.metadata.watch_threshold,
-            trust_threshold=float(trust_config.get("trust_threshold", 0.5)),
-            uncertainty_threshold=float(trust_config.get("uncertainty_threshold", 0.8)),
-        ),
+        config=decision_config,
+    )
+    reason_codes = build_reason_codes(
+        calibrated_probabilities=calibrated_probabilities,
+        uncertainty_scores=uncertainty,
+        trust_scores=trust_scores,
+        warning_levels=warning_levels,
+        config=decision_config,
     )
     predictions = dataset.metadata.loc[:, ["date", "ticker"]].assign(
         model=bundle.metadata.model_type,
@@ -243,11 +254,15 @@ def run_prediction(args: argparse.Namespace) -> pd.DataFrame:
         uncertainty_score=uncertainty,
         trust_score=trust_scores,
         alert_threshold=bundle.metadata.alert_threshold,
+        watch_threshold=bundle.metadata.watch_threshold,
         warning_level=warning_levels,
         model_bundle=str(args.model_bundle),
     )
     args.output.parent.mkdir(parents=True, exist_ok=True)
     predictions.to_csv(args.output, index=False)
+    if args.json_output is not None:
+        serving_frame = predictions.assign(reason_codes=reason_codes)
+        write_prediction_batch_json(build_prediction_batch(serving_frame), args.json_output)
     return predictions
 
 
@@ -255,6 +270,8 @@ def main() -> None:
     args = parse_args()
     predictions = run_prediction(args)
     print(f"Wrote {len(predictions)} prediction rows to {args.output}")
+    if args.json_output is not None:
+        print(f"Wrote serving JSON to {args.json_output}")
 
 
 if __name__ == "__main__":

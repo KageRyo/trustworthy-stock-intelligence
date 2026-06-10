@@ -225,6 +225,7 @@ risk_probability
 calibrated_risk_probability
 calibration_method
 alert_threshold
+watch_threshold
 warning_level
 ```
 
@@ -340,8 +341,14 @@ python -m scripts.predict_deep \
   --input data/raw/sp100/ohlcv.csv \
   --model-bundle data/artifacts/sp100_transformer_model_bundle \
   --output data/artifacts/latest_predictions.csv \
+  --json-output data/artifacts/latest_warnings.json \
   --latest-only
 ```
+
+The optional JSON output is the serving-ready contract for dashboards and the
+future API gateway. Each record includes the calibrated risk probability,
+uncertainty score, trust score, warning level, thresholds, and reason codes such
+as `probability_above_watch_threshold` or `trust_below_alert_threshold`.
 
 ## Dashboard
 
