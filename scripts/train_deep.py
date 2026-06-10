@@ -12,6 +12,7 @@ import pandas as pd
 import torch
 
 from scripts.train import prepare_training_frame
+from tsi.artifacts.model_bundle import ModelBundleMetadata, save_model_bundle
 from tsi.data.split import build_walk_forward_splits
 from tsi.evaluation.metrics import classification_metrics
 from tsi.features.technical import DEFAULT_FEATURE_COLUMNS
@@ -100,6 +101,12 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--output", type=Path, default=None)
     parser.add_argument("--predictions-output", type=Path, default=None)
+    parser.add_argument(
+        "--model-output",
+        type=Path,
+        default=None,
+        help="Optional model bundle directory for the latest successful fold.",
+    )
     return parser.parse_args(argv)
 
 
@@ -148,16 +155,55 @@ def build_prediction_frame(
     )
 
 
+def _model_config(args: argparse.Namespace, input_size: int) -> dict[str, object]:
+    return {
+        "input_size": input_size,
+        "d_model": args.d_model,
+        "num_heads": args.num_heads,
+        "num_layers": args.num_layers,
+        "dim_feedforward": args.dim_feedforward,
+        "dropout": args.dropout,
+        "max_sequence_length": args.lookback,
+    }
+
+
 def _build_model(args: argparse.Namespace, input_size: int) -> TemporalTransformerRiskModel:
     return TemporalTransformerRiskModel(
-        input_size=input_size,
-        d_model=args.d_model,
-        num_heads=args.num_heads,
-        num_layers=args.num_layers,
-        dim_feedforward=args.dim_feedforward,
-        dropout=args.dropout,
-        max_sequence_length=args.lookback,
+        **_model_config(args, input_size)
     )
+
+
+def _trust_config(args: argparse.Namespace, calibration_method: str, trust_score_method: str) -> dict[str, object]:
+    return {
+        "calibration_method": calibration_method,
+        "threshold_objective": args.threshold_objective,
+        "uncertainty_method": args.uncertainty_method,
+        "uncertainty_penalty": args.uncertainty_penalty,
+        "trust_score_method": trust_score_method,
+        "trust_threshold": args.trust_threshold,
+        "uncertainty_threshold": args.uncertainty_threshold,
+        "watch_threshold_ratio": args.watch_threshold_ratio,
+        "min_watch_threshold": args.min_watch_threshold,
+    }
+
+
+def _training_config_summary(
+    args: argparse.Namespace,
+    *,
+    device: torch.device,
+    max_gpu_count: int,
+    used_data_parallel: bool,
+) -> dict[str, object]:
+    return {
+        "epochs": args.epochs,
+        "batch_size": args.batch_size,
+        "learning_rate": args.learning_rate,
+        "weight_decay": args.weight_decay,
+        "num_workers": args.num_workers,
+        "device": str(device),
+        "max_gpu_count": max_gpu_count,
+        "used_data_parallel": used_data_parallel,
+    }
 
 
 def _uncertainty_scores(probabilities: np.ndarray, *, method: str) -> np.ndarray:
@@ -211,6 +257,7 @@ def run_training(args: argparse.Namespace) -> dict[str, object]:
 
     fold_results: list[dict[str, object]] = []
     prediction_rows: list[pd.DataFrame] = []
+    latest_bundle_payload: dict[str, object] | None = None
     for fold in folds:
         train_dataset = subset_sequence_dataset(sequence_dataset, fold.train_index)
         calibration_dataset = subset_sequence_dataset(sequence_dataset, fold.calibration_index)
@@ -348,6 +395,14 @@ def run_training(args: argparse.Namespace) -> dict[str, object]:
                 "tuned_metrics": tuned_metrics,
             }
         )
+        latest_bundle_payload = {
+            "model_state_dict": trained_model.state_dict(),
+            "standardizer": standardizer,
+            "calibrator": calibrator,
+            "alert_threshold": alert_threshold,
+            "watch_threshold": watch_threshold,
+            "fold_id": fold.fold_id,
+        }
 
     raw_metric_names = list(fold_results[0]["raw_metrics"].keys()) if fold_results else []
     calibrated_metric_names = list(fold_results[0]["calibrated_metrics"].keys()) if fold_results else []
@@ -373,6 +428,36 @@ def run_training(args: argparse.Namespace) -> dict[str, object]:
     predictions = pd.concat(prediction_rows, ignore_index=True) if prediction_rows else pd.DataFrame()
     gpu_counts = [fold["training"]["gpu_count"] for fold in fold_results]
     used_data_parallel = any(fold["training"]["used_data_parallel"] for fold in fold_results)
+    max_gpu_count = max(gpu_counts) if gpu_counts else 0
+    model_config = _model_config(args, input_size=len(sequence_dataset.feature_columns))
+    trust_config = _trust_config(args, calibration_method, trust_score_method)
+    training_summary = _training_config_summary(
+        args,
+        device=device,
+        max_gpu_count=max_gpu_count,
+        used_data_parallel=used_data_parallel,
+    )
+    if args.model_output is not None:
+        if latest_bundle_payload is None:
+            raise ValueError("No successful fold was available for model bundle export")
+        save_model_bundle(
+            args.model_output,
+            model_state_dict=latest_bundle_payload["model_state_dict"],
+            standardizer=latest_bundle_payload["standardizer"],
+            calibrator=latest_bundle_payload["calibrator"],
+            metadata=ModelBundleMetadata(
+                model_type="temporal_transformer",
+                model_config=model_config,
+                feature_columns=tuple(sequence_dataset.feature_columns),
+                lookback=args.lookback,
+                calibration_method=calibration_method,
+                trust_config=trust_config,
+                training_config=training_summary,
+                alert_threshold=float(latest_bundle_payload["alert_threshold"]),
+                watch_threshold=float(latest_bundle_payload["watch_threshold"]),
+                fold_id=int(latest_bundle_payload["fold_id"]),
+            ),
+        )
 
     return {
         "input": str(args.input),
@@ -380,34 +465,10 @@ def run_training(args: argparse.Namespace) -> dict[str, object]:
         "lookback": args.lookback,
         "horizon": args.horizon,
         "drawdown_threshold": args.drawdown_threshold,
-        "model_config": {
-            "d_model": args.d_model,
-            "num_heads": args.num_heads,
-            "num_layers": args.num_layers,
-            "dim_feedforward": args.dim_feedforward,
-            "dropout": args.dropout,
-        },
-        "trust_config": {
-            "calibration_method": calibration_method,
-            "threshold_objective": args.threshold_objective,
-            "uncertainty_method": args.uncertainty_method,
-            "uncertainty_penalty": args.uncertainty_penalty,
-            "trust_score_method": trust_score_method,
-            "trust_threshold": args.trust_threshold,
-            "uncertainty_threshold": args.uncertainty_threshold,
-            "watch_threshold_ratio": args.watch_threshold_ratio,
-            "min_watch_threshold": args.min_watch_threshold,
-        },
-        "training_config": {
-            "epochs": args.epochs,
-            "batch_size": args.batch_size,
-            "learning_rate": args.learning_rate,
-            "weight_decay": args.weight_decay,
-            "num_workers": args.num_workers,
-            "device": str(device),
-            "max_gpu_count": max(gpu_counts) if gpu_counts else 0,
-            "used_data_parallel": used_data_parallel,
-        },
+        "model_config": model_config,
+        "trust_config": trust_config,
+        "training_config": training_summary,
+        "model_bundle": str(args.model_output) if args.model_output is not None else None,
         "fold_count": len(fold_results),
         "rows_after_filtering": len(training_frame),
         "sequence_count": len(sequence_dataset.y),

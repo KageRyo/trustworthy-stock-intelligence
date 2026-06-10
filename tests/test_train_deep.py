@@ -39,10 +39,21 @@ def test_parse_args_supports_trust_score_method() -> None:
     args = train_deep.parse_args(["--input", "data.csv"])
 
     assert args.trust_score_method == "subtractive"
+    assert args.model_output is None
 
-    args = train_deep.parse_args(["--input", "data.csv", "--trust-score-method", "multiplicative"])
+    args = train_deep.parse_args(
+        [
+            "--input",
+            "data.csv",
+            "--trust-score-method",
+            "multiplicative",
+            "--model-output",
+            "bundle",
+        ]
+    )
 
     assert args.trust_score_method == "multiplicative"
+    assert str(args.model_output) == "bundle"
 
 
 def test_build_prediction_frame_matches_baseline_schema() -> None:
