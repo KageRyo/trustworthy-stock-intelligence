@@ -145,6 +145,16 @@ Required views:
 Add Go only after the Python training, inference, trust score, and dashboard
 loop is stable.
 
+Milestone 4 starts with a read-only API gateway that serves the
+Python-generated `latest_warnings.json` contract:
+
+```text
+GET /health
+GET /api/v1/warnings/latest
+GET /api/v1/warnings/{ticker}
+GET /api/v1/models/current
+```
+
 Recommended split:
 
 ```text

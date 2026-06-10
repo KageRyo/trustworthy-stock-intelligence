@@ -350,6 +350,27 @@ future API gateway. Each record includes the calibrated risk probability,
 uncertainty score, trust score, warning level, thresholds, and reason codes such
 as `probability_above_watch_threshold` or `trust_below_alert_threshold`.
 
+## Go API Gateway
+
+The first Go API is a read-only gateway around the Python-generated
+`latest_warnings.json` contract. It does not run model inference or connect to a
+database yet.
+
+```bash
+cd services/api-gateway-go
+TSI_WARNINGS_PATH=../../data/artifacts/latest_warnings.json \
+  CGO_ENABLED=0 go run ./cmd/server
+```
+
+Endpoints:
+
+```text
+GET /health
+GET /api/v1/warnings/latest
+GET /api/v1/warnings/{ticker}
+GET /api/v1/models/current
+```
+
 ## Dashboard
 
 The first dashboard is a local Streamlit viewer for trust experiment artifacts.
