@@ -307,7 +307,8 @@ python -m scripts.train_deep \
   --min-watch-threshold 0.05 \
   --trust-score-method subtractive \
   --output data/artifacts/sp100_transformer_summary.json \
-  --predictions-output data/artifacts/sp100_transformer_predictions.csv
+  --predictions-output data/artifacts/sp100_transformer_predictions.csv \
+  --model-output data/artifacts/sp100_transformer_model_bundle
 ```
 
 The prediction CSV includes:
@@ -325,6 +326,21 @@ uncertainty_score
 trust_score
 alert_threshold
 warning_level
+```
+
+## Model Bundle And Inference
+
+Deep training can export a model bundle containing the latest successful fold's
+model weights, model config, feature columns, standardizer, calibrator, trust
+config, and thresholds. Use it for repeatable batch inference without
+retraining:
+
+```bash
+python -m scripts.predict_deep \
+  --input data/raw/sp100/ohlcv.csv \
+  --model-bundle data/artifacts/sp100_transformer_model_bundle \
+  --output data/artifacts/latest_predictions.csv \
+  --latest-only
 ```
 
 ## Dashboard
