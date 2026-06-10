@@ -366,10 +366,17 @@ Endpoints:
 
 ```text
 GET /health
+GET /api/v1/status
 GET /api/v1/warnings/latest
+GET /api/v1/warnings/latest?level=watch&limit=20
 GET /api/v1/warnings/{ticker}
 GET /api/v1/models/current
 ```
+
+The API reloads `latest_warnings.json` when the file modification time changes.
+If reload fails, it keeps serving the last valid batch and exposes the error in
+`/health` and `/api/v1/status`. See `docs/api/warning_api.md` for the API
+contract.
 
 ## Dashboard
 

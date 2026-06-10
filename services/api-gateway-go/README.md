@@ -34,11 +34,21 @@ cd services/api-gateway-go
 CGO_ENABLED=0 go run ./cmd/server
 ```
 
+If Go is installed through conda, activate the environment first:
+
+```bash
+conda activate stock
+which go
+go version
+```
+
 ## Endpoints
 
 ```text
 GET /health
+GET /api/v1/status
 GET /api/v1/warnings/latest
+GET /api/v1/warnings/latest?level=watch&limit=20
 GET /api/v1/warnings/{ticker}
 GET /api/v1/models/current
 ```
@@ -46,9 +56,12 @@ GET /api/v1/models/current
 The first version is intentionally read-only. It does not call Python, connect
 to Redis/PostgreSQL, or run background inference jobs.
 
+The warning file is reloaded when its modified time changes. If reload fails,
+the server keeps serving the last valid batch and reports the error through the
+status endpoints.
+
 ## Test
 
 ```bash
 CGO_ENABLED=0 go test ./...
 ```
-

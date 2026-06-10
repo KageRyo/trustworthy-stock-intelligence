@@ -150,10 +150,16 @@ Python-generated `latest_warnings.json` contract:
 
 ```text
 GET /health
+GET /api/v1/status
 GET /api/v1/warnings/latest
+GET /api/v1/warnings/latest?level=watch&limit=20
 GET /api/v1/warnings/{ticker}
 GET /api/v1/models/current
 ```
+
+The first gateway reads `latest_warnings.json`, reloads it when the file
+modification time changes, and keeps serving the last valid batch if a reload
+fails.
 
 Recommended split:
 
