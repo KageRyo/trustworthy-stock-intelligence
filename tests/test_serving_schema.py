@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 import pandas as pd
@@ -66,3 +67,39 @@ def test_prediction_batch_json_round_trips(tmp_path: Path) -> None:
     payload = json.loads(output.read_text(encoding="utf-8"))
     assert payload["record_count"] == 1
     assert payload["records"][0]["ticker"] == "AAPL"
+
+
+def test_prediction_batch_json_replaces_existing_file_atomically(tmp_path: Path) -> None:
+    output = tmp_path / "warnings.json"
+    output.write_text('{"record_count": 999, "records": []}\n', encoding="utf-8")
+    batch = PredictionBatch(generated_at="2026-06-10T00:00:00+00:00", records=[])
+
+    write_prediction_batch_json(batch, output)
+
+    payload = json.loads(output.read_text(encoding="utf-8"))
+    assert payload["record_count"] == 0
+    assert not list(tmp_path.glob("*.tmp"))
+
+
+def test_prediction_batch_json_does_not_replace_existing_file_when_replace_fails(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    output = tmp_path / "warnings.json"
+    output.write_text('{"status": "old"}\n', encoding="utf-8")
+    batch = PredictionBatch(generated_at="2026-06-10T00:00:00+00:00", records=[])
+
+    def fail_replace(source: str | os.PathLike[str], destination: str | os.PathLike[str]) -> None:
+        raise OSError(f"replace failed: {source} -> {destination}")
+
+    monkeypatch.setattr(os, "replace", fail_replace)
+
+    try:
+        write_prediction_batch_json(batch, output)
+    except OSError as error:
+        assert "replace failed" in str(error)
+    else:
+        raise AssertionError("Expected OSError from failed atomic replace")
+
+    assert json.loads(output.read_text(encoding="utf-8")) == {"status": "old"}
+    assert not list(tmp_path.glob("*.tmp"))

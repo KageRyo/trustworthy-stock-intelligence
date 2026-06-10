@@ -4,8 +4,10 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 import json
+import os
 from pathlib import Path
 from typing import Literal
+from uuid import uuid4
 
 import pandas as pd
 from pydantic import BaseModel, ConfigDict, Field
@@ -106,10 +108,30 @@ def build_prediction_batch(
 
 
 def write_prediction_batch_json(batch: PredictionBatch, path: Path) -> None:
-    """Write a prediction batch JSON file."""
+    """Write a prediction batch JSON file atomically."""
 
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
-        json.dumps(batch.model_dump(mode="json"), indent=2) + "\n",
-        encoding="utf-8",
-    )
+    payload = json.dumps(batch.model_dump(mode="json"), indent=2) + "\n"
+    temporary_path = path.with_name(f".{path.name}.{uuid4().hex}.tmp")
+    try:
+        with temporary_path.open("w", encoding="utf-8") as file:
+            file.write(payload)
+            file.flush()
+            os.fsync(file.fileno())
+        os.replace(temporary_path, path)
+        _fsync_directory(path.parent)
+    finally:
+        temporary_path.unlink(missing_ok=True)
+
+
+def _fsync_directory(path: Path) -> None:
+    """Best-effort directory fsync for atomic rename durability."""
+
+    try:
+        directory_fd = os.open(path, os.O_RDONLY)
+    except OSError:
+        return
+    try:
+        os.fsync(directory_fd)
+    finally:
+        os.close(directory_fd)
