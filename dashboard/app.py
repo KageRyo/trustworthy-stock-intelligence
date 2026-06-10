@@ -8,10 +8,13 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
+import requests
 
 DEFAULT_RUN_DIR = Path(
     "experiments/005_temporal_transformer_trust/runs/platt_entropy_multiplicative_wr08"
 )
+DEFAULT_API_BASE_URL = "http://localhost:8080"
+API_TIMEOUT_SECONDS = 5.0
 METRIC_ORDER = ("auc", "f1", "brier_score", "ece", "precision", "recall")
 WARNING_LEVELS = ("alert", "watch", "abstain", "no_alert")
 
@@ -25,6 +28,17 @@ class RunArtifacts:
     warning_eval: dict[str, Any]
     diagnostics: dict[str, Any]
     threshold_sweep: pd.DataFrame
+
+
+@dataclass(frozen=True)
+class LiveAPIData:
+    """Loaded payloads from the Go warning API."""
+
+    health: dict[str, Any]
+    status: dict[str, Any]
+    current_model: dict[str, Any]
+    alert_warnings: dict[str, Any]
+    watch_warnings: dict[str, Any]
 
 
 def load_json(path: Path) -> dict[str, Any]:
@@ -52,6 +66,91 @@ def load_run_artifacts(run_dir: Path) -> RunArtifacts:
         diagnostics=load_json(required["diagnostics"]),
         threshold_sweep=pd.read_csv(required["threshold_sweep"]),
     )
+
+
+def normalize_api_base_url(base_url: str) -> str:
+    """Normalize API base URL text from dashboard input."""
+
+    return base_url.strip().rstrip("/")
+
+
+def fetch_api_json(
+    base_url: str,
+    endpoint: str,
+    *,
+    params: dict[str, object] | None = None,
+    timeout: float = API_TIMEOUT_SECONDS,
+) -> dict[str, Any]:
+    """Fetch one JSON payload from the Go API."""
+
+    url = f"{normalize_api_base_url(base_url)}/{endpoint.lstrip('/')}"
+    response = requests.get(url, params=params, timeout=timeout)
+    response.raise_for_status()
+    payload = response.json()
+    if not isinstance(payload, dict):
+        raise ValueError(f"Expected JSON object from {url}")
+    return payload
+
+
+def load_live_api_data(
+    base_url: str,
+    *,
+    limit: int = 20,
+    timeout: float = API_TIMEOUT_SECONDS,
+) -> LiveAPIData:
+    """Load dashboard payloads from the Go warning API."""
+
+    return LiveAPIData(
+        health=fetch_api_json(base_url, "/health", timeout=timeout),
+        status=fetch_api_json(base_url, "/api/v1/status", timeout=timeout),
+        current_model=fetch_api_json(base_url, "/api/v1/models/current", timeout=timeout),
+        alert_warnings=fetch_api_json(
+            base_url,
+            "/api/v1/warnings/latest",
+            params={"level": "alert", "limit": limit},
+            timeout=timeout,
+        ),
+        watch_warnings=fetch_api_json(
+            base_url,
+            "/api/v1/warnings/latest",
+            params={"level": "watch", "limit": limit},
+            timeout=timeout,
+        ),
+    )
+
+
+def build_live_warning_frame(batch: dict[str, Any]) -> pd.DataFrame:
+    """Build a tabular view from a live API warning batch."""
+
+    records = batch.get("records", [])
+    if not isinstance(records, list) or not records:
+        return pd.DataFrame(
+            columns=[
+                "date",
+                "ticker",
+                "warning_level",
+                "calibrated_risk_probability",
+                "trust_score",
+                "uncertainty_score",
+                "reason_codes",
+            ]
+        )
+    frame = pd.DataFrame(records)
+    if "reason_codes" in frame.columns:
+        frame["reason_codes"] = frame["reason_codes"].apply(
+            lambda values: ", ".join(values) if isinstance(values, list) else values
+        )
+    preferred_columns = [
+        "date",
+        "ticker",
+        "warning_level",
+        "calibrated_risk_probability",
+        "trust_score",
+        "uncertainty_score",
+        "reason_codes",
+    ]
+    available_columns = [column for column in preferred_columns if column in frame.columns]
+    return frame.loc[:, available_columns]
 
 
 def build_warning_distribution_frame(overall: dict[str, Any]) -> pd.DataFrame:
@@ -202,6 +301,8 @@ def main() -> None:
     st.title("Trust Experiment Viewer")
 
     run_dir = Path(st.sidebar.text_input("Run directory", str(DEFAULT_RUN_DIR)))
+    api_base_url = st.sidebar.text_input("API base URL", DEFAULT_API_BASE_URL)
+    api_limit = int(st.sidebar.number_input("API warning limit", min_value=1, max_value=100, value=20))
     try:
         artifacts = load_run_artifacts(run_dir)
     except FileNotFoundError as error:
@@ -223,7 +324,7 @@ def main() -> None:
     overview_cols[4].metric("GPU Count", _format_number(training_config.get("max_gpu_count")))
     overview_cols[5].metric("Rows", _format_number(diagnostics.get("row_count")))
 
-    tabs = st.tabs(["Overview", "Diagnostics", "Thresholds", "Ticker View", "Report"])
+    tabs = st.tabs(["Overview", "Diagnostics", "Thresholds", "Ticker View", "Live API", "Report"])
 
     with tabs[0]:
         metric_cols = st.columns(8)
@@ -287,6 +388,44 @@ def main() -> None:
             st.bar_chart(ticker_frame.set_index("date")["warning_level"].value_counts())
 
     with tabs[4]:
+        st.subheader("Live API")
+        try:
+            live_api = load_live_api_data(api_base_url, limit=api_limit)
+        except requests.RequestException as error:
+            st.error(f"API request failed: {error}")
+        except ValueError as error:
+            st.error(str(error))
+        else:
+            health = live_api.health
+            status = live_api.status
+            current_model = live_api.current_model
+            api_cols = st.columns(6)
+            api_cols[0].metric("Status", str(health.get("status", "n/a")))
+            api_cols[1].metric("Warnings Loaded", str(status.get("warnings_loaded", "n/a")))
+            api_cols[2].metric("Records", _format_number(status.get("record_count")))
+            api_cols[3].metric("Model", str(current_model.get("model", "n/a")))
+            api_cols[4].metric("Generated", str(status.get("generated_at", "n/a")))
+            api_cols[5].metric("Last Loaded", str(status.get("last_loaded_at", "n/a")))
+            if status.get("last_error") or health.get("last_error"):
+                st.warning(str(status.get("last_error") or health.get("last_error")))
+
+            alert_frame = build_live_warning_frame(live_api.alert_warnings)
+            watch_frame = build_live_warning_frame(live_api.watch_warnings)
+            alert_tab, watch_tab, raw_tab = st.tabs(["Alerts", "Watch", "Raw Status"])
+            with alert_tab:
+                st.dataframe(alert_frame, hide_index=True, width="stretch")
+            with watch_tab:
+                st.dataframe(watch_frame, hide_index=True, width="stretch")
+            with raw_tab:
+                st.json(
+                    {
+                        "health": live_api.health,
+                        "status": live_api.status,
+                        "current_model": live_api.current_model,
+                    }
+                )
+
+    with tabs[5]:
         report_path = artifacts.run_dir / "report.md"
         if report_path.exists():
             st.markdown(report_path.read_text(encoding="utf-8"))

@@ -398,7 +398,8 @@ MODEL_BUNDLE=data/artifacts/sp100_transformer_model_bundle make predict-latest
 
 ## Dashboard
 
-The first dashboard is a local Streamlit viewer for trust experiment artifacts.
+The Streamlit dashboard shows trust experiment artifacts and can also read the
+Go API gateway through the Live API tab.
 
 ```bash
 pip install -e ".[dashboard]"
@@ -407,7 +408,9 @@ streamlit run dashboard/app.py
 
 It reads the latest committed experiment summaries by default. Ticker-level
 timelines are shown when the local ignored `predictions.csv` exists in the run
-folder.
+folder. The Live API tab reads `/health`, `/api/v1/status`,
+`/api/v1/models/current`, and latest alert/watch warning queries from the API
+base URL configured in the sidebar.
 
 ## Status
 
