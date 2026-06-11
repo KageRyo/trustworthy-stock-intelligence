@@ -15,6 +15,14 @@ and a later Go API gateway around the Python ML core.
 See `docs/project_roadmap.md` for the implementation roadmap and
 engineering rules.
 
+Current v1 demo references:
+
+```text
+docs/architecture.md
+docs/demo/local_demo.md
+docs/api/warning_api.md
+```
+
 ## Research Focus
 
 Trustworthy Stock Intelligence studies whether stock risk warning models can issue reliable warnings under noisy and non-stationary market conditions. The core objective is not to maximize trading profit or predict the next closing price, but to detect future drawdown risk events early and explain why a warning is produced.
@@ -414,6 +422,13 @@ base URL configured in the sidebar.
 
 ## Status
 
-This repository now has a runnable pilot baseline for TSI-Risk-v0. The next
-priority is to compare raw and calibrated warnings on real S&P 100 pilot data,
-then write the first experiment reports with actual fold-level results.
+The v1 local end-to-end demo is complete:
+
+```text
+Python predict_deep.py
+-> atomic latest_warnings.json
+-> Go API Gateway
+-> Streamlit Dashboard Live API tab
+```
+
+CI runs Python tests, ruff, and Go API tests on push and pull request events.
