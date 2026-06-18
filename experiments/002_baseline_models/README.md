@@ -97,6 +97,7 @@ technical feature generation
 future 5-day drawdown labeling
 walk-forward train/calibration/test splits
 logistic regression baseline
+sklearn tree baselines
 Platt scaling
 isotonic calibration
 fold-level alert-oriented metrics
@@ -108,6 +109,21 @@ The first comparison to run on real pilot data is:
 logistic regression raw probabilities
 logistic regression + Platt scaling
 logistic regression + isotonic calibration
+```
+
+Tree-based baselines use sklearn built-ins first, avoiding optional XGBoost or
+LightGBM dependencies in the core workflow:
+
+```bash
+python -m scripts.train \
+  --input data/raw/sp100/ohlcv.csv \
+  --model-type random_forest \
+  --train-size 252 \
+  --calibration-size 63 \
+  --test-size 63 \
+  --calibration-method platt \
+  --output data/artifacts/sp100_random_forest_summary.json \
+  --predictions-output data/artifacts/sp100_random_forest_predictions.csv
 ```
 
 ## Next Steps

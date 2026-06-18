@@ -15,6 +15,7 @@ from tsi.features.technical import DEFAULT_FEATURE_COLUMNS, build_technical_feat
 from tsi.labeling.drawdown import add_future_drawdown_label
 from tsi.labeling.warning_level import assign_warning_levels, select_alert_threshold
 from tsi.models.logistic import LogisticRiskModel
+from tsi.models.tree import TreeRiskModel
 from tsi.trust.calibration import CalibrationMethod, fit_probability_calibrator
 
 
@@ -59,6 +60,16 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         default=None,
         help="Optional CSV output path for test-fold prediction rows.",
     )
+    parser.add_argument(
+        "--model-type",
+        choices=["logistic", "random_forest", "hist_gradient_boosting"],
+        default="logistic",
+        help="Baseline model family.",
+    )
+    parser.add_argument("--tree-n-estimators", type=int, default=200)
+    parser.add_argument("--tree-max-depth", type=int, default=None)
+    parser.add_argument("--tree-learning-rate", type=float, default=0.05)
+    parser.add_argument("--tree-max-iter", type=int, default=200)
     parser.add_argument(
         "--calibration-method",
         choices=["none", "platt", "isotonic"],
@@ -133,13 +144,12 @@ def run_training(args: argparse.Namespace) -> dict[str, object]:
             probabilities = pd.Series(positive_rate, index=test_frame.index, dtype=float).to_numpy()
             model_name = "constant_prior"
         else:
-            model = LogisticRiskModel()
+            model, model_name = build_baseline_model(args)
             model.fit(train_frame[DEFAULT_FEATURE_COLUMNS].to_numpy(), train_labels)
             calibration_probabilities = model.predict_proba(
                 calibration_frame[DEFAULT_FEATURE_COLUMNS].to_numpy()
             )
             probabilities = model.predict_proba(test_frame[DEFAULT_FEATURE_COLUMNS].to_numpy())
-            model_name = "logistic_regression"
         calibrator = fit_probability_calibrator(
             calibration_probabilities,
             calibration_labels,
@@ -233,6 +243,7 @@ def run_training(args: argparse.Namespace) -> dict[str, object]:
 
     return {
         "input": str(args.input),
+        "model_type": args.model_type,
         "feature_columns": DEFAULT_FEATURE_COLUMNS,
         "horizon": args.horizon,
         "drawdown_threshold": args.drawdown_threshold,
@@ -244,6 +255,23 @@ def run_training(args: argparse.Namespace) -> dict[str, object]:
         "summary": summary,
         "predictions": predictions,
     }
+
+
+def build_baseline_model(args: argparse.Namespace) -> tuple[LogisticRiskModel | TreeRiskModel, str]:
+    """Build the requested baseline model without changing the legacy default."""
+
+    if args.model_type == "logistic":
+        return LogisticRiskModel(), "logistic_regression"
+    if args.model_type in {"random_forest", "hist_gradient_boosting"}:
+        model = TreeRiskModel(
+            model_type=args.model_type,
+            n_estimators=args.tree_n_estimators,
+            max_depth=args.tree_max_depth,
+            learning_rate=args.tree_learning_rate,
+            max_iter=args.tree_max_iter,
+        )
+        return model, model.model_name
+    raise ValueError(f"Unsupported model type: {args.model_type}")
 
 
 def main() -> None:
