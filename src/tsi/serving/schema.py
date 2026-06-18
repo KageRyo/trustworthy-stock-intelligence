@@ -14,6 +14,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 WarningLevel = Literal["alert", "watch", "abstain", "no_alert"]
+DEFAULT_SCHEMA_VERSION = "v1"
 
 
 class PredictionRecord(BaseModel):
@@ -41,6 +42,9 @@ class PredictionBatch(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
+    schema_version: str = DEFAULT_SCHEMA_VERSION
+    run_id: str = "unknown"
+    data_as_of: str = ""
     generated_at: str = Field(default_factory=lambda: datetime.now(UTC).isoformat())
     record_count: int | None = None
     records: list[PredictionRecord]
@@ -61,6 +65,8 @@ def build_prediction_batch(
     frame: pd.DataFrame,
     *,
     generated_at: str | None = None,
+    run_id: str | None = None,
+    data_as_of: str | None = None,
 ) -> PredictionBatch:
     """Build a serving JSON batch from prediction rows."""
 
@@ -102,9 +108,29 @@ def build_prediction_batch(
         for _, row in frame.iterrows()
     ]
     return PredictionBatch(
+        run_id=run_id or _infer_run_id(frame),
+        data_as_of=data_as_of or _infer_data_as_of(frame),
         generated_at=generated_at or datetime.now(UTC).isoformat(),
         records=records,
     )
+
+
+def _infer_run_id(frame: pd.DataFrame) -> str:
+    if "run_id" in frame.columns and not frame.empty:
+        value = frame["run_id"].dropna()
+        if not value.empty:
+            return str(value.iloc[0])
+    if "model_bundle" in frame.columns and not frame.empty:
+        value = frame["model_bundle"].dropna()
+        if not value.empty:
+            return Path(str(value.iloc[0])).name or "unknown"
+    return "unknown"
+
+
+def _infer_data_as_of(frame: pd.DataFrame) -> str:
+    if "date" not in frame.columns or frame.empty:
+        return ""
+    return _date_to_iso_date(pd.to_datetime(frame["date"]).max())
 
 
 def write_prediction_batch_json(batch: PredictionBatch, path: Path) -> None:

@@ -33,6 +33,9 @@ def test_prediction_batch_builds_records_from_frame() -> None:
     batch = build_prediction_batch(frame, generated_at="2026-06-10T00:00:00+00:00")
 
     assert batch.record_count == 1
+    assert batch.schema_version == "v1"
+    assert batch.run_id == "model_bundle"
+    assert batch.data_as_of == "2026-06-08"
     assert batch.generated_at == "2026-06-10T00:00:00+00:00"
     assert batch.records[0].ticker == "AAPL"
     assert batch.records[0].date == "2026-06-08"
@@ -65,6 +68,8 @@ def test_prediction_batch_json_round_trips(tmp_path: Path) -> None:
     write_prediction_batch_json(batch, output)
 
     payload = json.loads(output.read_text(encoding="utf-8"))
+    assert payload["schema_version"] == "v1"
+    assert payload["run_id"] == "unknown"
     assert payload["record_count"] == 1
     assert payload["records"][0]["ticker"] == "AAPL"
 

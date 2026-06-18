@@ -1,9 +1,12 @@
 package warnings
 
 type PredictionBatch struct {
-	GeneratedAt string             `json:"generated_at"`
-	RecordCount int                `json:"record_count"`
-	Records     []PredictionRecord `json:"records"`
+	SchemaVersion string             `json:"schema_version"`
+	RunID         string             `json:"run_id"`
+	DataAsOf      string             `json:"data_as_of"`
+	GeneratedAt   string             `json:"generated_at"`
+	RecordCount   int                `json:"record_count"`
+	Records       []PredictionRecord `json:"records"`
 }
 
 type PredictionRecord struct {

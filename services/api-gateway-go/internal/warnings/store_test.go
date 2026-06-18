@@ -11,6 +11,9 @@ func writeTestBatch(t *testing.T) string {
 	t.Helper()
 	path := filepath.Join(t.TempDir(), "latest_warnings.json")
 	payload := `{
+  "schema_version": "v1",
+  "run_id": "fixture_run",
+  "data_as_of": "2026-06-08",
   "generated_at": "2026-06-10T00:00:00+00:00",
   "record_count": 2,
   "records": [
@@ -63,6 +66,9 @@ func TestFileStoreLoadsPredictionBatch(t *testing.T) {
 	if batch.RecordCount != 2 {
 		t.Fatalf("record_count = %d, want 2", batch.RecordCount)
 	}
+	if batch.SchemaVersion != "v1" || batch.RunID != "fixture_run" || batch.DataAsOf != "2026-06-08" {
+		t.Fatalf("unexpected contract metadata: %+v", batch)
+	}
 	if batch.Records[0].Ticker != "AAPL" {
 		t.Fatalf("first ticker = %q, want AAPL", batch.Records[0].Ticker)
 	}
@@ -99,6 +105,9 @@ func TestFileStoreRefreshReloadsWhenFileChanges(t *testing.T) {
 		t.Fatalf("NewFileStore returned error: %v", err)
 	}
 	updated := `{
+  "schema_version": "v1",
+  "run_id": "fixture_run_v2",
+  "data_as_of": "2026-06-09",
   "generated_at": "2026-06-11T00:00:00+00:00",
   "record_count": 1,
   "records": [
@@ -182,6 +191,9 @@ func TestFileStoreStatusReportsLoadedBatch(t *testing.T) {
 	}
 	if status.RecordCount != 2 {
 		t.Fatalf("record_count = %d, want 2", status.RecordCount)
+	}
+	if status.SchemaVersion != "v1" || status.RunID != "fixture_run" || status.DataAsOf != "2026-06-08" {
+		t.Fatalf("unexpected contract metadata: %+v", status)
 	}
 	if status.GeneratedAt == "" || status.LastLoadedAt == "" || status.FileModifiedAt == "" {
 		t.Fatalf("expected generated_at, last_loaded_at, and file_modified_at in status: %+v", status)

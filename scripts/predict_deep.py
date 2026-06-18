@@ -35,6 +35,11 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--num-workers", type=int, default=0)
     parser.add_argument("--device", choices=["auto", "cuda", "cpu"], default="auto")
     parser.add_argument("--latest-only", action="store_true", help="Keep only the latest row per ticker.")
+    parser.add_argument(
+        "--run-id",
+        default=None,
+        help="Optional run identifier for serving JSON metadata.",
+    )
     return parser.parse_args(argv)
 
 
@@ -262,7 +267,11 @@ def run_prediction(args: argparse.Namespace) -> pd.DataFrame:
     predictions.to_csv(args.output, index=False)
     if args.json_output is not None:
         serving_frame = predictions.assign(reason_codes=reason_codes)
-        write_prediction_batch_json(build_prediction_batch(serving_frame), args.json_output)
+        run_id = args.run_id or args.model_bundle.name
+        write_prediction_batch_json(
+            build_prediction_batch(serving_frame, run_id=run_id),
+            args.json_output,
+        )
     return predictions
 
 

@@ -22,6 +22,9 @@ type FileStore struct {
 type StoreStatus struct {
 	WarningsPath   string `json:"warnings_path"`
 	WarningsLoaded bool   `json:"warnings_loaded"`
+	SchemaVersion  string `json:"schema_version"`
+	RunID          string `json:"run_id"`
+	DataAsOf       string `json:"data_as_of"`
 	GeneratedAt    string `json:"generated_at"`
 	RecordCount    int    `json:"record_count"`
 	LastLoadedAt   string `json:"last_loaded_at"`
@@ -77,6 +80,9 @@ func (s *FileStore) Status() StoreStatus {
 	return StoreStatus{
 		WarningsPath:   s.path,
 		WarningsLoaded: len(s.batch.Records) > 0,
+		SchemaVersion:  s.batch.SchemaVersion,
+		RunID:          s.batch.RunID,
+		DataAsOf:       s.batch.DataAsOf,
 		GeneratedAt:    s.batch.GeneratedAt,
 		RecordCount:    s.batch.RecordCount,
 		LastLoadedAt:   formatTime(s.lastLoadedAt),
@@ -123,6 +129,12 @@ func loadFile(path string) (PredictionBatch, map[string]PredictionRecord, time.T
 	}
 	if batch.RecordCount == 0 {
 		batch.RecordCount = len(batch.Records)
+	}
+	if batch.SchemaVersion == "" {
+		batch.SchemaVersion = "v1"
+	}
+	if batch.RunID == "" {
+		batch.RunID = "unknown"
 	}
 	if batch.RecordCount != len(batch.Records) {
 		return PredictionBatch{}, nil, time.Time{}, fmt.Errorf(
