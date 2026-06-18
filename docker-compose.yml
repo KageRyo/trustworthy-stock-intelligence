@@ -1,0 +1,22 @@
+services:
+  api-gateway-go:
+    build:
+      context: services/api-gateway-go
+    environment:
+      TSI_API_ADDR: ":8080"
+      TSI_WARNINGS_PATH: /data/latest_warnings.json
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./data/artifacts:/data:ro
+
+  streamlit-dashboard:
+    build:
+      context: .
+      dockerfile: dashboard/Dockerfile
+    environment:
+      TSI_DASHBOARD_API_BASE_URL: http://api-gateway-go:8080
+    ports:
+      - "8501:8501"
+    depends_on:
+      - api-gateway-go

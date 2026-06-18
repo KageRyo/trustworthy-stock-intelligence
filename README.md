@@ -353,10 +353,12 @@ python -m scripts.predict_deep \
   --latest-only
 ```
 
-The optional JSON output is the serving-ready contract for dashboards and the
-future API gateway. Each record includes the calibrated risk probability,
-uncertainty score, trust score, warning level, thresholds, and reason codes such
-as `probability_above_watch_threshold` or `trust_below_alert_threshold`.
+The optional JSON output is the serving-ready contract for the Go API gateway
+and dashboard. The batch includes `schema_version`, `run_id`, `data_as_of`,
+`generated_at`, `record_count`, and records. Each record includes the calibrated
+risk probability, uncertainty score, trust score, warning level, thresholds, and
+reason codes such as `probability_above_watch_threshold` or
+`trust_below_alert_threshold`.
 
 ## Go API Gateway
 
@@ -374,9 +376,11 @@ Endpoints:
 
 ```text
 GET /health
+GET /metrics
 GET /api/v1/status
 GET /api/v1/warnings/latest
 GET /api/v1/warnings/latest?level=watch&limit=20
+GET /api/v1/warnings/latest?level=alert&sort=trust_score&order=desc&limit=20
 GET /api/v1/warnings/{ticker}
 GET /api/v1/models/current
 ```
@@ -419,6 +423,26 @@ timelines are shown when the local ignored `predictions.csv` exists in the run
 folder. The Live API tab reads `/health`, `/api/v1/status`,
 `/api/v1/models/current`, and latest alert/watch warning queries from the API
 base URL configured in the sidebar.
+
+## Experiment Reports
+
+Compare trust policies:
+
+```bash
+python -m scripts.compare_experiments \
+  --runs \
+    experiments/005_temporal_transformer_trust/runs/platt_entropy_wr08 \
+    experiments/005_temporal_transformer_trust/runs/platt_entropy_multiplicative_wr08 \
+  --output experiments/005_temporal_transformer_trust/comparison.md
+```
+
+Export reliability bins for dashboard calibration diagnostics:
+
+```bash
+python -m scripts.export_reliability_bins \
+  --input experiments/005_temporal_transformer_trust/runs/platt_entropy_multiplicative_wr08/predictions.csv \
+  --output experiments/005_temporal_transformer_trust/runs/platt_entropy_multiplicative_wr08/reliability_bins.csv
+```
 
 ## Status
 

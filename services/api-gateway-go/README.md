@@ -42,13 +42,31 @@ which go
 go version
 ```
 
+## Docker
+
+Build the API image from the service directory:
+
+```bash
+docker build -t tsi-api-gateway services/api-gateway-go
+```
+
+Run it with a mounted warning JSON:
+
+```bash
+docker run --rm -p 8080:8080 \
+  -v "$PWD/data/artifacts:/data:ro" \
+  tsi-api-gateway
+```
+
 ## Endpoints
 
 ```text
 GET /health
+GET /metrics
 GET /api/v1/status
 GET /api/v1/warnings/latest
 GET /api/v1/warnings/latest?level=watch&limit=20
+GET /api/v1/warnings/latest?level=alert&sort=trust_score&order=desc&limit=20
 GET /api/v1/warnings/{ticker}
 GET /api/v1/models/current
 ```

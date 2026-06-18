@@ -50,7 +50,17 @@ data/artifacts/latest_warnings.json
 ```
 
 `latest_warnings.json` is a `PredictionBatch` containing `PredictionRecord`
-items with:
+items. Batch-level metadata includes:
+
+```text
+schema_version
+run_id
+data_as_of
+generated_at
+record_count
+```
+
+Record-level fields include:
 
 ```text
 ticker
@@ -73,8 +83,8 @@ Go owns user-facing read-only API serving:
 - load `latest_warnings.json`
 - reload when file modification time changes
 - keep the last valid batch if reload fails
-- serve latest warnings, ticker lookup, model metadata, health, and status
-- support simple `level` and `limit` query filters
+- serve latest warnings, ticker lookup, model metadata, health, status, and metrics
+- support `level`, `limit`, `sort`, and `order` query filters
 
 Go does not:
 

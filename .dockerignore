@@ -1,0 +1,13 @@
+.git
+.pytest_cache
+.ruff_cache
+__pycache__
+*.pyc
+.env
+data/raw
+data/artifacts
+notebooks/.ipynb_checkpoints
+experiments/**/predictions.csv
+experiments/**/models
+experiments/**/checkpoints
+services/api-gateway-go

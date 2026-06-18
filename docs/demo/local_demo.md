@@ -73,9 +73,11 @@ Open or curl:
 
 ```text
 http://localhost:8080/health
+http://localhost:8080/metrics
 http://localhost:8080/api/v1/status
 http://localhost:8080/api/v1/models/current
 http://localhost:8080/api/v1/warnings/latest?level=watch&limit=20
+http://localhost:8080/api/v1/warnings/latest?level=alert&sort=trust_score&order=desc&limit=20
 ```
 
 The API reloads the warning file when its modification time changes. If reload
@@ -132,3 +134,21 @@ The demo shows that the Python ML core produces calibrated, uncertainty-aware
 warning records; the Go gateway serves those records without running inference;
 and the Streamlit dashboard can inspect both experiment artifacts and the live
 API output.
+
+## Optional Docker Demo
+
+After `make predict-latest` has created `data/artifacts/latest_warnings.json`,
+run the API and dashboard containers:
+
+```bash
+docker compose up --build
+```
+
+Open:
+
+```text
+http://localhost:8501
+```
+
+The dashboard container defaults to `http://api-gateway-go:8080` for the Live
+API tab.
