@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -16,6 +17,9 @@ func writeRouterFixture(t *testing.T) string {
 	t.Helper()
 	path := filepath.Join(t.TempDir(), "latest_warnings.json")
 	payload := `{
+  "schema_version": "v1",
+  "run_id": "fixture_run",
+  "data_as_of": "2026-06-08",
   "generated_at": "2026-06-10T00:00:00+00:00",
   "record_count": 2,
   "records": [
@@ -91,6 +95,24 @@ func TestHealthHandler(t *testing.T) {
 	if !payload.WarningsLoaded {
 		t.Fatalf("warnings_loaded = %v, want true", payload.WarningsLoaded)
 	}
+	if payload.SchemaVersion != "v1" || payload.RunID != "fixture_run" {
+		t.Fatalf("unexpected contract metadata: %+v", payload)
+	}
+}
+
+func TestMetricsHandler(t *testing.T) {
+	response := getJSON(t, testRouter(t), "/metrics")
+
+	if response.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200", response.Code)
+	}
+	body := response.Body.String()
+	if !strings.Contains(body, "tsi_api_warnings_loaded 1") {
+		t.Fatalf("metrics missing warnings loaded gauge: %s", body)
+	}
+	if !strings.Contains(body, `tsi_api_batch_info{schema_version="v1",run_id="fixture_run",data_as_of="2026-06-08"} 1`) {
+		t.Fatalf("metrics missing batch info: %s", body)
+	}
 }
 
 func TestStatusHandler(t *testing.T) {
@@ -105,6 +127,9 @@ func TestStatusHandler(t *testing.T) {
 	}
 	if payload.RecordCount != 2 {
 		t.Fatalf("record_count = %d, want 2", payload.RecordCount)
+	}
+	if payload.SchemaVersion != "v1" || payload.RunID != "fixture_run" {
+		t.Fatalf("unexpected contract metadata: %+v", payload)
 	}
 }
 
@@ -156,11 +181,70 @@ func TestLatestWarningsHandlerAppliesLimit(t *testing.T) {
 	}
 }
 
+func TestLatestWarningsHandlerSortsBeforeLimit(t *testing.T) {
+	response := getJSON(
+		t,
+		testRouter(t),
+		"/api/v1/warnings/latest?sort=trust_score&order=asc&limit=1",
+	)
+
+	if response.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200", response.Code)
+	}
+	var batch warnings.PredictionBatch
+	if err := json.NewDecoder(response.Body).Decode(&batch); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if batch.RecordCount != 1 {
+		t.Fatalf("record_count = %d, want 1", batch.RecordCount)
+	}
+	if batch.Records[0].Ticker != "MSFT" {
+		t.Fatalf("ticker = %q, want MSFT", batch.Records[0].Ticker)
+	}
+}
+
 func TestLatestWarningsHandlerRejectsInvalidLevel(t *testing.T) {
 	response := getJSON(t, testRouter(t), "/api/v1/warnings/latest?level=bad")
 
 	if response.Code != http.StatusBadRequest {
 		t.Fatalf("status = %d, want 400", response.Code)
+	}
+	var payload ErrorResponse
+	if err := json.NewDecoder(response.Body).Decode(&payload); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if payload.Error.Code != "invalid_level" {
+		t.Fatalf("error code = %q, want invalid_level", payload.Error.Code)
+	}
+}
+
+func TestLatestWarningsHandlerRejectsInvalidLimit(t *testing.T) {
+	response := getJSON(t, testRouter(t), "/api/v1/warnings/latest?limit=-1")
+
+	if response.Code != http.StatusBadRequest {
+		t.Fatalf("status = %d, want 400", response.Code)
+	}
+	var payload ErrorResponse
+	if err := json.NewDecoder(response.Body).Decode(&payload); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if payload.Error.Code != "invalid_limit" {
+		t.Fatalf("error code = %q, want invalid_limit", payload.Error.Code)
+	}
+}
+
+func TestLatestWarningsHandlerRejectsInvalidSort(t *testing.T) {
+	response := getJSON(t, testRouter(t), "/api/v1/warnings/latest?sort=ticker")
+
+	if response.Code != http.StatusBadRequest {
+		t.Fatalf("status = %d, want 400", response.Code)
+	}
+	var payload ErrorResponse
+	if err := json.NewDecoder(response.Body).Decode(&payload); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if payload.Error.Code != "invalid_sort" {
+		t.Fatalf("error code = %q, want invalid_sort", payload.Error.Code)
 	}
 }
 
@@ -185,6 +269,13 @@ func TestTickerWarningHandlerReturnsNotFound(t *testing.T) {
 	if response.Code != http.StatusNotFound {
 		t.Fatalf("status = %d, want 404", response.Code)
 	}
+	var payload ErrorResponse
+	if err := json.NewDecoder(response.Body).Decode(&payload); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if payload.Error.Code != "ticker_not_found" {
+		t.Fatalf("error code = %q, want ticker_not_found", payload.Error.Code)
+	}
 }
 
 func TestCurrentModelHandler(t *testing.T) {
@@ -203,6 +294,9 @@ func TestCurrentModelHandler(t *testing.T) {
 	if payload.RecordCount != 2 {
 		t.Fatalf("record_count = %d, want 2", payload.RecordCount)
 	}
+	if payload.SchemaVersion != "v1" || payload.RunID != "fixture_run" || payload.DataAsOf != "2026-06-08" {
+		t.Fatalf("unexpected contract metadata: %+v", payload)
+	}
 }
 
 func TestHandlersRefreshStoreBeforeServing(t *testing.T) {
@@ -213,6 +307,9 @@ func TestHandlersRefreshStoreBeforeServing(t *testing.T) {
 	}
 	router := NewRouter(NewHandlers(store))
 	updated := `{
+  "schema_version": "v1",
+  "run_id": "fixture_run_v2",
+  "data_as_of": "2026-06-09",
   "generated_at": "2026-06-11T00:00:00+00:00",
   "record_count": 1,
   "records": [

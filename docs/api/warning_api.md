@@ -23,9 +23,23 @@ Returns service status and the currently loaded warning batch summary.
 {
   "status": "ok",
   "warnings_loaded": true,
+  "schema_version": "v1",
+  "run_id": "platt_entropy_multiplicative_wr08",
+  "data_as_of": "2026-06-08",
   "generated_at": "2026-06-10T00:00:00+00:00",
   "record_count": 101
 }
+```
+
+### `GET /metrics`
+
+Returns Prometheus-style text metrics for lightweight local observability.
+
+```text
+tsi_api_warnings_loaded 1
+tsi_api_warning_records 101
+tsi_api_last_reload_error 0
+tsi_api_batch_info{schema_version="v1",run_id="platt_entropy_multiplicative_wr08",data_as_of="2026-06-08"} 1
 ```
 
 ### `GET /api/v1/status`
@@ -36,6 +50,9 @@ Returns file reload status.
 {
   "warnings_path": "data/artifacts/latest_warnings.json",
   "warnings_loaded": true,
+  "schema_version": "v1",
+  "run_id": "platt_entropy_multiplicative_wr08",
+  "data_as_of": "2026-06-08",
   "generated_at": "2026-06-10T00:00:00+00:00",
   "record_count": 101,
   "last_loaded_at": "2026-06-10T12:00:00Z",
@@ -49,6 +66,8 @@ Returns the latest prediction batch. Optional filters:
 
 ```text
 level=alert|watch|abstain|no_alert
+sort=trust_score|calibrated_risk_probability|uncertainty_score
+order=asc|desc
 limit=20
 ```
 
@@ -56,6 +75,7 @@ Example:
 
 ```text
 GET /api/v1/warnings/latest?level=watch&limit=20
+GET /api/v1/warnings/latest?level=alert&sort=trust_score&order=desc&limit=20
 ```
 
 ### `GET /api/v1/warnings/{ticker}`
@@ -69,10 +89,26 @@ Returns the model metadata from the current batch.
 
 ```json
 {
+  "schema_version": "v1",
+  "run_id": "platt_entropy_multiplicative_wr08",
+  "data_as_of": "2026-06-08",
   "model": "temporal_transformer",
   "model_bundle": "data/artifacts/sp100_transformer_model_bundle",
   "generated_at": "2026-06-10T00:00:00+00:00",
   "record_count": 101
+}
+```
+
+## Prediction Batch
+
+```json
+{
+  "schema_version": "v1",
+  "run_id": "platt_entropy_multiplicative_wr08",
+  "data_as_of": "2026-06-08",
+  "generated_at": "2026-06-10T00:00:00+00:00",
+  "record_count": 101,
+  "records": []
 }
 ```
 
@@ -97,6 +133,19 @@ Returns the model metadata from the current batch.
     "trust_below_alert_threshold",
     "warning_level_watch"
   ]
+}
+```
+
+## Error Response
+
+Errors use a consistent envelope.
+
+```json
+{
+  "error": {
+    "code": "invalid_limit",
+    "message": "limit must be a non-negative integer"
+  }
 }
 ```
 
