@@ -98,3 +98,55 @@ python -m scripts.report_trust_experiment \
   --threshold-sweep experiments/005_temporal_transformer_trust/runs/platt_entropy_t05/threshold_sweep.csv \
   --output experiments/005_temporal_transformer_trust/report.md
 ```
+
+## V1 Comparison Report
+
+Compare the subtractive and multiplicative trust-score runs:
+
+```bash
+python -m scripts.compare_experiments \
+  --runs \
+    experiments/005_temporal_transformer_trust/runs/platt_entropy_wr08 \
+    experiments/005_temporal_transformer_trust/runs/platt_entropy_multiplicative_wr08 \
+  --output experiments/005_temporal_transformer_trust/comparison.md
+```
+
+Export reliability bins for dashboard calibration diagnostics:
+
+```bash
+python -m scripts.export_reliability_bins \
+  --input experiments/005_temporal_transformer_trust/runs/platt_entropy_multiplicative_wr08/predictions.csv \
+  --output experiments/005_temporal_transformer_trust/runs/platt_entropy_multiplicative_wr08/reliability_bins.csv
+```
+
+Current v1 findings should be framed as a trust-aware conservative risk
+alerting demo. The multiplicative trust-score run emits a small alert set
+(`alert_rate` about 2.5%) with low recall, while the subtractive trust-score run
+is too conservative and emits no alerts under this policy. This supports the
+serving and dashboard demo, but it should not be described as accurate stock
+drawdown prediction or trading advice.
+
+Known limitations:
+
+- Alert recall is low, so the system misses many positive risk events.
+- Watch coverage is broad and should be interpreted as monitoring, not a strong prediction.
+- Calibration and warning policies need more folds, regimes, and baseline comparisons before stronger claims.
+- The current dashboard and Go API serve generated artifacts; they do not run live market inference.
+
+## Baseline vs Transformer Comparison
+
+Compare a logistic baseline summary against the Transformer trust run:
+
+```bash
+python -m scripts.compare_model_variants \
+  --runs \
+    data/artifacts/sp100_logistic_platt_summary.json \
+    experiments/005_temporal_transformer_trust/runs/platt_entropy_multiplicative_wr08 \
+  --output experiments/005_temporal_transformer_trust/baseline_vs_transformer.md
+```
+
+This comparison intentionally separates probability-model rows
+(`raw`, `calibrated`, `tuned`) from the warning-policy row (`trust_decision`).
+The expected v1 question is not whether the Transformer wins every metric; it is
+whether calibration improves reliability and whether the trust decision creates
+a more interpretable alerting policy.
