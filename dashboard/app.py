@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import json
+import os
 from pathlib import Path
 from typing import Any
 
@@ -13,10 +14,19 @@ import requests
 DEFAULT_RUN_DIR = Path(
     "experiments/005_temporal_transformer_trust/runs/platt_entropy_multiplicative_wr08"
 )
-DEFAULT_API_BASE_URL = "http://localhost:8080"
+DEFAULT_API_BASE_URL = os.getenv("TSI_DASHBOARD_API_BASE_URL", "http://localhost:8080")
 API_TIMEOUT_SECONDS = 5.0
 METRIC_ORDER = ("auc", "f1", "brier_score", "ece", "precision", "recall")
 WARNING_LEVELS = ("alert", "watch", "abstain", "no_alert")
+LIVE_WARNING_COLUMNS = [
+    "date",
+    "ticker",
+    "warning_level",
+    "calibrated_risk_probability",
+    "trust_score",
+    "uncertainty_score",
+    "reason_codes",
+]
 
 
 @dataclass(frozen=True)
@@ -28,6 +38,7 @@ class RunArtifacts:
     warning_eval: dict[str, Any]
     diagnostics: dict[str, Any]
     threshold_sweep: pd.DataFrame
+    reliability_bins: pd.DataFrame | None = None
 
 
 @dataclass(frozen=True)
@@ -65,6 +76,7 @@ def load_run_artifacts(run_dir: Path) -> RunArtifacts:
         warning_eval=load_json(required["warning_eval"]),
         diagnostics=load_json(required["diagnostics"]),
         threshold_sweep=pd.read_csv(required["threshold_sweep"]),
+        reliability_bins=_load_optional_csv(run_dir / "reliability_bins.csv"),
     )
 
 
@@ -107,13 +119,18 @@ def load_live_api_data(
         alert_warnings=fetch_api_json(
             base_url,
             "/api/v1/warnings/latest",
-            params={"level": "alert", "limit": limit},
+            params={"level": "alert", "sort": "trust_score", "order": "desc", "limit": limit},
             timeout=timeout,
         ),
         watch_warnings=fetch_api_json(
             base_url,
             "/api/v1/warnings/latest",
-            params={"level": "watch", "limit": limit},
+            params={
+                "level": "watch",
+                "sort": "calibrated_risk_probability",
+                "order": "desc",
+                "limit": limit,
+            },
             timeout=timeout,
         ),
     )
@@ -124,32 +141,13 @@ def build_live_warning_frame(batch: dict[str, Any]) -> pd.DataFrame:
 
     records = batch.get("records", [])
     if not isinstance(records, list) or not records:
-        return pd.DataFrame(
-            columns=[
-                "date",
-                "ticker",
-                "warning_level",
-                "calibrated_risk_probability",
-                "trust_score",
-                "uncertainty_score",
-                "reason_codes",
-            ]
-        )
+        return pd.DataFrame(columns=LIVE_WARNING_COLUMNS)
     frame = pd.DataFrame(records)
     if "reason_codes" in frame.columns:
         frame["reason_codes"] = frame["reason_codes"].apply(
             lambda values: ", ".join(values) if isinstance(values, list) else values
         )
-    preferred_columns = [
-        "date",
-        "ticker",
-        "warning_level",
-        "calibrated_risk_probability",
-        "trust_score",
-        "uncertainty_score",
-        "reason_codes",
-    ]
-    available_columns = [column for column in preferred_columns if column in frame.columns]
+    available_columns = [column for column in LIVE_WARNING_COLUMNS if column in frame.columns]
     return frame.loc[:, available_columns]
 
 
@@ -180,6 +178,12 @@ def build_metric_comparison_frame(summary: dict[str, Any]) -> pd.DataFrame:
             }
         )
     return pd.DataFrame(rows)
+
+
+def _load_optional_csv(path: Path) -> pd.DataFrame | None:
+    if not path.exists():
+        return None
+    return pd.read_csv(path)
 
 
 def select_threshold_tables(sweep: pd.DataFrame, *, limit: int = 10) -> dict[str, pd.DataFrame]:
@@ -294,6 +298,13 @@ def _format_number(value: Any) -> str:
         return "n/a"
 
 
+def _first_present(*values: Any, default: str = "n/a") -> str:
+    for value in values:
+        if value not in (None, ""):
+            return str(value)
+    return default
+
+
 def main() -> None:
     import streamlit as st
 
@@ -301,7 +312,7 @@ def main() -> None:
     st.title("Trust Experiment Viewer")
 
     run_dir = Path(st.sidebar.text_input("Run directory", str(DEFAULT_RUN_DIR)))
-    api_base_url = st.sidebar.text_input("API base URL", DEFAULT_API_BASE_URL)
+    api_base_url = st.sidebar.text_input("API Base URL", DEFAULT_API_BASE_URL)
     api_limit = int(st.sidebar.number_input("API warning limit", min_value=1, max_value=100, value=20))
     try:
         artifacts = load_run_artifacts(run_dir)
@@ -349,6 +360,20 @@ def main() -> None:
             st.dataframe(comparison, hide_index=True, width="stretch")
             chart = comparison[comparison["metric"].isin(["brier_score", "ece"])].set_index("metric")
             st.bar_chart(chart[["raw", "calibrated"]])
+            if artifacts.reliability_bins is not None:
+                st.subheader("Reliability Bins")
+                reliability_bins = artifacts.reliability_bins
+                st.dataframe(reliability_bins, hide_index=True, width="stretch")
+                if {
+                    "bin_upper",
+                    "mean_predicted_probability",
+                    "observed_positive_rate",
+                }.issubset(reliability_bins.columns):
+                    st.line_chart(
+                        reliability_bins.set_index("bin_upper")[
+                            ["mean_predicted_probability", "observed_positive_rate"]
+                        ]
+                    )
 
     with tabs[1]:
         st.subheader("Probability And Trust Diagnostics")
@@ -399,24 +424,35 @@ def main() -> None:
             health = live_api.health
             status = live_api.status
             current_model = live_api.current_model
+
+            st.subheader("API Health")
             api_cols = st.columns(6)
-            api_cols[0].metric("Status", str(health.get("status", "n/a")))
+            api_cols[0].metric("API Health", str(health.get("status", "n/a")))
             api_cols[1].metric("Warnings Loaded", str(status.get("warnings_loaded", "n/a")))
-            api_cols[2].metric("Records", _format_number(status.get("record_count")))
-            api_cols[3].metric("Model", str(current_model.get("model", "n/a")))
-            api_cols[4].metric("Generated", str(status.get("generated_at", "n/a")))
-            api_cols[5].metric("Last Loaded", str(status.get("last_loaded_at", "n/a")))
-            if status.get("last_error") or health.get("last_error"):
-                st.warning(str(status.get("last_error") or health.get("last_error")))
+            api_cols[2].metric("Generated At", _first_present(status.get("generated_at")))
+            api_cols[3].metric("Record Count", _format_number(status.get("record_count")))
+            api_cols[4].metric("Last Loaded At", _first_present(status.get("last_loaded_at")))
+            last_error = _first_present(status.get("last_error"), health.get("last_error"), default="none")
+            api_cols[5].metric("Last Error", last_error)
+            if last_error != "none":
+                st.warning(last_error)
+
+            st.subheader("Current Model")
+            model_cols = st.columns(4)
+            model_cols[0].metric("Model", str(current_model.get("model", "n/a")))
+            model_cols[1].metric("Model Bundle", str(current_model.get("model_bundle", "n/a")))
+            model_cols[2].metric("Generated At", _first_present(current_model.get("generated_at")))
+            model_cols[3].metric("Record Count", _format_number(current_model.get("record_count")))
 
             alert_frame = build_live_warning_frame(live_api.alert_warnings)
             watch_frame = build_live_warning_frame(live_api.watch_warnings)
-            alert_tab, watch_tab, raw_tab = st.tabs(["Alerts", "Watch", "Raw Status"])
-            with alert_tab:
-                st.dataframe(alert_frame, hide_index=True, width="stretch")
-            with watch_tab:
-                st.dataframe(watch_frame, hide_index=True, width="stretch")
-            with raw_tab:
+
+            st.subheader("Latest Alerts")
+            st.dataframe(alert_frame, hide_index=True, width="stretch")
+            st.subheader("Latest Watches")
+            st.dataframe(watch_frame, hide_index=True, width="stretch")
+
+            with st.expander("Raw API payloads"):
                 st.json(
                     {
                         "health": live_api.health,

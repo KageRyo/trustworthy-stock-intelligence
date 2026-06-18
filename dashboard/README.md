@@ -40,8 +40,9 @@ The Live API tab reads:
 GET /health
 GET /api/v1/status
 GET /api/v1/models/current
-GET /api/v1/warnings/latest?level=alert
-GET /api/v1/warnings/latest?level=watch
+GET /api/v1/warnings/latest?level=alert&sort=trust_score&order=desc
+GET /api/v1/warnings/latest?level=watch&sort=calibrated_risk_probability&order=desc
 ```
 
-Set the API base URL in the sidebar. The default is `http://localhost:8080`.
+Set the API base URL in the sidebar. The default is `http://localhost:8080`,
+or `TSI_DASHBOARD_API_BASE_URL` when set.
