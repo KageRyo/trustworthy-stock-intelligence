@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 from collections.abc import Sequence
 from pathlib import Path
 
@@ -13,6 +14,7 @@ from tsi.features.technical import DEFAULT_FEATURE_COLUMNS, build_technical_feat
 from tsi.labeling.drawdown import add_future_drawdown_label
 from tsi.labeling.warning_level import select_alert_threshold
 from tsi.models.logistic import LogisticRiskModel
+from tsi.data.postgres import write_prediction_batch_to_postgres
 from tsi.serving.schema import build_prediction_batch, write_prediction_batch_json
 from tsi.trust.calibration import CalibrationMethod, fit_probability_calibrator
 from tsi.trust.decision import (
@@ -60,6 +62,22 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         default="multiplicative",
     )
     parser.add_argument("--run-id", default="baseline_latest")
+    parser.add_argument(
+        "--write-db",
+        action="store_true",
+        help="Write the prediction batch into PostgreSQL prediction/warning tables.",
+    )
+    parser.add_argument(
+        "--database-url",
+        default=os.getenv("TSI_DATABASE_URL", ""),
+        help="PostgreSQL connection URL. Defaults to TSI_DATABASE_URL.",
+    )
+    parser.add_argument(
+        "--feature-interval",
+        choices=["1m", "5m", "1d"],
+        default="1d",
+        help="Feature interval metadata stored with the prediction batch.",
+    )
     return parser.parse_args(argv)
 
 
@@ -215,10 +233,16 @@ def run_prediction(args: argparse.Namespace) -> pd.DataFrame:
     args.output.parent.mkdir(parents=True, exist_ok=True)
     predictions.to_csv(args.output, index=False)
     serving_frame = predictions.assign(reason_codes=reason_codes)
-    write_prediction_batch_json(
-        build_prediction_batch(serving_frame, run_id=args.run_id),
-        args.json_output,
-    )
+    batch = build_prediction_batch(serving_frame, run_id=args.run_id)
+    write_prediction_batch_json(batch, args.json_output)
+    if args.write_db:
+        if not args.database_url:
+            raise ValueError("--database-url or TSI_DATABASE_URL is required with --write-db")
+        write_prediction_batch_to_postgres(
+            args.database_url,
+            batch,
+            feature_interval=args.feature_interval,
+        )
     return predictions
 
 
@@ -257,6 +281,8 @@ def main() -> None:
     predictions = run_prediction(args)
     print(f"Wrote {len(predictions)} latest baseline prediction rows to {args.output}")
     print(f"Wrote serving JSON to {args.json_output}")
+    if args.write_db:
+        print("Wrote serving warning batch to PostgreSQL")
 
 
 if __name__ == "__main__":

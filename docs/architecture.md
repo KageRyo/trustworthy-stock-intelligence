@@ -15,7 +15,8 @@ flowchart TD
     E --> F[Trust Score]
     F --> G[Warning Decision]
     G --> H[Reason Codes]
-    H --> I[Atomic latest_warnings.json]
+    H --> I[PostgreSQL warning_records]
+    H --> O[Optional latest_warnings.json Export]
     I --> J[Go API Gateway]
     J --> K[Streamlit Dashboard Live API Tab]
     J --> N[TypeScript Stock Dashboard]
@@ -42,9 +43,9 @@ The schema supports:
 1d
 ```
 
-The near-real-time freshness target is 5-minute bars. Current Go serving is
-still artifact-backed through `latest_warnings.json`; DB-backed serving is a
-future step after the API contract stabilizes.
+The near-real-time freshness target is 5-minute bars. Go serving is DB-backed
+and requires PostgreSQL. JSON exports are optional artifacts for debugging,
+notifications, or compatibility scripts.
 
 ## Python ML Core
 
@@ -69,15 +70,15 @@ scripts/predict_deep.py
 
 ## Serving Contract
 
-`scripts.predict_deep` writes:
+Prediction scripts write serving records into PostgreSQL:
 
 ```text
-data/artifacts/latest_predictions.csv
-data/artifacts/latest_warnings.json
+prediction_batches
+warning_records
 ```
 
-`latest_warnings.json` is a `PredictionBatch` containing `PredictionRecord`
-items. Batch-level metadata includes:
+The optional `latest_warnings.json` export is a `PredictionBatch` containing
+`PredictionRecord` items. Batch-level metadata includes:
 
 ```text
 schema_version
@@ -100,16 +101,16 @@ warning_level
 reason_codes
 ```
 
-The JSON file is written through a temporary file and `os.replace`, so serving
-processes do not observe partial writes.
+When JSON export is enabled, the file is written through a temporary file and
+`os.replace`, so readers do not observe partial writes.
 
 ## Go API Gateway
 
 Go owns user-facing read-only API serving:
 
-- load `latest_warnings.json`
-- reload when file modification time changes
-- keep the last valid batch if reload fails
+- connect to PostgreSQL through `TSI_DATABASE_URL`
+- read latest `prediction_batches` and `warning_records`
+- manage DB-backed watchlists
 - serve latest warnings, ticker lookup, model metadata, health, status, and metrics
 - serve typed ticker analysis responses for dashboard use
 - support `level`, `limit`, `sort`, and `order` query filters
@@ -120,7 +121,7 @@ Go does not:
 - load PyTorch models
 - run inference
 - call Python synchronously per request
-- connect to Redis/PostgreSQL in v1
+- start without PostgreSQL
 
 ## Dashboards
 
@@ -131,6 +132,9 @@ Primary endpoints:
 
 ```text
 GET /api/v1/analysis/{ticker}
+GET /api/v1/watchlists/default
+POST /api/v1/watchlists/default/tickers
+DELETE /api/v1/watchlists/default/tickers/{ticker}
 GET /api/v1/tickers
 GET /api/v1/warnings/latest
 GET /api/v1/status

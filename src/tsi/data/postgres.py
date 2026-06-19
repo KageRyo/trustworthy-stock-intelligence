@@ -3,18 +3,20 @@
 from __future__ import annotations
 
 import math
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any, Literal, cast
 
 import pandas as pd
 from pydantic import BaseModel, ConfigDict, Field
 
 from tsi.data.download import DownloadFrameResult
+from tsi.serving.schema import PredictionBatch
 
 MarketBarInterval = Literal["1m", "5m", "1d"]
 TickerMarketName = Literal["us", "twse", "tpex", "taiwan", "unknown"]
 IngestionStatus = Literal["success", "dry_run"]
 INGESTION_SCHEMA_VERSION = "market_data_ingestion.v1"
+PREDICTION_WRITE_SCHEMA_VERSION = "prediction_batch_write.v1"
 SUPPORTED_INTERVALS: set[str] = {"1m", "5m", "1d"}
 
 
@@ -68,6 +70,22 @@ class MarketDataIngestionSummary(BaseModel):
     failed_batches: list[list[str]]
     database_write: bool
     ingestion_run_id: str | None = None
+
+
+class PredictionBatchWriteSummary(BaseModel):
+    """Schema-first summary for writing a prediction batch into PostgreSQL."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    schema_version: str = PREDICTION_WRITE_SCHEMA_VERSION
+    status: Literal["success"]
+    run_id: str
+    data_as_of: str
+    generated_at: str
+    feature_interval: MarketBarInterval
+    record_count: int = Field(ge=0)
+    tickers: list[str]
+    prediction_batch_id: str
 
 
 def validate_interval(interval: str) -> MarketBarInterval:
@@ -225,6 +243,103 @@ def write_download_to_postgres(
     )
 
 
+def read_watchlist_tickers(database_url: str, watchlist_name: str = "default") -> list[str]:
+    """Read active ticker symbols from a PostgreSQL watchlist."""
+
+    with connect_database(database_url) as connection:
+        rows = connection.execute(
+            """
+            SELECT t.symbol
+            FROM watchlist_tickers wt
+            JOIN watchlists w ON w.id = wt.watchlist_id
+            JOIN tickers t ON t.id = wt.ticker_id
+            WHERE w.name = %s AND wt.removed_at IS NULL
+            ORDER BY t.symbol
+            """,
+            (watchlist_name,),
+        ).fetchall()
+    return [str(row[0]) for row in rows]
+
+
+def write_prediction_batch_to_postgres(
+    database_url: str,
+    batch: PredictionBatch,
+    *,
+    feature_interval: str = "1d",
+) -> PredictionBatchWriteSummary:
+    """Upsert a serving prediction batch into PostgreSQL warning tables."""
+
+    interval = validate_interval(feature_interval)
+    model_name, model_bundle = _infer_batch_model_metadata(batch)
+    data_as_of = _to_utc_datetime(batch.data_as_of or _infer_batch_record_date(batch))
+    generated_at = _to_utc_datetime(batch.generated_at)
+
+    with connect_database(database_url) as connection:
+        with connection.transaction():
+            batch_id = _upsert_prediction_batch(
+                connection,
+                batch=batch,
+                data_as_of=data_as_of,
+                generated_at=generated_at,
+                model_name=model_name,
+                model_bundle=model_bundle,
+                feature_interval=interval,
+            )
+            connection.execute("DELETE FROM warning_records WHERE batch_id = %s", (batch_id,))
+            for record in batch.records:
+                resolved = _resolve_prediction_record_ticker(record.ticker)
+                ticker_id = _upsert_prediction_ticker(connection, resolved)
+                connection.execute(
+                    """
+                    INSERT INTO warning_records (
+                        batch_id, ticker_id, prediction_date, risk_probability,
+                        calibrated_risk_probability, calibration_method,
+                        uncertainty_score, trust_score, alert_threshold,
+                        watch_threshold, warning_level, reason_codes
+                    )
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    ON CONFLICT (batch_id, ticker_id)
+                    DO UPDATE SET
+                        prediction_date = EXCLUDED.prediction_date,
+                        risk_probability = EXCLUDED.risk_probability,
+                        calibrated_risk_probability = EXCLUDED.calibrated_risk_probability,
+                        calibration_method = EXCLUDED.calibration_method,
+                        uncertainty_score = EXCLUDED.uncertainty_score,
+                        trust_score = EXCLUDED.trust_score,
+                        alert_threshold = EXCLUDED.alert_threshold,
+                        watch_threshold = EXCLUDED.watch_threshold,
+                        warning_level = EXCLUDED.warning_level,
+                        reason_codes = EXCLUDED.reason_codes
+                    """,
+                    (
+                        batch_id,
+                        ticker_id,
+                        _to_utc_datetime(record.date),
+                        record.risk_probability,
+                        record.calibrated_risk_probability,
+                        record.calibration_method,
+                        record.uncertainty_score,
+                        record.trust_score,
+                        record.alert_threshold,
+                        record.watch_threshold,
+                        record.warning_level,
+                        record.reason_codes,
+                    ),
+                )
+        connection.commit()
+
+    return PredictionBatchWriteSummary(
+        status="success",
+        run_id=batch.run_id,
+        data_as_of=data_as_of.isoformat(),
+        generated_at=generated_at.isoformat(),
+        feature_interval=interval,
+        record_count=len(batch.records),
+        tickers=sorted({record.ticker for record in batch.records}),
+        prediction_batch_id=batch_id,
+    )
+
+
 def connect_database(database_url: str) -> Any:
     """Connect to PostgreSQL using psycopg, loaded only for DB workflows."""
 
@@ -247,6 +362,30 @@ def _to_utc_datetime(value: object) -> datetime:
     else:
         timestamp = timestamp.tz_convert("UTC")
     return timestamp.to_pydatetime()
+
+
+def _infer_batch_model_metadata(batch: PredictionBatch) -> tuple[str, str]:
+    if not batch.records:
+        return "unknown", "unknown"
+    first = batch.records[0]
+    return first.model, first.model_bundle
+
+
+def _infer_batch_record_date(batch: PredictionBatch) -> str:
+    if not batch.records:
+        return datetime.now(UTC).date().isoformat()
+    return max(record.date for record in batch.records)
+
+
+def _resolve_prediction_record_ticker(ticker: str) -> ResolvedTickerSchema:
+    symbol = ticker.strip().upper()
+    if symbol.isdigit():
+        return ResolvedTickerSchema(symbol=symbol, query_symbol=f"{symbol}.TW", market="twse")
+    return ResolvedTickerSchema(
+        symbol=symbol.replace(".", "-"),
+        query_symbol=symbol.replace(".", "-"),
+        market="us",
+    )
 
 
 def _finite_float(value: object, column: str) -> float:
@@ -401,3 +540,63 @@ def _mark_ingestion_failed(connection: Any, ingestion_run_id: str, error_message
         """,
         (error_message[:2000], ingestion_run_id),
     )
+
+
+def _upsert_prediction_batch(
+    connection: Any,
+    *,
+    batch: PredictionBatch,
+    data_as_of: datetime,
+    generated_at: datetime,
+    model_name: str,
+    model_bundle: str,
+    feature_interval: MarketBarInterval,
+) -> str:
+    from psycopg.types.json import Jsonb
+
+    cursor = connection.execute(
+        """
+        INSERT INTO prediction_batches (
+            schema_version, run_id, data_as_of, generated_at, model,
+            model_bundle, feature_interval, record_count, metadata
+        )
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        ON CONFLICT (run_id)
+        DO UPDATE SET
+            schema_version = EXCLUDED.schema_version,
+            data_as_of = EXCLUDED.data_as_of,
+            generated_at = EXCLUDED.generated_at,
+            model = EXCLUDED.model,
+            model_bundle = EXCLUDED.model_bundle,
+            feature_interval = EXCLUDED.feature_interval,
+            record_count = EXCLUDED.record_count,
+            metadata = EXCLUDED.metadata
+        RETURNING id
+        """,
+        (
+            batch.schema_version,
+            batch.run_id,
+            data_as_of,
+            generated_at,
+            model_name,
+            model_bundle,
+            feature_interval,
+            len(batch.records),
+            Jsonb({"source_schema": batch.schema_version}),
+        ),
+    )
+    return str(cursor.fetchone()[0])
+
+
+def _upsert_prediction_ticker(connection: Any, ticker: ResolvedTickerSchema) -> str:
+    cursor = connection.execute(
+        """
+        INSERT INTO tickers (symbol, query_symbol, market)
+        VALUES (%s, %s, %s)
+        ON CONFLICT (market, symbol)
+        DO UPDATE SET query_symbol = EXCLUDED.query_symbol, updated_at = now()
+        RETURNING id
+        """,
+        (ticker.symbol, ticker.query_symbol, ticker.market),
+    )
+    return str(cursor.fetchone()[0])

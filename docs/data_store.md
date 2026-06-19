@@ -54,6 +54,8 @@ The docker-compose PostgreSQL service initializes:
 universes
 tickers
 universe_tickers
+watchlists
+watchlist_tickers
 ingestion_runs
 market_bars
 prediction_batches
@@ -102,6 +104,38 @@ python -m scripts.ingest_market_data \
   --dry-run
 ```
 
+Once users add tickers through the dashboard watchlist API, ingestion can read
+the active watchlist directly:
+
+```bash
+python -m scripts.ingest_market_data \
+  --watchlist-name default \
+  --interval 5m
+```
+
+## Prediction Serving Store
+
+The baseline latest prediction script can upsert the generated serving batch
+into PostgreSQL:
+
+```bash
+python -m scripts.predict_latest_baseline \
+  --input data/raw/watchlist/ohlcv.csv \
+  --output data/artifacts/latest_predictions.csv \
+  --json-output data/artifacts/latest_warnings.json \
+  --write-db
+```
+
+This writes:
+
+```text
+prediction_batches
+warning_records
+```
+
+The JSON file remains useful as an export/debug artifact, but the Go API reads
+from PostgreSQL and requires `TSI_DATABASE_URL`.
+
 ## Provider Notes
 
 yfinance is useful for local pilot workflows and supports Yahoo symbols such as:
@@ -121,6 +155,7 @@ ingestion. yfinance remains acceptable for local demo and early pipeline tests.
 
 ## Current Limitation
 
-The current Go API still reads `latest_warnings.json`. PostgreSQL is available
-through docker-compose and market bars can be ingested into it, but the
-DB-backed Go warning store is still a future task.
+The DB-backed API and watchlist state are available. The remaining gap is
+coverage automation: broad US/Taiwan ticker universe ingestion, scheduled
+5-minute updates, warning history/change detection, and intraday-trained models
+still need to be implemented.

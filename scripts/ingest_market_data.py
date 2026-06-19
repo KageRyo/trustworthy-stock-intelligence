@@ -8,9 +8,14 @@ from collections.abc import Sequence
 from datetime import UTC, datetime, timedelta
 
 from tsi.data.download import download_ticker_frame
-from tsi.data.postgres import build_ingestion_summary, build_market_bar_rows, write_download_to_postgres
+from tsi.data.postgres import (
+    build_ingestion_summary,
+    build_market_bar_rows,
+    read_watchlist_tickers,
+    write_download_to_postgres,
+)
 
-DEFAULT_DATABASE_URL = "postgresql://tsi:tsi_local_password@localhost:5432/tsi"
+DEFAULT_DATABASE_URL = "postgresql://tsi:tsi_local_password@localhost:55432/tsi"
 
 
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
@@ -18,8 +23,13 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--tickers",
         nargs="+",
-        required=True,
+        default=None,
         help="Ticker symbols or Taiwan numeric stock codes, for example NVDA 2330.",
+    )
+    parser.add_argument(
+        "--watchlist-name",
+        default=None,
+        help="Read active ticker symbols from this PostgreSQL watchlist when --tickers is omitted.",
     )
     parser.add_argument(
         "--market",
@@ -83,9 +93,14 @@ def default_start_for_interval(interval: str) -> str:
 
 def main() -> None:
     args = parse_args()
+    tickers = list(args.tickers or [])
+    if not tickers and args.watchlist_name:
+        tickers = read_watchlist_tickers(args.database_url, args.watchlist_name)
+    if not tickers:
+        raise ValueError("--tickers or --watchlist-name with active DB tickers is required")
     start = args.start or default_start_for_interval(args.interval)
     result = download_ticker_frame(
-        tickers=args.tickers,
+        tickers=tickers,
         start=start,
         end=args.end,
         market=args.market,

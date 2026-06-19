@@ -362,13 +362,13 @@ reason codes such as `probability_above_watch_threshold` or
 
 ## Go API Gateway
 
-The first Go API is a read-only gateway around the Python-generated
-`latest_warnings.json` contract. It does not run model inference or connect to a
-database yet.
+The Go API is a PostgreSQL-backed gateway around precomputed warning records.
+It does not run model inference in request handlers. `TSI_DATABASE_URL` is
+required; the service should fail fast when PostgreSQL is unavailable.
 
 ```bash
 cd services/api-gateway-go
-TSI_WARNINGS_PATH=../../data/artifacts/latest_warnings.json \
+TSI_DATABASE_URL=postgresql://tsi:tsi_local_password@localhost:55432/tsi \
   CGO_ENABLED=0 go run ./cmd/server
 ```
 
@@ -381,6 +381,9 @@ GET /openapi.yaml
 GET /swagger/
 GET /api/v1/status
 GET /api/v1/tickers
+GET /api/v1/watchlists/default
+POST /api/v1/watchlists/default/tickers
+DELETE /api/v1/watchlists/default/tickers/{ticker}
 GET /api/v1/analysis/{ticker}
 GET /api/v1/warnings/latest
 GET /api/v1/warnings/latest?level=watch&limit=20
@@ -389,10 +392,9 @@ GET /api/v1/warnings/{ticker}
 GET /api/v1/models/current
 ```
 
-The API reloads `latest_warnings.json` when the file modification time changes.
-If reload fails, it keeps serving the last valid batch and exposes the error in
-`/health` and `/api/v1/status`. See `docs/api/warning_api.md` for the API
-contract. Ticker-level dashboard analysis uses the typed
+The API reads the latest `prediction_batches` and `warning_records` from
+PostgreSQL and exposes typed watchlist endpoints backed by PostgreSQL. See
+`docs/api/warning_api.md` for the API contract. Ticker-level dashboard analysis uses the typed
 `/api/v1/analysis/{ticker}` contract documented in `docs/api/analysis_api.md`.
 Swagger UI is available at `/swagger/`, and the OpenAPI document is available
 at `/openapi.yaml`.
@@ -402,10 +404,11 @@ at `/openapi.yaml`.
 Common demo commands are collected in `Makefile`:
 
 ```bash
+docker compose up postgres
 make download-tickers WATCHLIST_TICKERS="NVDA 2330" DOWNLOAD_INTERVAL=1d
 make predict-latest-baseline DATA_INPUT=data/raw/watchlist/ohlcv.csv
 make ingest-market-data WATCHLIST_TICKERS="NVDA 2330" MARKET_INTERVAL=5m
-make predict-latest
+make ingest-watchlist-data MARKET_INTERVAL=5m
 make api
 make stock-dashboard
 make dashboard
@@ -416,16 +419,18 @@ Override paths or binaries as needed:
 
 ```bash
 GO=/mnt/8tb_hdd/ryo/miniconda3/envs/stock/bin/go make test-go
-MODEL_BUNDLE=data/artifacts/sp100_transformer_model_bundle make predict-latest
+DATABASE_URL=postgresql://tsi:tsi_local_password@localhost:55432/tsi make api
 ```
 
 `predict-latest-baseline` is the no-bundle local path for real OHLCV data. It
-trains a leakage-aware logistic baseline on the downloaded daily data and writes
-the same serving contract as the deep predictor:
+trains a leakage-aware logistic baseline on the downloaded daily data, writes an
+optional JSON export, and upserts the serving warning batch into PostgreSQL:
 
 ```text
 data/artifacts/latest_predictions.csv
 data/artifacts/latest_warnings.json
+prediction_batches
+warning_records
 ```
 
 Numeric Taiwan stock codes are supported through the downloader. For example,
@@ -446,9 +451,9 @@ batches, and warning records. The initial schema lives in:
 infra/postgres/init/001_schema.sql
 ```
 
-The Go API still reads `latest_warnings.json` in the current implementation.
-PostgreSQL is the data layer for provider ingestion and history, not yet the
-active API warning store. See `docs/data_store.md`.
+The Go API reads warning records and watchlists from PostgreSQL. JSON warning
+exports are local artifacts for debugging or notifications, not the API's
+primary store. See `docs/data_store.md`.
 
 Start PostgreSQL locally with:
 
