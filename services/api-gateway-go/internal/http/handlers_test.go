@@ -36,7 +36,12 @@ func writeRouterFixture(t *testing.T) string {
       "alert_threshold": 0.2,
       "watch_threshold": 0.16,
       "warning_level": "watch",
-      "reason_codes": ["probability_above_watch_threshold"]
+      "reason_codes": [
+        "probability_above_watch_threshold",
+        "trust_below_alert_threshold",
+        "uncertainty_below_threshold",
+        "warning_level_watch"
+      ]
     },
     {
       "date": "2026-06-08",
@@ -51,7 +56,12 @@ func writeRouterFixture(t *testing.T) string {
       "alert_threshold": 0.2,
       "watch_threshold": 0.16,
       "warning_level": "no_alert",
-      "reason_codes": ["calibrated_probability_below_watch_threshold"]
+      "reason_codes": [
+        "calibrated_probability_below_watch_threshold",
+        "trust_below_alert_threshold",
+        "uncertainty_below_threshold",
+        "warning_level_no_alert"
+      ]
     }
   ]
 }`
@@ -64,6 +74,19 @@ func writeRouterFixture(t *testing.T) string {
 func testRouter(t *testing.T) http.Handler {
 	t.Helper()
 	path := writeRouterFixture(t)
+	store, err := warnings.NewFileStore(path)
+	if err != nil {
+		t.Fatalf("NewFileStore returned error: %v", err)
+	}
+	return NewRouter(NewHandlers(store))
+}
+
+func testRouterFromPayload(t *testing.T, payload string) http.Handler {
+	t.Helper()
+	path := filepath.Join(t.TempDir(), "latest_warnings.json")
+	if err := os.WriteFile(path, []byte(payload), 0o644); err != nil {
+		t.Fatalf("write fixture: %v", err)
+	}
 	store, err := warnings.NewFileStore(path)
 	if err != nil {
 		t.Fatalf("NewFileStore returned error: %v", err)
@@ -133,6 +156,50 @@ func TestStatusHandler(t *testing.T) {
 	}
 }
 
+func TestOpenAPIHandler(t *testing.T) {
+	response := getJSON(t, testRouter(t), "/openapi.yaml")
+
+	if response.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200", response.Code)
+	}
+	if contentType := response.Header().Get("Content-Type"); contentType != "application/yaml" {
+		t.Fatalf("content type = %q, want application/yaml", contentType)
+	}
+	body := response.Body.String()
+	if !strings.Contains(body, "openapi: 3.1.0") ||
+		!strings.Contains(body, "/api/v1/analysis/{ticker}") ||
+		!strings.Contains(body, "/api/v1/tickers") {
+		t.Fatalf("openapi response missing expected content: %s", body)
+	}
+}
+
+func TestSwaggerHandler(t *testing.T) {
+	response := getJSON(t, testRouter(t), "/swagger")
+
+	if response.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200", response.Code)
+	}
+	body := response.Body.String()
+	if !strings.Contains(body, "SwaggerUIBundle") || !strings.Contains(body, "/openapi.yaml") {
+		t.Fatalf("swagger response missing expected content: %s", body)
+	}
+
+	response = getJSON(t, testRouter(t), "/swagger/")
+	if response.Code != http.StatusOK {
+		t.Fatalf("trailing slash status = %d, want 200", response.Code)
+	}
+}
+
+func TestEmbeddedOpenAPISpecMatchesDocsSpec(t *testing.T) {
+	docsSpec, err := os.ReadFile(filepath.Join("..", "..", "..", "..", "docs", "api", "openapi.yaml"))
+	if err != nil {
+		t.Fatalf("read docs openapi spec: %v", err)
+	}
+	if string(openAPISpec) != string(docsSpec) {
+		t.Fatal("embedded openapi spec must match docs/api/openapi.yaml")
+	}
+}
+
 func TestLatestWarningsHandler(t *testing.T) {
 	response := getJSON(t, testRouter(t), "/api/v1/warnings/latest")
 
@@ -145,6 +212,27 @@ func TestLatestWarningsHandler(t *testing.T) {
 	}
 	if batch.RecordCount != 2 {
 		t.Fatalf("record_count = %d, want 2", batch.RecordCount)
+	}
+}
+
+func TestTickersHandler(t *testing.T) {
+	response := getJSON(t, testRouter(t), "/api/v1/tickers")
+
+	if response.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200", response.Code)
+	}
+	var payload TickerListResponse
+	if err := json.NewDecoder(response.Body).Decode(&payload); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if payload.SchemaVersion != "ticker_list.v1" {
+		t.Fatalf("schema version = %q, want ticker_list.v1", payload.SchemaVersion)
+	}
+	if payload.RecordCount != 2 {
+		t.Fatalf("record_count = %d, want 2", payload.RecordCount)
+	}
+	if payload.Tickers[0].Ticker != "AAPL" || payload.Tickers[0].Market != "us" {
+		t.Fatalf("unexpected first ticker: %+v", payload.Tickers[0])
 	}
 }
 
@@ -275,6 +363,141 @@ func TestTickerWarningHandlerReturnsNotFound(t *testing.T) {
 	}
 	if payload.Error.Code != "ticker_not_found" {
 		t.Fatalf("error code = %q, want ticker_not_found", payload.Error.Code)
+	}
+}
+
+func TestTickerAnalysisHandler(t *testing.T) {
+	response := getJSON(t, testRouter(t), "/api/v1/analysis/aapl")
+
+	if response.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200", response.Code)
+	}
+	var payload TickerAnalysisResponse
+	if err := json.NewDecoder(response.Body).Decode(&payload); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if payload.SchemaVersion != "analysis.v1" {
+		t.Fatalf("schema_version = %q, want analysis.v1", payload.SchemaVersion)
+	}
+	if payload.Ticker != "AAPL" || payload.Date != "2026-06-08" {
+		t.Fatalf("unexpected ticker metadata: %+v", payload)
+	}
+	if payload.Warning.Level != "watch" {
+		t.Fatalf("warning level = %q, want watch", payload.Warning.Level)
+	}
+	if payload.Warning.CalibratedRiskProbability != 0.12 {
+		t.Fatalf(
+			"calibrated risk probability = %f, want 0.12",
+			payload.Warning.CalibratedRiskProbability,
+		)
+	}
+	if payload.Trust.TrustStatus != "limited_trust" {
+		t.Fatalf("trust status = %q, want limited_trust", payload.Trust.TrustStatus)
+	}
+	if payload.Trust.UncertaintyStatus != "acceptable_uncertainty" {
+		t.Fatalf(
+			"uncertainty status = %q, want acceptable_uncertainty",
+			payload.Trust.UncertaintyStatus,
+		)
+	}
+	if payload.Model.Name != "temporal_transformer" || payload.Model.ModelBundle != "bundle" {
+		t.Fatalf("unexpected model analysis: %+v", payload.Model)
+	}
+	if payload.DataFreshness.RecordCount != 2 || payload.DataFreshness.LastLoadedAt == "" {
+		t.Fatalf("unexpected data freshness: %+v", payload.DataFreshness)
+	}
+	if len(payload.Reasons) != 4 {
+		t.Fatalf("reasons length = %d, want 4", len(payload.Reasons))
+	}
+	if payload.Reasons[0].Code != "probability_above_watch_threshold" ||
+		payload.Reasons[0].Severity != "watch" {
+		t.Fatalf("unexpected first reason: %+v", payload.Reasons[0])
+	}
+	if len(payload.Limitations) == 0 {
+		t.Fatal("expected limitations")
+	}
+}
+
+func TestTickerAnalysisHandlerReturnsNotFound(t *testing.T) {
+	response := getJSON(t, testRouter(t), "/api/v1/analysis/NVDA")
+
+	if response.Code != http.StatusNotFound {
+		t.Fatalf("status = %d, want 404", response.Code)
+	}
+	var payload ErrorResponse
+	if err := json.NewDecoder(response.Body).Decode(&payload); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if payload.Error.Code != "ticker_not_found" {
+		t.Fatalf("error code = %q, want ticker_not_found", payload.Error.Code)
+	}
+}
+
+func TestHandlersSupportNumericTaiwanTicker(t *testing.T) {
+	router := testRouterFromPayload(t, `{
+  "schema_version": "v1",
+  "run_id": "tw_fixture_run",
+  "data_as_of": "2026-06-19",
+  "generated_at": "2026-06-19T00:00:00+00:00",
+  "record_count": 1,
+  "records": [
+    {
+      "date": "2026-06-19",
+      "ticker": "2330",
+      "model": "temporal_transformer",
+      "model_bundle": "tw_bundle",
+      "risk_probability": 0.31,
+      "calibrated_risk_probability": 0.22,
+      "calibration_method": "platt",
+      "uncertainty_score": 0.25,
+      "trust_score": 0.18,
+      "alert_threshold": 0.30,
+      "watch_threshold": 0.15,
+      "warning_level": "watch",
+      "reason_codes": [
+        "probability_above_watch_threshold",
+        "trust_below_alert_threshold",
+        "uncertainty_below_threshold",
+        "warning_level_watch"
+      ]
+    }
+  ]
+}`)
+
+	warningResponse := getJSON(t, router, "/api/v1/warnings/2330")
+	if warningResponse.Code != http.StatusOK {
+		t.Fatalf("warning status = %d, want 200", warningResponse.Code)
+	}
+	var warningRecord warnings.PredictionRecord
+	if err := json.NewDecoder(warningResponse.Body).Decode(&warningRecord); err != nil {
+		t.Fatalf("decode warning response: %v", err)
+	}
+	if warningRecord.Ticker != "2330" {
+		t.Fatalf("warning ticker = %q, want 2330", warningRecord.Ticker)
+	}
+
+	analysisResponse := getJSON(t, router, "/api/v1/analysis/2330")
+	if analysisResponse.Code != http.StatusOK {
+		t.Fatalf("analysis status = %d, want 200", analysisResponse.Code)
+	}
+	var analysis TickerAnalysisResponse
+	if err := json.NewDecoder(analysisResponse.Body).Decode(&analysis); err != nil {
+		t.Fatalf("decode analysis response: %v", err)
+	}
+	if analysis.Ticker != "2330" || analysis.Warning.Level != "watch" {
+		t.Fatalf("unexpected analysis response: %+v", analysis)
+	}
+
+	tickersResponse := getJSON(t, router, "/api/v1/tickers")
+	if tickersResponse.Code != http.StatusOK {
+		t.Fatalf("tickers status = %d, want 200", tickersResponse.Code)
+	}
+	var tickers TickerListResponse
+	if err := json.NewDecoder(tickersResponse.Body).Decode(&tickers); err != nil {
+		t.Fatalf("decode tickers response: %v", err)
+	}
+	if len(tickers.Tickers) != 1 || tickers.Tickers[0].Market != "taiwan" {
+		t.Fatalf("unexpected tickers response: %+v", tickers)
 	}
 }
 

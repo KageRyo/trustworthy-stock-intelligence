@@ -117,6 +117,11 @@ func (h *Handlers) LatestWarnings(response http.ResponseWriter, request *http.Re
 	writeJSON(response, http.StatusOK, batch)
 }
 
+func (h *Handlers) Tickers(response http.ResponseWriter, _ *http.Request) {
+	h.refreshStore()
+	writeJSON(response, http.StatusOK, buildTickerList(h.store.Batch()))
+}
+
 func (h *Handlers) TickerWarning(response http.ResponseWriter, request *http.Request) {
 	h.refreshStore()
 	ticker := strings.TrimPrefix(request.URL.Path, "/api/v1/warnings/")
@@ -131,6 +136,22 @@ func (h *Handlers) TickerWarning(response http.ResponseWriter, request *http.Req
 		return
 	}
 	writeJSON(response, http.StatusOK, record)
+}
+
+func (h *Handlers) TickerAnalysis(response http.ResponseWriter, request *http.Request) {
+	h.refreshStore()
+	ticker := strings.TrimPrefix(request.URL.Path, "/api/v1/analysis/")
+	ticker = strings.TrimSpace(ticker)
+	if ticker == "" || strings.Contains(ticker, "/") {
+		writeError(response, http.StatusNotFound, newHTTPError("ticker_not_found", "ticker not found"))
+		return
+	}
+	record, ok := h.store.FindTicker(ticker)
+	if !ok {
+		writeError(response, http.StatusNotFound, newHTTPError("ticker_not_found", "ticker not found"))
+		return
+	}
+	writeJSON(response, http.StatusOK, buildTickerAnalysis(record, h.store.Status()))
 }
 
 func (h *Handlers) CurrentModel(response http.ResponseWriter, _ *http.Request) {

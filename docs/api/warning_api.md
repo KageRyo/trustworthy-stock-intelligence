@@ -42,6 +42,14 @@ tsi_api_last_reload_error 0
 tsi_api_batch_info{schema_version="v1",run_id="platt_entropy_multiplicative_wr08",data_as_of="2026-06-08"} 1
 ```
 
+### `GET /openapi.yaml`
+
+Returns the OpenAPI 3.1 YAML document for the API.
+
+### `GET /swagger/`
+
+Returns Swagger UI for browsing the OpenAPI contract.
+
 ### `GET /api/v1/status`
 
 Returns file reload status.
@@ -78,10 +86,24 @@ GET /api/v1/warnings/latest?level=watch&limit=20
 GET /api/v1/warnings/latest?level=alert&sort=trust_score&order=desc&limit=20
 ```
 
+### `GET /api/v1/tickers`
+
+Returns the ticker symbols present in the currently loaded warning batch. This
+is a coverage endpoint for the loaded artifact, not a complete market universe.
+
 ### `GET /api/v1/warnings/{ticker}`
 
 Returns one warning record for a ticker. Ticker lookup is case-insensitive.
 Missing tickers return `404`.
+
+### `GET /api/v1/analysis/{ticker}`
+
+Returns a typed ticker analysis response for dashboard use. The analysis
+endpoint wraps one latest warning record with warning, trust, model, data
+freshness, reason explanation, and limitation schemas. It does not run
+synchronous inference.
+
+See `docs/api/analysis_api.md` for the response schema.
 
 ### `GET /api/v1/models/current`
 

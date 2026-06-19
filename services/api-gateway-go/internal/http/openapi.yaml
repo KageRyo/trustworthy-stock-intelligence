@@ -1,0 +1,619 @@
+openapi: 3.1.0
+info:
+  title: Trustworthy Stock Intelligence API
+  version: 0.1.0
+  summary: Read-only warning and ticker analysis API.
+  description: |
+    The API serves precomputed stock drawdown-risk warning artifacts generated
+    by the Python ML core. Request handlers do not run synchronous inference.
+servers:
+  - url: http://127.0.0.1:18080
+    description: Local development API
+tags:
+  - name: Health
+  - name: Warnings
+  - name: Analysis
+  - name: Models
+paths:
+  /openapi.yaml:
+    get:
+      tags: [Health]
+      summary: Read the OpenAPI specification.
+      operationId: getOpenAPISpec
+      responses:
+        "200":
+          description: OpenAPI YAML document.
+          content:
+            application/yaml:
+              schema:
+                type: string
+  /swagger:
+    get:
+      tags: [Health]
+      summary: Read Swagger UI.
+      operationId: getSwaggerUI
+      responses:
+        "200":
+          description: Swagger UI HTML page.
+          content:
+            text/html:
+              schema:
+                type: string
+  /swagger/:
+    get:
+      tags: [Health]
+      summary: Read Swagger UI.
+      operationId: getSwaggerUITrailingSlash
+      responses:
+        "200":
+          description: Swagger UI HTML page.
+          content:
+            text/html:
+              schema:
+                type: string
+  /health:
+    get:
+      tags: [Health]
+      summary: Read gateway health.
+      operationId: getHealth
+      responses:
+        "200":
+          description: Health status.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+  /metrics:
+    get:
+      tags: [Health]
+      summary: Read Prometheus-style metrics.
+      operationId: getMetrics
+      responses:
+        "200":
+          description: Prometheus text metrics.
+          content:
+            text/plain:
+              schema:
+                type: string
+  /api/v1/status:
+    get:
+      tags: [Health]
+      summary: Read warning file reload status.
+      operationId: getStatus
+      responses:
+        "200":
+          description: Store status.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StoreStatus"
+  /api/v1/warnings/latest:
+    get:
+      tags: [Warnings]
+      summary: Read latest warning records.
+      operationId: getLatestWarnings
+      parameters:
+        - name: level
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/WarningLevel"
+        - name: sort
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [trust_score, calibrated_risk_probability, uncertainty_score]
+        - name: order
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+      responses:
+        "200":
+          description: Latest prediction batch.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PredictionBatch"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+  /api/v1/tickers:
+    get:
+      tags: [Warnings]
+      summary: Read ticker coverage in the latest loaded warning batch.
+      description: |
+        This endpoint reports only the tickers present in the currently loaded
+        prediction batch. It is not a complete market universe endpoint.
+      operationId: getTickers
+      responses:
+        "200":
+          description: Latest loaded ticker list.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TickerListResponse"
+  /api/v1/warnings/{ticker}:
+    get:
+      tags: [Warnings]
+      summary: Read one latest warning record for a ticker.
+      operationId: getTickerWarning
+      parameters:
+        - $ref: "#/components/parameters/TickerPath"
+      responses:
+        "200":
+          description: Ticker warning record.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PredictionRecord"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /api/v1/analysis/{ticker}:
+    get:
+      tags: [Analysis]
+      summary: Read typed dashboard analysis for a ticker.
+      description: |
+        Returns a dashboard-oriented analysis response built from the latest
+        precomputed warning record. Supports alphabetic tickers such as `NVDA`
+        and numeric Taiwan stock codes such as `2330` when those records exist
+        in the loaded warning batch.
+      operationId: getTickerAnalysis
+      parameters:
+        - $ref: "#/components/parameters/TickerPath"
+      responses:
+        "200":
+          description: Ticker analysis response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TickerAnalysisResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /api/v1/models/current:
+    get:
+      tags: [Models]
+      summary: Read current model metadata.
+      operationId: getCurrentModel
+      responses:
+        "200":
+          description: Current model metadata.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CurrentModelResponse"
+components:
+  parameters:
+    TickerPath:
+      name: ticker
+      in: path
+      required: true
+      description: Alphabetic ticker or numeric Taiwan stock code in the loaded batch.
+      schema:
+        type: string
+        minLength: 1
+        examples: ["NVDA", "2330"]
+  responses:
+    BadRequest:
+      description: Invalid request parameter.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    NotFound:
+      description: Ticker was not found in the latest loaded warning batch.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+  schemas:
+    WarningLevel:
+      type: string
+      enum: [alert, watch, abstain, no_alert]
+    HealthResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - status
+        - warnings_loaded
+        - schema_version
+        - run_id
+        - data_as_of
+        - generated_at
+        - record_count
+      properties:
+        status:
+          type: string
+          examples: [ok]
+        warnings_loaded:
+          type: boolean
+        schema_version:
+          type: string
+        run_id:
+          type: string
+        data_as_of:
+          type: string
+          format: date
+        generated_at:
+          type: string
+        record_count:
+          type: integer
+          minimum: 0
+        last_error:
+          type: string
+    StoreStatus:
+      type: object
+      additionalProperties: false
+      required:
+        - warnings_path
+        - warnings_loaded
+        - schema_version
+        - run_id
+        - data_as_of
+        - generated_at
+        - record_count
+        - last_loaded_at
+        - file_modified_at
+      properties:
+        warnings_path:
+          type: string
+        warnings_loaded:
+          type: boolean
+        schema_version:
+          type: string
+        run_id:
+          type: string
+        data_as_of:
+          type: string
+        generated_at:
+          type: string
+        record_count:
+          type: integer
+          minimum: 0
+        last_loaded_at:
+          type: string
+        file_modified_at:
+          type: string
+        last_error:
+          type: string
+    CurrentModelResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - schema_version
+        - run_id
+        - data_as_of
+        - model
+        - model_bundle
+        - generated_at
+        - record_count
+      properties:
+        schema_version:
+          type: string
+        run_id:
+          type: string
+        data_as_of:
+          type: string
+        model:
+          type: string
+        model_bundle:
+          type: string
+        generated_at:
+          type: string
+        record_count:
+          type: integer
+          minimum: 0
+    PredictionBatch:
+      type: object
+      additionalProperties: false
+      required:
+        - schema_version
+        - run_id
+        - data_as_of
+        - generated_at
+        - record_count
+        - records
+      properties:
+        schema_version:
+          type: string
+          examples: [v1]
+        run_id:
+          type: string
+        data_as_of:
+          type: string
+        generated_at:
+          type: string
+        record_count:
+          type: integer
+          minimum: 0
+        records:
+          type: array
+          items:
+            $ref: "#/components/schemas/PredictionRecord"
+    PredictionRecord:
+      type: object
+      additionalProperties: false
+      required:
+        - date
+        - ticker
+        - model
+        - model_bundle
+        - risk_probability
+        - calibrated_risk_probability
+        - calibration_method
+        - uncertainty_score
+        - trust_score
+        - alert_threshold
+        - watch_threshold
+        - warning_level
+        - reason_codes
+      properties:
+        date:
+          type: string
+          format: date
+        ticker:
+          type: string
+        model:
+          type: string
+        model_bundle:
+          type: string
+        risk_probability:
+          type: number
+          minimum: 0
+          maximum: 1
+        calibrated_risk_probability:
+          type: number
+          minimum: 0
+          maximum: 1
+        calibration_method:
+          type: string
+        uncertainty_score:
+          type: number
+          minimum: 0
+          maximum: 1
+        trust_score:
+          type: number
+          minimum: 0
+          maximum: 1
+        alert_threshold:
+          type: number
+          minimum: 0
+          maximum: 1
+        watch_threshold:
+          type: number
+          minimum: 0
+          maximum: 1
+        warning_level:
+          $ref: "#/components/schemas/WarningLevel"
+        reason_codes:
+          type: array
+          items:
+            type: string
+    TickerListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - schema_version
+        - run_id
+        - data_as_of
+        - generated_at
+        - record_count
+        - tickers
+      properties:
+        schema_version:
+          type: string
+          const: ticker_list.v1
+        run_id:
+          type: string
+        data_as_of:
+          type: string
+        generated_at:
+          type: string
+        record_count:
+          type: integer
+          minimum: 0
+        tickers:
+          type: array
+          items:
+            $ref: "#/components/schemas/TickerSummary"
+    TickerSummary:
+      type: object
+      additionalProperties: false
+      required:
+        - ticker
+        - market
+        - date
+        - warning_level
+        - calibrated_risk_probability
+        - trust_score
+      properties:
+        ticker:
+          type: string
+          examples: ["NVDA", "2330"]
+        market:
+          type: string
+          enum: [us, taiwan, unknown]
+        date:
+          type: string
+          format: date
+        warning_level:
+          $ref: "#/components/schemas/WarningLevel"
+        calibrated_risk_probability:
+          type: number
+          minimum: 0
+          maximum: 1
+        trust_score:
+          type: number
+          minimum: 0
+          maximum: 1
+    TickerAnalysisResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - schema_version
+        - ticker
+        - date
+        - run_id
+        - data_as_of
+        - generated_at
+        - warning
+        - trust
+        - model
+        - data_freshness
+        - reasons
+        - limitations
+      properties:
+        schema_version:
+          type: string
+          const: analysis.v1
+        ticker:
+          type: string
+        date:
+          type: string
+          format: date
+        run_id:
+          type: string
+        data_as_of:
+          type: string
+        generated_at:
+          type: string
+        warning:
+          $ref: "#/components/schemas/WarningAnalysis"
+        trust:
+          $ref: "#/components/schemas/TrustAssessment"
+        model:
+          $ref: "#/components/schemas/ModelAnalysis"
+        data_freshness:
+          $ref: "#/components/schemas/DataFreshness"
+        reasons:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReasonExplanation"
+        limitations:
+          type: array
+          items:
+            type: string
+    WarningAnalysis:
+      type: object
+      additionalProperties: false
+      required:
+        - level
+        - risk_probability
+        - calibrated_risk_probability
+        - alert_threshold
+        - watch_threshold
+        - summary
+      properties:
+        level:
+          $ref: "#/components/schemas/WarningLevel"
+        risk_probability:
+          type: number
+          minimum: 0
+          maximum: 1
+        calibrated_risk_probability:
+          type: number
+          minimum: 0
+          maximum: 1
+        alert_threshold:
+          type: number
+          minimum: 0
+          maximum: 1
+        watch_threshold:
+          type: number
+          minimum: 0
+          maximum: 1
+        summary:
+          type: string
+    TrustAssessment:
+      type: object
+      additionalProperties: false
+      required:
+        - trust_score
+        - uncertainty_score
+        - calibration_method
+        - trust_status
+        - uncertainty_status
+        - summary
+      properties:
+        trust_score:
+          type: number
+          minimum: 0
+          maximum: 1
+        uncertainty_score:
+          type: number
+          minimum: 0
+          maximum: 1
+        calibration_method:
+          type: string
+        trust_status:
+          type: string
+        uncertainty_status:
+          type: string
+        summary:
+          type: string
+    ModelAnalysis:
+      type: object
+      additionalProperties: false
+      required: [name, model_bundle]
+      properties:
+        name:
+          type: string
+        model_bundle:
+          type: string
+    DataFreshness:
+      type: object
+      additionalProperties: false
+      required:
+        - data_as_of
+        - generated_at
+        - last_loaded_at
+        - file_modified_at
+        - record_count
+      properties:
+        data_as_of:
+          type: string
+        generated_at:
+          type: string
+        last_loaded_at:
+          type: string
+        file_modified_at:
+          type: string
+        record_count:
+          type: integer
+          minimum: 0
+    ReasonExplanation:
+      type: object
+      additionalProperties: false
+      required: [code, severity, title, detail]
+      properties:
+        code:
+          type: string
+        severity:
+          type: string
+          enum: [info, watch, alert]
+        title:
+          type: string
+        detail:
+          type: string
+    ErrorResponse:
+      type: object
+      additionalProperties: false
+      required: [error]
+      properties:
+        error:
+          type: object
+          additionalProperties: false
+          required: [code, message]
+          properties:
+            code:
+              type: string
+            message:
+              type: string

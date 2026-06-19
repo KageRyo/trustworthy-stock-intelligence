@@ -63,7 +63,11 @@ docker run --rm -p 8080:8080 \
 ```text
 GET /health
 GET /metrics
+GET /openapi.yaml
+GET /swagger/
 GET /api/v1/status
+GET /api/v1/tickers
+GET /api/v1/analysis/{ticker}
 GET /api/v1/warnings/latest
 GET /api/v1/warnings/latest?level=watch&limit=20
 GET /api/v1/warnings/latest?level=alert&sort=trust_score&order=desc&limit=20
@@ -73,6 +77,15 @@ GET /api/v1/models/current
 
 The first version is intentionally read-only. It does not call Python, connect
 to Redis/PostgreSQL, or run background inference jobs.
+
+`/api/v1/analysis/{ticker}` returns a typed dashboard analysis schema built from
+the latest warning record. See `docs/api/analysis_api.md`.
+
+`/api/v1/tickers` returns the symbols present in the loaded warning batch. It is
+not a complete market universe endpoint.
+
+Swagger UI is served from `/swagger/`, with the OpenAPI YAML at
+`/openapi.yaml`.
 
 The warning file is reloaded when its modified time changes. If reload fails,
 the server keeps serving the last valid batch and reports the error through the
