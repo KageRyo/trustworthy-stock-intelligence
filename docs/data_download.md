@@ -65,6 +65,27 @@ Download both:
   --batch-size 50
 ```
 
+Download explicit US and Taiwan tickers:
+
+```bash
+python -m scripts.download_tickers \
+  --tickers NVDA 2330 \
+  --interval 1d \
+  --output-dir data/raw/watchlist
+```
+
+For intraday freshness checks, request 5-minute bars. Numeric Taiwan tickers are
+resolved to yfinance provider symbols such as `2330.TW`, while the output keeps
+the user-facing ticker as `2330`.
+
+```bash
+python -m scripts.download_tickers \
+  --tickers NVDA 2330 \
+  --interval 5m \
+  --start 2026-06-12 \
+  --output-dir data/raw/watchlist_5m
+```
+
 ## Output Files
 
 Each universe writes:
