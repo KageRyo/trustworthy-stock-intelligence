@@ -6,13 +6,13 @@ import (
 )
 
 const (
-	defaultAddress      = ":8080"
-	defaultWarningsPath = "data/artifacts/latest_warnings.json"
+	defaultAddress = ":8080"
 )
 
 type Config struct {
 	Address      string
 	WarningsPath string
+	DatabaseURL  string
 }
 
 func Load() Config {
@@ -24,7 +24,8 @@ func Load() Config {
 	}
 	return Config{
 		Address:      address,
-		WarningsPath: envOrDefault("TSI_WARNINGS_PATH", defaultWarningsPath),
+		WarningsPath: envOrDefault("TSI_WARNINGS_PATH", ""),
+		DatabaseURL:  envOrDefault("TSI_DATABASE_URL", ""),
 	}
 }
 

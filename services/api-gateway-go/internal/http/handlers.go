@@ -1,6 +1,7 @@
 package apihttp
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -9,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/KageRyo/trustworthy-stock-intelligence/services/api-gateway-go/internal/warnings"
+	"github.com/KageRyo/trustworthy-stock-intelligence/services/api-gateway-go/internal/watchlist"
 )
 
 type WarningStore interface {
@@ -19,7 +21,14 @@ type WarningStore interface {
 }
 
 type Handlers struct {
-	store WarningStore
+	store     WarningStore
+	watchlist WatchlistStore
+}
+
+type WatchlistStore interface {
+	List(ctx context.Context, name string) (watchlist.Watchlist, error)
+	AddTicker(ctx context.Context, name string, input watchlist.AddTickerInput) (watchlist.Ticker, error)
+	RemoveTicker(ctx context.Context, name string, ticker string) (bool, error)
 }
 
 type CurrentModelResponse struct {
@@ -52,8 +61,12 @@ type ErrorBody struct {
 	Message string `json:"message"`
 }
 
-func NewHandlers(store WarningStore) *Handlers {
-	return &Handlers{store: store}
+func NewHandlers(store WarningStore, watchlistStores ...WatchlistStore) *Handlers {
+	var storeWatchlist WatchlistStore
+	if len(watchlistStores) > 0 {
+		storeWatchlist = watchlistStores[0]
+	}
+	return &Handlers{store: store, watchlist: storeWatchlist}
 }
 
 func (h *Handlers) Health(response http.ResponseWriter, _ *http.Request) {

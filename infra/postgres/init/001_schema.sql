@@ -30,6 +30,31 @@ CREATE TABLE IF NOT EXISTS universe_tickers (
     PRIMARY KEY (universe_id, ticker_id)
 );
 
+CREATE TABLE IF NOT EXISTS watchlists (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL UNIQUE,
+    description TEXT NOT NULL DEFAULT '',
+    is_default BOOLEAN NOT NULL DEFAULT false,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS watchlists_single_default_idx
+    ON watchlists (is_default)
+    WHERE is_default;
+
+CREATE TABLE IF NOT EXISTS watchlist_tickers (
+    watchlist_id UUID NOT NULL REFERENCES watchlists(id) ON DELETE CASCADE,
+    ticker_id UUID NOT NULL REFERENCES tickers(id) ON DELETE CASCADE,
+    added_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    removed_at TIMESTAMPTZ,
+    notes TEXT NOT NULL DEFAULT '',
+    PRIMARY KEY (watchlist_id, ticker_id)
+);
+
+CREATE INDEX IF NOT EXISTS watchlist_tickers_active_idx
+    ON watchlist_tickers (watchlist_id, removed_at);
+
 CREATE TABLE IF NOT EXISTS ingestion_runs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     provider TEXT NOT NULL,

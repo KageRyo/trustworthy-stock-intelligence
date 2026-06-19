@@ -1,6 +1,8 @@
 package apihttp
 
 import (
+	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -11,6 +13,7 @@ import (
 	"time"
 
 	"github.com/KageRyo/trustworthy-stock-intelligence/services/api-gateway-go/internal/warnings"
+	"github.com/KageRyo/trustworthy-stock-intelligence/services/api-gateway-go/internal/watchlist"
 )
 
 func writeRouterFixture(t *testing.T) string {
@@ -94,9 +97,36 @@ func testRouterFromPayload(t *testing.T, payload string) http.Handler {
 	return NewRouter(NewHandlers(store))
 }
 
+func testRouterWithWatchlist(t *testing.T, watchlistStore WatchlistStore) http.Handler {
+	t.Helper()
+	path := writeRouterFixture(t)
+	store, err := warnings.NewFileStore(path)
+	if err != nil {
+		t.Fatalf("NewFileStore returned error: %v", err)
+	}
+	return NewRouter(NewHandlers(store, watchlistStore))
+}
+
 func getJSON(t *testing.T, router http.Handler, path string) *httptest.ResponseRecorder {
 	t.Helper()
 	request := httptest.NewRequest(http.MethodGet, path, nil)
+	response := httptest.NewRecorder()
+	router.ServeHTTP(response, request)
+	return response
+}
+
+func postJSON(t *testing.T, router http.Handler, path string, body string) *httptest.ResponseRecorder {
+	t.Helper()
+	request := httptest.NewRequest(http.MethodPost, path, bytes.NewBufferString(body))
+	request.Header.Set("Content-Type", "application/json")
+	response := httptest.NewRecorder()
+	router.ServeHTTP(response, request)
+	return response
+}
+
+func deleteJSON(t *testing.T, router http.Handler, path string) *httptest.ResponseRecorder {
+	t.Helper()
+	request := httptest.NewRequest(http.MethodDelete, path, nil)
 	response := httptest.NewRecorder()
 	router.ServeHTTP(response, request)
 	return response
@@ -571,5 +601,169 @@ func TestHandlersRefreshStoreBeforeServing(t *testing.T) {
 	}
 	if record.WarningLevel != "alert" {
 		t.Fatalf("warning level = %q, want alert", record.WarningLevel)
+	}
+}
+
+type fakeWatchlistStore struct {
+	list      watchlist.Watchlist
+	removeHit bool
+}
+
+func (s *fakeWatchlistStore) List(
+	_ context.Context,
+	name string,
+) (watchlist.Watchlist, error) {
+	if s.list.Name == "" {
+		s.list.Name = name
+	}
+	return s.list, nil
+}
+
+func (s *fakeWatchlistStore) AddTicker(
+	_ context.Context,
+	name string,
+	input watchlist.AddTickerInput,
+) (watchlist.Ticker, error) {
+	resolved, err := watchlist.ResolveTicker(input.Ticker, input.Market)
+	if err != nil {
+		return watchlist.Ticker{}, err
+	}
+	ticker := watchlist.Ticker{
+		Ticker:      resolved.Ticker,
+		QuerySymbol: resolved.QuerySymbol,
+		Market:      resolved.Market,
+		AddedAt:     "2026-06-19T00:00:00Z",
+		Notes:       input.Notes,
+	}
+	s.list.Name = name
+	s.list.Tickers = append(s.list.Tickers, ticker)
+	s.list.UpdatedAt = ticker.AddedAt
+	return ticker, nil
+}
+
+func (s *fakeWatchlistStore) RemoveTicker(
+	_ context.Context,
+	_ string,
+	ticker string,
+) (bool, error) {
+	s.removeHit = true
+	kept := make([]watchlist.Ticker, 0, len(s.list.Tickers))
+	removed := false
+	for _, entry := range s.list.Tickers {
+		if strings.EqualFold(entry.Ticker, ticker) {
+			removed = true
+			continue
+		}
+		kept = append(kept, entry)
+	}
+	s.list.Tickers = kept
+	return removed, nil
+}
+
+func TestWatchlistHandlerReturnsLatestWarningJoin(t *testing.T) {
+	router := testRouterWithWatchlist(t, &fakeWatchlistStore{
+		list: watchlist.Watchlist{
+			Name:      "default",
+			UpdatedAt: "2026-06-19T00:00:00Z",
+			Tickers: []watchlist.Ticker{
+				{
+					Ticker:      "AAPL",
+					QuerySymbol: "AAPL",
+					Market:      "us",
+					AddedAt:     "2026-06-19T00:00:00Z",
+				},
+			},
+		},
+	})
+
+	response := getJSON(t, router, "/api/v1/watchlists/default")
+
+	if response.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200", response.Code)
+	}
+	var payload WatchlistResponse
+	if err := json.NewDecoder(response.Body).Decode(&payload); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if payload.SchemaVersion != "watchlist.v1" || payload.RecordCount != 1 {
+		t.Fatalf("unexpected watchlist response: %+v", payload)
+	}
+	if !payload.Tickers[0].HasLatestWarning || payload.Tickers[0].LatestWarning == nil {
+		t.Fatalf("expected latest warning join: %+v", payload.Tickers[0])
+	}
+	if payload.Tickers[0].LatestWarning.WarningLevel != "watch" {
+		t.Fatalf("warning level = %q, want watch", payload.Tickers[0].LatestWarning.WarningLevel)
+	}
+}
+
+func TestAddWatchlistTickerAcceptsTaiwanNumericTicker(t *testing.T) {
+	router := testRouterWithWatchlist(t, &fakeWatchlistStore{})
+
+	response := postJSON(
+		t,
+		router,
+		"/api/v1/watchlists/default/tickers",
+		`{"schema_version":"watchlist_add.v1","ticker":"2330","market":"auto","notes":"core holding"}`,
+	)
+
+	if response.Code != http.StatusCreated {
+		t.Fatalf("status = %d, want 201: %s", response.Code, response.Body.String())
+	}
+	var payload WatchlistResponse
+	if err := json.NewDecoder(response.Body).Decode(&payload); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if payload.RecordCount != 1 {
+		t.Fatalf("record_count = %d, want 1", payload.RecordCount)
+	}
+	ticker := payload.Tickers[0]
+	if ticker.Ticker != "2330" || ticker.QuerySymbol != "2330.TW" || ticker.Market != "twse" {
+		t.Fatalf("unexpected ticker mapping: %+v", ticker)
+	}
+	if ticker.HasLatestWarning {
+		t.Fatalf("expected newly added ticker without latest warning: %+v", ticker)
+	}
+}
+
+func TestRemoveWatchlistTickerReturnsUpdatedWatchlist(t *testing.T) {
+	store := &fakeWatchlistStore{
+		list: watchlist.Watchlist{
+			Name: "default",
+			Tickers: []watchlist.Ticker{
+				{Ticker: "AAPL", QuerySymbol: "AAPL", Market: "us"},
+			},
+		},
+	}
+	router := testRouterWithWatchlist(t, store)
+
+	response := deleteJSON(t, router, "/api/v1/watchlists/default/tickers/AAPL")
+
+	if response.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200", response.Code)
+	}
+	if !store.removeHit {
+		t.Fatal("expected fake store remove to be called")
+	}
+	var payload WatchlistResponse
+	if err := json.NewDecoder(response.Body).Decode(&payload); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if payload.RecordCount != 0 {
+		t.Fatalf("record_count = %d, want 0", payload.RecordCount)
+	}
+}
+
+func TestWatchlistEndpointReportsUnavailableStore(t *testing.T) {
+	response := getJSON(t, testRouter(t), "/api/v1/watchlists/default")
+
+	if response.Code != http.StatusServiceUnavailable {
+		t.Fatalf("status = %d, want 503", response.Code)
+	}
+	var payload ErrorResponse
+	if err := json.NewDecoder(response.Body).Decode(&payload); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if payload.Error.Code != "watchlist_store_unavailable" {
+		t.Fatalf("error code = %q, want watchlist_store_unavailable", payload.Error.Code)
 	}
 }

@@ -2,16 +2,18 @@ openapi: 3.1.0
 info:
   title: Trustworthy Stock Intelligence API
   version: 0.1.0
-  summary: Read-only warning and ticker analysis API.
+  summary: PostgreSQL-backed warning, watchlist, and ticker analysis API.
   description: |
-    The API serves precomputed stock drawdown-risk warning artifacts generated
-    by the Python ML core. Request handlers do not run synchronous inference.
+    The API serves precomputed stock drawdown-risk warning records generated
+    by the Python ML core and stored in PostgreSQL. Request handlers do not run
+    synchronous inference.
 servers:
   - url: http://127.0.0.1:18080
     description: Local development API
 tags:
   - name: Health
   - name: Warnings
+  - name: Watchlists
   - name: Analysis
   - name: Models
 paths:
@@ -78,7 +80,7 @@ paths:
   /api/v1/status:
     get:
       tags: [Health]
-      summary: Read warning file reload status.
+      summary: Read warning store reload status.
       operationId: getStatus
       responses:
         "200":
@@ -141,6 +143,65 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TickerListResponse"
+  /api/v1/watchlists/{name}:
+    get:
+      tags: [Watchlists]
+      summary: Read a user-managed watchlist.
+      operationId: getWatchlist
+      parameters:
+        - $ref: "#/components/parameters/WatchlistNamePath"
+      responses:
+        "200":
+          description: Watchlist state with latest warning joins where available.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WatchlistResponse"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /api/v1/watchlists/{name}/tickers:
+    post:
+      tags: [Watchlists]
+      summary: Add a ticker to a watchlist.
+      operationId: addWatchlistTicker
+      parameters:
+        - $ref: "#/components/parameters/WatchlistNamePath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WatchlistAddTickerRequest"
+      responses:
+        "201":
+          description: Updated watchlist state.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WatchlistResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /api/v1/watchlists/{name}/tickers/{ticker}:
+    delete:
+      tags: [Watchlists]
+      summary: Remove a ticker from a watchlist.
+      operationId: removeWatchlistTicker
+      parameters:
+        - $ref: "#/components/parameters/WatchlistNamePath"
+        - $ref: "#/components/parameters/TickerPath"
+      responses:
+        "200":
+          description: Updated watchlist state.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WatchlistResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
   /api/v1/warnings/{ticker}:
     get:
       tags: [Warnings]
@@ -201,6 +262,15 @@ components:
         type: string
         minLength: 1
         examples: ["NVDA", "2330"]
+    WatchlistNamePath:
+      name: name
+      in: path
+      required: true
+      description: Watchlist name. The local dashboard uses `default`.
+      schema:
+        type: string
+        minLength: 1
+        examples: ["default"]
   responses:
     BadRequest:
       description: Invalid request parameter.
@@ -210,6 +280,12 @@ components:
             $ref: "#/components/schemas/ErrorResponse"
     NotFound:
       description: Ticker was not found in the latest loaded warning batch.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    ServiceUnavailable:
+      description: Required backing store is unavailable.
       content:
         application/json:
           schema:
@@ -444,6 +520,97 @@ components:
         date:
           type: string
           format: date
+        warning_level:
+          $ref: "#/components/schemas/WarningLevel"
+        calibrated_risk_probability:
+          type: number
+          minimum: 0
+          maximum: 1
+        trust_score:
+          type: number
+          minimum: 0
+          maximum: 1
+    WatchlistAddTickerRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - schema_version
+        - ticker
+        - market
+        - notes
+      properties:
+        schema_version:
+          type: string
+          const: watchlist_add.v1
+        ticker:
+          type: string
+          examples: ["NVDA", "2330"]
+        market:
+          type: string
+          enum: [auto, us, twse, tpex]
+        notes:
+          type: string
+    WatchlistResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - schema_version
+        - name
+        - record_count
+        - updated_at
+        - tickers
+      properties:
+        schema_version:
+          type: string
+          const: watchlist.v1
+        name:
+          type: string
+        record_count:
+          type: integer
+          minimum: 0
+        updated_at:
+          type: string
+        tickers:
+          type: array
+          items:
+            $ref: "#/components/schemas/WatchlistTicker"
+    WatchlistTicker:
+      type: object
+      additionalProperties: false
+      required:
+        - ticker
+        - query_symbol
+        - market
+        - added_at
+        - notes
+        - has_latest_warning
+      properties:
+        ticker:
+          type: string
+        query_symbol:
+          type: string
+        market:
+          type: string
+          enum: [us, twse, tpex, taiwan, unknown]
+        added_at:
+          type: string
+        notes:
+          type: string
+        has_latest_warning:
+          type: boolean
+        latest_warning:
+          $ref: "#/components/schemas/WatchlistLatestWarning"
+    WatchlistLatestWarning:
+      type: object
+      additionalProperties: false
+      required:
+        - date
+        - warning_level
+        - calibrated_risk_probability
+        - trust_score
+      properties:
+        date:
+          type: string
         warning_level:
           $ref: "#/components/schemas/WarningLevel"
         calibrated_risk_probability:
