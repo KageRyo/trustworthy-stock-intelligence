@@ -4,10 +4,13 @@ import {
   Database,
   Gauge,
   Info,
+  ListChecks,
+  Plus,
   RefreshCcw,
   Search,
   ShieldCheck,
-  Target
+  Target,
+  Trash2
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
@@ -23,11 +26,14 @@ import {
 } from "recharts";
 import {
   APIClientError,
+  addWatchlistTicker,
   fetchCurrentModel,
   fetchLatestWarnings,
   fetchStatus,
   fetchTickerAnalysis,
-  fetchTickers
+  fetchTickers,
+  fetchWatchlist,
+  removeWatchlistTicker
 } from "./lib/api";
 import type {
   APIStatus,
@@ -37,6 +43,8 @@ import type {
   ReasonExplanation,
   TickerList,
   TickerAnalysis,
+  Watchlist,
+  WatchlistTicker,
   WarningLevel
 } from "./lib/schemas";
 
@@ -142,6 +150,7 @@ export default function App() {
   const [model, setModel] = useState<CurrentModel | null>(null);
   const [latestWarnings, setLatestWarnings] = useState<PredictionBatch | null>(null);
   const [tickerList, setTickerList] = useState<TickerList | null>(null);
+  const [watchlist, setWatchlist] = useState<Watchlist | null>(null);
   const [analysis, setAnalysis] = useState<TickerAnalysis | null>(null);
   const [tickerInput, setTickerInput] = useState("NVDA");
   const [selectedTicker, setSelectedTicker] = useState("");
@@ -149,6 +158,7 @@ export default function App() {
   const [analysisState, setAnalysisState] = useState<LoadState>("idle");
   const [batchError, setBatchError] = useState("");
   const [analysisError, setAnalysisError] = useState("");
+  const [watchlistError, setWatchlistError] = useState("");
 
   const batchSummary = useMemo(() => summarizeBatch(latestWarnings), [latestWarnings]);
   const coverageSummary = useMemo(() => summarizeCoverage(tickerList), [tickerList]);
@@ -157,16 +167,19 @@ export default function App() {
     setBatchState("loading");
     setBatchError("");
     try {
-      const [nextStatus, nextModel, nextWarnings, nextTickers] = await Promise.all([
+      const [nextStatus, nextModel, nextWarnings, nextTickers, nextWatchlist] = await Promise.all([
         fetchStatus(),
         fetchCurrentModel(),
         fetchLatestWarnings(75),
-        fetchTickers()
+        fetchTickers(),
+        fetchWatchlist()
       ]);
       setStatus(nextStatus);
       setModel(nextModel);
       setLatestWarnings(nextWarnings);
       setTickerList(nextTickers);
+      setWatchlist(nextWatchlist);
+      setWatchlistError("");
       setBatchState("ready");
 
       if (nextWarnings.records.length > 0) {
@@ -228,6 +241,30 @@ export default function App() {
     }
   }
 
+  async function addCurrentTickerToWatchlist() {
+    const normalized = normalizeTicker(tickerInput);
+    if (!normalized) {
+      return;
+    }
+    setWatchlistError("");
+    try {
+      const nextWatchlist = await addWatchlistTicker(normalized);
+      setWatchlist(nextWatchlist);
+    } catch (error) {
+      setWatchlistError(errorMessage(error));
+    }
+  }
+
+  async function removeTickerFromWatchlist(ticker: string) {
+    setWatchlistError("");
+    try {
+      const nextWatchlist = await removeWatchlistTicker(ticker);
+      setWatchlist(nextWatchlist);
+    } catch (error) {
+      setWatchlistError(errorMessage(error));
+    }
+  }
+
   return (
     <main className="min-h-screen bg-paper text-ink">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-5 sm:px-6 lg:px-8">
@@ -263,6 +300,14 @@ export default function App() {
             <button
               className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-line bg-white px-4 text-sm font-semibold text-ink shadow-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-data"
               type="button"
+              onClick={addCurrentTickerToWatchlist}
+            >
+              <Plus size={17} aria-hidden="true" />
+              Add
+            </button>
+            <button
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-line bg-white px-4 text-sm font-semibold text-ink shadow-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-data"
+              type="button"
               onClick={refreshAll}
             >
               <RefreshCcw size={17} aria-hidden="true" />
@@ -272,6 +317,7 @@ export default function App() {
         </header>
 
         {batchError ? <ErrorBanner message={batchError} /> : null}
+        {watchlistError ? <ErrorBanner message={watchlistError} /> : null}
         {status?.last_error ? <ErrorBanner message={status.last_error} /> : null}
 
         <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
@@ -311,7 +357,7 @@ export default function App() {
             icon={<Database size={18} />}
             label="Coverage"
             value={formatNumber(tickerList?.record_count ?? status?.record_count)}
-            detail={coverageSummary}
+            detail={`${coverageSummary} / WL ${formatNumber(watchlist?.record_count)}`}
             tone="data"
           />
         </section>
@@ -326,7 +372,15 @@ export default function App() {
         </section>
 
         <section className="grid gap-5 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
-          <ReasonsPanel reasons={analysis?.reasons ?? []} />
+          <WatchlistPanel
+            watchlist={watchlist}
+            selectedTicker={selectedTicker}
+            onSelectTicker={(ticker) => {
+              setTickerInput(ticker);
+              setSelectedTicker(ticker);
+            }}
+            onRemoveTicker={removeTickerFromWatchlist}
+          />
           <WarningsTable
             records={latestWarnings?.records ?? []}
             selectedTicker={selectedTicker}
@@ -336,6 +390,10 @@ export default function App() {
             }}
             loading={batchState === "loading"}
           />
+        </section>
+
+        <section>
+          <ReasonsPanel reasons={analysis?.reasons ?? []} />
         </section>
       </div>
     </main>
@@ -531,6 +589,111 @@ function ReasonItem({ reason }: { reason: ReasonExplanation }) {
       <p className="mt-2 text-sm leading-6">{reason.detail}</p>
       <p className="mt-2 break-all font-mono text-xs opacity-75">{reason.code}</p>
     </div>
+  );
+}
+
+function WatchlistPanel({
+  watchlist,
+  selectedTicker,
+  onSelectTicker,
+  onRemoveTicker
+}: {
+  watchlist: Watchlist | null;
+  selectedTicker: string;
+  onSelectTicker: (ticker: string) => void;
+  onRemoveTicker: (ticker: string) => void;
+}) {
+  const tickers = watchlist?.tickers ?? [];
+
+  return (
+    <section className="rounded-lg border border-line bg-white p-5 shadow-panel">
+      <div className="mb-4 flex flex-col gap-2 border-b border-line pb-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 className="text-lg font-semibold tracking-normal">Watchlist</h2>
+          <p className="mt-1 text-sm text-slate-500">
+            {formatNumber(watchlist?.record_count)} rows
+          </p>
+        </div>
+        <ListChecks className="text-data" size={22} aria-hidden="true" />
+      </div>
+      {tickers.length === 0 ? <PanelState label="No watchlist tickers" /> : null}
+      {tickers.length > 0 ? (
+        <div className="overflow-x-auto">
+          <table className="min-w-[620px] w-full border-collapse text-left text-sm">
+            <thead>
+              <tr className="border-b border-line text-xs uppercase tracking-normal text-slate-500">
+                <th className="py-3 pr-3 font-semibold">Ticker</th>
+                <th className="px-3 py-3 font-semibold">Market</th>
+                <th className="px-3 py-3 font-semibold">Latest</th>
+                <th className="px-3 py-3 font-semibold">Trust</th>
+                <th className="px-3 py-3 font-semibold">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {tickers.map((ticker) => (
+                <WatchlistRow
+                  key={`${ticker.market}-${ticker.ticker}`}
+                  ticker={ticker}
+                  selected={selectedTicker === ticker.ticker}
+                  onSelectTicker={onSelectTicker}
+                  onRemoveTicker={onRemoveTicker}
+                />
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+function WatchlistRow({
+  ticker,
+  selected,
+  onSelectTicker,
+  onRemoveTicker
+}: {
+  ticker: WatchlistTicker;
+  selected: boolean;
+  onSelectTicker: (ticker: string) => void;
+  onRemoveTicker: (ticker: string) => void;
+}) {
+  return (
+    <tr className={`border-b border-line last:border-0 ${selected ? "bg-sky-50" : "hover:bg-slate-50"}`}>
+      <td className="py-3 pr-3">
+        <button
+          className="font-semibold text-data hover:underline focus:outline-none focus:ring-2 focus:ring-data"
+          type="button"
+          onClick={() => onSelectTicker(ticker.ticker)}
+        >
+          {ticker.ticker}
+        </button>
+        <p className="mt-1 text-xs text-slate-500">{ticker.query_symbol}</p>
+      </td>
+      <td className="px-3 py-3 text-slate-600">{ticker.market.toUpperCase()}</td>
+      <td className="px-3 py-3">
+        {ticker.latest_warning ? (
+          <LevelBadge level={ticker.latest_warning.warning_level} />
+        ) : (
+          <span className="inline-flex min-w-[86px] items-center justify-center rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold uppercase tracking-normal text-slate-600">
+            Pending
+          </span>
+        )}
+      </td>
+      <td className="px-3 py-3">
+        {ticker.latest_warning ? formatPercent(ticker.latest_warning.trust_score) : "n/a"}
+      </td>
+      <td className="px-3 py-3">
+        <button
+          className="grid h-9 w-9 place-items-center rounded-md border border-line bg-white text-slate-600 hover:bg-red-50 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-data"
+          type="button"
+          aria-label={`Remove ${ticker.ticker}`}
+          onClick={() => onRemoveTicker(ticker.ticker)}
+        >
+          <Trash2 size={16} aria-hidden="true" />
+        </button>
+      </td>
+    </tr>
   );
 }
 

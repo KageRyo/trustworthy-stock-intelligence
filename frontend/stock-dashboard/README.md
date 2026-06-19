@@ -1,6 +1,6 @@
 # TSI Stock Dashboard
 
-TypeScript dashboard for the Go warning API.
+TypeScript dashboard for the PostgreSQL-backed Go warning API.
 
 ## Data Contract
 
@@ -16,6 +16,14 @@ The main ticker analysis endpoint is:
 GET /api/v1/analysis/{ticker}
 ```
 
+The dashboard also manages the DB-backed default watchlist:
+
+```text
+GET /api/v1/watchlists/default
+POST /api/v1/watchlists/default/tickers
+DELETE /api/v1/watchlists/default/tickers/{ticker}
+```
+
 See:
 
 ```text
@@ -24,9 +32,10 @@ docs/api/analysis_api.md
 
 ## Run
 
-Start the Go API first:
+Start PostgreSQL and the Go API first:
 
 ```bash
+docker compose up postgres
 make api
 ```
 

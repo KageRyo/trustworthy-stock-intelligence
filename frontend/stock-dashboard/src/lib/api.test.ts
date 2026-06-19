@@ -1,5 +1,13 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { APIClientError, fetchStatus, fetchTickerAnalysis, fetchTickers } from "./api";
+import {
+  APIClientError,
+  addWatchlistTicker,
+  fetchStatus,
+  fetchTickerAnalysis,
+  fetchTickers,
+  fetchWatchlist,
+  removeWatchlistTicker
+} from "./api";
 
 const fetchMock = vi.fn();
 globalThis.fetch = fetchMock;
@@ -102,6 +110,31 @@ function tickerListPayload() {
   };
 }
 
+function watchlistPayload() {
+  return {
+    schema_version: "watchlist.v1",
+    name: "default",
+    record_count: 1,
+    updated_at: "2026-06-19T00:00:00Z",
+    tickers: [
+      {
+        ticker: "2330",
+        query_symbol: "2330.TW",
+        market: "twse",
+        added_at: "2026-06-19T00:00:00Z",
+        notes: "",
+        has_latest_warning: true,
+        latest_warning: {
+          date: "2026-06-19",
+          warning_level: "watch",
+          calibrated_risk_probability: 0.22,
+          trust_score: 0.18
+        }
+      }
+    ]
+  };
+}
+
 afterEach(() => {
   fetchMock.mockReset();
 });
@@ -145,6 +178,56 @@ describe("typed API client", () => {
       headers: {
         Accept: "application/json"
       }
+    });
+  });
+
+  it("parses DB-backed watchlists", async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse(watchlistPayload()));
+
+    const watchlist = await fetchWatchlist();
+
+    expect(watchlist.schema_version).toBe("watchlist.v1");
+    expect(watchlist.tickers[0].query_symbol).toBe("2330.TW");
+    expect(fetchMock).toHaveBeenCalledWith("/api/v1/watchlists/default", {
+      headers: {
+        Accept: "application/json"
+      }
+    });
+  });
+
+  it("adds watchlist tickers with a schema-first request body", async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse(watchlistPayload(), 201));
+
+    const watchlist = await addWatchlistTicker("2330");
+
+    expect(watchlist.record_count).toBe(1);
+    expect(fetchMock).toHaveBeenCalledWith("/api/v1/watchlists/default/tickers", {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        schema_version: "watchlist_add.v1",
+        ticker: "2330",
+        market: "auto",
+        notes: ""
+      })
+    });
+  });
+
+  it("removes watchlist tickers through the typed API client", async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse({ ...watchlistPayload(), record_count: 0, tickers: [] }));
+
+    const watchlist = await removeWatchlistTicker("2330");
+
+    expect(watchlist.record_count).toBe(0);
+    expect(fetchMock).toHaveBeenCalledWith("/api/v1/watchlists/default/tickers/2330", {
+      method: "DELETE",
+      headers: {
+        Accept: "application/json"
+      },
+      body: undefined
     });
   });
 

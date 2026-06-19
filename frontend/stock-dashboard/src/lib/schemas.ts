@@ -118,6 +118,37 @@ export const tickerListSchema = z
   })
   .strict();
 
+export const watchlistLatestWarningSchema = z
+  .object({
+    date: z.string(),
+    warning_level: warningLevelSchema,
+    calibrated_risk_probability: z.number().min(0).max(1),
+    trust_score: z.number().min(0).max(1)
+  })
+  .strict();
+
+export const watchlistTickerSchema = z
+  .object({
+    ticker: z.string(),
+    query_symbol: z.string(),
+    market: z.enum(["us", "twse", "tpex", "taiwan", "unknown"]),
+    added_at: z.string(),
+    notes: z.string(),
+    has_latest_warning: z.boolean(),
+    latest_warning: watchlistLatestWarningSchema.optional()
+  })
+  .strict();
+
+export const watchlistSchema = z
+  .object({
+    schema_version: z.literal("watchlist.v1"),
+    name: z.string(),
+    record_count: z.number().int().nonnegative(),
+    updated_at: z.string(),
+    tickers: z.array(watchlistTickerSchema)
+  })
+  .strict();
+
 export const statusSchema = z
   .object({
     warnings_path: z.string(),
@@ -163,6 +194,8 @@ export type PredictionRecord = z.infer<typeof predictionRecordSchema>;
 export type PredictionBatch = z.infer<typeof predictionBatchSchema>;
 export type TickerSummary = z.infer<typeof tickerSummarySchema>;
 export type TickerList = z.infer<typeof tickerListSchema>;
+export type Watchlist = z.infer<typeof watchlistSchema>;
+export type WatchlistTicker = z.infer<typeof watchlistTickerSchema>;
 export type APIStatus = z.infer<typeof statusSchema>;
 export type CurrentModel = z.infer<typeof currentModelSchema>;
 export type APIError = z.infer<typeof apiErrorSchema>;

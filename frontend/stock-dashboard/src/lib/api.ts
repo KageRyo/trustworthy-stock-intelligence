@@ -6,11 +6,13 @@ import {
   statusSchema,
   tickerListSchema,
   tickerAnalysisSchema,
+  watchlistSchema,
   type APIStatus,
   type CurrentModel,
   type PredictionBatch,
   type TickerList,
-  type TickerAnalysis
+  type TickerAnalysis,
+  type Watchlist
 } from "./schemas";
 
 const API_BASE_URL = (import.meta.env.VITE_TSI_API_BASE_URL ?? "").replace(/\/$/, "");
@@ -47,6 +49,46 @@ async function fetchSchema<T>(path: string, schema: z.ZodType<T>, query?: Record
     headers: {
       Accept: "application/json"
     }
+  });
+  const payload = await readJSONResponse(response, url);
+
+  if (!response.ok) {
+    const parsedError = apiErrorSchema.safeParse(payload);
+    if (parsedError.success) {
+      throw new APIClientError(parsedError.data.error.message, {
+        code: parsedError.data.error.code,
+        status: response.status
+      });
+    }
+    throw new APIClientError(`API request failed with status ${response.status}`, {
+      code: "invalid_error_schema",
+      status: response.status
+    });
+  }
+
+  const parsed = schema.safeParse(payload);
+  if (!parsed.success) {
+    throw new APIClientError("API response did not match the expected schema", {
+      code: "invalid_response_schema",
+      status: response.status
+    });
+  }
+  return parsed.data;
+}
+
+async function mutateSchema<T>(
+  path: string,
+  schema: z.ZodType<T>,
+  options: { method: "POST" | "DELETE"; body?: unknown }
+) {
+  const url = apiUrl(path);
+  const response = await fetch(url, {
+    method: options.method,
+    headers: {
+      Accept: "application/json",
+      ...(options.body === undefined ? {} : { "Content-Type": "application/json" })
+    },
+    body: options.body === undefined ? undefined : JSON.stringify(options.body)
   });
   const payload = await readJSONResponse(response, url);
 
@@ -118,4 +160,30 @@ export function fetchLatestWarnings(limit = 50): Promise<PredictionBatch> {
 
 export function fetchTickers(): Promise<TickerList> {
   return fetchSchema("/api/v1/tickers", tickerListSchema);
+}
+
+export function fetchWatchlist(name = "default"): Promise<Watchlist> {
+  return fetchSchema(`/api/v1/watchlists/${encodeURIComponent(name)}`, watchlistSchema);
+}
+
+export function addWatchlistTicker(ticker: string, name = "default"): Promise<Watchlist> {
+  return mutateSchema(`/api/v1/watchlists/${encodeURIComponent(name)}/tickers`, watchlistSchema, {
+    method: "POST",
+    body: {
+      schema_version: "watchlist_add.v1",
+      ticker: ticker.trim().toUpperCase(),
+      market: "auto",
+      notes: ""
+    }
+  });
+}
+
+export function removeWatchlistTicker(ticker: string, name = "default"): Promise<Watchlist> {
+  return mutateSchema(
+    `/api/v1/watchlists/${encodeURIComponent(name)}/tickers/${encodeURIComponent(
+      ticker.trim().toUpperCase()
+    )}`,
+    watchlistSchema,
+    { method: "DELETE" }
+  );
 }
