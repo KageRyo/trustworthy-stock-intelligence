@@ -54,6 +54,9 @@ data = [
   "pandas-market-calendars>=4.4",
   "ta>=0.11",
 ]
+db = [
+  "psycopg[binary]>=3.2",
+]
 deep = [
   "torch>=2.7",
   "torchvision>=0.22",

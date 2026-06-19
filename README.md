@@ -377,7 +377,11 @@ Endpoints:
 ```text
 GET /health
 GET /metrics
+GET /openapi.yaml
+GET /swagger/
 GET /api/v1/status
+GET /api/v1/tickers
+GET /api/v1/analysis/{ticker}
 GET /api/v1/warnings/latest
 GET /api/v1/warnings/latest?level=watch&limit=20
 GET /api/v1/warnings/latest?level=alert&sort=trust_score&order=desc&limit=20
@@ -388,15 +392,22 @@ GET /api/v1/models/current
 The API reloads `latest_warnings.json` when the file modification time changes.
 If reload fails, it keeps serving the last valid batch and exposes the error in
 `/health` and `/api/v1/status`. See `docs/api/warning_api.md` for the API
-contract.
+contract. Ticker-level dashboard analysis uses the typed
+`/api/v1/analysis/{ticker}` contract documented in `docs/api/analysis_api.md`.
+Swagger UI is available at `/swagger/`, and the OpenAPI document is available
+at `/openapi.yaml`.
 
 ## Local Demo Commands
 
 Common demo commands are collected in `Makefile`:
 
 ```bash
+make download-tickers WATCHLIST_TICKERS="NVDA 2330" DOWNLOAD_INTERVAL=1d
+make predict-latest-baseline DATA_INPUT=data/raw/watchlist/ohlcv.csv
+make ingest-market-data WATCHLIST_TICKERS="NVDA 2330" MARKET_INTERVAL=5m
 make predict-latest
 make api
+make stock-dashboard
 make dashboard
 make test-all
 ```
@@ -408,7 +419,77 @@ GO=/mnt/8tb_hdd/ryo/miniconda3/envs/stock/bin/go make test-go
 MODEL_BUNDLE=data/artifacts/sp100_transformer_model_bundle make predict-latest
 ```
 
-## Dashboard
+`predict-latest-baseline` is the no-bundle local path for real OHLCV data. It
+trains a leakage-aware logistic baseline on the downloaded daily data and writes
+the same serving contract as the deep predictor:
+
+```text
+data/artifacts/latest_predictions.csv
+data/artifacts/latest_warnings.json
+```
+
+Numeric Taiwan stock codes are supported through the downloader. For example,
+`2330` is downloaded from yfinance as `2330.TW` but remains `2330` in the
+serving `ticker` field.
+
+The local watchlist flow only covers the tickers you download. It does not mean
+the loaded warning batch covers all US and Taiwan stocks. Use
+`GET /api/v1/tickers` or the dashboard table to see the current loaded coverage.
+
+## Data Store
+
+PostgreSQL is included in `docker-compose.yml` as the medium-term source of
+truth for ticker universes, 1m/5m/1d market bars, ingestion runs, prediction
+batches, and warning records. The initial schema lives in:
+
+```text
+infra/postgres/init/001_schema.sql
+```
+
+The Go API still reads `latest_warnings.json` in the current implementation.
+PostgreSQL is the data layer for provider ingestion and history, not yet the
+active API warning store. See `docs/data_store.md`.
+
+Start PostgreSQL locally with:
+
+```bash
+docker compose up postgres
+```
+
+Install the optional PostgreSQL writer dependency and ingest fresh watchlist
+bars with:
+
+```bash
+python -m pip install -e ".[db]"
+make ingest-market-data WATCHLIST_TICKERS="NVDA 2330" MARKET_INTERVAL=5m
+```
+
+The ingestion command validates downloaded rows through Pydantic schemas and
+prints a `market_data_ingestion.v1` summary. Five-minute ingestion improves
+market-data freshness, but the current baseline and deep warning models remain
+daily unless trained and labeled on intraday features.
+
+## Dashboards
+
+The TypeScript stock dashboard is the primary interactive UI for ticker-level
+risk analysis. It reads typed Go API responses and validates them with Zod
+schemas before rendering.
+
+```bash
+make frontend-install
+make api
+make stock-dashboard
+```
+
+Open:
+
+```text
+http://localhost:5173
+```
+
+The first version supports ticker search, typed `/api/v1/analysis/{ticker}`
+results, warning/trust metrics, reason explanations, model metadata, and the
+latest warnings table.
 
 The Streamlit dashboard shows trust experiment artifacts and can also read the
 Go API gateway through the Live API tab.

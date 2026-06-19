@@ -5,7 +5,10 @@ Python/Go split.
 
 ```mermaid
 flowchart TD
-    A[OHLCV CSV] --> B[Python Feature Builder]
+    P[Provider APIs: yfinance/TWSE] --> Q[Ingestion Job]
+    Q --> R[PostgreSQL 1m/5m/1d Bars]
+    A[OHLCV CSV Snapshot] --> B[Python Feature Builder]
+    R --> B
     B --> C[Temporal Transformer]
     C --> D[Calibration]
     D --> E[Uncertainty Estimation]
@@ -15,9 +18,33 @@ flowchart TD
     H --> I[Atomic latest_warnings.json]
     I --> J[Go API Gateway]
     J --> K[Streamlit Dashboard Live API Tab]
+    J --> N[TypeScript Stock Dashboard]
     G --> L[Experiment Reports]
     L --> M[Streamlit Dashboard Artifact Tabs]
 ```
+
+## Data Layer
+
+Provider APIs are ingestion sources. The project should preserve snapshots for
+trustworthy ML runs instead of relying on request-time provider calls.
+
+The chosen medium-term store is PostgreSQL:
+
+```text
+provider API -> PostgreSQL market_bars -> feature/inference job -> warnings
+```
+
+The schema supports:
+
+```text
+1m
+5m
+1d
+```
+
+The near-real-time freshness target is 5-minute bars. Current Go serving is
+still artifact-backed through `latest_warnings.json`; DB-backed serving is a
+future step after the API contract stabilizes.
 
 ## Python ML Core
 
@@ -84,6 +111,7 @@ Go owns user-facing read-only API serving:
 - reload when file modification time changes
 - keep the last valid batch if reload fails
 - serve latest warnings, ticker lookup, model metadata, health, status, and metrics
+- serve typed ticker analysis responses for dashboard use
 - support `level`, `limit`, `sort`, and `order` query filters
 
 Go does not:
@@ -94,7 +122,24 @@ Go does not:
 - call Python synchronously per request
 - connect to Redis/PostgreSQL in v1
 
-## Dashboard
+## Dashboards
+
+The TypeScript stock dashboard is the primary ticker analysis UI. It reads the
+Go API and validates response payloads with Zod schemas before rendering.
+
+Primary endpoints:
+
+```text
+GET /api/v1/analysis/{ticker}
+GET /api/v1/tickers
+GET /api/v1/warnings/latest
+GET /api/v1/status
+GET /api/v1/models/current
+```
+
+The analysis endpoint is schema-owned by Go structs in
+`services/api-gateway-go/internal/http/analysis.go` and documented in
+`docs/api/analysis_api.md`.
 
 Streamlit has two views:
 

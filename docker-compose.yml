@@ -1,4 +1,21 @@
 services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: tsi
+      POSTGRES_USER: tsi
+      POSTGRES_PASSWORD: tsi_local_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./infra/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tsi -d tsi"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   api-gateway-go:
     build:
       context: services/api-gateway-go
@@ -20,3 +37,16 @@ services:
       - "8501:8501"
     depends_on:
       - api-gateway-go
+
+  stock-dashboard:
+    build:
+      context: frontend/stock-dashboard
+    environment:
+      TSI_DASHBOARD_API_BASE_URL: http://api-gateway-go:8080
+    ports:
+      - "5173:5173"
+    depends_on:
+      - api-gateway-go
+
+volumes:
+  postgres-data:
