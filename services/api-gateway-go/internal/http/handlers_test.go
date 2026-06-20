@@ -551,6 +551,17 @@ func TestBuildTickerAnalysisPrefersRecordMetadata(t *testing.T) {
 	}
 }
 
+func TestExplainReasonCodeSupportsInsufficientHistory(t *testing.T) {
+	reason := explainReasonCode("insufficient_history")
+
+	if reason.Severity != "watch" {
+		t.Fatalf("severity = %q, want watch", reason.Severity)
+	}
+	if !strings.Contains(strings.ToLower(reason.Detail), "not enough labeled history") {
+		t.Fatalf("unexpected detail: %+v", reason)
+	}
+}
+
 func TestTickerAnalysisHandlerReturnsNotFound(t *testing.T) {
 	response := getJSON(t, testRouter(t), "/api/v1/analysis/NVDA")
 

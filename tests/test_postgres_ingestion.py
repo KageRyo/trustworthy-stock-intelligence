@@ -4,6 +4,7 @@ import pandas as pd
 
 from tsi.data.download import DownloadFrameResult, DownloadTicker
 from tsi.data.postgres import (
+    _resolve_prediction_record_ticker,
     build_ingestion_summary,
     build_market_bar_rows,
     build_resolved_tickers,
@@ -16,6 +17,14 @@ def test_infer_market_maps_provider_suffixes() -> None:
     assert infer_market("2330", "2330.TW") == "twse"
     assert infer_market("6488", "6488.TWO") == "tpex"
     assert infer_market("NVDA", "NVDA") == "us"
+
+
+def test_prediction_record_resolver_maps_taiwan_alphanumeric_codes_to_twse() -> None:
+    resolved = _resolve_prediction_record_ticker("00981A")
+
+    assert resolved.symbol == "00981A"
+    assert resolved.query_symbol == "00981A.TW"
+    assert resolved.market == "twse"
 
 
 def test_validate_interval_accepts_database_supported_intervals() -> None:

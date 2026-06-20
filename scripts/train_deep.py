@@ -13,6 +13,7 @@ import torch
 
 from scripts.train import prepare_training_frame
 from tsi.artifacts.model_bundle import ModelBundleMetadata, save_model_bundle
+from tsi.data.csv import read_ohlcv_csv
 from tsi.data.split import build_walk_forward_splits
 from tsi.evaluation.metrics import classification_metrics
 from tsi.features.technical import DEFAULT_FEATURE_COLUMNS
@@ -221,7 +222,7 @@ def run_training(args: argparse.Namespace) -> dict[str, object]:
     np.random.seed(args.seed)
     device = resolve_training_device(args.device, allow_cpu=args.allow_cpu)
 
-    ohlcv = pd.read_csv(args.input)
+    ohlcv = read_ohlcv_csv(args.input)
     training_frame = prepare_training_frame(
         ohlcv,
         horizon=args.horizon,

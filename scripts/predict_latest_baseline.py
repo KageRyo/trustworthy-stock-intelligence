@@ -10,11 +10,12 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from tsi.data.csv import read_ohlcv_csv
+from tsi.data.postgres import write_prediction_batch_to_postgres
 from tsi.features.technical import DEFAULT_FEATURE_COLUMNS, build_technical_features
 from tsi.labeling.drawdown import add_future_drawdown_label
 from tsi.labeling.warning_level import select_alert_threshold
 from tsi.models.logistic import LogisticRiskModel
-from tsi.data.postgres import write_prediction_batch_to_postgres
 from tsi.serving.schema import build_prediction_batch, write_prediction_batch_json
 from tsi.trust.calibration import CalibrationMethod, fit_probability_calibrator
 from tsi.trust.decision import (
@@ -153,7 +154,7 @@ def split_train_calibration(
 def run_prediction(args: argparse.Namespace) -> pd.DataFrame:
     """Train a baseline on historical labels and write latest predictions."""
 
-    ohlcv = pd.read_csv(args.input)
+    ohlcv = read_ohlcv_csv(args.input)
     training_frame, latest_frame = prepare_frames(
         ohlcv,
         horizon=args.horizon,

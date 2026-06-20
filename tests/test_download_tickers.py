@@ -5,6 +5,7 @@ import pytest
 
 from tsi.data import download as download_module
 from tsi.data.download import (
+    TWSEStockDayResponse,
     _normalize_download_frame,
     configure_yfinance_cache,
     download_ticker_frame,
@@ -17,6 +18,13 @@ def test_resolve_yfinance_ticker_maps_numeric_auto_to_twse_symbol() -> None:
 
     assert resolved.ticker == "2330"
     assert resolved.query_symbol == "2330.TW"
+
+
+def test_resolve_yfinance_ticker_maps_taiwan_alphanumeric_auto_to_twse_symbol() -> None:
+    resolved = resolve_yfinance_ticker("00981a")
+
+    assert resolved.ticker == "00981A"
+    assert resolved.query_symbol == "00981A.TW"
 
 
 def test_resolve_yfinance_ticker_supports_tpex_numeric_codes() -> None:
@@ -86,3 +94,61 @@ def test_configure_yfinance_cache_uses_writable_env_path(monkeypatch, tmp_path) 
 
     assert cache_dir.is_dir()
     assert calls == [str(cache_dir)]
+
+
+def test_download_ticker_frame_falls_back_to_twse_daily_for_taiwan_code(monkeypatch) -> None:
+    def fake_yfinance_download(**_kwargs):
+        return pd.DataFrame()
+
+    def fake_fetch_json(_url, params):
+        if params["date"] == "20260601":
+            return TWSEStockDayResponse(
+                stat="OK",
+                date="20260601",
+                title="115年06月 00981A 主動統一台股增長 各日成交資訊",
+                fields=[
+                    "日期",
+                    "成交股數",
+                    "成交金額",
+                    "開盤價",
+                    "最高價",
+                    "最低價",
+                    "收盤價",
+                    "漲跌價差",
+                    "成交筆數",
+                    "註記",
+                ],
+                data=[
+                    [
+                        "115/06/01",
+                        "254,690,698",
+                        "8,109,667,428",
+                        "31.69",
+                        "32.07",
+                        "31.61",
+                        "31.70",
+                        "+0.16",
+                        "73,732",
+                        "",
+                    ]
+                ],
+            ).model_dump()
+        return TWSEStockDayResponse(stat="很抱歉，沒有符合條件的資料!").model_dump()
+
+    monkeypatch.setattr(download_module.yf, "download", fake_yfinance_download)
+    monkeypatch.setattr(download_module, "fetch_json", fake_fetch_json)
+
+    result = download_ticker_frame(
+        ["00981A"],
+        start="2026-06-01",
+        end="2026-06-02",
+        interval="1d",
+        market="auto",
+    )
+
+    assert result.tickers[0].query_symbol == "00981A.TW"
+    assert result.failed_batches == []
+    assert result.ohlcv["ticker"].tolist() == ["00981A"]
+    assert result.ohlcv["date"].tolist() == ["2026-06-01"]
+    assert result.ohlcv["close"].tolist() == [31.70]
+    assert result.ohlcv["volume"].tolist() == [254690698.0]

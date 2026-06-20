@@ -9,6 +9,7 @@ from pathlib import Path
 
 import pandas as pd
 
+from tsi.data.csv import read_ohlcv_csv
 from tsi.data.split import build_walk_forward_splits
 from tsi.evaluation.metrics import classification_metrics
 from tsi.features.technical import DEFAULT_FEATURE_COLUMNS, build_technical_features
@@ -109,7 +110,7 @@ def prepare_training_frame(
 def run_training(args: argparse.Namespace) -> dict[str, object]:
     """Train one logistic model per walk-forward fold and return metrics."""
 
-    ohlcv = pd.read_csv(args.input)
+    ohlcv = read_ohlcv_csv(args.input)
     training_frame = prepare_training_frame(
         ohlcv,
         horizon=args.horizon,

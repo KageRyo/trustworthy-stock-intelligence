@@ -98,3 +98,37 @@ def test_run_prediction_writes_serving_json_for_numeric_and_us_tickers(tmp_path:
     assert payload["record_count"] == 2
     assert [record["ticker"] for record in payload["records"]] == ["2330", "NVDA"]
     assert output_path.exists()
+
+
+def test_run_prediction_preserves_leading_zero_ticker_symbols(tmp_path: Path) -> None:
+    input_path = tmp_path / "ohlcv.csv"
+    output_path = tmp_path / "latest_predictions.csv"
+    json_path = tmp_path / "latest_warnings.json"
+    frame = _ohlcv_frame()
+    frame = frame[frame["ticker"] == "2330"].copy()
+    frame["ticker"] = "00878"
+    frame.to_csv(input_path, index=False)
+    args = parse_args(
+        [
+            "--input",
+            str(input_path),
+            "--output",
+            str(output_path),
+            "--json-output",
+            str(json_path),
+            "--calibration-size",
+            "10",
+            "--train-size",
+            "40",
+            "--calibration-method",
+            "none",
+            "--run-id",
+            "test_leading_zero",
+        ]
+    )
+
+    predictions = run_prediction(args)
+    payload = json.loads(json_path.read_text(encoding="utf-8"))
+
+    assert predictions["ticker"].tolist() == ["00878"]
+    assert payload["records"][0]["ticker"] == "00878"

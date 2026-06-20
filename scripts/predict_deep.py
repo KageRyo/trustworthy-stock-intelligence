@@ -11,6 +11,7 @@ import pandas as pd
 import torch
 
 from tsi.artifacts.model_bundle import load_model_bundle
+from tsi.data.csv import read_ohlcv_csv
 from tsi.features.technical import build_technical_features
 from tsi.models.temporal_transformer import TemporalTransformerRiskModel
 from tsi.serving.schema import build_prediction_batch, write_prediction_batch_json
@@ -191,7 +192,7 @@ def run_prediction(args: argparse.Namespace) -> pd.DataFrame:
     model.load_state_dict(bundle.model_state_dict)
     model = model.to(device)
 
-    ohlcv = pd.read_csv(args.input)
+    ohlcv = read_ohlcv_csv(args.input)
     inference_frame = build_inference_frame(
         ohlcv,
         feature_columns=bundle.metadata.feature_columns,

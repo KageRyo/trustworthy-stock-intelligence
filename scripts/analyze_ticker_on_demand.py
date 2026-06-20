@@ -10,12 +10,14 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Literal
 
+import pandas as pd
 from pydantic import BaseModel, ConfigDict, Field
 
 from scripts.predict_latest_baseline import parse_args as parse_prediction_args
 from scripts.predict_latest_baseline import run_prediction
 from tsi.data.download import download_ticker_frame
-from tsi.data.postgres import write_download_to_postgres
+from tsi.data.postgres import write_download_to_postgres, write_prediction_batch_to_postgres
+from tsi.serving.schema import build_prediction_batch, write_prediction_batch_json
 
 SCHEMA_VERSION = "on_demand_analysis.v1"
 
@@ -171,7 +173,21 @@ def run_on_demand_analysis(args: argparse.Namespace) -> OnDemandAnalysisSummary:
     if args.train_size is not None:
         prediction_args.extend(["--train-size", str(args.train_size)])
 
-    predictions = run_prediction(parse_prediction_args(prediction_args))
+    try:
+        predictions = run_prediction(parse_prediction_args(prediction_args))
+    except ValueError as exc:
+        if not is_insufficient_history_error(exc):
+            raise
+        predictions = write_insufficient_history_prediction(
+            result.ohlcv,
+            ticker=ticker,
+            run_id=run_id,
+            input_path=input_path,
+            predictions_path=predictions_path,
+            warnings_path=warnings_path,
+            database_url=database_url,
+            feature_interval=args.interval,
+        )
     if predictions.empty:
         raise ValueError(f"No predictions generated for ticker {ticker}")
 
@@ -213,6 +229,64 @@ def build_run_id(ticker: str) -> str:
 
 def default_fresh_start() -> str:
     return (datetime.now(UTC).date() - timedelta(days=7)).isoformat()
+
+
+def is_insufficient_history_error(error: ValueError) -> bool:
+    message = str(error)
+    return any(
+        marker in message
+        for marker in (
+            "Not enough labeled dates",
+            "No latest feature rows were created",
+            "train and calibration frames must not be empty",
+        )
+    )
+
+
+def write_insufficient_history_prediction(
+    ohlcv: pd.DataFrame,
+    *,
+    ticker: str,
+    run_id: str,
+    input_path: Path,
+    predictions_path: Path,
+    warnings_path: Path,
+    database_url: str,
+    feature_interval: str,
+) -> pd.DataFrame:
+    frame = ohlcv.copy()
+    data_as_of = str(frame["date"].max())
+    predictions = frame.iloc[[-1]][["date", "ticker"]].assign(
+        model="insufficient_history_abstain",
+        risk_probability=0.5,
+        calibrated_risk_probability=0.5,
+        calibration_method="none",
+        uncertainty_score=1.0,
+        trust_score=0.0,
+        alert_threshold=1.0,
+        watch_threshold=1.0,
+        warning_level="abstain",
+        model_bundle=f"insufficient_history:{input_path}",
+        reason_codes=[
+            [
+                "insufficient_history",
+                "trust_below_alert_threshold",
+                "uncertainty_above_threshold",
+                "warning_level_abstain",
+            ]
+        ],
+    )
+    predictions["ticker"] = ticker
+    predictions_path.parent.mkdir(parents=True, exist_ok=True)
+    predictions.drop(columns=["reason_codes"]).to_csv(predictions_path, index=False)
+    batch = build_prediction_batch(predictions, run_id=run_id, data_as_of=data_as_of)
+    write_prediction_batch_json(batch, warnings_path)
+    write_prediction_batch_to_postgres(
+        database_url,
+        batch,
+        feature_interval=feature_interval,
+    )
+    return predictions.drop(columns=["reason_codes"])
 
 
 def main() -> None:

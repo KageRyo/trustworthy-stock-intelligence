@@ -9,7 +9,7 @@ from typing import Any, Literal, cast
 import pandas as pd
 from pydantic import BaseModel, ConfigDict, Field
 
-from tsi.data.download import DownloadFrameResult
+from tsi.data.download import DownloadFrameResult, is_taiwan_local_ticker
 from tsi.serving.schema import PredictionBatch
 
 MarketBarInterval = Literal["1m", "5m", "1d"]
@@ -379,7 +379,7 @@ def _infer_batch_record_date(batch: PredictionBatch) -> str:
 
 def _resolve_prediction_record_ticker(ticker: str) -> ResolvedTickerSchema:
     symbol = ticker.strip().upper()
-    if symbol.isdigit():
+    if is_taiwan_local_ticker(symbol):
         return ResolvedTickerSchema(symbol=symbol, query_symbol=f"{symbol}.TW", market="twse")
     return ResolvedTickerSchema(
         symbol=symbol.replace(".", "-"),

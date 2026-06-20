@@ -249,6 +249,13 @@ func explainReasonCode(code string) ReasonExplanation {
 			Title:    "No alert warning level",
 			Detail:   "The final warning decision is no alert.",
 		}
+	case "insufficient_history":
+		return ReasonExplanation{
+			Code:     code,
+			Severity: "watch",
+			Title:    "Insufficient price history",
+			Detail:   "The ticker has market data, but not enough labeled history for a calibrated risk prediction.",
+		}
 	default:
 		return ReasonExplanation{
 			Code:     code,
