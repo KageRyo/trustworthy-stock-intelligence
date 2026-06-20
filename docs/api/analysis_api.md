@@ -17,6 +17,11 @@ when `TSI_ON_DEMAND_ANALYSIS_COMMAND` is configured. If the provider or model
 pipeline cannot produce a record, the endpoint returns the standard API error
 envelope.
 
+If market data exists but the ticker does not have enough labeled history for a
+calibrated prediction, the endpoint returns an `abstain` analysis with the
+`insufficient_history` reason code. This keeps the response schema stable while
+making the trust limitation explicit.
+
 ## Response Schema
 
 ### `TickerAnalysisResponse`

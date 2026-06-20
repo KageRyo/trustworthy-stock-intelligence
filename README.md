@@ -454,6 +454,12 @@ The dashboard can request an analysis for a ticker that is not already present
 in PostgreSQL. When `TSI_ON_DEMAND_ANALYSIS_COMMAND` is configured, the Go API
 delegates to the Python on-demand command, downloads provider data, writes a new
 warning record to PostgreSQL, refreshes its store, and returns the analysis.
+Taiwan local symbols such as `0050`, `00878`, `2330`, and alphanumeric ETF
+codes such as `00981A` are resolved as Taiwan tickers. Daily Taiwan fallback
+data is parsed from schema-validated TWSE/TPEx provider responses when yfinance
+does not cover a symbol. If market data exists but the ticker has too little
+history for calibrated training, the system returns an `abstain` warning with
+an `insufficient_history` reason code instead of failing the request.
 Use `GET /api/v1/tickers` or the dashboard table to see which symbols currently
 have stored warning records.
 

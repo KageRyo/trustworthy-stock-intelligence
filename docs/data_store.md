@@ -152,8 +152,11 @@ For the dashboard and API, Taiwan stock codes should remain user-facing numeric
 codes such as `2330`. Provider suffixes belong in ingestion metadata, not in the
 main dashboard search experience.
 
-TWSE/TPEx official sources should be evaluated for Taiwan market production-like
-ingestion. yfinance remains acceptable for local demo and early pipeline tests.
+TWSE/TPEx official daily sources are used as Taiwan fallback providers for
+on-demand ticker analysis when yfinance does not cover a Taiwan symbol. Their
+responses should be validated through explicit provider schemas before being
+normalized into OHLCV rows. yfinance remains acceptable for local demo and early
+pipeline tests, especially for US symbols and Taiwan symbols it already covers.
 
 ## Current Limitation
 
