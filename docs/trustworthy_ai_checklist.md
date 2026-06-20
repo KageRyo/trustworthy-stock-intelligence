@@ -1,0 +1,68 @@
+# Trustworthy AI Checklist
+
+Source reviewed: `air_screen3_TAI指標互動展示.pptx`, 58 slides verified from
+the PPTX slide XML and extracted text on 2026-06-20.
+
+This checklist adapts the deck's pre-modeling, modeling, and post-modeling TAI
+dimensions to this stock drawdown-risk warning project.
+
+## Dimensions
+
+| Dimension | Project checkpoint |
+| --- | --- |
+| Accuracy | Track data freshness, data quality, completeness, calibration, precision, recall, F1, false alarm rate, miss rate, and lead time. |
+| Reliability | Test provider outages, market-noise sensitivity, perturbation stability, drift, stale data handling, and warning-threshold stability. |
+| Safety | Keep outputs framed as risk warnings, not investment advice. Show limitations, stale-data states, low-trust states, and warning thresholds. |
+| Resilience | Support US and Taiwan symbols, numeric Taiwan codes, 1m/5m/1d bars, provider replacement, scheduled ingestion, and recovery after provider failures. |
+| Transparency | Persist run IDs, model bundle names, data_as_of, generated_at, feature interval, reason codes, logs, and audit metadata. |
+| Accountability | Keep API schemas, tests, dependency/license review, run notes, and Python/Go/dashboard responsibility boundaries explicit. |
+| Explainability | Provide reason-code explanations now; add feature attribution and ticker-level warning history next. |
+| Autonomy | Keep the dashboard human-over-the-loop. Users control watchlists, and the system must not automate trading actions. |
+| Privacy | Minimize data collection. Protect `.env`, DB credentials, logs, and any future user holdings/watchlist-sensitive data. |
+| Fairness | Track coverage bias across US/Taiwan markets, sectors, liquidity, market cap, and provider availability. Do not claim all-stock coverage until measured. |
+| Security | Use typed schemas, strict error envelopes, input validation, dependency audits, CORS allowlists, DB-required startup, and provider payload validation. |
+
+## Stage Gates
+
+Before modeling:
+
+- Define target use, users, non-use cases, and risk-warning limits.
+- Validate provider freshness, required OHLCV fields, symbol normalization, and
+  market coverage.
+- Define risk labels, alert/watch/no-alert thresholds, and audit fields before
+  training.
+- Record privacy, license, dependency, and data-source assumptions.
+
+During modeling:
+
+- Report accuracy metrics and alert-oriented metrics under temporal validation.
+- Monitor data quality, missing fields, class imbalance, calibration quality,
+  uncertainty, and trust threshold behavior.
+- Record training data, feature columns, model bundle, calibrator, thresholds,
+  and run metadata.
+- Test robustness against stale data, missing bars, noisy prices, and provider
+  corrections.
+
+After modeling:
+
+- Continue monitoring freshness, drift, calibration, warning changes, and
+  coverage.
+- Provide user-facing explanations, limitations, and model decision purpose.
+- Keep a correction path for bad warnings, stale predictions, and low-trust
+  outputs.
+- Maintain security, dependency, CORS, DB, and audit controls.
+
+## Near-Term Tasks
+
+- Add scheduled 5-minute watchlist ingestion into PostgreSQL.
+- Add a prediction job that consumes fresh DB market bars and writes
+  `prediction_batches` / `warning_records`.
+- Add warning history and change detection endpoints.
+- Add ticker-level timelines for risk probability, trust score, uncertainty,
+  and warning level.
+- Add feature attribution to complement current reason codes.
+- Add API/dashboard freshness badges that block or downgrade stale predictions.
+- Add universe coverage metadata for US and Taiwan markets.
+- Add a TAI audit artifact for each model run summarizing data freshness,
+  coverage, calibration, uncertainty, trust behavior, known limitations, and
+  open risks.

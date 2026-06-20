@@ -10,10 +10,11 @@ Instead, it reformulates stock analysis as a future risk-event detection problem
 The repository is also being extended into a complete trustworthy deep-learning
 stock risk alerting side project: calibrated prediction, uncertainty
 estimation, trust scoring, warning decisions, audit-ready outputs, dashboard,
-and a later Go API gateway around the Python ML core.
+and a Go API gateway around the Python ML core.
 
 See `docs/project_roadmap.md` for the implementation roadmap and
-engineering rules.
+engineering rules. See `docs/trustworthy_ai_checklist.md` for the current
+trustworthy AI checklist adapted from the reviewed TAI metric deck.
 
 Current v1 demo references:
 
@@ -21,6 +22,7 @@ Current v1 demo references:
 docs/architecture.md
 docs/demo/local_demo.md
 docs/api/warning_api.md
+docs/trustworthy_ai_checklist.md
 ```
 
 ## Research Focus
@@ -353,8 +355,8 @@ python -m scripts.predict_deep \
   --latest-only
 ```
 
-The optional JSON output is the serving-ready contract for the Go API gateway
-and dashboard. The batch includes `schema_version`, `run_id`, `data_as_of`,
+The optional JSON output is an export/debug contract for notifications and
+artifact review. The PostgreSQL serving batch includes `schema_version`, `run_id`, `data_as_of`,
 `generated_at`, `record_count`, and records. Each record includes the calibrated
 risk probability, uncertainty score, trust score, warning level, thresholds, and
 reason codes such as `probability_above_watch_threshold` or
@@ -366,9 +368,17 @@ The Go API is a PostgreSQL-backed gateway around precomputed warning records.
 It does not run model inference in request handlers. `TSI_DATABASE_URL` is
 required; the service should fail fast when PostgreSQL is unavailable.
 
+Create local environment configuration from the placeholder template:
+
+```bash
+cp .env.example .env
+```
+
+Fill `.env` with local DB credentials and CORS origins. Do not commit `.env`.
+
 ```bash
 cd services/api-gateway-go
-TSI_DATABASE_URL=postgresql://tsi:tsi_local_password@localhost:55432/tsi \
+TSI_DATABASE_URL="postgresql://<database-user>:<local-password>@localhost:55432/<database-name>" \
   CGO_ENABLED=0 go run ./cmd/server
 ```
 
@@ -404,6 +414,7 @@ at `/openapi.yaml`.
 Common demo commands are collected in `Makefile`:
 
 ```bash
+cp .env.example .env
 docker compose up postgres
 make download-tickers WATCHLIST_TICKERS="NVDA 2330" DOWNLOAD_INTERVAL=1d
 make predict-latest-baseline DATA_INPUT=data/raw/watchlist/ohlcv.csv
@@ -419,7 +430,7 @@ Override paths or binaries as needed:
 
 ```bash
 GO=/mnt/8tb_hdd/ryo/miniconda3/envs/stock/bin/go make test-go
-DATABASE_URL=postgresql://tsi:tsi_local_password@localhost:55432/tsi make api
+DATABASE_URL="postgresql://<database-user>:<local-password>@localhost:55432/<database-name>" make api
 ```
 
 `predict-latest-baseline` is the no-bundle local path for real OHLCV data. It
@@ -489,7 +500,7 @@ make stock-dashboard
 Open:
 
 ```text
-http://localhost:5173
+http://localhost:5175
 ```
 
 The first version supports ticker search, typed `/api/v1/analysis/{ticker}`
@@ -536,9 +547,9 @@ The v1 local end-to-end demo is complete:
 
 ```text
 Python predict_deep.py
--> atomic latest_warnings.json
+-> PostgreSQL prediction_batches / warning_records
 -> Go API Gateway
--> Streamlit Dashboard Live API tab
+-> TypeScript Dashboard / Streamlit Live API tab
 ```
 
 CI runs Python tests, ruff, and Go API tests on push and pull request events.

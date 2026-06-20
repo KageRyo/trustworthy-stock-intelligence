@@ -145,8 +145,8 @@ Required views:
 Add Go only after the Python training, inference, trust score, and dashboard
 loop is stable.
 
-Milestone 4 starts with a read-only API gateway that serves the
-Python-generated `latest_warnings.json` contract:
+Milestone 4 starts with a PostgreSQL-backed API gateway that serves
+precomputed warning records and user watchlists:
 
 ```text
 GET /health
@@ -157,9 +157,10 @@ GET /api/v1/warnings/{ticker}
 GET /api/v1/models/current
 ```
 
-The first gateway reads `latest_warnings.json`, reloads it when the file
-modification time changes, and keeps serving the last valid batch if a reload
-fails.
+The gateway requires PostgreSQL at startup and reads `prediction_batches`,
+`warning_records`, and watchlist tables. Python may still export
+`latest_warnings.json` for local debugging, notification snapshots, or artifact
+review, but JSON is not the serving source of truth.
 
 Recommended split:
 
