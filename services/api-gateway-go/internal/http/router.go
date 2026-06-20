@@ -2,7 +2,7 @@ package apihttp
 
 import "net/http"
 
-func NewRouter(handlers *Handlers) http.Handler {
+func NewRouter(handlers *Handlers, corsConfigs ...CORSConfig) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /health", handlers.Health)
 	mux.HandleFunc("GET /metrics", handlers.Metrics)
@@ -18,5 +18,9 @@ func NewRouter(handlers *Handlers) http.Handler {
 	mux.HandleFunc("GET /api/v1/warnings/latest", handlers.LatestWarnings)
 	mux.HandleFunc("GET /api/v1/warnings/{ticker}", handlers.TickerWarning)
 	mux.HandleFunc("GET /api/v1/models/current", handlers.CurrentModel)
-	return mux
+	corsConfig := CORSConfig{AllowedOrigins: []string{"*"}}
+	if len(corsConfigs) > 0 {
+		corsConfig = corsConfigs[0]
+	}
+	return withCORS(mux, corsConfig)
 }

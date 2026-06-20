@@ -7,12 +7,15 @@ DB-backed watchlists, and does not run model inference.
 ## Environment
 
 ```text
-TSI_DATABASE_URL=postgresql://tsi:tsi_local_password@localhost:55432/tsi
+TSI_DATABASE_URL=postgresql://<database-user>:<local-password>@localhost:55432/<database-name>
 TSI_API_ADDR=:8080
+TSI_CORS_ALLOWED_ORIGINS=http://<dashboard-host>:5175,http://localhost:5175
 PORT=8080
 ```
 
 `TSI_DATABASE_URL` is required. `TSI_API_ADDR` takes precedence over `PORT`.
+`TSI_CORS_ALLOWED_ORIGINS` is a comma-separated list of browser origins allowed
+to call the API.
 
 ## Endpoints
 
@@ -201,6 +204,5 @@ the database is unreachable, the service does not start. Request handlers may
 refresh the latest DB warning batch, but they do not call Python or run model
 inference synchronously.
 
-Python writes `latest_warnings.json` atomically through a temporary file and
-`os.replace`, so the gateway observes either the previous complete batch or the
-next complete batch.
+Python may still export `latest_warnings.json` as a local debug or notification
+artifact, but the gateway serving path is PostgreSQL.

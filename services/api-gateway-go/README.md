@@ -17,11 +17,15 @@ watchlist_tickers
 Configure PostgreSQL with:
 
 ```bash
-export TSI_DATABASE_URL=postgresql://tsi:tsi_local_password@localhost:55432/tsi
+export TSI_DATABASE_URL="postgresql://<database-user>:<local-password>@localhost:55432/<database-name>"
 ```
 
 `TSI_DATABASE_URL` is required. The default address is `:8080`. Override it
 with `TSI_API_ADDR`, or `PORT` when `TSI_API_ADDR` is not set.
+
+Browser clients are controlled by `TSI_CORS_ALLOWED_ORIGINS`, a comma-separated
+list of exact origins. The local default is `*`; shared deployments should use
+explicit dashboard origins.
 
 ## Run
 
@@ -29,7 +33,7 @@ From the repository root:
 
 ```bash
 cd services/api-gateway-go
-TSI_DATABASE_URL=postgresql://tsi:tsi_local_password@localhost:55432/tsi \
+TSI_DATABASE_URL="postgresql://<database-user>:<local-password>@localhost:55432/<database-name>" \
   CGO_ENABLED=0 go run ./cmd/server
 ```
 
@@ -53,7 +57,7 @@ Run it with a PostgreSQL URL:
 
 ```bash
 docker run --rm -p 8080:8080 \
-  -e TSI_DATABASE_URL=postgresql://tsi:tsi_local_password@host.docker.internal:55432/tsi \
+  -e TSI_DATABASE_URL="postgresql://<database-user>:<local-password>@host.docker.internal:55432/<database-name>" \
   tsi-api-gateway
 ```
 

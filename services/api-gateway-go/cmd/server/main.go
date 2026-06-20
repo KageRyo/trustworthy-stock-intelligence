@@ -26,7 +26,10 @@ func main() {
 		log.Fatalf("load postgres watchlist store: %v", err)
 	}
 	defer watchlistStore.Close()
-	router := apihttp.NewRouter(apihttp.NewHandlers(store, watchlistStore))
+	router := apihttp.NewRouter(
+		apihttp.NewHandlers(store, watchlistStore),
+		apihttp.CORSConfig{AllowedOrigins: cfg.CORSAllowedOrigins},
+	)
 	log.Printf("starting TSI API gateway on %s using PostgreSQL", cfg.Address)
 	if err := http.ListenAndServe(cfg.Address, router); err != nil {
 		log.Fatalf("server stopped: %v", err)

@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"strconv"
+	"strings"
 )
 
 const (
@@ -10,9 +11,9 @@ const (
 )
 
 type Config struct {
-	Address      string
-	WarningsPath string
-	DatabaseURL  string
+	Address            string
+	DatabaseURL        string
+	CORSAllowedOrigins []string
 }
 
 func Load() Config {
@@ -23,9 +24,9 @@ func Load() Config {
 		}
 	}
 	return Config{
-		Address:      address,
-		WarningsPath: envOrDefault("TSI_WARNINGS_PATH", ""),
-		DatabaseURL:  envOrDefault("TSI_DATABASE_URL", ""),
+		Address:            address,
+		DatabaseURL:        envOrDefault("TSI_DATABASE_URL", ""),
+		CORSAllowedOrigins: splitCSV(envOrDefault("TSI_CORS_ALLOWED_ORIGINS", "*")),
 	}
 }
 
@@ -35,4 +36,16 @@ func envOrDefault(name string, fallback string) string {
 		return fallback
 	}
 	return value
+}
+
+func splitCSV(value string) []string {
+	parts := strings.Split(value, ",")
+	values := make([]string, 0, len(parts))
+	for _, part := range parts {
+		trimmed := strings.TrimSpace(part)
+		if trimmed != "" {
+			values = append(values, trimmed)
+		}
+	}
+	return values
 }

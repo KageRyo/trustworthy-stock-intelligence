@@ -76,12 +76,17 @@ func writeRouterFixture(t *testing.T) string {
 
 func testRouter(t *testing.T) http.Handler {
 	t.Helper()
+	return NewRouter(NewHandlers(mustFileStore(t)))
+}
+
+func mustFileStore(t *testing.T) *warnings.FileStore {
+	t.Helper()
 	path := writeRouterFixture(t)
 	store, err := warnings.NewFileStore(path)
 	if err != nil {
 		t.Fatalf("NewFileStore returned error: %v", err)
 	}
-	return NewRouter(NewHandlers(store))
+	return store
 }
 
 func testRouterFromPayload(t *testing.T, payload string) http.Handler {
@@ -130,6 +135,68 @@ func deleteJSON(t *testing.T, router http.Handler, path string) *httptest.Respon
 	response := httptest.NewRecorder()
 	router.ServeHTTP(response, request)
 	return response
+}
+
+func TestCORSAllowsConfiguredOrigin(t *testing.T) {
+	router := NewRouter(
+		NewHandlers(mustFileStore(t)),
+		CORSConfig{AllowedOrigins: []string{"http://140.123.105.126:5175"}},
+	)
+	request := httptest.NewRequest(http.MethodOptions, "/api/v1/status", nil)
+	request.Header.Set("Origin", "http://140.123.105.126:5175")
+	request.Header.Set("Access-Control-Request-Method", "GET")
+	response := httptest.NewRecorder()
+
+	router.ServeHTTP(response, request)
+
+	if response.Code != http.StatusNoContent {
+		t.Fatalf("status = %d, want 204", response.Code)
+	}
+	if got := response.Header().Get("Access-Control-Allow-Origin"); got != "http://140.123.105.126:5175" {
+		t.Fatalf("allow origin = %q, want configured origin", got)
+	}
+	if got := response.Header().Get("Access-Control-Allow-Methods"); !strings.Contains(got, "POST") {
+		t.Fatalf("allow methods missing POST: %q", got)
+	}
+}
+
+func TestCORSAddsHeadersOnGET(t *testing.T) {
+	router := NewRouter(
+		NewHandlers(mustFileStore(t)),
+		CORSConfig{AllowedOrigins: []string{"http://140.123.105.126:5175"}},
+	)
+	request := httptest.NewRequest(http.MethodGet, "/api/v1/status", nil)
+	request.Header.Set("Origin", "http://140.123.105.126:5175")
+	response := httptest.NewRecorder()
+
+	router.ServeHTTP(response, request)
+
+	if response.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200", response.Code)
+	}
+	if got := response.Header().Get("Access-Control-Allow-Origin"); got != "http://140.123.105.126:5175" {
+		t.Fatalf("allow origin = %q, want configured origin", got)
+	}
+}
+
+func TestCORSRejectsUnconfiguredPreflightOrigin(t *testing.T) {
+	router := NewRouter(
+		NewHandlers(mustFileStore(t)),
+		CORSConfig{AllowedOrigins: []string{"http://localhost:5175"}},
+	)
+	request := httptest.NewRequest(http.MethodOptions, "/api/v1/status", nil)
+	request.Header.Set("Origin", "http://evil.example")
+	request.Header.Set("Access-Control-Request-Method", "GET")
+	response := httptest.NewRecorder()
+
+	router.ServeHTTP(response, request)
+
+	if response.Code != http.StatusForbidden {
+		t.Fatalf("status = %d, want 403", response.Code)
+	}
+	if got := response.Header().Get("Access-Control-Allow-Origin"); got != "" {
+		t.Fatalf("allow origin = %q, want empty", got)
+	}
 }
 
 func TestHealthHandler(t *testing.T) {
