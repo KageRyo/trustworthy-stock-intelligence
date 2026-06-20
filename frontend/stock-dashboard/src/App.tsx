@@ -34,6 +34,14 @@ import {
   fetchWatchlist,
   removeWatchlistTicker
 } from "./lib/api";
+import {
+  numberLocale,
+  readStoredLocale,
+  storeLocale,
+  translations,
+  type DashboardCopy,
+  type Locale
+} from "./lib/i18n";
 import type {
   APIStatus,
   CurrentModel,
@@ -56,38 +64,31 @@ const levelStyles: Record<WarningLevel, string> = {
   no_alert: "border-emerald-200 bg-emerald-50 text-emerald-800"
 };
 
-const levelLabels: Record<WarningLevel, string> = {
-  alert: "Alert",
-  watch: "Watch",
-  abstain: "Abstain",
-  no_alert: "No Alert"
-};
-
 const barColors = ["#c2410c", "#0369a1", "#166534", "#b45309"];
 const sessionWatchlistStorageKey = "tsi.session.watchlist_name";
 
-function formatPercent(value: number | undefined): string {
+function formatPercent(value: number | undefined, na = "n/a"): string {
   if (value === undefined || Number.isNaN(value)) {
-    return "n/a";
+    return na;
   }
   return `${(value * 100).toFixed(1)}%`;
 }
 
-function formatNumber(value: number | undefined): string {
+function formatNumber(value: number | undefined, locale: Locale, na = "n/a"): string {
   if (value === undefined || Number.isNaN(value)) {
-    return "n/a";
+    return na;
   }
-  return value.toLocaleString("en-US");
+  return value.toLocaleString(numberLocale(locale));
 }
 
-function errorMessage(error: unknown): string {
+function errorMessage(error: unknown, copy: DashboardCopy): string {
   if (error instanceof APIClientError) {
     return `${error.message} (${error.code})`;
   }
   if (error instanceof Error) {
     return error.message;
   }
-  return "Unexpected error";
+  return copy.errors.unexpected;
 }
 
 function normalizeTicker(value: string): string {
@@ -150,28 +151,49 @@ function summarizeBatch(batch: PredictionBatch | null) {
   };
 }
 
-function summarizeCoverage(tickerList: TickerList | null): string {
+function summarizeCoverage(tickerList: TickerList | null, copy: DashboardCopy): string {
   if (!tickerList || tickerList.tickers.length === 0) {
-    return "n/a";
+    return copy.common.na;
   }
   const usCount = tickerList.tickers.filter((ticker) => ticker.market === "us").length;
   const taiwanCount = tickerList.tickers.filter((ticker) => ticker.market === "taiwan").length;
   const unknownCount = tickerList.tickers.length - usCount - taiwanCount;
   const parts = [];
   if (usCount > 0) {
-    parts.push(`${usCount} US`);
+    parts.push(`${usCount} ${copy.markets.us}`);
   }
   if (taiwanCount > 0) {
-    parts.push(`${taiwanCount} TW`);
+    parts.push(`${taiwanCount} ${copy.markets.taiwan}`);
   }
   if (unknownCount > 0) {
-    parts.push(`${unknownCount} unknown`);
+    parts.push(`${unknownCount} ${copy.markets.unknown}`);
   }
   return parts.join(" / ");
 }
 
+function hasReason(analysis: TickerAnalysis, code: string): boolean {
+  return analysis.reasons.some((reason) => reason.code === code);
+}
+
+function localizedTrustSummary(analysis: TickerAnalysis, copy: DashboardCopy): string {
+  if (hasReason(analysis, "insufficient_history")) {
+    return copy.trustSummaries.insufficientHistory;
+  }
+  if (hasReason(analysis, "uncertainty_above_threshold")) {
+    return copy.trustSummaries.highUncertainty;
+  }
+  if (hasReason(analysis, "trust_above_alert_threshold")) {
+    return copy.trustSummaries.trustedForAlert;
+  }
+  if (hasReason(analysis, "trust_below_alert_threshold")) {
+    return copy.trustSummaries.limitedTrust;
+  }
+  return copy.trustSummaries.default;
+}
+
 export default function App() {
   const [watchlistName] = useState(getSessionWatchlistName);
+  const [locale, setLocale] = useState<Locale>(readStoredLocale);
   const [status, setStatus] = useState<APIStatus | null>(null);
   const [model, setModel] = useState<CurrentModel | null>(null);
   const [latestWarnings, setLatestWarnings] = useState<PredictionBatch | null>(null);
@@ -187,8 +209,14 @@ export default function App() {
   const [analysisNotice, setAnalysisNotice] = useState("");
   const [watchlistError, setWatchlistError] = useState("");
 
+  const copy = translations[locale];
   const batchSummary = useMemo(() => summarizeBatch(latestWarnings), [latestWarnings]);
-  const coverageSummary = useMemo(() => summarizeCoverage(tickerList), [tickerList]);
+  const coverageSummary = useMemo(() => summarizeCoverage(tickerList, copy), [tickerList, copy]);
+
+  function changeLocale(nextLocale: Locale) {
+    setLocale(nextLocale);
+    storeLocale(nextLocale);
+  }
 
   const loadBatch = useCallback(async () => {
     setBatchState("loading");
@@ -209,10 +237,10 @@ export default function App() {
       setWatchlistError("");
       setBatchState("ready");
     } catch (error) {
-      setBatchError(errorMessage(error));
+      setBatchError(errorMessage(error, copy));
       setBatchState("error");
     }
-  }, [watchlistName]);
+  }, [copy, watchlistName]);
 
   const rememberViewedTicker = useCallback(
     async (ticker: string) => {
@@ -223,10 +251,10 @@ export default function App() {
         (entry) => entry.ticker === ticker && entry.has_latest_warning
       );
       if (!hasLatestWarning) {
-        setAnalysisNotice(`${ticker} was analyzed, but the watchlist join has not refreshed yet.`);
+        setAnalysisNotice(copy.notices.watchlistJoinNotRefreshed(ticker));
       }
     },
-    [watchlistName]
+    [copy, watchlistName]
   );
 
   const loadAnalysis = useCallback(async (ticker: string) => {
@@ -244,21 +272,19 @@ export default function App() {
       try {
         await rememberViewedTicker(normalized);
       } catch (watchlistAddError) {
-        setWatchlistError(errorMessage(watchlistAddError));
+        setWatchlistError(errorMessage(watchlistAddError, copy));
       }
     } catch (error) {
       setAnalysis(null);
       if (error instanceof APIClientError && error.code === "ticker_not_found") {
-        setAnalysisError(
-          `No market data or model output could be generated for ${normalized}. Check the symbol and provider coverage.`
-        );
+        setAnalysisError(copy.errors.noMarketData(normalized));
         setAnalysisState("error");
         return;
       }
-      setAnalysisError(errorMessage(error));
+      setAnalysisError(errorMessage(error, copy));
       setAnalysisState("error");
     }
-  }, [rememberViewedTicker]);
+  }, [copy, rememberViewedTicker]);
 
   useEffect(() => {
     void loadBatch();
@@ -291,7 +317,7 @@ export default function App() {
       const nextWatchlist = await removeWatchlistTicker(ticker, watchlistName);
       setWatchlist(nextWatchlist);
     } catch (error) {
-      setWatchlistError(errorMessage(error));
+      setWatchlistError(errorMessage(error, copy));
     }
   }
 
@@ -301,13 +327,30 @@ export default function App() {
         <header className="flex flex-col gap-4 border-b border-line pb-5 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <p className="text-sm font-semibold uppercase tracking-normal text-data">
-              Trustworthy Stock Intelligence
+              {copy.productName}
             </p>
             <h1 className="text-2xl font-semibold tracking-normal sm:text-3xl">
-              Stock Risk Dashboard
+              {copy.appTitle}
             </h1>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div
+              className="inline-flex h-11 rounded-md border border-line bg-white p-1 shadow-sm"
+              aria-label={copy.language.label}
+            >
+              {(["zh-Hant", "en"] as const).map((option) => (
+                <button
+                  key={option}
+                  className={`rounded px-3 text-sm font-semibold ${
+                    locale === option ? "bg-ink text-white" : "text-slate-600 hover:bg-slate-50"
+                  }`}
+                  type="button"
+                  onClick={() => changeLocale(option)}
+                >
+                  {option === "zh-Hant" ? copy.language.zhHant : copy.language.english}
+                </button>
+              ))}
+            </div>
             <form
               className="flex min-w-0 rounded-md border border-line bg-white shadow-sm"
               onSubmit={submitTicker}
@@ -316,15 +359,15 @@ export default function App() {
                 className="h-11 min-w-0 flex-1 rounded-l-md px-3 text-sm font-medium outline-none ring-0 placeholder:text-slate-400 sm:w-48"
                 value={tickerInput}
                 onChange={(event) => setTickerInput(event.target.value)}
-                placeholder="Ticker or 2330"
-                aria-label="Ticker or Taiwan stock code"
+                placeholder={copy.searchPlaceholder}
+                aria-label={copy.searchAria}
               />
               <button
                 className="inline-flex h-11 items-center gap-2 rounded-r-md bg-ink px-4 text-sm font-semibold text-white hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-data"
                 type="submit"
               >
                 <Search size={17} aria-hidden="true" />
-                Search
+                {copy.common.search}
               </button>
             </form>
             <button
@@ -333,7 +376,7 @@ export default function App() {
               onClick={refreshAll}
             >
               <RefreshCcw size={17} aria-hidden="true" />
-              Refresh
+              {copy.common.refresh}
             </button>
           </div>
         </header>
@@ -345,41 +388,45 @@ export default function App() {
         <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
           <MetricCard
             icon={<AlertTriangle size={18} />}
-            label="Alerts"
-            value={formatNumber(batchSummary.counts.alert)}
+            label={copy.metrics.alerts}
+            value={formatNumber(batchSummary.counts.alert, locale, copy.common.na)}
             tone="risk"
           />
           <MetricCard
             icon={<Target size={18} />}
-            label="Watch"
-            value={formatNumber(batchSummary.counts.watch)}
+            label={copy.metrics.watch}
+            value={formatNumber(batchSummary.counts.watch, locale, copy.common.na)}
             tone="watch"
           />
           <MetricCard
             icon={<ShieldCheck size={18} />}
-            label="Avg Trust"
-            value={formatPercent(batchSummary.averageTrust)}
+            label={copy.metrics.avgTrust}
+            value={formatPercent(batchSummary.averageTrust, copy.common.na)}
             tone="trust"
           />
           <MetricCard
             icon={<Gauge size={18} />}
-            label="Highest Risk"
-            value={batchSummary.highestRisk?.ticker ?? "n/a"}
-            detail={formatPercent(batchSummary.highestRisk?.calibrated_risk_probability)}
+            label={copy.metrics.highestRisk}
+            value={batchSummary.highestRisk?.ticker ?? copy.common.na}
+            detail={formatPercent(batchSummary.highestRisk?.calibrated_risk_probability, copy.common.na)}
             tone="risk"
           />
           <MetricCard
             icon={<Activity size={18} />}
-            label="Lowest Trust"
-            value={batchSummary.lowestTrust?.ticker ?? "n/a"}
-            detail={formatPercent(batchSummary.lowestTrust?.trust_score)}
+            label={copy.metrics.lowestTrust}
+            value={batchSummary.lowestTrust?.ticker ?? copy.common.na}
+            detail={formatPercent(batchSummary.lowestTrust?.trust_score, copy.common.na)}
             tone="watch"
           />
           <MetricCard
             icon={<Database size={18} />}
-            label="Coverage"
-            value={formatNumber(tickerList?.record_count ?? status?.record_count)}
-            detail={`${coverageSummary} / Seen ${formatNumber(watchlist?.record_count)}`}
+            label={copy.metrics.coverage}
+            value={formatNumber(tickerList?.record_count ?? status?.record_count, locale, copy.common.na)}
+            detail={`${coverageSummary} / ${copy.common.viewed} ${formatNumber(
+              watchlist?.record_count,
+              locale,
+              copy.common.na
+            )}`}
             tone="data"
           />
         </section>
@@ -390,8 +437,9 @@ export default function App() {
             state={analysisState}
             error={analysisError}
             notice={analysisNotice}
+            copy={copy}
           />
-          <TrustPanel analysis={analysis} model={model} status={status} />
+          <TrustPanel analysis={analysis} model={model} status={status} copy={copy} />
         </section>
 
         <section className="grid gap-5 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
@@ -399,6 +447,8 @@ export default function App() {
             watchlist={watchlist}
             watchlistName={watchlistName}
             selectedTicker={selectedTicker}
+            locale={locale}
+            copy={copy}
             onSelectTicker={(ticker) => {
               setTickerInput(ticker);
               setSelectedTicker(ticker);
@@ -408,6 +458,8 @@ export default function App() {
           <WarningsTable
             records={latestWarnings?.records ?? []}
             selectedTicker={selectedTicker}
+            locale={locale}
+            copy={copy}
             onSelectTicker={(ticker) => {
               setTickerInput(ticker);
               setSelectedTicker(ticker);
@@ -417,7 +469,7 @@ export default function App() {
         </section>
 
         <section>
-          <ReasonsPanel reasons={analysis?.reasons ?? []} />
+          <ReasonsPanel reasons={analysis?.reasons ?? []} copy={copy} locale={locale} />
         </section>
       </div>
     </main>
@@ -462,19 +514,21 @@ function AnalysisPanel({
   analysis,
   state,
   error,
-  notice
+  notice,
+  copy
 }: {
   analysis: TickerAnalysis | null;
   state: LoadState;
   error: string;
   notice: string;
+  copy: DashboardCopy;
 }) {
   const chartData = analysis
     ? [
-        { name: "Risk", value: analysis.warning.risk_probability },
-        { name: "Calibrated", value: analysis.warning.calibrated_risk_probability },
-        { name: "Trust", value: analysis.trust.trust_score },
-        { name: "Uncertainty", value: analysis.trust.uncertainty_score }
+        { name: copy.chart.risk, value: analysis.warning.risk_probability },
+        { name: copy.chart.calibrated, value: analysis.warning.calibrated_risk_probability },
+        { name: copy.chart.trust, value: analysis.trust.trust_score },
+        { name: copy.chart.uncertainty, value: analysis.trust.uncertainty_score }
       ]
     : [];
 
@@ -484,27 +538,27 @@ function AnalysisPanel({
         <div>
           <div className="flex flex-wrap items-center gap-3">
             <h2 className="text-xl font-semibold tracking-normal">
-              {analysis?.ticker ?? "Ticker Analysis"}
+              {analysis?.ticker ?? copy.panels.tickerAnalysis}
             </h2>
-            {analysis ? <LevelBadge level={analysis.warning.level} /> : null}
+            {analysis ? <LevelBadge level={analysis.warning.level} copy={copy} /> : null}
           </div>
           <p className="mt-1 text-sm text-slate-500">
-            {analysis ? `${analysis.date} | ${analysis.run_id}` : "No ticker selected"}
+            {analysis ? `${analysis.date} | ${analysis.run_id}` : copy.panels.noTickerSelected}
           </p>
         </div>
         {analysis ? (
           <div className="text-right">
             <p className="text-xs font-semibold uppercase tracking-normal text-slate-500">
-              Calibrated Risk
+              {copy.panels.calibratedRisk}
             </p>
             <p className="text-3xl font-semibold tracking-normal text-risk">
-              {formatPercent(analysis.warning.calibrated_risk_probability)}
+              {formatPercent(analysis.warning.calibrated_risk_probability, copy.common.na)}
             </p>
           </div>
         ) : null}
       </div>
 
-      {state === "loading" ? <PanelState label="Loading analysis" /> : null}
+      {state === "loading" ? <PanelState label={copy.states.loadingAnalysis} /> : null}
       {state === "error" ? <ErrorBanner message={error} /> : null}
       {notice ? <NoticeBanner message={notice} /> : null}
 
@@ -516,7 +570,7 @@ function AnalysisPanel({
                 <CartesianGrid stroke="#e5e7eb" vertical={false} />
                 <XAxis dataKey="name" tickLine={false} axisLine={false} />
                 <YAxis domain={[0, 1]} tickFormatter={(value) => `${Number(value) * 100}%`} />
-                <Tooltip formatter={(value) => formatPercent(Number(value))} />
+                <Tooltip formatter={(value) => formatPercent(Number(value), copy.common.na)} />
                 <Bar dataKey="value" radius={[6, 6, 0, 0]}>
                   {chartData.map((entry, index) => (
                     <Cell key={entry.name} fill={barColors[index % barColors.length]} />
@@ -526,15 +580,24 @@ function AnalysisPanel({
             </ResponsiveContainer>
           </div>
           <div className="grid content-start gap-3">
-            <ValueRow label="Raw Risk" value={formatPercent(analysis.warning.risk_probability)} />
             <ValueRow
-              label="Calibrated Risk"
-              value={formatPercent(analysis.warning.calibrated_risk_probability)}
+              label={copy.labels.rawRisk}
+              value={formatPercent(analysis.warning.risk_probability, copy.common.na)}
             />
-            <ValueRow label="Alert Threshold" value={formatPercent(analysis.warning.alert_threshold)} />
-            <ValueRow label="Watch Threshold" value={formatPercent(analysis.warning.watch_threshold)} />
+            <ValueRow
+              label={copy.labels.calibratedRisk}
+              value={formatPercent(analysis.warning.calibrated_risk_probability, copy.common.na)}
+            />
+            <ValueRow
+              label={copy.labels.alertThreshold}
+              value={formatPercent(analysis.warning.alert_threshold, copy.common.na)}
+            />
+            <ValueRow
+              label={copy.labels.watchThreshold}
+              value={formatPercent(analysis.warning.watch_threshold, copy.common.na)}
+            />
             <p className="rounded-md border border-line bg-slate-50 p-3 text-sm leading-6 text-slate-700">
-              {analysis.warning.summary}
+              {copy.warningSummaries[analysis.warning.level]}
             </p>
           </div>
         </div>
@@ -546,74 +609,124 @@ function AnalysisPanel({
 function TrustPanel({
   analysis,
   model,
-  status
+  status,
+  copy
 }: {
   analysis: TickerAnalysis | null;
   model: CurrentModel | null;
   status: APIStatus | null;
+  copy: DashboardCopy;
 }) {
   return (
     <section className="rounded-lg border border-line bg-white p-5 shadow-panel">
       <div className="flex items-center justify-between border-b border-line pb-4">
         <div>
-          <h2 className="text-lg font-semibold tracking-normal">Trust And Model</h2>
-          <p className="mt-1 text-sm text-slate-500">{model?.model || analysis?.model.name || "n/a"}</p>
+          <h2 className="text-lg font-semibold tracking-normal">{copy.panels.trustAndModel}</h2>
+          <p className="mt-1 text-sm text-slate-500">
+            {model?.model || analysis?.model.name || copy.common.na}
+          </p>
         </div>
         <ShieldCheck className="text-trust" size={24} aria-hidden="true" />
       </div>
       <div className="mt-5 grid gap-3">
-        <ValueRow label="Trust Score" value={formatPercent(analysis?.trust.trust_score)} />
-        <ValueRow label="Trust Status" value={analysis?.trust.trust_status ?? "n/a"} />
-        <ValueRow label="Uncertainty" value={formatPercent(analysis?.trust.uncertainty_score)} />
-        <ValueRow label="Uncertainty Status" value={analysis?.trust.uncertainty_status ?? "n/a"} />
-        <ValueRow label="Calibration" value={analysis?.trust.calibration_method ?? "n/a"} />
-        <ValueRow label="Data As Of" value={status?.data_as_of || analysis?.data_as_of || "n/a"} />
-        <ValueRow label="Generated At" value={status?.generated_at || analysis?.generated_at || "n/a"} />
-        <ValueRow label="Model Bundle" value={model?.model_bundle || analysis?.model.model_bundle || "n/a"} />
+        <ValueRow
+          label={copy.labels.trustScore}
+          value={formatPercent(analysis?.trust.trust_score, copy.common.na)}
+        />
+        <ValueRow
+          label={copy.labels.trustStatus}
+          value={
+            analysis
+              ? copy.trustStatuses[analysis.trust.trust_status] ?? analysis.trust.trust_status
+              : copy.common.na
+          }
+        />
+        <ValueRow
+          label={copy.labels.uncertainty}
+          value={formatPercent(analysis?.trust.uncertainty_score, copy.common.na)}
+        />
+        <ValueRow
+          label={copy.labels.uncertaintyStatus}
+          value={
+            analysis
+              ? copy.uncertaintyStatuses[analysis.trust.uncertainty_status] ??
+                analysis.trust.uncertainty_status
+              : copy.common.na
+          }
+        />
+        <ValueRow label={copy.labels.calibration} value={analysis?.trust.calibration_method ?? copy.common.na} />
+        <ValueRow
+          label={copy.labels.dataAsOf}
+          value={status?.data_as_of || analysis?.data_as_of || copy.common.na}
+        />
+        <ValueRow
+          label={copy.labels.generatedAt}
+          value={status?.generated_at || analysis?.generated_at || copy.common.na}
+        />
+        <ValueRow
+          label={copy.labels.modelBundle}
+          value={model?.model_bundle || analysis?.model.model_bundle || copy.common.na}
+        />
       </div>
       {analysis ? (
         <p className="mt-4 rounded-md border border-line bg-emerald-50 p-3 text-sm leading-6 text-emerald-900">
-          {analysis.trust.summary}
+          {localizedTrustSummary(analysis, copy)}
         </p>
       ) : null}
     </section>
   );
 }
 
-function ReasonsPanel({ reasons }: { reasons: ReasonExplanation[] }) {
+function ReasonsPanel({
+  reasons,
+  copy,
+  locale
+}: {
+  reasons: ReasonExplanation[];
+  copy: DashboardCopy;
+  locale: Locale;
+}) {
   return (
     <section className="rounded-lg border border-line bg-white p-5 shadow-panel">
       <div className="mb-4 flex items-center justify-between border-b border-line pb-4">
         <div>
-          <h2 className="text-lg font-semibold tracking-normal">Reason Codes</h2>
-          <p className="mt-1 text-sm text-slate-500">{formatNumber(reasons.length)} reasons</p>
+          <h2 className="text-lg font-semibold tracking-normal">{copy.panels.reasonCodes}</h2>
+          <p className="mt-1 text-sm text-slate-500">
+            {formatNumber(reasons.length, locale, copy.common.na)} {copy.common.reasons}
+          </p>
         </div>
         <Info className="text-data" size={22} aria-hidden="true" />
       </div>
       <div className="grid gap-3">
-        {reasons.length === 0 ? <PanelState label="No reason codes" /> : null}
+        {reasons.length === 0 ? <PanelState label={copy.states.noReasonCodes} /> : null}
         {reasons.map((reason) => (
-          <ReasonItem key={reason.code} reason={reason} />
+          <ReasonItem key={reason.code} reason={reason} copy={copy} />
         ))}
       </div>
     </section>
   );
 }
 
-function ReasonItem({ reason }: { reason: ReasonExplanation }) {
+function ReasonItem({ reason, copy }: { reason: ReasonExplanation; copy: DashboardCopy }) {
   const severityClass = {
     alert: "border-red-200 bg-red-50 text-red-900",
     watch: "border-amber-200 bg-amber-50 text-amber-900",
     info: "border-sky-200 bg-sky-50 text-sky-900"
   }[reason.severity];
+  const localizedReason = copy.reasonCodes[reason.code] ?? {
+    title: reason.title,
+    detail: reason.detail
+  };
 
   return (
     <div className={`rounded-md border p-3 ${severityClass}`}>
       <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm font-semibold">{reason.title}</p>
-        <span className="text-xs font-semibold uppercase tracking-normal">{reason.severity}</span>
+        <p className="text-sm font-semibold">{localizedReason.title}</p>
+        <span className="text-xs font-semibold uppercase tracking-normal">
+          {copy.severity[reason.severity]}
+        </span>
       </div>
-      <p className="mt-2 text-sm leading-6">{reason.detail}</p>
+      <p className="mt-2 text-sm leading-6">{localizedReason.detail}</p>
       <p className="mt-2 break-all font-mono text-xs opacity-75">{reason.code}</p>
     </div>
   );
@@ -623,12 +736,16 @@ function WatchlistPanel({
   watchlist,
   watchlistName,
   selectedTicker,
+  locale,
+  copy,
   onSelectTicker,
   onRemoveTicker
 }: {
   watchlist: Watchlist | null;
   watchlistName: string;
   selectedTicker: string;
+  locale: Locale;
+  copy: DashboardCopy;
   onSelectTicker: (ticker: string) => void;
   onRemoveTicker: (ticker: string) => void;
 }) {
@@ -638,24 +755,25 @@ function WatchlistPanel({
     <section className="rounded-lg border border-line bg-white p-5 shadow-panel">
       <div className="mb-4 flex flex-col gap-2 border-b border-line pb-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-lg font-semibold tracking-normal">Session Watchlist</h2>
+          <h2 className="text-lg font-semibold tracking-normal">{copy.panels.sessionWatchlist}</h2>
           <p className="mt-1 text-sm text-slate-500">
-            {formatNumber(watchlist?.record_count)} viewed | {watchlistName}
+            {formatNumber(watchlist?.record_count, locale, copy.common.na)} {copy.common.viewed} |{" "}
+            {watchlistName}
           </p>
         </div>
         <ListChecks className="text-data" size={22} aria-hidden="true" />
       </div>
-      {tickers.length === 0 ? <PanelState label="No viewed tickers in this session" /> : null}
+      {tickers.length === 0 ? <PanelState label={copy.states.noViewedTickers} /> : null}
       {tickers.length > 0 ? (
         <div className="overflow-x-auto">
           <table className="min-w-[620px] w-full border-collapse text-left text-sm">
             <thead>
               <tr className="border-b border-line text-xs uppercase tracking-normal text-slate-500">
-                <th className="py-3 pr-3 font-semibold">Ticker</th>
-                <th className="px-3 py-3 font-semibold">Market</th>
-                <th className="px-3 py-3 font-semibold">Latest</th>
-                <th className="px-3 py-3 font-semibold">Trust</th>
-                <th className="px-3 py-3 font-semibold">Action</th>
+                <th className="py-3 pr-3 font-semibold">{copy.labels.ticker}</th>
+                <th className="px-3 py-3 font-semibold">{copy.labels.market}</th>
+                <th className="px-3 py-3 font-semibold">{copy.labels.latest}</th>
+                <th className="px-3 py-3 font-semibold">{copy.labels.trustScore}</th>
+                <th className="px-3 py-3 font-semibold">{copy.labels.action}</th>
               </tr>
             </thead>
             <tbody>
@@ -664,6 +782,7 @@ function WatchlistPanel({
                   key={`${ticker.market}-${ticker.ticker}`}
                   ticker={ticker}
                   selected={selectedTicker === ticker.ticker}
+                  copy={copy}
                   onSelectTicker={onSelectTicker}
                   onRemoveTicker={onRemoveTicker}
                 />
@@ -679,11 +798,13 @@ function WatchlistPanel({
 function WatchlistRow({
   ticker,
   selected,
+  copy,
   onSelectTicker,
   onRemoveTicker
 }: {
   ticker: WatchlistTicker;
   selected: boolean;
+  copy: DashboardCopy;
   onSelectTicker: (ticker: string) => void;
   onRemoveTicker: (ticker: string) => void;
 }) {
@@ -699,24 +820,26 @@ function WatchlistRow({
         </button>
         <p className="mt-1 text-xs text-slate-500">{ticker.query_symbol}</p>
       </td>
-      <td className="px-3 py-3 text-slate-600">{ticker.market.toUpperCase()}</td>
+      <td className="px-3 py-3 text-slate-600">
+        {copy.markets[ticker.market] ?? ticker.market.toUpperCase()}
+      </td>
       <td className="px-3 py-3">
         {ticker.latest_warning ? (
-          <LevelBadge level={ticker.latest_warning.warning_level} />
+          <LevelBadge level={ticker.latest_warning.warning_level} copy={copy} />
         ) : (
           <span className="inline-flex min-w-[86px] items-center justify-center rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold uppercase tracking-normal text-slate-600">
-            Pending
+            {copy.common.noAnalysis}
           </span>
         )}
       </td>
       <td className="px-3 py-3">
-        {ticker.latest_warning ? formatPercent(ticker.latest_warning.trust_score) : "n/a"}
+        {ticker.latest_warning ? formatPercent(ticker.latest_warning.trust_score, copy.common.na) : copy.common.na}
       </td>
       <td className="px-3 py-3">
         <button
           className="grid h-9 w-9 place-items-center rounded-md border border-line bg-white text-slate-600 hover:bg-red-50 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-data"
           type="button"
-          aria-label={`Remove ${ticker.ticker}`}
+          aria-label={`${copy.common.remove} ${ticker.ticker}`}
           onClick={() => onRemoveTicker(ticker.ticker)}
         >
           <Trash2 size={16} aria-hidden="true" />
@@ -730,32 +853,38 @@ function WarningsTable({
   records,
   selectedTicker,
   onSelectTicker,
-  loading
+  loading,
+  locale,
+  copy
 }: {
   records: PredictionRecord[];
   selectedTicker: string;
   onSelectTicker: (ticker: string) => void;
   loading: boolean;
+  locale: Locale;
+  copy: DashboardCopy;
 }) {
   return (
     <section className="rounded-lg border border-line bg-white p-5 shadow-panel">
       <div className="mb-4 flex flex-col gap-2 border-b border-line pb-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-lg font-semibold tracking-normal">Latest Warnings</h2>
-          <p className="mt-1 text-sm text-slate-500">{formatNumber(records.length)} rows</p>
+          <h2 className="text-lg font-semibold tracking-normal">{copy.panels.latestWarnings}</h2>
+          <p className="mt-1 text-sm text-slate-500">
+            {formatNumber(records.length, locale, copy.common.na)} {copy.common.rows}
+          </p>
         </div>
-        {loading ? <span className="text-sm font-medium text-data">Loading</span> : null}
+        {loading ? <span className="text-sm font-medium text-data">{copy.common.loading}</span> : null}
       </div>
       <div className="overflow-x-auto">
         <table className="min-w-[760px] w-full border-collapse text-left text-sm">
           <thead>
             <tr className="border-b border-line text-xs uppercase tracking-normal text-slate-500">
-              <th className="py-3 pr-3 font-semibold">Ticker</th>
-              <th className="px-3 py-3 font-semibold">Level</th>
-              <th className="px-3 py-3 font-semibold">Calibrated</th>
-              <th className="px-3 py-3 font-semibold">Trust</th>
-              <th className="px-3 py-3 font-semibold">Uncertainty</th>
-              <th className="px-3 py-3 font-semibold">Date</th>
+              <th className="py-3 pr-3 font-semibold">{copy.labels.ticker}</th>
+              <th className="px-3 py-3 font-semibold">{copy.labels.level}</th>
+              <th className="px-3 py-3 font-semibold">{copy.labels.calibratedRisk}</th>
+              <th className="px-3 py-3 font-semibold">{copy.labels.trustScore}</th>
+              <th className="px-3 py-3 font-semibold">{copy.labels.uncertainty}</th>
+              <th className="px-3 py-3 font-semibold">{copy.labels.date}</th>
             </tr>
           </thead>
           <tbody>
@@ -776,13 +905,13 @@ function WarningsTable({
                   </button>
                 </td>
                 <td className="px-3 py-3">
-                  <LevelBadge level={record.warning_level} />
+                  <LevelBadge level={record.warning_level} copy={copy} />
                 </td>
                 <td className="px-3 py-3 font-medium">
-                  {formatPercent(record.calibrated_risk_probability)}
+                  {formatPercent(record.calibrated_risk_probability, copy.common.na)}
                 </td>
-                <td className="px-3 py-3">{formatPercent(record.trust_score)}</td>
-                <td className="px-3 py-3">{formatPercent(record.uncertainty_score)}</td>
+                <td className="px-3 py-3">{formatPercent(record.trust_score, copy.common.na)}</td>
+                <td className="px-3 py-3">{formatPercent(record.uncertainty_score, copy.common.na)}</td>
                 <td className="px-3 py-3 text-slate-500">{record.date}</td>
               </tr>
             ))}
@@ -793,12 +922,12 @@ function WarningsTable({
   );
 }
 
-function LevelBadge({ level }: { level: WarningLevel }) {
+function LevelBadge({ level, copy }: { level: WarningLevel; copy: DashboardCopy }) {
   return (
     <span
       className={`inline-flex min-w-[86px] items-center justify-center rounded-md border px-2.5 py-1 text-xs font-semibold uppercase tracking-normal ${levelStyles[level]}`}
     >
-      {levelLabels[level]}
+      {copy.warningLevels[level]}
     </span>
   );
 }

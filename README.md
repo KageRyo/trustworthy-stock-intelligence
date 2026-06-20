@@ -534,7 +534,8 @@ http://localhost:5175
 
 The first version supports ticker search, typed `/api/v1/analysis/{ticker}`
 results, warning/trust metrics, reason explanations, model metadata, and the
-latest warnings table.
+latest warnings table. The dashboard supports English and 正體中文 through a
+client-side language switcher.
 
 The Streamlit dashboard shows trust experiment artifacts and can also read the
 Go API gateway through the Live API tab.
