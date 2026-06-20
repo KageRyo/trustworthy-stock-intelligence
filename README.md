@@ -391,9 +391,9 @@ GET /openapi.yaml
 GET /swagger/
 GET /api/v1/status
 GET /api/v1/tickers
-GET /api/v1/watchlists/default
-POST /api/v1/watchlists/default/tickers
-DELETE /api/v1/watchlists/default/tickers/{ticker}
+GET /api/v1/watchlists/{session-name}
+POST /api/v1/watchlists/{session-name}/tickers
+DELETE /api/v1/watchlists/{session-name}/tickers/{ticker}
 GET /api/v1/analysis/{ticker}
 GET /api/v1/warnings/latest
 GET /api/v1/warnings/latest?level=watch&limit=20
@@ -403,7 +403,9 @@ GET /api/v1/models/current
 ```
 
 The API reads the latest `prediction_batches` and `warning_records` from
-PostgreSQL and exposes typed watchlist endpoints backed by PostgreSQL. See
+PostgreSQL and exposes typed watchlist endpoints backed by PostgreSQL. The
+TypeScript dashboard uses a browser-session watchlist name stored in
+`sessionStorage`; searched/viewed tickers are added to that session list. See
 `docs/api/warning_api.md` for the API contract. Ticker-level dashboard analysis uses the typed
 `/api/v1/analysis/{ticker}` contract documented in `docs/api/analysis_api.md`.
 Swagger UI is available at `/swagger/`, and the OpenAPI document is available

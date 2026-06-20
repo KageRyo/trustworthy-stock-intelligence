@@ -132,9 +132,9 @@ Primary endpoints:
 
 ```text
 GET /api/v1/analysis/{ticker}
-GET /api/v1/watchlists/default
-POST /api/v1/watchlists/default/tickers
-DELETE /api/v1/watchlists/default/tickers/{ticker}
+GET /api/v1/watchlists/{session-name}
+POST /api/v1/watchlists/{session-name}/tickers
+DELETE /api/v1/watchlists/{session-name}/tickers/{ticker}
 GET /api/v1/tickers
 GET /api/v1/warnings/latest
 GET /api/v1/status

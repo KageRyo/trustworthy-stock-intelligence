@@ -162,11 +162,11 @@ export function fetchTickers(): Promise<TickerList> {
   return fetchSchema("/api/v1/tickers", tickerListSchema);
 }
 
-export function fetchWatchlist(name = "default"): Promise<Watchlist> {
+export function fetchWatchlist(name: string): Promise<Watchlist> {
   return fetchSchema(`/api/v1/watchlists/${encodeURIComponent(name)}`, watchlistSchema);
 }
 
-export function addWatchlistTicker(ticker: string, name = "default"): Promise<Watchlist> {
+export function addWatchlistTicker(ticker: string, name: string): Promise<Watchlist> {
   return mutateSchema(`/api/v1/watchlists/${encodeURIComponent(name)}/tickers`, watchlistSchema, {
     method: "POST",
     body: {
@@ -178,7 +178,7 @@ export function addWatchlistTicker(ticker: string, name = "default"): Promise<Wa
   });
 }
 
-export function removeWatchlistTicker(ticker: string, name = "default"): Promise<Watchlist> {
+export function removeWatchlistTicker(ticker: string, name: string): Promise<Watchlist> {
   return mutateSchema(
     `/api/v1/watchlists/${encodeURIComponent(name)}/tickers/${encodeURIComponent(
       ticker.trim().toUpperCase()

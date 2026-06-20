@@ -266,11 +266,11 @@ components:
       name: name
       in: path
       required: true
-      description: Watchlist name. The local dashboard uses `default`.
+      description: Watchlist name. The local dashboard uses browser-session names such as `session-...`; no JWT is required for this local workflow.
       schema:
         type: string
         minLength: 1
-        examples: ["default"]
+        examples: ["session-7d2f5d0c-5b20-4f6b-a7a7-6e59cbd7a3bd"]
   responses:
     BadRequest:
       description: Invalid request parameter.

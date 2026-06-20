@@ -70,7 +70,15 @@ func (s *PostgresStore) Close() {
 }
 
 func (s *PostgresStore) List(ctx context.Context, name string) (Watchlist, error) {
-	watchlistID, err := s.ensureWatchlist(ctx, name)
+	normalizedName := normalizeWatchlistName(name)
+	watchlistID, err := s.lookupWatchlist(ctx, normalizedName)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return Watchlist{
+			Name:      normalizedName,
+			Tickers:   []Ticker{},
+			UpdatedAt: "",
+		}, nil
+	}
 	if err != nil {
 		return Watchlist{}, err
 	}
@@ -114,7 +122,7 @@ func (s *PostgresStore) List(ctx context.Context, name string) (Watchlist, error
 		return Watchlist{}, fmt.Errorf("iterate watchlist tickers: %w", err)
 	}
 	return Watchlist{
-		Name:      normalizeWatchlistName(name),
+		Name:      normalizedName,
 		Tickers:   tickers,
 		UpdatedAt: formatOptionalTime(updatedAt),
 	}, nil
@@ -171,7 +179,10 @@ func (s *PostgresStore) AddTicker(
 }
 
 func (s *PostgresStore) RemoveTicker(ctx context.Context, name string, ticker string) (bool, error) {
-	watchlistID, err := s.ensureWatchlist(ctx, name)
+	watchlistID, err := s.lookupWatchlist(ctx, normalizeWatchlistName(name))
+	if errors.Is(err, pgx.ErrNoRows) {
+		return false, nil
+	}
 	if err != nil {
 		return false, err
 	}
@@ -229,6 +240,23 @@ func ResolveTicker(ticker string, market Market) (ResolvedTicker, error) {
 	default:
 		return ResolvedTicker{}, fmt.Errorf("unsupported market: %s", market)
 	}
+}
+
+func (s *PostgresStore) lookupWatchlist(ctx context.Context, name string) (string, error) {
+	var watchlistID string
+	err := s.pool.QueryRow(
+		ctx,
+		`
+		SELECT id::text
+		FROM watchlists
+		WHERE name = $1
+		`,
+		name,
+	).Scan(&watchlistID)
+	if err != nil {
+		return "", err
+	}
+	return watchlistID, nil
 }
 
 func (s *PostgresStore) ensureWatchlist(ctx context.Context, name string) (string, error) {

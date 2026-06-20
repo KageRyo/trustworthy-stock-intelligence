@@ -113,7 +113,7 @@ function tickerListPayload() {
 function watchlistPayload() {
   return {
     schema_version: "watchlist.v1",
-    name: "default",
+    name: "session-test",
     record_count: 1,
     updated_at: "2026-06-19T00:00:00Z",
     tickers: [
@@ -184,11 +184,11 @@ describe("typed API client", () => {
   it("parses DB-backed watchlists", async () => {
     fetchMock.mockResolvedValueOnce(jsonResponse(watchlistPayload()));
 
-    const watchlist = await fetchWatchlist();
+    const watchlist = await fetchWatchlist("session-test");
 
     expect(watchlist.schema_version).toBe("watchlist.v1");
     expect(watchlist.tickers[0].query_symbol).toBe("2330.TW");
-    expect(fetchMock).toHaveBeenCalledWith("/api/v1/watchlists/default", {
+    expect(fetchMock).toHaveBeenCalledWith("/api/v1/watchlists/session-test", {
       headers: {
         Accept: "application/json"
       }
@@ -198,10 +198,10 @@ describe("typed API client", () => {
   it("adds watchlist tickers with a schema-first request body", async () => {
     fetchMock.mockResolvedValueOnce(jsonResponse(watchlistPayload(), 201));
 
-    const watchlist = await addWatchlistTicker("2330");
+    const watchlist = await addWatchlistTicker("2330", "session-test");
 
     expect(watchlist.record_count).toBe(1);
-    expect(fetchMock).toHaveBeenCalledWith("/api/v1/watchlists/default/tickers", {
+    expect(fetchMock).toHaveBeenCalledWith("/api/v1/watchlists/session-test/tickers", {
       method: "POST",
       headers: {
         Accept: "application/json",
@@ -219,10 +219,10 @@ describe("typed API client", () => {
   it("removes watchlist tickers through the typed API client", async () => {
     fetchMock.mockResolvedValueOnce(jsonResponse({ ...watchlistPayload(), record_count: 0, tickers: [] }));
 
-    const watchlist = await removeWatchlistTicker("2330");
+    const watchlist = await removeWatchlistTicker("2330", "session-test");
 
     expect(watchlist.record_count).toBe(0);
-    expect(fetchMock).toHaveBeenCalledWith("/api/v1/watchlists/default/tickers/2330", {
+    expect(fetchMock).toHaveBeenCalledWith("/api/v1/watchlists/session-test/tickers/2330", {
       method: "DELETE",
       headers: {
         Accept: "application/json"

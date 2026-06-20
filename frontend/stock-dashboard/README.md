@@ -16,12 +16,14 @@ The main ticker analysis endpoint is:
 GET /api/v1/analysis/{ticker}
 ```
 
-The dashboard also manages the DB-backed default watchlist:
+The dashboard also manages a DB-backed browser-session watchlist. The session
+name is generated in `sessionStorage`, and searched/viewed tickers are added to
+that list:
 
 ```text
-GET /api/v1/watchlists/default
-POST /api/v1/watchlists/default/tickers
-DELETE /api/v1/watchlists/default/tickers/{ticker}
+GET /api/v1/watchlists/{session-name}
+POST /api/v1/watchlists/{session-name}/tickers
+DELETE /api/v1/watchlists/{session-name}/tickers/{ticker}
 ```
 
 See:

@@ -104,12 +104,14 @@ python -m scripts.ingest_market_data \
   --dry-run
 ```
 
-Once users add tickers through the dashboard watchlist API, ingestion can read
-the active watchlist directly:
+Once users add tickers through the dashboard watchlist API, ingestion can read a
+specific watchlist directly. The current TypeScript dashboard creates
+browser-session watchlist names, so production scheduling needs a deliberate
+policy for which session or curated list to ingest:
 
 ```bash
 python -m scripts.ingest_market_data \
-  --watchlist-name default \
+  --watchlist-name session-example \
   --interval 5m
 ```
 

@@ -5,7 +5,6 @@ import {
   Gauge,
   Info,
   ListChecks,
-  Plus,
   RefreshCcw,
   Search,
   ShieldCheck,
@@ -65,6 +64,7 @@ const levelLabels: Record<WarningLevel, string> = {
 };
 
 const barColors = ["#c2410c", "#0369a1", "#166534", "#b45309"];
+const sessionWatchlistStorageKey = "tsi.session.watchlist_name";
 
 function formatPercent(value: number | undefined): string {
   if (value === undefined || Number.isNaN(value)) {
@@ -92,6 +92,31 @@ function errorMessage(error: unknown): string {
 
 function normalizeTicker(value: string): string {
   return value.trim().toUpperCase();
+}
+
+function createSessionWatchlistName(): string {
+  const randomID =
+    typeof globalThis.crypto?.randomUUID === "function"
+      ? globalThis.crypto.randomUUID()
+      : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+  return `session-${randomID.replace(/[^a-zA-Z0-9-]/g, "")}`;
+}
+
+function getSessionWatchlistName(): string {
+  if (typeof window === "undefined") {
+    return createSessionWatchlistName();
+  }
+  try {
+    const existing = window.sessionStorage.getItem(sessionWatchlistStorageKey);
+    if (existing) {
+      return existing;
+    }
+    const nextName = createSessionWatchlistName();
+    window.sessionStorage.setItem(sessionWatchlistStorageKey, nextName);
+    return nextName;
+  } catch {
+    return createSessionWatchlistName();
+  }
 }
 
 function summarizeBatch(batch: PredictionBatch | null) {
@@ -146,13 +171,14 @@ function summarizeCoverage(tickerList: TickerList | null): string {
 }
 
 export default function App() {
+  const [watchlistName] = useState(getSessionWatchlistName);
   const [status, setStatus] = useState<APIStatus | null>(null);
   const [model, setModel] = useState<CurrentModel | null>(null);
   const [latestWarnings, setLatestWarnings] = useState<PredictionBatch | null>(null);
   const [tickerList, setTickerList] = useState<TickerList | null>(null);
   const [watchlist, setWatchlist] = useState<Watchlist | null>(null);
   const [analysis, setAnalysis] = useState<TickerAnalysis | null>(null);
-  const [tickerInput, setTickerInput] = useState("NVDA");
+  const [tickerInput, setTickerInput] = useState("");
   const [selectedTicker, setSelectedTicker] = useState("");
   const [batchState, setBatchState] = useState<LoadState>("idle");
   const [analysisState, setAnalysisState] = useState<LoadState>("idle");
@@ -173,7 +199,7 @@ export default function App() {
         fetchCurrentModel(),
         fetchLatestWarnings(75),
         fetchTickers(),
-        fetchWatchlist()
+        fetchWatchlist(watchlistName)
       ]);
       setStatus(nextStatus);
       setModel(nextModel);
@@ -182,22 +208,29 @@ export default function App() {
       setWatchlist(nextWatchlist);
       setWatchlistError("");
       setBatchState("ready");
-
-      if (nextWarnings.records.length > 0) {
-        const firstTicker = nextWarnings.records[0].ticker;
-        setSelectedTicker((currentTicker) => {
-          if (currentTicker) {
-            return currentTicker;
-          }
-          setTickerInput(firstTicker);
-          return firstTicker;
-        });
-      }
     } catch (error) {
       setBatchError(errorMessage(error));
       setBatchState("error");
     }
-  }, []);
+  }, [watchlistName]);
+
+  const rememberViewedTicker = useCallback(
+    async (ticker: string, pendingNotice?: string) => {
+      const nextWatchlist = await addWatchlistTicker(ticker, watchlistName);
+      setWatchlist(nextWatchlist);
+      setWatchlistError("");
+      const hasLatestWarning = nextWatchlist.tickers.some(
+        (entry) => entry.ticker === ticker && entry.has_latest_warning
+      );
+      if (pendingNotice || !hasLatestWarning) {
+        setAnalysisNotice(
+          pendingNotice ??
+            `${ticker} is in this browser session watchlist. Latest analysis is pending until the next ingestion and prediction run.`
+        );
+      }
+    },
+    [watchlistName]
+  );
 
   const loadAnalysis = useCallback(async (ticker: string) => {
     const normalized = normalizeTicker(ticker);
@@ -211,16 +244,19 @@ export default function App() {
       const nextAnalysis = await fetchTickerAnalysis(normalized);
       setAnalysis(nextAnalysis);
       setAnalysisState("ready");
+      try {
+        await rememberViewedTicker(normalized);
+      } catch (watchlistAddError) {
+        setWatchlistError(errorMessage(watchlistAddError));
+      }
     } catch (error) {
       setAnalysis(null);
       if (error instanceof APIClientError && error.code === "ticker_not_found") {
         setAnalysisState("idle");
         try {
-          const nextWatchlist = await addWatchlistTicker(normalized);
-          setWatchlist(nextWatchlist);
-          setWatchlistError("");
-          setAnalysisNotice(
-            `${normalized} is now in the watchlist. Latest analysis is pending until market data ingestion and prediction run for this ticker.`
+          await rememberViewedTicker(
+            normalized,
+            `${normalized} is now in this browser session watchlist. Latest analysis is pending until market data ingestion and prediction run for this ticker.`
           );
         } catch (watchlistAddError) {
           setAnalysisError(errorMessage(watchlistAddError));
@@ -231,7 +267,7 @@ export default function App() {
       setAnalysisError(errorMessage(error));
       setAnalysisState("error");
     }
-  }, []);
+  }, [rememberViewedTicker]);
 
   useEffect(() => {
     void loadBatch();
@@ -258,33 +294,10 @@ export default function App() {
     }
   }
 
-  async function addCurrentTickerToWatchlist() {
-    const normalized = normalizeTicker(tickerInput);
-    if (!normalized) {
-      return;
-    }
-    setWatchlistError("");
-    setAnalysisNotice("");
-    try {
-      const nextWatchlist = await addWatchlistTicker(normalized);
-      setWatchlist(nextWatchlist);
-      const hasLatestWarning = nextWatchlist.tickers.some(
-        (ticker) => ticker.ticker === normalized && ticker.has_latest_warning
-      );
-      if (!hasLatestWarning) {
-        setAnalysisNotice(
-          `${normalized} is in the watchlist. Latest analysis is pending until the next ingestion and prediction run.`
-        );
-      }
-    } catch (error) {
-      setWatchlistError(errorMessage(error));
-    }
-  }
-
   async function removeTickerFromWatchlist(ticker: string) {
     setWatchlistError("");
     try {
-      const nextWatchlist = await removeWatchlistTicker(ticker);
+      const nextWatchlist = await removeWatchlistTicker(ticker, watchlistName);
       setWatchlist(nextWatchlist);
     } catch (error) {
       setWatchlistError(errorMessage(error));
@@ -323,14 +336,6 @@ export default function App() {
                 Search
               </button>
             </form>
-            <button
-              className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-line bg-white px-4 text-sm font-semibold text-ink shadow-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-data"
-              type="button"
-              onClick={addCurrentTickerToWatchlist}
-            >
-              <Plus size={17} aria-hidden="true" />
-              Add
-            </button>
             <button
               className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-line bg-white px-4 text-sm font-semibold text-ink shadow-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-data"
               type="button"
@@ -383,7 +388,7 @@ export default function App() {
             icon={<Database size={18} />}
             label="Coverage"
             value={formatNumber(tickerList?.record_count ?? status?.record_count)}
-            detail={`${coverageSummary} / WL ${formatNumber(watchlist?.record_count)}`}
+            detail={`${coverageSummary} / Seen ${formatNumber(watchlist?.record_count)}`}
             tone="data"
           />
         </section>
@@ -401,6 +406,7 @@ export default function App() {
         <section className="grid gap-5 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
           <WatchlistPanel
             watchlist={watchlist}
+            watchlistName={watchlistName}
             selectedTicker={selectedTicker}
             onSelectTicker={(ticker) => {
               setTickerInput(ticker);
@@ -624,11 +630,13 @@ function ReasonItem({ reason }: { reason: ReasonExplanation }) {
 
 function WatchlistPanel({
   watchlist,
+  watchlistName,
   selectedTicker,
   onSelectTicker,
   onRemoveTicker
 }: {
   watchlist: Watchlist | null;
+  watchlistName: string;
   selectedTicker: string;
   onSelectTicker: (ticker: string) => void;
   onRemoveTicker: (ticker: string) => void;
@@ -639,14 +647,14 @@ function WatchlistPanel({
     <section className="rounded-lg border border-line bg-white p-5 shadow-panel">
       <div className="mb-4 flex flex-col gap-2 border-b border-line pb-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-lg font-semibold tracking-normal">Watchlist</h2>
+          <h2 className="text-lg font-semibold tracking-normal">Session Watchlist</h2>
           <p className="mt-1 text-sm text-slate-500">
-            {formatNumber(watchlist?.record_count)} rows
+            {formatNumber(watchlist?.record_count)} viewed | {watchlistName}
           </p>
         </div>
         <ListChecks className="text-data" size={22} aria-hidden="true" />
       </div>
-      {tickers.length === 0 ? <PanelState label="No watchlist tickers" /> : null}
+      {tickers.length === 0 ? <PanelState label="No viewed tickers in this session" /> : null}
       {tickers.length > 0 ? (
         <div className="overflow-x-auto">
           <table className="min-w-[620px] w-full border-collapse text-left text-sm">

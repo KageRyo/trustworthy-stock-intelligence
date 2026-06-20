@@ -98,11 +98,13 @@ universe.
 
 ### `GET /api/v1/watchlists/{name}`
 
-Returns a DB-backed watchlist with latest warning joins where available.
+Returns a DB-backed watchlist with latest warning joins where available. Reading
+a missing watchlist returns an empty list and does not create a DB row.
 
 ### `POST /api/v1/watchlists/{name}/tickers`
 
-Adds a ticker to a DB-backed watchlist. The request body is schema-first:
+Adds a ticker to a DB-backed watchlist. This is the operation that creates the
+watchlist if it does not already exist. The request body is schema-first:
 
 ```json
 {
