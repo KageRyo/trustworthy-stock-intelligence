@@ -7,6 +7,10 @@ __pycache__/
 
 # Environments
 .venv/
+.env
+.env.*
+!.env.example
+AGENTS.md
 
 # Local data artifacts
 data/raw/

@@ -3,6 +3,11 @@ GO ?= go
 STREAMLIT ?= streamlit
 NPM ?= npm
 
+ifneq (,$(wildcard .env))
+include .env
+export
+endif
+
 DATA_INPUT ?= data/raw/sp100/ohlcv.csv
 WATCHLIST_TICKERS ?= NVDA 2330
 WATCHLIST_DATA_DIR ?= data/raw/watchlist
@@ -13,7 +18,7 @@ API_ADDR ?= :18080
 GOCACHE ?= /tmp/tsi-go-build-cache
 FRONTEND_DIR ?= frontend/stock-dashboard
 FRONTEND_API_BASE_URL ?= http://127.0.0.1:18080
-DATABASE_URL ?= postgresql://tsi:tsi_local_password@localhost:55432/tsi
+DATABASE_URL ?= $(TSI_DATABASE_URL)
 DOWNLOAD_INTERVAL ?= 1d
 MARKET_INTERVAL ?= 5m
 MARKET_START ?=

@@ -15,7 +15,7 @@ from tsi.data.postgres import (
     write_download_to_postgres,
 )
 
-DEFAULT_DATABASE_URL = "postgresql://tsi:tsi_local_password@localhost:55432/tsi"
+DEFAULT_DATABASE_URL = ""
 
 
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
@@ -73,7 +73,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--database-url",
         default=os.getenv("TSI_DATABASE_URL", DEFAULT_DATABASE_URL),
-        help="PostgreSQL connection URL. Defaults to TSI_DATABASE_URL or local docker-compose.",
+        help="PostgreSQL connection URL. Defaults to TSI_DATABASE_URL.",
     )
     parser.add_argument(
         "--dry-run",
@@ -93,6 +93,8 @@ def default_start_for_interval(interval: str) -> str:
 
 def main() -> None:
     args = parse_args()
+    if not args.database_url and (args.watchlist_name or not args.dry_run):
+        raise ValueError("--database-url or TSI_DATABASE_URL is required for DB-backed ingestion")
     tickers = list(args.tickers or [])
     if not tickers and args.watchlist_name:
         tickers = read_watchlist_tickers(args.database_url, args.watchlist_name)

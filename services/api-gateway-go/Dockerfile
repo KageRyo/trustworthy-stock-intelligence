@@ -13,7 +13,6 @@ WORKDIR /app
 COPY --from=build /out/tsi-api-gateway /app/tsi-api-gateway
 
 ENV TSI_API_ADDR=:8080
-ENV TSI_WARNINGS_PATH=/data/latest_warnings.json
 EXPOSE 8080
 
 USER appuser

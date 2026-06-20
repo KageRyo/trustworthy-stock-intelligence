@@ -2,16 +2,16 @@ services:
   postgres:
     image: postgres:17-alpine
     environment:
-      POSTGRES_DB: tsi
-      POSTGRES_USER: tsi
-      POSTGRES_PASSWORD: tsi_local_password
+      POSTGRES_DB: "${TSI_POSTGRES_DB:?set TSI_POSTGRES_DB in .env}"
+      POSTGRES_USER: "${TSI_POSTGRES_USER:?set TSI_POSTGRES_USER in .env}"
+      POSTGRES_PASSWORD: "${TSI_POSTGRES_PASSWORD:?set TSI_POSTGRES_PASSWORD in .env}"
     ports:
       - "${TSI_POSTGRES_PORT:-55432}:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
       - ./infra/postgres/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U tsi -d tsi"]
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -21,7 +21,8 @@ services:
       context: services/api-gateway-go
     environment:
       TSI_API_ADDR: ":8080"
-      TSI_DATABASE_URL: postgresql://tsi:tsi_local_password@postgres:5432/tsi
+      TSI_DATABASE_URL: "${TSI_DOCKER_DATABASE_URL:?set TSI_DOCKER_DATABASE_URL in .env}"
+      TSI_CORS_ALLOWED_ORIGINS: "${TSI_CORS_ALLOWED_ORIGINS:-*}"
     ports:
       - "8080:8080"
     depends_on:
@@ -45,7 +46,7 @@ services:
     environment:
       TSI_DASHBOARD_API_BASE_URL: http://api-gateway-go:8080
     ports:
-      - "5173:5173"
+      - "5175:5175"
     depends_on:
       - api-gateway-go
 

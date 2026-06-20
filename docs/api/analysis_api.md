@@ -2,7 +2,7 @@
 
 The ticker analysis API is a schema-first read model built on top of the
 Python-generated warning batch. It does not run synchronous inference. It
-converts one `PredictionRecord` from `latest_warnings.json` into a typed,
+converts one latest PostgreSQL `warning_records` row into a typed,
 dashboard-oriented analysis response.
 
 ## Endpoint
@@ -29,7 +29,7 @@ envelope with `ticker_not_found`.
 | `warning` | `WarningAnalysis` | Risk warning probability, thresholds, level, and summary. |
 | `trust` | `TrustAssessment` | Calibration, uncertainty, trust status, and summary. |
 | `model` | `ModelAnalysis` | Model name and model bundle path used for the prediction. |
-| `data_freshness` | `DataFreshness` | Serving freshness metadata from the loaded warning file. |
+| `data_freshness` | `DataFreshness` | Serving freshness metadata from the loaded DB warning batch. |
 | `reasons` | `ReasonExplanation[]` | Typed explanations derived from reason codes. |
 | `limitations` | `string[]` | Fixed limitations shown by clients. |
 
@@ -68,8 +68,8 @@ envelope with `ticker_not_found`.
 | --- | --- | --- |
 | `data_as_of` | string | Batch-level market data cutoff date. |
 | `generated_at` | string | Batch generation timestamp. |
-| `last_loaded_at` | string | API load timestamp for the warning file. |
-| `file_modified_at` | string | Filesystem modification timestamp for the warning file. |
+| `last_loaded_at` | string | API load timestamp for the DB warning batch. |
+| `file_modified_at` | string | Empty for DB-backed serving; retained for schema compatibility. |
 | `record_count` | integer | Number of records in the loaded batch. |
 
 ### `ReasonExplanation`
