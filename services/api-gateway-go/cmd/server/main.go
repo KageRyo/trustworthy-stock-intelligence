@@ -26,8 +26,22 @@ func main() {
 		log.Fatalf("load postgres watchlist store: %v", err)
 	}
 	defer watchlistStore.Close()
+	handlers := apihttp.NewHandlers(store, watchlistStore)
+	if cfg.OnDemandAnalysisCommand != "" {
+		analyzer, err := apihttp.NewCommandOnDemandAnalyzer(
+			cfg.OnDemandAnalysisCommand,
+			cfg.DatabaseURL,
+			cfg.OnDemandAnalysisWorkdir,
+			cfg.OnDemandAnalysisTimeoutDuration,
+		)
+		if err != nil {
+			log.Fatalf("configure on-demand analysis: %v", err)
+		}
+		handlers.SetOnDemandAnalyzer(analyzer)
+		log.Printf("on-demand ticker analysis enabled with command %q", cfg.OnDemandAnalysisCommand)
+	}
 	router := apihttp.NewRouter(
-		apihttp.NewHandlers(store, watchlistStore),
+		handlers,
 		apihttp.CORSConfig{AllowedOrigins: cfg.CORSAllowedOrigins},
 	)
 	log.Printf("starting TSI API gateway on %s using PostgreSQL", cfg.Address)

@@ -145,7 +145,11 @@ func loadFile(path string) (PredictionBatch, map[string]PredictionRecord, time.T
 		)
 	}
 	byKey := make(map[string]PredictionRecord, len(batch.Records))
-	for _, record := range batch.Records {
+	for index, record := range batch.Records {
+		record.RunID = batch.RunID
+		record.DataAsOf = batch.DataAsOf
+		record.GeneratedAt = batch.GeneratedAt
+		batch.Records[index] = record
 		byKey[strings.ToUpper(record.Ticker)] = record
 	}
 	return batch, byKey, info.ModTime(), nil

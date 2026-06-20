@@ -65,13 +65,16 @@ func buildTickerAnalysis(
 	record warnings.PredictionRecord,
 	status warnings.StoreStatus,
 ) TickerAnalysisResponse {
+	runID := valueOrDefault(record.RunID, status.RunID)
+	dataAsOf := valueOrDefault(record.DataAsOf, status.DataAsOf)
+	generatedAt := valueOrDefault(record.GeneratedAt, status.GeneratedAt)
 	return TickerAnalysisResponse{
 		SchemaVersion: analysisSchemaVersion,
 		Ticker:        record.Ticker,
 		Date:          record.Date,
-		RunID:         status.RunID,
-		DataAsOf:      status.DataAsOf,
-		GeneratedAt:   status.GeneratedAt,
+		RunID:         runID,
+		DataAsOf:      dataAsOf,
+		GeneratedAt:   generatedAt,
 		Warning: WarningAnalysis{
 			Level:                     record.WarningLevel,
 			RiskProbability:           record.RiskProbability,
@@ -93,8 +96,8 @@ func buildTickerAnalysis(
 			ModelBundle: record.ModelBundle,
 		},
 		DataFreshness: DataFreshness{
-			DataAsOf:       status.DataAsOf,
-			GeneratedAt:    status.GeneratedAt,
+			DataAsOf:       dataAsOf,
+			GeneratedAt:    generatedAt,
 			LastLoadedAt:   status.LastLoadedAt,
 			FileModifiedAt: status.FileModifiedAt,
 			RecordCount:    status.RecordCount,
@@ -102,6 +105,13 @@ func buildTickerAnalysis(
 		Reasons:     explainReasonCodes(record.ReasonCodes),
 		Limitations: analysisLimitations(),
 	}
+}
+
+func valueOrDefault(value string, fallback string) string {
+	if strings.TrimSpace(value) == "" {
+		return fallback
+	}
+	return value
 }
 
 func warningSummary(record warnings.PredictionRecord) string {
@@ -269,7 +279,7 @@ func humanizeReasonCode(code string) string {
 func analysisLimitations() []string {
 	return []string{
 		"This is a drawdown-risk warning signal, not investment advice.",
-		"The API serves the latest precomputed batch and does not run synchronous inference.",
+		"When a ticker is missing, the API can trigger a configured on-demand market-data and prediction command before responding.",
 		"Outputs depend on the supplied OHLCV data, model bundle, calibration, and thresholds.",
 	}
 }

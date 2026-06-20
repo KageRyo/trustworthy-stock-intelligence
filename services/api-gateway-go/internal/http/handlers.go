@@ -21,8 +21,9 @@ type WarningStore interface {
 }
 
 type Handlers struct {
-	store     WarningStore
-	watchlist WatchlistStore
+	store            WarningStore
+	watchlist        WatchlistStore
+	onDemandAnalyzer OnDemandAnalyzer
 }
 
 type WatchlistStore interface {
@@ -67,6 +68,10 @@ func NewHandlers(store WarningStore, watchlistStores ...WatchlistStore) *Handler
 		storeWatchlist = watchlistStores[0]
 	}
 	return &Handlers{store: store, watchlist: storeWatchlist}
+}
+
+func (h *Handlers) SetOnDemandAnalyzer(analyzer OnDemandAnalyzer) {
+	h.onDemandAnalyzer = analyzer
 }
 
 func (h *Handlers) Health(response http.ResponseWriter, _ *http.Request) {
@@ -161,8 +166,28 @@ func (h *Handlers) TickerAnalysis(response http.ResponseWriter, request *http.Re
 	}
 	record, ok := h.store.FindTicker(ticker)
 	if !ok {
-		writeError(response, http.StatusNotFound, newHTTPError("ticker_not_found", "ticker not found"))
-		return
+		if h.onDemandAnalyzer == nil {
+			writeError(response, http.StatusNotFound, newHTTPError("ticker_not_found", "ticker not found"))
+			return
+		}
+		if err := h.onDemandAnalyzer.Analyze(request.Context(), ticker); err != nil {
+			writeError(
+				response,
+				http.StatusServiceUnavailable,
+				newHTTPError("on_demand_analysis_failed", err.Error()),
+			)
+			return
+		}
+		h.refreshStore()
+		record, ok = h.store.FindTicker(ticker)
+		if !ok {
+			writeError(
+				response,
+				http.StatusNotFound,
+				newHTTPError("ticker_not_found", "ticker not found after on-demand analysis"),
+			)
+			return
+		}
 	}
 	writeJSON(response, http.StatusOK, buildTickerAnalysis(record, h.store.Status()))
 }

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -515,6 +516,41 @@ func TestTickerAnalysisHandler(t *testing.T) {
 	}
 }
 
+func TestBuildTickerAnalysisPrefersRecordMetadata(t *testing.T) {
+	payload := buildTickerAnalysis(
+		warnings.PredictionRecord{
+			RunID:                     "record_run",
+			DataAsOf:                  "2026-06-18",
+			GeneratedAt:               "2026-06-20T08:46:54Z",
+			Date:                      "2026-06-18",
+			Ticker:                    "2884",
+			Model:                     "logistic_regression_latest",
+			ModelBundle:               "bundle",
+			RiskProbability:           0.3,
+			CalibratedRiskProbability: 0.2,
+			CalibrationMethod:         "platt",
+			UncertaintyScore:          0.4,
+			TrustScore:                0.1,
+			AlertThreshold:            0.5,
+			WatchThreshold:            0.4,
+			WarningLevel:              "no_alert",
+			ReasonCodes:               []string{"warning_level_no_alert"},
+		},
+		warnings.StoreStatus{
+			RunID:       "global_latest_run",
+			DataAsOf:    "2026-06-20",
+			GeneratedAt: "2026-06-20T08:47:11Z",
+		},
+	)
+
+	if payload.RunID != "record_run" {
+		t.Fatalf("run_id = %q, want record_run", payload.RunID)
+	}
+	if payload.DataAsOf != "2026-06-18" || payload.DataFreshness.DataAsOf != "2026-06-18" {
+		t.Fatalf("unexpected data_as_of metadata: %+v", payload)
+	}
+}
+
 func TestTickerAnalysisHandlerReturnsNotFound(t *testing.T) {
 	response := getJSON(t, testRouter(t), "/api/v1/analysis/NVDA")
 
@@ -527,6 +563,71 @@ func TestTickerAnalysisHandlerReturnsNotFound(t *testing.T) {
 	}
 	if payload.Error.Code != "ticker_not_found" {
 		t.Fatalf("error code = %q, want ticker_not_found", payload.Error.Code)
+	}
+}
+
+func TestTickerAnalysisHandlerRunsOnDemandWhenTickerMissing(t *testing.T) {
+	store := newMutableWarningStore()
+	analyzer := &fakeOnDemandAnalyzer{
+		onAnalyze: func(ticker string) {
+			if ticker != "2884" {
+				t.Fatalf("ticker = %q, want 2884", ticker)
+			}
+			store.setRecord(warnings.PredictionRecord{
+				Date:                      "2026-06-19",
+				Ticker:                    "2884",
+				Model:                     "logistic_regression_latest",
+				ModelBundle:               "baseline_latest:data/raw/on_demand/2884/ohlcv.csv",
+				RiskProbability:           0.21,
+				CalibratedRiskProbability: 0.17,
+				CalibrationMethod:         "platt",
+				UncertaintyScore:          0.22,
+				TrustScore:                0.13,
+				AlertThreshold:            0.3,
+				WatchThreshold:            0.15,
+				WarningLevel:              "watch",
+				ReasonCodes:               []string{"warning_level_watch"},
+			})
+		},
+	}
+	handlers := NewHandlers(store)
+	handlers.SetOnDemandAnalyzer(analyzer)
+	router := NewRouter(handlers)
+
+	response := getJSON(t, router, "/api/v1/analysis/2884")
+
+	if response.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200: %s", response.Code, response.Body.String())
+	}
+	var payload TickerAnalysisResponse
+	if err := json.NewDecoder(response.Body).Decode(&payload); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if payload.Ticker != "2884" || payload.Warning.Level != "watch" {
+		t.Fatalf("unexpected analysis response: %+v", payload)
+	}
+	if len(analyzer.calls) != 1 || analyzer.calls[0] != "2884" {
+		t.Fatalf("on-demand calls = %+v, want [2884]", analyzer.calls)
+	}
+}
+
+func TestTickerAnalysisHandlerReturnsUnavailableWhenOnDemandFails(t *testing.T) {
+	store := newMutableWarningStore()
+	handlers := NewHandlers(store)
+	handlers.SetOnDemandAnalyzer(&fakeOnDemandAnalyzer{err: errors.New("provider failed")})
+	router := NewRouter(handlers)
+
+	response := getJSON(t, router, "/api/v1/analysis/2884")
+
+	if response.Code != http.StatusServiceUnavailable {
+		t.Fatalf("status = %d, want 503", response.Code)
+	}
+	var payload ErrorResponse
+	if err := json.NewDecoder(response.Body).Decode(&payload); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if payload.Error.Code != "on_demand_analysis_failed" {
+		t.Fatalf("error code = %q, want on_demand_analysis_failed", payload.Error.Code)
 	}
 }
 
@@ -833,4 +934,75 @@ func TestWatchlistEndpointReportsUnavailableStore(t *testing.T) {
 	if payload.Error.Code != "watchlist_store_unavailable" {
 		t.Fatalf("error code = %q, want watchlist_store_unavailable", payload.Error.Code)
 	}
+}
+
+type mutableWarningStore struct {
+	batch   warnings.PredictionBatch
+	records map[string]warnings.PredictionRecord
+	status  warnings.StoreStatus
+}
+
+func newMutableWarningStore() *mutableWarningStore {
+	return &mutableWarningStore{
+		batch: warnings.PredictionBatch{
+			SchemaVersion: "v1",
+			RunID:         "test_run",
+			DataAsOf:      "2026-06-19",
+			GeneratedAt:   "2026-06-19T00:00:00Z",
+			Records:       []warnings.PredictionRecord{},
+		},
+		records: map[string]warnings.PredictionRecord{},
+		status: warnings.StoreStatus{
+			WarningsPath:   "test",
+			WarningsLoaded: false,
+			SchemaVersion:  "v1",
+			RunID:          "test_run",
+			DataAsOf:       "2026-06-19",
+			GeneratedAt:    "2026-06-19T00:00:00Z",
+			RecordCount:    0,
+			LastLoadedAt:   "2026-06-19T00:00:00Z",
+		},
+	}
+}
+
+func (s *mutableWarningStore) Batch() warnings.PredictionBatch {
+	return s.batch
+}
+
+func (s *mutableWarningStore) FindTicker(ticker string) (warnings.PredictionRecord, bool) {
+	record, ok := s.records[strings.ToUpper(ticker)]
+	return record, ok
+}
+
+func (s *mutableWarningStore) Refresh() error {
+	return nil
+}
+
+func (s *mutableWarningStore) Status() warnings.StoreStatus {
+	return s.status
+}
+
+func (s *mutableWarningStore) setRecord(record warnings.PredictionRecord) {
+	s.records[strings.ToUpper(record.Ticker)] = record
+	s.batch.Records = []warnings.PredictionRecord{record}
+	s.batch.RecordCount = 1
+	s.status.WarningsLoaded = true
+	s.status.RecordCount = 1
+}
+
+type fakeOnDemandAnalyzer struct {
+	calls     []string
+	err       error
+	onAnalyze func(ticker string)
+}
+
+func (a *fakeOnDemandAnalyzer) Analyze(_ context.Context, ticker string) error {
+	a.calls = append(a.calls, ticker)
+	if a.err != nil {
+		return a.err
+	}
+	if a.onAnalyze != nil {
+		a.onAnalyze(ticker)
+	}
+	return nil
 }

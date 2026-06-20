@@ -4,6 +4,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 const (
@@ -11,9 +12,12 @@ const (
 )
 
 type Config struct {
-	Address            string
-	DatabaseURL        string
-	CORSAllowedOrigins []string
+	Address                         string
+	DatabaseURL                     string
+	CORSAllowedOrigins              []string
+	OnDemandAnalysisCommand         string
+	OnDemandAnalysisWorkdir         string
+	OnDemandAnalysisTimeoutDuration time.Duration
 }
 
 func Load() Config {
@@ -24,9 +28,12 @@ func Load() Config {
 		}
 	}
 	return Config{
-		Address:            address,
-		DatabaseURL:        envOrDefault("TSI_DATABASE_URL", ""),
-		CORSAllowedOrigins: splitCSV(envOrDefault("TSI_CORS_ALLOWED_ORIGINS", "*")),
+		Address:                         address,
+		DatabaseURL:                     envOrDefault("TSI_DATABASE_URL", ""),
+		CORSAllowedOrigins:              splitCSV(envOrDefault("TSI_CORS_ALLOWED_ORIGINS", "*")),
+		OnDemandAnalysisCommand:         envOrDefault("TSI_ON_DEMAND_ANALYSIS_COMMAND", ""),
+		OnDemandAnalysisWorkdir:         envOrDefault("TSI_ON_DEMAND_ANALYSIS_WORKDIR", ""),
+		OnDemandAnalysisTimeoutDuration: secondsEnv("TSI_ON_DEMAND_ANALYSIS_TIMEOUT_SECONDS", 120),
 	}
 }
 
@@ -48,4 +55,16 @@ func splitCSV(value string) []string {
 		}
 	}
 	return values
+}
+
+func secondsEnv(name string, fallback int) time.Duration {
+	value := strings.TrimSpace(os.Getenv(name))
+	if value == "" {
+		return time.Duration(fallback) * time.Second
+	}
+	seconds, err := strconv.Atoi(value)
+	if err != nil || seconds < 1 {
+		return time.Duration(fallback) * time.Second
+	}
+	return time.Duration(seconds) * time.Second
 }

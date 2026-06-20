@@ -10,6 +10,9 @@ type PredictionBatch struct {
 }
 
 type PredictionRecord struct {
+	RunID                     string   `json:"-"`
+	DataAsOf                  string   `json:"-"`
+	GeneratedAt               string   `json:"-"`
 	Date                      string   `json:"date"`
 	Ticker                    string   `json:"ticker"`
 	Model                     string   `json:"model"`

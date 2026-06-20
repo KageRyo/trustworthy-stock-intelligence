@@ -101,47 +101,52 @@ func (s *PostgresStore) Status() StoreStatus {
 func (s *PostgresStore) loadLatestBatch(
 	ctx context.Context,
 ) (PredictionBatch, map[string]PredictionRecord, error) {
-	var batchID string
 	var schemaVersion string
 	var runID string
 	var dataAsOf time.Time
 	var generatedAt time.Time
-	var model string
-	var modelBundle string
-	var recordCount int
 	err := s.pool.QueryRow(
 		ctx,
 		`
-		SELECT id::text, schema_version, run_id, data_as_of, generated_at,
-		       model, model_bundle, record_count
+		SELECT schema_version, run_id, data_as_of, generated_at
 		FROM prediction_batches
 		ORDER BY generated_at DESC, created_at DESC
 		LIMIT 1
 		`,
-	).Scan(&batchID, &schemaVersion, &runID, &dataAsOf, &generatedAt, &model, &modelBundle, &recordCount)
+	).Scan(&schemaVersion, &runID, &dataAsOf, &generatedAt)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return emptyBatch(), map[string]PredictionRecord{}, nil
 	}
 	if err != nil {
-		return PredictionBatch{}, nil, fmt.Errorf("load latest prediction batch: %w", err)
+		return PredictionBatch{}, nil, fmt.Errorf("load latest prediction batch metadata: %w", err)
 	}
 
 	rows, err := s.pool.Query(
 		ctx,
 		`
-		SELECT wr.prediction_date, t.symbol, wr.risk_probability,
-		       wr.calibrated_risk_probability, wr.calibration_method,
-		       wr.uncertainty_score, wr.trust_score, wr.alert_threshold,
-		       wr.watch_threshold, wr.warning_level, wr.reason_codes
-		FROM warning_records wr
-		JOIN tickers t ON t.id = wr.ticker_id
-		WHERE wr.batch_id = $1
-		ORDER BY t.symbol
+		SELECT prediction_date, symbol, run_id, data_as_of, generated_at,
+		       model, model_bundle, risk_probability,
+		       calibrated_risk_probability, calibration_method,
+		       uncertainty_score, trust_score, alert_threshold,
+		       watch_threshold, warning_level, reason_codes
+		FROM (
+			SELECT DISTINCT ON (t.symbol)
+			       wr.prediction_date, t.symbol, pb.run_id, pb.data_as_of,
+			       pb.generated_at, pb.model, pb.model_bundle, wr.risk_probability,
+			       wr.calibrated_risk_probability, wr.calibration_method,
+			       wr.uncertainty_score, wr.trust_score, wr.alert_threshold,
+			       wr.watch_threshold, wr.warning_level, wr.reason_codes,
+			       pb.created_at
+			FROM warning_records wr
+			JOIN prediction_batches pb ON pb.id = wr.batch_id
+			JOIN tickers t ON t.id = wr.ticker_id
+			ORDER BY t.symbol, pb.generated_at DESC, wr.prediction_date DESC, pb.created_at DESC
+		) latest_per_ticker
+		ORDER BY symbol
 		`,
-		batchID,
 	)
 	if err != nil {
-		return PredictionBatch{}, nil, fmt.Errorf("load warning records: %w", err)
+		return PredictionBatch{}, nil, fmt.Errorf("load latest warning records by ticker: %w", err)
 	}
 	defer rows.Close()
 
@@ -149,10 +154,17 @@ func (s *PostgresStore) loadLatestBatch(
 	byKey := map[string]PredictionRecord{}
 	for rows.Next() {
 		var predictionDate time.Time
+		var recordDataAsOf time.Time
+		var recordGeneratedAt time.Time
 		var record PredictionRecord
 		if err := rows.Scan(
 			&predictionDate,
 			&record.Ticker,
+			&record.RunID,
+			&recordDataAsOf,
+			&recordGeneratedAt,
+			&record.Model,
+			&record.ModelBundle,
 			&record.RiskProbability,
 			&record.CalibratedRiskProbability,
 			&record.CalibrationMethod,
@@ -166,8 +178,8 @@ func (s *PostgresStore) loadLatestBatch(
 			return PredictionBatch{}, nil, fmt.Errorf("scan warning record: %w", err)
 		}
 		record.Date = formatDataTime(predictionDate)
-		record.Model = model
-		record.ModelBundle = modelBundle
+		record.DataAsOf = formatDataTime(recordDataAsOf)
+		record.GeneratedAt = recordGeneratedAt.UTC().Format(time.RFC3339)
 		records = append(records, record)
 		byKey[strings.ToUpper(record.Ticker)] = record
 	}
@@ -182,9 +194,6 @@ func (s *PostgresStore) loadLatestBatch(
 		GeneratedAt:   generatedAt.UTC().Format(time.RFC3339),
 		RecordCount:   len(records),
 		Records:       records,
-	}
-	if recordCount != len(records) {
-		batch.RecordCount = len(records)
 	}
 	return batch, byKey, nil
 }

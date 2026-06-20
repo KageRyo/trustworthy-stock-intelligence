@@ -3,7 +3,13 @@ from __future__ import annotations
 import pandas as pd
 import pytest
 
-from tsi.data.download import _normalize_download_frame, download_ticker_frame, resolve_yfinance_ticker
+from tsi.data import download as download_module
+from tsi.data.download import (
+    _normalize_download_frame,
+    configure_yfinance_cache,
+    download_ticker_frame,
+    resolve_yfinance_ticker,
+)
 
 
 def test_resolve_yfinance_ticker_maps_numeric_auto_to_twse_symbol() -> None:
@@ -67,3 +73,16 @@ def test_normalize_download_frame_preserves_intraday_timestamp() -> None:
 def test_download_ticker_frame_rejects_unsupported_interval() -> None:
     with pytest.raises(ValueError, match="interval must be one of"):
         download_ticker_frame(["NVDA"], start="2026-01-01", interval="15m")
+
+
+def test_configure_yfinance_cache_uses_writable_env_path(monkeypatch, tmp_path) -> None:
+    cache_dir = tmp_path / "yf-cache"
+    calls: list[str] = []
+
+    monkeypatch.setenv("TSI_YFINANCE_CACHE_DIR", str(cache_dir))
+    monkeypatch.setattr(download_module.yf, "set_tz_cache_location", calls.append)
+
+    configure_yfinance_cache()
+
+    assert cache_dir.is_dir()
+    assert calls == [str(cache_dir)]

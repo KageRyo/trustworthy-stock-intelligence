@@ -7,6 +7,7 @@ should prefer a licensed and versioned market data source.
 from __future__ import annotations
 
 import json
+import os
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -62,6 +63,16 @@ def batched(items: list[str], batch_size: int) -> Iterable[list[str]]:
 
     for start in range(0, len(items), batch_size):
         yield items[start : start + batch_size]
+
+
+def configure_yfinance_cache() -> None:
+    """Point yfinance's timezone cache at a known writable local directory."""
+
+    cache_dir = Path(os.getenv("TSI_YFINANCE_CACHE_DIR", "/tmp/tsi-yfinance-cache"))
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    set_cache_location = getattr(yf, "set_tz_cache_location", None)
+    if callable(set_cache_location):
+        set_cache_location(str(cache_dir))
 
 
 def resolve_yfinance_ticker(ticker: str, *, market: TickerMarket = "auto") -> DownloadTicker:
@@ -175,6 +186,7 @@ def download_ohlcv(
 ) -> DownloadResult:
     """Download daily OHLCV data for a universe and write local CSV artifacts."""
 
+    configure_yfinance_cache()
     output_dir = output_root / universe.name
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -320,6 +332,7 @@ def download_ticker_frame(
 ) -> DownloadFrameResult:
     """Download OHLCV data for explicit tickers and return it in memory."""
 
+    configure_yfinance_cache()
     if interval not in {"1m", "5m", "1d"}:
         raise ValueError("interval must be one of 1m, 5m, 1d")
     if batch_size < 1:
