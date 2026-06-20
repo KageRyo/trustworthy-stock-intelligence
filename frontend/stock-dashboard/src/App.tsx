@@ -158,6 +158,7 @@ export default function App() {
   const [analysisState, setAnalysisState] = useState<LoadState>("idle");
   const [batchError, setBatchError] = useState("");
   const [analysisError, setAnalysisError] = useState("");
+  const [analysisNotice, setAnalysisNotice] = useState("");
   const [watchlistError, setWatchlistError] = useState("");
 
   const batchSummary = useMemo(() => summarizeBatch(latestWarnings), [latestWarnings]);
@@ -205,12 +206,28 @@ export default function App() {
     }
     setAnalysisState("loading");
     setAnalysisError("");
+    setAnalysisNotice("");
     try {
       const nextAnalysis = await fetchTickerAnalysis(normalized);
       setAnalysis(nextAnalysis);
       setAnalysisState("ready");
     } catch (error) {
       setAnalysis(null);
+      if (error instanceof APIClientError && error.code === "ticker_not_found") {
+        setAnalysisState("idle");
+        try {
+          const nextWatchlist = await addWatchlistTicker(normalized);
+          setWatchlist(nextWatchlist);
+          setWatchlistError("");
+          setAnalysisNotice(
+            `${normalized} is now in the watchlist. Latest analysis is pending until market data ingestion and prediction run for this ticker.`
+          );
+        } catch (watchlistAddError) {
+          setAnalysisError(errorMessage(watchlistAddError));
+          setAnalysisState("error");
+        }
+        return;
+      }
       setAnalysisError(errorMessage(error));
       setAnalysisState("error");
     }
@@ -247,9 +264,18 @@ export default function App() {
       return;
     }
     setWatchlistError("");
+    setAnalysisNotice("");
     try {
       const nextWatchlist = await addWatchlistTicker(normalized);
       setWatchlist(nextWatchlist);
+      const hasLatestWarning = nextWatchlist.tickers.some(
+        (ticker) => ticker.ticker === normalized && ticker.has_latest_warning
+      );
+      if (!hasLatestWarning) {
+        setAnalysisNotice(
+          `${normalized} is in the watchlist. Latest analysis is pending until the next ingestion and prediction run.`
+        );
+      }
     } catch (error) {
       setWatchlistError(errorMessage(error));
     }
@@ -367,6 +393,7 @@ export default function App() {
             analysis={analysis}
             state={analysisState}
             error={analysisError}
+            notice={analysisNotice}
           />
           <TrustPanel analysis={analysis} model={model} status={status} />
         </section>
@@ -437,11 +464,13 @@ function MetricCard({
 function AnalysisPanel({
   analysis,
   state,
-  error
+  error,
+  notice
 }: {
   analysis: TickerAnalysis | null;
   state: LoadState;
   error: string;
+  notice: string;
 }) {
   const chartData = analysis
     ? [
@@ -480,6 +509,7 @@ function AnalysisPanel({
 
       {state === "loading" ? <PanelState label="Loading analysis" /> : null}
       {state === "error" ? <ErrorBanner message={error} /> : null}
+      {notice ? <NoticeBanner message={notice} /> : null}
 
       {analysis ? (
         <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,0.9fr)_minmax(260px,0.7fr)]">
@@ -786,6 +816,14 @@ function ValueRow({ label, value }: { label: string; value: string }) {
 function ErrorBanner({ message }: { message: string }) {
   return (
     <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-900">
+      {message}
+    </div>
+  );
+}
+
+function NoticeBanner({ message }: { message: string }) {
+  return (
+    <div className="mt-4 rounded-lg border border-sky-200 bg-sky-50 px-4 py-3 text-sm font-medium text-sky-900">
       {message}
     </div>
   );

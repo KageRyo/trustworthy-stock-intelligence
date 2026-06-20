@@ -6,7 +6,7 @@ const apiTarget = process.env.TSI_DASHBOARD_API_BASE_URL ?? "http://127.0.0.1:18
 export default defineConfig({
   plugins: [react()],
   server: {
-    port: 5173,
+    port: 5175,
     proxy: {
       "/api": {
         target: apiTarget,

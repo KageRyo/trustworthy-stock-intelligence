@@ -47,6 +47,12 @@ npm ci
 npm run dev
 ```
 
+Default local URL:
+
+```text
+http://localhost:5175
+```
+
 The Vite dev server proxies `/api` and `/health` to `http://127.0.0.1:18080`
 by default. Override the proxy target with:
 

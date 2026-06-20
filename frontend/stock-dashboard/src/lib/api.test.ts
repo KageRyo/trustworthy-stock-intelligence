@@ -23,7 +23,7 @@ function jsonResponse(payload: unknown, status = 200): Response {
 
 function statusPayload() {
   return {
-    warnings_path: "data/artifacts/latest_warnings.json",
+    warnings_path: "postgres",
     warnings_loaded: true,
     schema_version: "v1",
     run_id: "fixture_run",
