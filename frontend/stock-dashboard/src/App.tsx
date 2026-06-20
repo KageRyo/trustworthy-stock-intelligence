@@ -215,18 +215,15 @@ export default function App() {
   }, [watchlistName]);
 
   const rememberViewedTicker = useCallback(
-    async (ticker: string, pendingNotice?: string) => {
+    async (ticker: string) => {
       const nextWatchlist = await addWatchlistTicker(ticker, watchlistName);
       setWatchlist(nextWatchlist);
       setWatchlistError("");
       const hasLatestWarning = nextWatchlist.tickers.some(
         (entry) => entry.ticker === ticker && entry.has_latest_warning
       );
-      if (pendingNotice || !hasLatestWarning) {
-        setAnalysisNotice(
-          pendingNotice ??
-            `${ticker} is in this browser session watchlist. Latest analysis is pending until the next ingestion and prediction run.`
-        );
+      if (!hasLatestWarning) {
+        setAnalysisNotice(`${ticker} was analyzed, but the watchlist join has not refreshed yet.`);
       }
     },
     [watchlistName]
@@ -252,16 +249,10 @@ export default function App() {
     } catch (error) {
       setAnalysis(null);
       if (error instanceof APIClientError && error.code === "ticker_not_found") {
-        setAnalysisState("idle");
-        try {
-          await rememberViewedTicker(
-            normalized,
-            `${normalized} is now in this browser session watchlist. Latest analysis is pending until market data ingestion and prediction run for this ticker.`
-          );
-        } catch (watchlistAddError) {
-          setAnalysisError(errorMessage(watchlistAddError));
-          setAnalysisState("error");
-        }
+        setAnalysisError(
+          `No market data or model output could be generated for ${normalized}. Check the symbol and provider coverage.`
+        );
+        setAnalysisState("error");
         return;
       }
       setAnalysisError(errorMessage(error));

@@ -450,9 +450,12 @@ Numeric Taiwan stock codes are supported through the downloader. For example,
 `2330` is downloaded from yfinance as `2330.TW` but remains `2330` in the
 serving `ticker` field.
 
-The local watchlist flow only covers the tickers you download. It does not mean
-the loaded warning batch covers all US and Taiwan stocks. Use
-`GET /api/v1/tickers` or the dashboard table to see the current loaded coverage.
+The dashboard can request an analysis for a ticker that is not already present
+in PostgreSQL. When `TSI_ON_DEMAND_ANALYSIS_COMMAND` is configured, the Go API
+delegates to the Python on-demand command, downloads provider data, writes a new
+warning record to PostgreSQL, refreshes its store, and returns the analysis.
+Use `GET /api/v1/tickers` or the dashboard table to see which symbols currently
+have stored warning records.
 
 ## Data Store
 
@@ -486,6 +489,24 @@ The ingestion command validates downloaded rows through Pydantic schemas and
 prints a `market_data_ingestion.v1` summary. Five-minute ingestion improves
 market-data freshness, but the current baseline and deep warning models remain
 daily unless trained and labeled on intraday features.
+
+For interactive ticker search, run the API with on-demand analysis enabled:
+
+```bash
+make api
+```
+
+The `api` make target sets:
+
+```text
+TSI_ON_DEMAND_ANALYSIS_COMMAND=python -m scripts.analyze_ticker_on_demand
+TSI_ON_DEMAND_ANALYSIS_WORKDIR=<repo-root>
+TSI_ON_DEMAND_ANALYSIS_TIMEOUT_SECONDS=120
+```
+
+This is a local bridge for immediate analysis. It still writes structured
+warning records to PostgreSQL; it does not make `latest_warnings.json` the
+serving source of truth.
 
 ## Dashboards
 

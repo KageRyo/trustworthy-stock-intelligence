@@ -1,9 +1,10 @@
 # Ticker Analysis API Contract
 
 The ticker analysis API is a schema-first read model built on top of the
-Python-generated warning batch. It does not run synchronous inference. It
-converts one latest PostgreSQL `warning_records` row into a typed,
-dashboard-oriented analysis response.
+Python-generated warning records in PostgreSQL. When configured, the API can
+delegate a missing ticker to the Python on-demand analysis command, refresh the
+store, and then convert the resulting PostgreSQL `warning_records` row into a
+typed, dashboard-oriented analysis response.
 
 ## Endpoint
 
@@ -11,8 +12,10 @@ dashboard-oriented analysis response.
 GET /api/v1/analysis/{ticker}
 ```
 
-Ticker lookup is case-insensitive. Missing tickers return the standard API error
-envelope with `ticker_not_found`.
+Ticker lookup is case-insensitive. Missing tickers trigger on-demand analysis
+when `TSI_ON_DEMAND_ANALYSIS_COMMAND` is configured. If the provider or model
+pipeline cannot produce a record, the endpoint returns the standard API error
+envelope.
 
 ## Response Schema
 
@@ -21,7 +24,7 @@ envelope with `ticker_not_found`.
 | Field | Type | Description |
 | --- | --- | --- |
 | `schema_version` | string | Analysis response schema version. Current value: `analysis.v1`. |
-| `ticker` | string | Requested ticker symbol from the loaded warning batch. |
+| `ticker` | string | Requested ticker symbol from PostgreSQL warning records. |
 | `date` | string | Prediction date for the ticker record, formatted as `YYYY-MM-DD`. |
 | `run_id` | string | Warning batch run identifier. |
 | `data_as_of` | string | Batch-level market data cutoff date. |
@@ -94,7 +97,8 @@ Known analysis endpoint errors:
 
 | HTTP Status | Code | Meaning |
 | --- | --- | --- |
-| `404` | `ticker_not_found` | The ticker is missing from the latest loaded warning batch. |
+| `404` | `ticker_not_found` | The ticker is missing and was not produced by on-demand analysis. |
+| `503` | `on_demand_analysis_failed` | The configured on-demand analysis command failed or timed out. |
 
 ## Schema Ownership
 

@@ -27,6 +27,18 @@ Browser clients are controlled by `TSI_CORS_ALLOWED_ORIGINS`, a comma-separated
 list of exact origins. The local default is `*`; shared deployments should use
 explicit dashboard origins.
 
+For local interactive ticker search, set:
+
+```bash
+export TSI_ON_DEMAND_ANALYSIS_COMMAND="python -m scripts.analyze_ticker_on_demand"
+export TSI_ON_DEMAND_ANALYSIS_WORKDIR="/absolute/path/to/trustworthy-stock-intelligence"
+export TSI_ON_DEMAND_ANALYSIS_TIMEOUT_SECONDS=120
+```
+
+When enabled, `/api/v1/analysis/{ticker}` can delegate a missing ticker to the
+Python ML core, write the generated warning record to PostgreSQL, refresh the
+store, and return a typed analysis response.
+
 ## Run
 
 From the repository root:
@@ -82,13 +94,14 @@ GET /api/v1/models/current
 ```
 
 The service requires PostgreSQL through `TSI_DATABASE_URL`. It does not call
-Python or run background inference jobs in request handlers.
+Python by default. If `TSI_ON_DEMAND_ANALYSIS_COMMAND` is configured, missing
+ticker analysis is delegated to that Python command before the handler returns.
 
 `/api/v1/analysis/{ticker}` returns a typed dashboard analysis schema built from
 the latest warning record. See `docs/api/analysis_api.md`.
 
-`/api/v1/tickers` returns the symbols present in the loaded warning batch. It is
-not a complete market universe endpoint.
+`/api/v1/tickers` returns the symbols that currently have PostgreSQL warning
+records. It is not a complete market universe endpoint.
 
 `/api/v1/watchlists/{name}` and child ticker endpoints manage DB-backed
 watchlists. A ticker may be present in a watchlist before a latest warning exists
@@ -100,6 +113,11 @@ Swagger UI is served from `/swagger/`, with the OpenAPI YAML at
 The latest warning batch is loaded from PostgreSQL `prediction_batches` and
 `warning_records`. Missing `TSI_DATABASE_URL` or an unreachable database is a
 startup error.
+
+The lightweight Docker image contains only the Go API binary. Use the local
+`make api` workflow for on-demand Python analysis, or build a combined
+runtime/worker image before enabling `TSI_ON_DEMAND_ANALYSIS_COMMAND` in a
+container.
 
 ## Test
 

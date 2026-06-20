@@ -157,7 +157,7 @@ ingestion. yfinance remains acceptable for local demo and early pipeline tests.
 
 ## Current Limitation
 
-The DB-backed API and watchlist state are available. The remaining gap is
-coverage automation: broad US/Taiwan ticker universe ingestion, scheduled
-5-minute updates, warning history/change detection, and intraday-trained models
-still need to be implemented.
+The DB-backed API, watchlist state, and local on-demand ticker analysis bridge
+are available. The remaining gap is coverage automation: broad US/Taiwan ticker
+universe ingestion, scheduled 5-minute updates, warning history/change
+detection, and intraday-trained models still need to be implemented.
