@@ -6,6 +6,10 @@ delegate a missing ticker to the Python on-demand analysis command, refresh the
 store, and then convert the resulting PostgreSQL `warning_records` row into a
 typed, dashboard-oriented analysis response.
 
+JSON examples and field tables in this document describe the owned response
+schema. They should stay aligned with Go structs, OpenAPI, and frontend Zod
+schemas.
+
 ## Endpoint
 
 ```text
@@ -21,6 +25,10 @@ If market data exists but the ticker does not have enough labeled history for a
 calibrated prediction, the endpoint returns an `abstain` analysis with the
 `insufficient_history` reason code. This keeps the response schema stable while
 making the trust limitation explicit.
+
+Taiwan local tickers are string symbols. Numeric and alphanumeric inputs such
+as `0050`, `2330`, `00981A`, `02001L`, and TPEx emerging symbols such as `5240`
+should not be coerced to numbers.
 
 ## Response Schema
 

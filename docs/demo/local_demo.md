@@ -1,95 +1,157 @@
 # Local Demo Walkthrough
 
-This walkthrough runs the v1 local end-to-end demo:
+This walkthrough runs the `0.2.0` local dashboard demo:
 
 ```text
-Python ML inference
--> atomic latest_warnings.json
+Provider APIs
+-> Python on-demand ingestion and prediction
+-> PostgreSQL warning records
 -> Go API Gateway
--> Streamlit Dashboard Live API tab
+-> TypeScript Stock Dashboard
 ```
 
 The demo is not investment advice and does not run live trading.
 
 ## Prerequisites
 
-Prepare these local artifacts first:
+Install Python, Go, frontend, and DB dependencies:
+
+```bash
+python -m pip install -e ".[dev,db,dashboard,deep]"
+cd frontend/stock-dashboard
+npm ci
+cd ../..
+```
+
+Go `1.22.x` or newer is required for the API gateway. Node `22.x` is used in
+CI for the dashboard.
+
+Create local environment configuration:
+
+```bash
+cp .env.example .env
+```
+
+Fill `.env` with local PostgreSQL credentials and CORS origins. Do not commit
+`.env`.
+
+## 1. Start PostgreSQL
+
+```bash
+docker compose up -d postgres
+```
+
+The database initializes schemas from:
 
 ```text
-data/raw/sp100/ohlcv.csv
-data/artifacts/sp100_transformer_model_bundle/
+infra/postgres/init/
 ```
 
-The raw data, model bundle, and generated latest prediction files are local
-artifacts and are not committed to git.
-
-Install the Python package and dashboard dependencies:
-
-```bash
-pip install -e ".[dashboard,deep,dev]"
-```
-
-Go 1.22 or newer is required for the API gateway.
-
-## 1. Generate Latest Warnings
-
-```bash
-make predict-latest
-```
-
-This writes:
-
-```text
-data/artifacts/latest_predictions.csv
-data/artifacts/latest_warnings.json
-```
-
-`latest_warnings.json` is written atomically, so the Go API sees either the
-previous complete file or the next complete file.
-
-Override paths when needed:
-
-```bash
-DATA_INPUT=data/raw/sp100/ohlcv.csv \
-MODEL_BUNDLE=data/artifacts/sp100_transformer_model_bundle \
-make predict-latest
-```
+For an existing local database, apply any new migration files under that
+directory before testing a new release.
 
 ## 2. Start Go API
 
-In a second terminal:
-
 ```bash
-make api
+make api API_ADDR=0.0.0.0:18080
 ```
 
-If Go is installed in a conda environment:
-
-```bash
-GO=/mnt/8tb_hdd/ryo/miniconda3/envs/stock/bin/go make api
-```
-
-Open or curl:
+The `api` target uses:
 
 ```text
-http://localhost:8080/health
-http://localhost:8080/metrics
-http://localhost:8080/api/v1/status
-http://localhost:8080/api/v1/models/current
-http://localhost:8080/api/v1/warnings/latest?level=watch&limit=20
-http://localhost:8080/api/v1/warnings/latest?level=alert&sort=trust_score&order=desc&limit=20
+TSI_DATABASE_URL
+TSI_ON_DEMAND_ANALYSIS_COMMAND=python -m scripts.analyze_ticker_on_demand
+TSI_ON_DEMAND_ANALYSIS_WORKDIR=<repo-root>
+TSI_ON_DEMAND_ANALYSIS_TIMEOUT_SECONDS=120
 ```
 
-The API reloads the warning file when its modification time changes. If reload
-fails, it keeps serving the last valid batch and reports the error through
-`/health` and `/api/v1/status`.
+Open:
 
-## 3. Start Dashboard
+```text
+http://localhost:18080/health
+http://localhost:18080/swagger/
+http://localhost:18080/api/v1/status
+http://localhost:18080/api/v1/models/current
+```
 
-In a third terminal:
+If `TSI_DATABASE_URL` is missing or PostgreSQL is unreachable, the API should
+fail at startup.
+
+## 3. Start TypeScript Dashboard
 
 ```bash
-make dashboard
+make stock-dashboard
+```
+
+Open:
+
+```text
+http://localhost:5175
+http://140.123.105.126:5175
+```
+
+The Vite dev server binds to `0.0.0.0`. It proxies API calls to
+`http://127.0.0.1:18080` by default through `TSI_DASHBOARD_API_BASE_URL`.
+
+## 4. Try Ticker Analysis
+
+Search for:
+
+```text
+NVDA
+2330
+00981A
+5240
+```
+
+Expected behavior:
+
+- stored warning records return immediately
+- missing tickers trigger the configured Python on-demand command
+- provider-backed but insufficient-history symbols return typed `abstain`
+  analysis instead of an unstructured failure
+- Taiwan alphanumeric symbols remain Taiwan symbols, not US tickers
+- TPEx emerging fallback can resolve supported emerging-stock codes
+
+## 5. Verify API Directly
+
+```bash
+curl http://localhost:18080/api/v1/analysis/NVDA
+curl http://localhost:18080/api/v1/analysis/2330
+curl http://localhost:18080/api/v1/analysis/00981A
+curl http://localhost:18080/api/v1/analysis/5240
+```
+
+Watchlist example:
+
+```bash
+curl http://localhost:18080/api/v1/watchlists/session-demo
+curl -X POST http://localhost:18080/api/v1/watchlists/session-demo/tickers \
+  -H "Content-Type: application/json" \
+  -d '{"schema_version":"watchlist_add.v1","ticker":"2330","market":"auto","notes":""}'
+```
+
+The request body is a schema-owned `watchlist_add.v1` payload.
+
+## 6. Run Checks
+
+```bash
+python -m pytest
+python -m ruff check src tests scripts dashboard
+cd services/api-gateway-go
+GOCACHE=/tmp/tsi-go-build-cache CGO_ENABLED=0 go test ./...
+cd ../../frontend/stock-dashboard
+npm test -- --run
+npm run build
+```
+
+## Optional Streamlit Dashboard
+
+The Streamlit dashboard remains useful for research artifacts and a live API
+tab:
+
+```bash
+streamlit run dashboard/app.py
 ```
 
 Open:
@@ -98,57 +160,8 @@ Open:
 http://localhost:8501
 ```
 
-Use the sidebar:
+## Optional JSON Export
 
-```text
-API base URL: http://localhost:8080
-API warning limit: 20
-```
-
-Open the `Live API` tab. It shows:
-
-- API health and warning load status
-- current model metadata
-- generated and last-loaded timestamps
-- latest alert warnings
-- latest watch warnings
-- raw health/status/model payloads
-
-## 4. Verify Tests
-
-```bash
-make test-python
-GO=/mnt/8tb_hdd/ryo/miniconda3/envs/stock/bin/go make test-go
-make lint
-```
-
-Or, if `go` is on `PATH`:
-
-```bash
-make test-all
-```
-
-## Expected Demo Story
-
-The demo shows that the Python ML core produces calibrated, uncertainty-aware
-warning records; the Go gateway serves those records without running inference;
-and the Streamlit dashboard can inspect both experiment artifacts and the live
-API output.
-
-## Optional Docker Demo
-
-After `make predict-latest` has created `data/artifacts/latest_warnings.json`,
-run the API and dashboard containers:
-
-```bash
-docker compose up --build
-```
-
-Open:
-
-```text
-http://localhost:8501
-```
-
-The dashboard container defaults to `http://api-gateway-go:8080` for the Live
-API tab.
+`latest_warnings.json` can still be generated for debug snapshots,
+notifications, or report exports. It is not the primary serving source for the
+Go API in the `0.2.0` dashboard path.

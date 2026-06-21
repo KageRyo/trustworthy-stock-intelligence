@@ -146,6 +146,7 @@ yfinance is useful for local pilot workflows and supports Yahoo symbols such as:
 NVDA
 2330.TW
 6488.TWO
+5240.EMERGING
 ```
 
 For the dashboard and API, Taiwan stock codes should remain user-facing numeric
@@ -153,14 +154,26 @@ codes such as `2330`. Provider suffixes belong in ingestion metadata, not in the
 main dashboard search experience.
 
 TWSE/TPEx official daily sources are used as Taiwan fallback providers for
-on-demand ticker analysis when yfinance does not cover a Taiwan symbol. Their
-responses should be validated through explicit provider schemas before being
+on-demand ticker analysis when yfinance does not cover a Taiwan symbol. The
+fallback order is:
+
+```text
+TWSE daily
+-> TPEx listed daily
+-> TPEx emerging-stock daily
+```
+
+Their responses are validated through explicit provider schemas before being
 normalized into OHLCV rows. yfinance remains acceptable for local demo and early
 pipeline tests, especially for US symbols and Taiwan symbols it already covers.
 
+Taiwan symbols are stored as strings. Leading zeroes and suffix letters such as
+`00981A` and `02001L` must not be converted to numbers.
+
 ## Current Limitation
 
-The DB-backed API, watchlist state, and local on-demand ticker analysis bridge
-are available. The remaining gap is coverage automation: broad US/Taiwan ticker
-universe ingestion, scheduled 5-minute updates, warning history/change
-detection, and intraday-trained models still need to be implemented.
+The DB-backed API, watchlist state, local on-demand ticker analysis bridge, and
+Taiwan provider fallbacks are available. The remaining gap is coverage
+automation: broad US/Taiwan ticker universe ingestion, scheduled 5-minute
+updates, warning history/change detection, and intraday-trained models still
+need to be implemented.

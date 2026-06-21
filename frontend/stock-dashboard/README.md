@@ -1,5 +1,7 @@
 # TSI Stock Dashboard
 
+Version: `0.2.0`
+
 TypeScript dashboard for the PostgreSQL-backed Go warning API.
 
 ## Data Contract
@@ -32,6 +34,10 @@ See:
 docs/api/analysis_api.md
 ```
 
+The UI supports English and 正體中文 through a client-side language switcher.
+Ticker symbols are handled as strings so Taiwan codes keep leading zeroes and
+suffix letters.
+
 ## Run
 
 Start PostgreSQL and the Go API first:
@@ -53,6 +59,12 @@ Default local URL:
 
 ```text
 http://localhost:5175
+```
+
+For LAN testing, use:
+
+```text
+http://140.123.105.126:5175
 ```
 
 The Vite dev server proxies `/api` and `/health` to `http://127.0.0.1:18080`

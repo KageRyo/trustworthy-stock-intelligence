@@ -5,7 +5,7 @@ Python/Go split.
 
 ```mermaid
 flowchart TD
-    P[Provider APIs: yfinance/TWSE] --> Q[Ingestion Job]
+    P[Provider APIs: yfinance/TWSE/TPEx] --> Q[Ingestion Job]
     Q --> R[PostgreSQL 1m/5m/1d Bars]
     A[OHLCV CSV Snapshot] --> B[Python Feature Builder]
     R --> B
@@ -106,7 +106,7 @@ When JSON export is enabled, the file is written through a temporary file and
 
 ## Go API Gateway
 
-Go owns user-facing read-only API serving:
+Go owns user-facing API serving:
 
 - connect to PostgreSQL through `TSI_DATABASE_URL`
 - read latest `prediction_batches` and `warning_records`
@@ -114,13 +114,15 @@ Go owns user-facing read-only API serving:
 - serve latest warnings, ticker lookup, model metadata, health, status, and metrics
 - serve typed ticker analysis responses for dashboard use
 - support `level`, `limit`, `sort`, and `order` query filters
+- optionally delegate missing ticker analysis to a configured local Python
+  command, then reload PostgreSQL-backed warnings
 
 Go does not:
 
 - run feature engineering
 - load PyTorch models
 - run inference
-- call Python synchronously per request
+- embed Python model logic in the API binary
 - start without PostgreSQL
 
 ## Dashboards
@@ -154,13 +156,13 @@ Streamlit has two views:
 ## Local Demo Flow
 
 ```bash
-make predict-latest
+docker compose up -d postgres
 make api
-make dashboard
+make stock-dashboard
 ```
 
 The resulting system demonstrates:
 
 ```text
-Python inference -> JSON serving contract -> Go API -> Dashboard
+Provider/Python analysis -> PostgreSQL serving records -> Go API -> TypeScript Dashboard
 ```

@@ -57,18 +57,20 @@ Trust layer: Calibration + uncertainty-aware warning levels
 Evaluation: walk-forward validation, false alarm rate, miss rate, lead time, ECE
 ```
 
-## Deferred Work
+## Formal Research Deferred Work
 
-The following topics are deferred until the core risk warning protocol is stable:
+The following topics are deferred for the formal research milestone until the
+core risk warning protocol is stable:
 
 - candlestick image modeling
 - news and social-media NLP
 - LLM reasoning
 - retrieval-augmented generation
 - full multimodal fusion
-- dashboard
-- FastAPI service
 - real-time streaming
 - automated trading
 
-These extensions may be used later, but they are not part of the first research milestone.
+The side-project product track now includes a Go API and TypeScript dashboard.
+Those product surfaces do not change the formal research requirement: model
+claims still need leakage-aware temporal validation and trustworthy AI
+reporting before being treated as research results.

@@ -1,5 +1,7 @@
 # TSI Go API Gateway
 
+Version: `0.2.0`
+
 REST API for serving trustworthy stock warning outputs and user-managed
 watchlists generated/stored by the Python ML core and PostgreSQL.
 
@@ -27,6 +29,12 @@ Browser clients are controlled by `TSI_CORS_ALLOWED_ORIGINS`, a comma-separated
 list of exact origins. The local default is `*`; shared deployments should use
 explicit dashboard origins.
 
+Example for a shared local dashboard:
+
+```bash
+export TSI_CORS_ALLOWED_ORIGINS="http://140.123.105.126:5175,http://localhost:5175,http://127.0.0.1:5175"
+```
+
 For local interactive ticker search, set:
 
 ```bash
@@ -38,6 +46,10 @@ export TSI_ON_DEMAND_ANALYSIS_TIMEOUT_SECONDS=120
 When enabled, `/api/v1/analysis/{ticker}` can delegate a missing ticker to the
 Python ML core, write the generated warning record to PostgreSQL, refresh the
 store, and return a typed analysis response.
+
+Supported ticker normalization includes US symbols, Taiwan numeric codes,
+Taiwan alphanumeric local codes, explicit `.TW`, `.TWO`, and `.EMERGING`
+suffixes, and DB-preserved market metadata from previous provider ingestion.
 
 ## Run
 

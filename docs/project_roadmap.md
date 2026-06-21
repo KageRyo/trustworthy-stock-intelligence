@@ -1,203 +1,106 @@
 # Project Roadmap
 
-## Project Goal
+## Goal
 
-Trustworthy Stock Intelligence is evolving into a deep-learning stock risk
-alerting side project.
-
-The goal is to build a complete, runnable, explainable, and auditable risk
-warning system. The system focuses on trustworthy AI behavior, not investment
-advice, exact price prediction, or automated trading.
+Trustworthy Stock Intelligence is a human-in-the-loop stock risk assessment
+system. The main user flow is:
 
 ```text
-Historical market data
--> deep risk predictor
--> calibration
--> uncertainty estimation
--> trust score
--> warning decision
--> dashboard and audit-ready logs
+stock ticker
+-> market data
+-> calibrated drawdown-risk model
+-> uncertainty and trust score
+-> warning level and reasons
+-> dashboard/API analysis
 ```
 
-## Scope Shift
+The system focuses on trustworthy AI behavior: calibration, uncertainty,
+abstention, transparency, auditability, and clear limitations. It is not an
+investment recommendation system or automated trading system.
 
-The original milestone remains useful as the leakage-aware baseline and
-experiment protocol. For the side project version, the scope expands beyond the
-research-only first milestone.
+## Current State: 0.2.0
 
-In scope for the side project:
+Completed:
 
-- Logistic, tree-based, and deep-learning risk models
-- Temporal Transformer as the first main DL model
-- Probability calibration and calibration diagnostics
-- Uncertainty estimation
-- Trust score and abstain decisions
-- Explanation factors and warning reason codes
-- Prediction and warning audit logs
-- Streamlit dashboard for the first demo
-- Go API gateway after the Python ML loop is stable
+- leakage-aware baseline and deep-learning training/inference foundations
+- trust score, uncertainty, warning levels, and reason codes
+- PostgreSQL schema for tickers, market bars, watchlists, prediction batches,
+  and warning records
+- Go API gateway with DB-required startup, Swagger/OpenAPI, CORS, watchlists,
+  latest warnings, and ticker analysis
+- TypeScript dashboard with runtime schemas, English and 正體中文, ticker search,
+  latest warnings, and session watchlists
+- on-demand Python analysis bridge for missing ticker records
+- US and Taiwan ticker handling, including Taiwan alphanumeric codes and TPEx
+  emerging-stock fallback
 
-Still out of scope:
-
-- Investment recommendations
-- Automated trading
-- Claims of guaranteed profit
-- Random train-test splits for main evaluation
-- Rewriting DL training or feature engineering in Go
-
-## Milestone 0: Preserve Baseline
-
-Keep the existing leakage-aware baseline pipeline runnable:
+## Target Architecture
 
 ```text
-OHLCV
--> technical features
--> future drawdown label
--> walk-forward split
--> logistic regression
--> calibration
--> warning level
--> alert-oriented metrics
+Provider APIs
+-> scheduled ingestion
+-> PostgreSQL market_bars
+-> Python feature and prediction jobs
+-> PostgreSQL prediction_batches / warning_records
+-> Go API gateway
+-> TypeScript dashboard
 ```
 
-The baseline is used to validate labels, temporal splits, calibration, and
-warning decisions before adding deep models.
+The optional JSON export remains useful for notifications, snapshots, and debug
+artifacts, but PostgreSQL is the serving source of truth.
 
-## Milestone 1: Python DL Closed Loop
+## Next Milestone: 0.3.0
 
-Build the first complete Python-only trustworthy DL loop.
+Recommended focus:
 
-Target additions:
+1. Scheduled 5-minute ingestion for user/session watchlists.
+2. Warning history and change detection:
 
 ```text
-src/tsi/training/dataset.py
-src/tsi/training/trainer.py
-src/tsi/models/temporal_transformer.py
-scripts/train_deep.py
+new alert
+new watch
+upgraded
+downgraded
+resolved
+persistent alert
+low-trust warning
 ```
 
-Initial modeling setup:
+3. Ticker detail timelines for risk probability, trust score, uncertainty, and
+   warning level.
+4. Freshness badges and stale-data downgrade behavior in API/dashboard.
+5. Market coverage metadata for US, TWSE, TPEx listed, and TPEx emerging
+   symbols.
 
-```text
-lookback = 60 trading days
-horizon = 5 trading days
-risk event = future 5-day max drawdown <= -5%
-model = Temporal Transformer Encoder
-loss = BCEWithLogitsLoss
-optimizer = AdamW
-```
+## Later Milestones
 
-Expected output fields:
+0.4.0:
 
-```text
-risk_probability
-calibrated_risk_probability
-uncertainty_score
-trust_score
-warning_level
-reason_codes
-```
+- queue-based prediction jobs instead of request-time synchronous analysis
+- warning change endpoint and dashboard page
+- watchlist ingestion scheduler
+- model run audit artifact aligned with the TAI checklist
 
-## Milestone 2: Trust Layer
+0.5.0:
 
-Add a dedicated trust layer after model inference.
+- intraday-trained model path if 5-minute labels/features are validated
+- feature attribution beyond reason codes
+- provider health and coverage monitoring
+- richer portfolio/watchlist grouping
 
-Target modules:
+Research track:
 
-```text
-src/tsi/trust/uncertainty.py
-src/tsi/trust/trust_score.py
-src/tsi/trust/decision.py
-```
-
-First decision rule:
-
-```text
-trust_score = calibrated_risk_probability - lambda * uncertainty_score
-
-if calibrated_p >= alert_threshold and trust_score >= trust_threshold:
-    alert
-elif calibrated_p >= watch_threshold:
-    watch
-elif uncertainty_score >= uncertainty_threshold:
-    abstain
-else:
-    no_alert
-```
-
-## Milestone 3: Streamlit Dashboard
-
-Use Streamlit for the first demo. The first version may read prediction CSV
-artifacts directly instead of requiring a database.
-
-Required views:
-
-- Ticker selector
-- Latest risk probability
-- Raw versus calibrated probability
-- Uncertainty score
-- Trust score
-- Warning level timeline
-- Recent explanation factors
-
-## Milestone 4: Go API Gateway
-
-Add Go only after the Python training, inference, trust score, and dashboard
-loop is stable.
-
-Milestone 4 starts with a PostgreSQL-backed API gateway that serves
-precomputed warning records and user watchlists:
-
-```text
-GET /health
-GET /api/v1/status
-GET /api/v1/warnings/latest
-GET /api/v1/warnings/latest?level=watch&limit=20
-GET /api/v1/warnings/{ticker}
-GET /api/v1/models/current
-```
-
-The gateway requires PostgreSQL at startup and reads `prediction_batches`,
-`warning_records`, and watchlist tables. Python may still export
-`latest_warnings.json` for local debugging, notification snapshots, or artifact
-review, but JSON is not the serving source of truth.
-
-Recommended split:
-
-```text
-Go = user-facing API, WebSocket/SSE, cache, warning queries, job dispatch
-Python = feature engineering, training, inference, calibration, uncertainty, explanation
-Redis = cache and queue
-PostgreSQL = source of truth
-```
-
-Most user requests should read precomputed predictions and warnings from
-Redis/PostgreSQL. On-demand prediction should be submitted as a job instead of
-running synchronous model inference on every request.
+- preserve leakage-aware evaluation
+- compare model families under walk-forward validation
+- report calibration, false alarm rate, miss rate, lead time, coverage, and
+  selective risk
 
 ## Engineering Rules
 
-Feature changes should start with explicit tests or test cases. After
-implementation, the relevant test suite must pass before commit or push.
-
-Commit messages use this format:
-
-```text
-type(scope): summary
-```
-
-Allowed types include:
-
-```text
-chore
-init
-feat
-fix
-refactor
-docs
-test
-```
-
-If environment variables change, update `.env` and `.env.example` together.
-Never commit `.env`, and never put secrets or sensitive values in
-`.env.example`.
+- Use schema-first contracts for API, provider parsing, CLI summaries, and
+  frontend validation.
+- Run Python, Go, and frontend tests before commit/push.
+- Commit in tested slices with `type(scope): summary`.
+- Do not commit `.env`, downloaded data, model bundles, or generated caches.
+- Keep ticker symbols as strings.
+- Keep Go serving dependent on PostgreSQL; missing DB should fail startup.

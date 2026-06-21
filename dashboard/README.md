@@ -1,6 +1,8 @@
 # Trust Dashboard
 
 Streamlit dashboard for local trust experiment artifacts and the Go warning API.
+The TypeScript stock dashboard is the primary ticker analysis UI as of `0.2.0`;
+this app remains useful for research diagnostics and the Live API tab.
 
 ## Run
 
@@ -19,7 +21,6 @@ streamlit run dashboard/app.py
 For the Live API tab, run the Go gateway separately:
 
 ```bash
-make predict-latest
 make api
 make dashboard
 ```
@@ -44,5 +45,5 @@ GET /api/v1/warnings/latest?level=alert&sort=trust_score&order=desc
 GET /api/v1/warnings/latest?level=watch&sort=calibrated_risk_probability&order=desc
 ```
 
-Set the API base URL in the sidebar. The default is `http://localhost:8080`,
-or `TSI_DASHBOARD_API_BASE_URL` when set.
+Set the API base URL in the sidebar. Use `http://localhost:18080` when running
+the repository `make api` target, or set `TSI_DASHBOARD_API_BASE_URL`.

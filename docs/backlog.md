@@ -1,85 +1,80 @@
-# Research Backlog
+# Backlog
 
-## Documentation
+This backlog tracks work after `0.2.0`. Items are grouped by product area, not
+by implementation language.
+
+## Near Term
 
 ```text
-[Docs] Write research motivation and problem definition
-[Docs] Define 5-day drawdown risk labeling protocol
-[Docs] Define walk-forward experiment protocol
-[Docs] Define alert-oriented evaluation metrics
-[Docs] Define reproducibility requirements
+[Data] Schedule 5-minute ingestion for active watchlists.
+[Data] Track provider freshness and provider coverage per ticker.
+[API] Add warning changes endpoint.
+[API] Add warning history/date endpoints.
+[Dashboard] Add ticker detail timelines.
+[Dashboard] Add warning changes page.
+[Dashboard] Add freshness and low-trust badges.
+[Trust] Generate model-run TAI audit artifacts.
+[Docs] Keep release notes and documentation index current.
 ```
 
-## Data
+## Data And Providers
 
 ```text
-[Data] Add S&P 100 universe config
-[Data] Implement OHLCV downloader for pilot experiments
-[Data] Implement daily OHLCV preprocessing
-[Data] Add market index features
+[Data] Build broad US ticker universe metadata.
+[Data] Build TWSE/TPEx listed universe metadata.
+[Data] Build TPEx emerging universe metadata.
+[Data] Add provider health checks and outage reporting.
+[Data] Record provider source and query symbol for all market bars.
+[Data] Validate intraday 5-minute data quality before model training.
 ```
 
-## Features
+## Modeling And Trust
 
 ```text
-[Feature] Implement technical indicators
-[Feature] Add feature leakage checks
-[Feature] Add per-fold normalization flow
+[Model] Add prediction job that consumes PostgreSQL market_bars directly.
+[Model] Separate daily and intraday model metadata.
+[Model] Add drift and stale-data monitoring.
+[Trust] Add feature attribution for ticker detail pages.
+[Trust] Add calibration monitoring over time.
+[Trust] Add abstain-rate and coverage monitoring.
 ```
 
-## Labeling
+## API
 
 ```text
-[Labeling] Implement future drawdown risk labels
-[Labeling] Add end-of-series label handling
-[Labeling] Add risk label class-balance report
+[API] GET /api/v1/warnings/changes
+[API] GET /api/v1/history/dates
+[API] GET /api/v1/history/{date}
+[API] GET /api/v1/warnings/{ticker}/history
+[API] GET /api/v1/watchlists
+[API] Add schema version docs for every request/response model.
 ```
 
-## Evaluation
+## Dashboard
 
 ```text
-[Evaluation] Implement walk-forward split
-[Evaluation] Implement precision, recall, F1, and AUC
-[Evaluation] Implement false alarm rate and miss rate
-[Evaluation] Implement lead-time evaluation
-[Evaluation] Implement Brier Score and ECE
-[Evaluation] Implement selective prediction metrics
+[Dashboard] Ticker detail page with probability, trust, uncertainty, and level timelines.
+[Dashboard] Watchlist grouping and filtering.
+[Dashboard] Warning changes page.
+[Dashboard] Coverage state for unsupported/provider-missing symbols.
+[Dashboard] Better empty, loading, stale, and error states.
 ```
 
-## Baselines
+## Research
 
 ```text
-[Baseline] Train logistic regression baseline
-[Baseline] Train random forest baseline
-[Baseline] Train XGBoost baseline
-[Baseline] Compare raw and calibrated probabilities
-```
-
-## Trust Layer
-
-```text
-[Trust] Add probability calibration module
-[Trust] Add uncertainty interface
-[Trust] Add alert/watch/abstain warning rules
-[Trust] Add SHAP explanation module
-```
-
-## Reports
-
-```text
-[Report] Add first risk labeling report
-[Report] Add first baseline experiment report
-[Report] Add calibration experiment report
-[Report] Add limitations and future work notes
+[Research] Keep walk-forward validation as the default.
+[Research] Compare logistic, tree, and deep models under identical splits.
+[Research] Report calibration, false alarm rate, miss rate, lead time, coverage, and selective risk.
+[Research] Keep experiment reports under experiments/.
 ```
 
 ## Deferred
 
 ```text
-[Deferred] Candlestick image branch
-[Deferred] News NLP branch
-[Deferred] LLM event branch
-[Deferred] Dashboard
-[Deferred] API service
-[Deferred] Real-time streaming
+[Deferred] Automated trading.
+[Deferred] Investment recommendation wording.
+[Deferred] LLM-based advice.
+[Deferred] Full multimodal learning.
+[Deferred] Production authentication and paid plans.
 ```
