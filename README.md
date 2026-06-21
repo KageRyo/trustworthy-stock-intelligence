@@ -5,7 +5,7 @@
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
 ![Go](https://img.shields.io/badge/go-1.22-blue)
 ![TypeScript](https://img.shields.io/badge/typescript-5.6-blue)
-![License](https://img.shields.io/badge/license-MIT-green)
+![License](https://img.shields.io/badge/license-Apache--2.0-green)
 
 Trustworthy Stock Intelligence is a local stock drawdown-risk analysis system.
 It accepts a stock ticker as input and returns a schema-validated risk analysis:
@@ -201,4 +201,4 @@ experiments/              Experiment notes and reports
 
 ## License
 
-MIT
+Apache License 2.0
