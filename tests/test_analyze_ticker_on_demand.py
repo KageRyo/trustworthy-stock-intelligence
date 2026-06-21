@@ -19,7 +19,7 @@ def test_run_on_demand_analysis_downloads_predicts_and_emits_schema(
     tmp_path: Path,
 ) -> None:
     captured_prediction_input = {}
-    captured_market_write = {}
+    captured_market_writes = []
 
     def fake_download_ticker_frame(**kwargs):
         assert kwargs["tickers"] == ["2884"]
@@ -48,10 +48,14 @@ def test_run_on_demand_analysis_downloads_predicts_and_emits_schema(
         )
 
     def fake_write_download_to_postgres(database_url, result, *, provider, universe_name):
-        captured_market_write["database_url"] = database_url
-        captured_market_write["interval"] = result.interval
-        captured_market_write["provider"] = provider
-        captured_market_write["universe_name"] = universe_name
+        captured_market_writes.append(
+            {
+                "database_url": database_url,
+                "interval": result.interval,
+                "provider": provider,
+                "universe_name": universe_name,
+            }
+        )
 
     def fake_run_prediction(args: argparse.Namespace) -> pd.DataFrame:
         captured_prediction_input["args"] = args
@@ -90,12 +94,20 @@ def test_run_on_demand_analysis_downloads_predicts_and_emits_schema(
     assert summary.row_count == 80
     assert summary.prediction_count == 1
     assert Path(summary.input_path).exists()
-    assert captured_market_write == {
-        "database_url": "postgresql://user:pass@localhost:5432/db",
-        "interval": "5m",
-        "provider": "yfinance",
-        "universe_name": "on_demand",
-    }
+    assert captured_market_writes == [
+        {
+            "database_url": "postgresql://user:pass@localhost:5432/db",
+            "interval": "5m",
+            "provider": "yfinance",
+            "universe_name": "on_demand",
+        },
+        {
+            "database_url": "postgresql://user:pass@localhost:5432/db",
+            "interval": "1d",
+            "provider": "yfinance",
+            "universe_name": "on_demand",
+        },
+    ]
     prediction_args = captured_prediction_input["args"]
     assert prediction_args.write_db is True
     assert prediction_args.database_url == "postgresql://user:pass@localhost:5432/db"
@@ -141,6 +153,7 @@ def test_run_on_demand_analysis_writes_abstain_when_history_is_insufficient(
 
     monkeypatch.setattr(module, "download_ticker_frame", fake_download_ticker_frame)
     monkeypatch.setattr(module, "run_prediction", fake_run_prediction)
+    monkeypatch.setattr(module, "write_download_to_postgres", lambda *_args, **_kwargs: None)
     monkeypatch.setattr(
         module,
         "write_prediction_batch_to_postgres",
@@ -203,6 +216,7 @@ def test_run_on_demand_analysis_rethrows_non_history_prediction_errors(monkeypat
 
     monkeypatch.setattr(module, "download_ticker_frame", fake_download_ticker_frame)
     monkeypatch.setattr(module, "run_prediction", fake_run_prediction)
+    monkeypatch.setattr(module, "write_download_to_postgres", lambda *_args, **_kwargs: None)
 
     args = module.parse_args(
         [

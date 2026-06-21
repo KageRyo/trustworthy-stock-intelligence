@@ -13,11 +13,12 @@ from tsi.data.download import DownloadFrameResult, is_taiwan_local_ticker
 from tsi.serving.schema import PredictionBatch
 
 MarketBarInterval = Literal["1m", "5m", "1d"]
-TickerMarketName = Literal["us", "twse", "tpex", "taiwan", "unknown"]
+TickerMarketName = Literal["us", "twse", "tpex", "emerging", "taiwan", "unknown"]
 IngestionStatus = Literal["success", "dry_run"]
 INGESTION_SCHEMA_VERSION = "market_data_ingestion.v1"
 PREDICTION_WRITE_SCHEMA_VERSION = "prediction_batch_write.v1"
 SUPPORTED_INTERVALS: set[str] = {"1m", "5m", "1d"}
+TAIWAN_MARKETS: set[str] = {"twse", "tpex", "emerging", "taiwan"}
 
 
 class ResolvedTickerSchema(BaseModel):
@@ -105,7 +106,9 @@ def infer_market(symbol: str, query_symbol: str) -> TickerMarketName:
         return "twse"
     if normalized_query.endswith(".TWO"):
         return "tpex"
-    if normalized_symbol.isdigit():
+    if normalized_query.endswith(".EMERGING"):
+        return "emerging"
+    if is_taiwan_local_ticker(normalized_symbol):
         return "taiwan"
     if normalized_symbol:
         return "us"
@@ -119,7 +122,11 @@ def build_resolved_tickers(result: DownloadFrameResult) -> list[ResolvedTickerSc
         ResolvedTickerSchema(
             symbol=ticker.ticker,
             query_symbol=ticker.query_symbol,
-            market=infer_market(ticker.ticker, ticker.query_symbol),
+            market=resolve_download_ticker_market(
+                ticker.ticker,
+                ticker.query_symbol,
+                ticker.market,
+            ),
         )
         for ticker in result.tickers
     ]
@@ -149,7 +156,7 @@ def build_market_bar_rows(
             MarketBarRow(
                 symbol=symbol,
                 query_symbol=resolved.query_symbol,
-                market=infer_market(symbol, resolved.query_symbol),
+                market=resolve_download_ticker_market(symbol, resolved.query_symbol, resolved.market),
                 ts=_to_utc_datetime(frame_row["date"]),
                 interval=interval,
                 provider=provider,
@@ -287,7 +294,7 @@ def write_prediction_batch_to_postgres(
             )
             connection.execute("DELETE FROM warning_records WHERE batch_id = %s", (batch_id,))
             for record in batch.records:
-                resolved = _resolve_prediction_record_ticker(record.ticker)
+                resolved = _resolve_prediction_record_ticker(connection, record.ticker)
                 ticker_id = _upsert_prediction_ticker(connection, resolved)
                 connection.execute(
                     """
@@ -377,15 +384,55 @@ def _infer_batch_record_date(batch: PredictionBatch) -> str:
     return max(record.date for record in batch.records)
 
 
-def _resolve_prediction_record_ticker(ticker: str) -> ResolvedTickerSchema:
+def resolve_download_ticker_market(
+    symbol: str,
+    query_symbol: str,
+    market: str,
+) -> TickerMarketName:
+    """Resolve downloaded ticker market, preferring schema metadata over suffix guesses."""
+
+    if market in {"us", "twse", "tpex", "emerging", "taiwan"}:
+        return cast(TickerMarketName, market)
+    return infer_market(symbol, query_symbol)
+
+
+def _resolve_prediction_record_ticker(connection: Any, ticker: str) -> ResolvedTickerSchema:
     symbol = ticker.strip().upper()
     if is_taiwan_local_ticker(symbol):
+        existing = _lookup_existing_taiwan_ticker(connection, symbol)
+        if existing is not None:
+            return existing
         return ResolvedTickerSchema(symbol=symbol, query_symbol=f"{symbol}.TW", market="twse")
     return ResolvedTickerSchema(
         symbol=symbol.replace(".", "-"),
         query_symbol=symbol.replace(".", "-"),
         market="us",
     )
+
+
+def _lookup_existing_taiwan_ticker(connection: Any, symbol: str) -> ResolvedTickerSchema | None:
+    row = connection.execute(
+        """
+        SELECT symbol, query_symbol, market
+        FROM tickers
+        WHERE upper(symbol) = upper(%s)
+          AND market IN ('twse', 'tpex', 'emerging', 'taiwan')
+        ORDER BY
+          updated_at DESC,
+          CASE market
+            WHEN 'twse' THEN 1
+            WHEN 'tpex' THEN 2
+            WHEN 'emerging' THEN 3
+            WHEN 'taiwan' THEN 4
+            ELSE 5
+          END
+        LIMIT 1
+        """,
+        (symbol,),
+    ).fetchone()
+    if row is None:
+        return None
+    return ResolvedTickerSchema(symbol=str(row[0]), query_symbol=str(row[1]), market=str(row[2]))
 
 
 def _finite_float(value: object, column: str) -> float:
@@ -454,7 +501,9 @@ def _upsert_tickers(
             """,
             (ticker.symbol, ticker.query_symbol, ticker.market),
         )
-        ticker_ids[(ticker.market, ticker.symbol)] = str(cursor.fetchone()[0])
+        ticker_id = str(cursor.fetchone()[0])
+        _merge_stale_us_ticker_alias(connection, ticker, ticker_id)
+        ticker_ids[(ticker.market, ticker.symbol)] = ticker_id
     return ticker_ids
 
 
@@ -599,4 +648,160 @@ def _upsert_prediction_ticker(connection: Any, ticker: ResolvedTickerSchema) -> 
         """,
         (ticker.symbol, ticker.query_symbol, ticker.market),
     )
-    return str(cursor.fetchone()[0])
+    ticker_id = str(cursor.fetchone()[0])
+    _merge_stale_us_ticker_alias(connection, ticker, ticker_id)
+    return ticker_id
+
+
+def _should_merge_stale_us_ticker_alias(ticker: ResolvedTickerSchema) -> bool:
+    return ticker.market in TAIWAN_MARKETS and is_taiwan_local_ticker(ticker.symbol)
+
+
+def _merge_stale_us_ticker_alias(
+    connection: Any,
+    ticker: ResolvedTickerSchema,
+    target_ticker_id: str,
+) -> None:
+    """Move references from stale US rows created before Taiwan-code detection existed."""
+
+    if not _should_merge_stale_us_ticker_alias(ticker):
+        return
+
+    stale_rows = connection.execute(
+        """
+        SELECT id
+        FROM tickers
+        WHERE upper(symbol) = upper(%s)
+          AND market = 'us'
+          AND id <> %s
+        """,
+        (ticker.symbol, target_ticker_id),
+    ).fetchall()
+    for row in stale_rows:
+        stale_ticker_id = str(row[0])
+        _move_universe_ticker_references(connection, stale_ticker_id, target_ticker_id)
+        _move_watchlist_ticker_references(connection, stale_ticker_id, target_ticker_id)
+        _move_market_bar_references(connection, stale_ticker_id, target_ticker_id)
+        _move_warning_record_references(connection, stale_ticker_id, target_ticker_id)
+        connection.execute("DELETE FROM tickers WHERE id = %s", (stale_ticker_id,))
+
+
+def _move_universe_ticker_references(
+    connection: Any,
+    stale_ticker_id: str,
+    target_ticker_id: str,
+) -> None:
+    connection.execute(
+        """
+        INSERT INTO universe_tickers (universe_id, ticker_id, added_at, removed_at)
+        SELECT universe_id, %s, added_at, removed_at
+        FROM universe_tickers
+        WHERE ticker_id = %s
+        ON CONFLICT (universe_id, ticker_id)
+        DO UPDATE SET
+            added_at = LEAST(universe_tickers.added_at, EXCLUDED.added_at),
+            removed_at = CASE
+                WHEN universe_tickers.removed_at IS NULL OR EXCLUDED.removed_at IS NULL THEN NULL
+                ELSE LEAST(universe_tickers.removed_at, EXCLUDED.removed_at)
+            END
+        """,
+        (target_ticker_id, stale_ticker_id),
+    )
+    connection.execute("DELETE FROM universe_tickers WHERE ticker_id = %s", (stale_ticker_id,))
+
+
+def _move_watchlist_ticker_references(
+    connection: Any,
+    stale_ticker_id: str,
+    target_ticker_id: str,
+) -> None:
+    connection.execute(
+        """
+        INSERT INTO watchlist_tickers (watchlist_id, ticker_id, added_at, removed_at, notes)
+        SELECT watchlist_id, %s, added_at, removed_at, notes
+        FROM watchlist_tickers
+        WHERE ticker_id = %s
+        ON CONFLICT (watchlist_id, ticker_id)
+        DO UPDATE SET
+            added_at = LEAST(watchlist_tickers.added_at, EXCLUDED.added_at),
+            removed_at = CASE
+                WHEN watchlist_tickers.removed_at IS NULL OR EXCLUDED.removed_at IS NULL THEN NULL
+                ELSE LEAST(watchlist_tickers.removed_at, EXCLUDED.removed_at)
+            END,
+            notes = CASE
+                WHEN watchlist_tickers.notes = '' THEN EXCLUDED.notes
+                ELSE watchlist_tickers.notes
+            END
+        """,
+        (target_ticker_id, stale_ticker_id),
+    )
+    connection.execute("DELETE FROM watchlist_tickers WHERE ticker_id = %s", (stale_ticker_id,))
+
+
+def _move_market_bar_references(
+    connection: Any,
+    stale_ticker_id: str,
+    target_ticker_id: str,
+) -> None:
+    connection.execute(
+        """
+        INSERT INTO market_bars (
+            ticker_id, ts, interval, provider, open, high, low, close,
+            adj_close, volume, ingestion_run_id, created_at
+        )
+        SELECT
+            %s, ts, interval, provider, open, high, low, close,
+            adj_close, volume, ingestion_run_id, created_at
+        FROM market_bars
+        WHERE ticker_id = %s
+        ON CONFLICT (ticker_id, interval, ts, provider)
+        DO UPDATE SET
+            open = EXCLUDED.open,
+            high = EXCLUDED.high,
+            low = EXCLUDED.low,
+            close = EXCLUDED.close,
+            adj_close = EXCLUDED.adj_close,
+            volume = EXCLUDED.volume,
+            ingestion_run_id = COALESCE(EXCLUDED.ingestion_run_id, market_bars.ingestion_run_id)
+        """,
+        (target_ticker_id, stale_ticker_id),
+    )
+    connection.execute("DELETE FROM market_bars WHERE ticker_id = %s", (stale_ticker_id,))
+
+
+def _move_warning_record_references(
+    connection: Any,
+    stale_ticker_id: str,
+    target_ticker_id: str,
+) -> None:
+    connection.execute(
+        """
+        INSERT INTO warning_records (
+            batch_id, ticker_id, prediction_date, risk_probability,
+            calibrated_risk_probability, calibration_method,
+            uncertainty_score, trust_score, alert_threshold,
+            watch_threshold, warning_level, reason_codes, created_at
+        )
+        SELECT
+            batch_id, %s, prediction_date, risk_probability,
+            calibrated_risk_probability, calibration_method,
+            uncertainty_score, trust_score, alert_threshold,
+            watch_threshold, warning_level, reason_codes, created_at
+        FROM warning_records
+        WHERE ticker_id = %s
+        ON CONFLICT (batch_id, ticker_id)
+        DO UPDATE SET
+            prediction_date = EXCLUDED.prediction_date,
+            risk_probability = EXCLUDED.risk_probability,
+            calibrated_risk_probability = EXCLUDED.calibrated_risk_probability,
+            calibration_method = EXCLUDED.calibration_method,
+            uncertainty_score = EXCLUDED.uncertainty_score,
+            trust_score = EXCLUDED.trust_score,
+            alert_threshold = EXCLUDED.alert_threshold,
+            watch_threshold = EXCLUDED.watch_threshold,
+            warning_level = EXCLUDED.warning_level,
+            reason_codes = EXCLUDED.reason_codes
+        """,
+        (target_ticker_id, stale_ticker_id),
+    )
+    connection.execute("DELETE FROM warning_records WHERE ticker_id = %s", (stale_ticker_id,))

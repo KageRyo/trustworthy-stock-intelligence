@@ -19,7 +19,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument(
         "--market",
-        choices=["auto", "us", "twse", "tpex"],
+        choices=["auto", "us", "twse", "tpex", "emerging"],
         default="auto",
         help="Ticker market resolver. auto maps numeric tickers to TWSE yfinance symbols.",
     )

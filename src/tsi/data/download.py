@@ -23,9 +23,11 @@ import yfinance as yf
 from tsi.data.universe import Universe, UniverseName, load_universe
 
 OHLCV_COLUMNS = ["date", "ticker", "open", "high", "low", "close", "adj_close", "volume"]
-TickerMarket = Literal["auto", "us", "twse", "tpex"]
+TickerMarket = Literal["auto", "us", "twse", "tpex", "emerging"]
+ResolvedTickerMarket = Literal["us", "twse", "tpex", "emerging", "taiwan", "unknown"]
 TWSE_STOCK_DAY_URL = "https://www.twse.com.tw/exchangeReport/STOCK_DAY"
 TPEX_DAILY_URL = "https://www.tpex.org.tw/www/zh-tw/afterTrading/tradingStock"
+TPEX_EMERGING_HISTORICAL_URL = "https://www.tpex.org.tw/www/zh-tw/emerging/historical"
 
 
 @dataclass(frozen=True)
@@ -49,6 +51,7 @@ class DownloadTicker:
 
     ticker: str
     query_symbol: str
+    market: ResolvedTickerMarket = "unknown"
 
 
 @dataclass(frozen=True)
@@ -62,6 +65,15 @@ class DownloadFrameResult:
     end: str | None
     interval: str
     failed_batches: list[list[str]]
+
+
+@dataclass(frozen=True)
+class TaiwanFallbackResult:
+    """Official Taiwan exchange fallback data and resolved market metadata."""
+
+    ohlcv: pd.DataFrame
+    query_symbol: str
+    market: ResolvedTickerMarket
 
 
 class TWSEStockDayResponse(BaseModel):
@@ -95,6 +107,30 @@ class TPEXTradingStockResponse(BaseModel):
     tables: list[TPEXTradingStockTable] = Field(default_factory=list)
 
 
+class TPEXEmergingHistoricalTable(BaseModel):
+    """Schema for one TPEx emerging-stock historical monthly table."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    title: str | None = None
+    subtitle: str | None = None
+    date: str | None = None
+    totalCount: int | None = None
+    fields: list[str] = Field(default_factory=list)
+    data: list[list[str]] = Field(default_factory=list)
+    notes: list[str] = Field(default_factory=list)
+
+
+class TPEXEmergingHistoricalResponse(BaseModel):
+    """Schema for TPEx emerging-stock historical trading responses."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    stat: str
+    date: str | None = None
+    tables: list[TPEXEmergingHistoricalTable] = Field(default_factory=list)
+
+
 def batched(items: list[str], batch_size: int) -> Iterable[list[str]]:
     """Yield fixed-size batches."""
 
@@ -115,7 +151,9 @@ def configure_yfinance_cache() -> None:
 def is_taiwan_local_ticker(ticker: str) -> bool:
     """Return whether a ticker looks like a local Taiwan stock or ETF code."""
 
-    normalized = ticker.strip().upper().removesuffix(".TW").removesuffix(".TWO")
+    normalized = (
+        ticker.strip().upper().removesuffix(".TW").removesuffix(".TWO").removesuffix(".EMERGING")
+    )
     if normalized.isdigit() and 4 <= len(normalized) <= 6:
         return True
     return re.fullmatch(r"[0-9]{4,6}[A-Z]", normalized) is not None
@@ -134,25 +172,48 @@ def resolve_yfinance_ticker(ticker: str, *, market: TickerMarket = "auto") -> Do
 
     if market == "auto":
         if normalized.endswith(".TW"):
-            return DownloadTicker(ticker=normalized.removesuffix(".TW"), query_symbol=normalized)
+            return DownloadTicker(
+                ticker=normalized.removesuffix(".TW"),
+                query_symbol=normalized,
+                market="twse",
+            )
         if normalized.endswith(".TWO"):
-            return DownloadTicker(ticker=normalized.removesuffix(".TWO"), query_symbol=normalized)
+            return DownloadTicker(
+                ticker=normalized.removesuffix(".TWO"),
+                query_symbol=normalized,
+                market="tpex",
+            )
+        if normalized.endswith(".EMERGING"):
+            return DownloadTicker(
+                ticker=normalized.removesuffix(".EMERGING"),
+                query_symbol=normalized,
+                market="emerging",
+            )
         if is_taiwan_local_ticker(normalized):
-            return DownloadTicker(ticker=normalized, query_symbol=f"{normalized}.TW")
-        return DownloadTicker(ticker=normalize_yfinance_symbol(normalized), query_symbol=normalized)
+            return DownloadTicker(ticker=normalized, query_symbol=f"{normalized}.TW", market="twse")
+        return DownloadTicker(
+            ticker=normalize_yfinance_symbol(normalized),
+            query_symbol=normalized,
+            market="us",
+        )
     if market == "us":
         symbol = normalize_yfinance_symbol(normalized)
-        return DownloadTicker(ticker=symbol, query_symbol=symbol)
+        return DownloadTicker(ticker=symbol, query_symbol=symbol, market="us")
     if market == "twse":
-        numeric = normalized.removesuffix(".TW")
-        if not numeric.isdigit():
-            raise ValueError("twse market requires a numeric Taiwan stock code")
-        return DownloadTicker(ticker=numeric, query_symbol=f"{numeric}.TW")
+        code = normalized.removesuffix(".TW")
+        if not is_taiwan_local_ticker(code):
+            raise ValueError("twse market requires a Taiwan stock code")
+        return DownloadTicker(ticker=code, query_symbol=f"{code}.TW", market="twse")
     if market == "tpex":
-        numeric = normalized.removesuffix(".TWO")
-        if not numeric.isdigit():
-            raise ValueError("tpex market requires a numeric Taiwan stock code")
-        return DownloadTicker(ticker=numeric, query_symbol=f"{numeric}.TWO")
+        code = normalized.removesuffix(".TWO")
+        if not is_taiwan_local_ticker(code):
+            raise ValueError("tpex market requires a Taiwan stock code")
+        return DownloadTicker(ticker=code, query_symbol=f"{code}.TWO", market="tpex")
+    if market == "emerging":
+        code = normalized.removesuffix(".EMERGING")
+        if not is_taiwan_local_ticker(code):
+            raise ValueError("emerging market requires a Taiwan stock code")
+        return DownloadTicker(ticker=code, query_symbol=f"{code}.EMERGING", market="emerging")
     raise ValueError(f"Unsupported market: {market}")
 
 
@@ -336,6 +397,7 @@ def download_ticker_list(
         {
             "ticker": [ticker.ticker for ticker in result.tickers],
             "query_symbol": [ticker.query_symbol for ticker in result.tickers],
+            "market": [ticker.market for ticker in result.tickers],
         }
     ).to_csv(tickers_path, index=False)
 
@@ -394,22 +456,26 @@ def download_ticker_frame(
     query_symbols = [ticker.query_symbol for ticker in resolved]
     aliases = {ticker.query_symbol: ticker.ticker for ticker in resolved}
     resolved_by_query = {ticker.query_symbol: ticker for ticker in resolved}
+    resolved_by_ticker = {ticker.ticker: ticker for ticker in resolved}
     failed_batches: list[list[str]] = []
     all_frames: list[pd.DataFrame] = []
 
     for ticker_batch in batched(query_symbols, batch_size):
         downloaded_aliases: set[str] = set()
-        raw = yf.download(
-            tickers=ticker_batch,
-            start=start,
-            end=end,
-            interval=interval,
-            group_by="ticker",
-            auto_adjust=False,
-            actions=False,
-            threads=True,
-            progress=False,
-        )
+        if all(resolved_by_query[query_symbol].market == "emerging" for query_symbol in ticker_batch):
+            raw = pd.DataFrame()
+        else:
+            raw = yf.download(
+                tickers=ticker_batch,
+                start=start,
+                end=end,
+                interval=interval,
+                group_by="ticker",
+                auto_adjust=False,
+                actions=False,
+                threads=True,
+                progress=False,
+            )
         normalized = _normalize_download_frame(
             raw,
             ticker_batch,
@@ -430,10 +496,15 @@ def download_ticker_frame(
                 market=market,
                 interval=interval,
             )
-            if fallback.empty:
+            if fallback.ohlcv.empty:
                 failed_batches.append([query_symbol])
             else:
-                all_frames.append(fallback)
+                all_frames.append(fallback.ohlcv)
+                resolved_by_ticker[resolved_ticker.ticker] = DownloadTicker(
+                    ticker=resolved_ticker.ticker,
+                    query_symbol=fallback.query_symbol,
+                    market=fallback.market,
+                )
 
     if not all_frames:
         raise RuntimeError(f"No OHLCV rows downloaded for ticker list {dataset_name}.")
@@ -442,7 +513,7 @@ def download_ticker_frame(
     ohlcv = ohlcv.drop_duplicates(subset=["date", "ticker"]).sort_values(["ticker", "date"])
     return DownloadFrameResult(
         dataset_name=dataset_name,
-        tickers=resolved,
+        tickers=[resolved_by_ticker[ticker.ticker] for ticker in resolved],
         ohlcv=ohlcv.reset_index(drop=True),
         start=start,
         end=end,
@@ -458,20 +529,31 @@ def download_taiwan_daily_fallback(
     end: str | None,
     market: TickerMarket,
     interval: str,
-) -> pd.DataFrame:
+) -> TaiwanFallbackResult:
     """Fetch Taiwan daily bars from official TWSE/TPEx endpoints when yfinance misses."""
 
     if interval != "1d" or market == "us" or not is_taiwan_local_ticker(ticker):
-        return pd.DataFrame(columns=OHLCV_COLUMNS)
+        return empty_taiwan_fallback(ticker, market="unknown")
+    if market == "emerging":
+        frame = download_tpex_emerging_daily_frame(ticker, start=start, end=end)
+        return TaiwanFallbackResult(frame, f"{ticker.strip().upper()}.EMERGING", "emerging")
     if market == "tpex":
-        return download_tpex_daily_frame(ticker, start=start, end=end)
+        frame = download_tpex_daily_frame(ticker, start=start, end=end)
+        return TaiwanFallbackResult(frame, f"{ticker.strip().upper()}.TWO", "tpex")
     if market == "twse":
-        return download_twse_daily_frame(ticker, start=start, end=end)
+        frame = download_twse_daily_frame(ticker, start=start, end=end)
+        return TaiwanFallbackResult(frame, f"{ticker.strip().upper()}.TW", "twse")
 
     twse_frame = download_twse_daily_frame(ticker, start=start, end=end)
     if not twse_frame.empty:
-        return twse_frame
-    return download_tpex_daily_frame(ticker, start=start, end=end)
+        return TaiwanFallbackResult(twse_frame, f"{ticker.strip().upper()}.TW", "twse")
+    tpex_frame = download_tpex_daily_frame(ticker, start=start, end=end)
+    if not tpex_frame.empty:
+        return TaiwanFallbackResult(tpex_frame, f"{ticker.strip().upper()}.TWO", "tpex")
+    emerging_frame = download_tpex_emerging_daily_frame(ticker, start=start, end=end)
+    if not emerging_frame.empty:
+        return TaiwanFallbackResult(emerging_frame, f"{ticker.strip().upper()}.EMERGING", "emerging")
+    return empty_taiwan_fallback(ticker, market="unknown")
 
 
 def download_twse_daily_frame(ticker: str, *, start: str, end: str | None) -> pd.DataFrame:
@@ -512,10 +594,51 @@ def download_tpex_daily_frame(ticker: str, *, start: str, end: str | None) -> pd
     return taiwan_rows_to_ohlcv(ticker, rows)
 
 
+def download_tpex_emerging_daily_frame(ticker: str, *, start: str, end: str | None) -> pd.DataFrame:
+    rows: list[list[str]] = []
+    for month in month_starts(start, end):
+        payload = TPEXEmergingHistoricalResponse.model_validate(
+            fetch_json_post(
+                TPEX_EMERGING_HISTORICAL_URL,
+                {
+                    "date": month.strftime("%Y%m01"),
+                    "code": ticker,
+                    "type": "Monthly",
+                    "response": "json",
+                },
+            )
+        )
+        if payload.stat != "ok":
+            continue
+        for table in payload.tables:
+            rows.extend(table.data)
+    return tpex_emerging_rows_to_ohlcv(ticker, rows)
+
+
+def empty_taiwan_fallback(ticker: str, *, market: ResolvedTickerMarket) -> TaiwanFallbackResult:
+    query_symbol = ticker.strip().upper()
+    return TaiwanFallbackResult(pd.DataFrame(columns=OHLCV_COLUMNS), query_symbol, market)
+
+
 def fetch_json(url: str, params: dict[str, str]) -> dict[str, object]:
     request = Request(
         f"{url}?{urlencode(params)}",
         headers={"User-Agent": "trustworthy-stock-intelligence/0.1"},
+    )
+    with urlopen(request, timeout=20) as response:
+        return json.loads(response.read().decode("utf-8"))
+
+
+def fetch_json_post(url: str, params: dict[str, str]) -> dict[str, object]:
+    request = Request(
+        url,
+        data=urlencode(params).encode("utf-8"),
+        headers={
+            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+            "User-Agent": "trustworthy-stock-intelligence/0.1",
+            "X-Requested-With": "XMLHttpRequest",
+        },
+        method="POST",
     )
     with urlopen(request, timeout=20) as response:
         return json.loads(response.read().decode("utf-8"))
@@ -556,6 +679,64 @@ def taiwan_rows_to_ohlcv(ticker: str, rows: list[list[str]]) -> pd.DataFrame:
         return pd.DataFrame(columns=OHLCV_COLUMNS)
     frame = pd.DataFrame(parsed_rows)
     return frame.drop_duplicates(subset=["date", "ticker"]).sort_values(["ticker", "date"])
+
+
+def tpex_emerging_rows_to_ohlcv(ticker: str, rows: list[list[str]]) -> pd.DataFrame:
+    parsed_rows = []
+    for row in rows:
+        if len(row) < 13:
+            continue
+        date = parse_minguo_date(row[0])
+        values = [parse_taiwan_number(value) for value in row[1:13]]
+        if date is None or any(value is None for value in values):
+            continue
+        click_volume, click_amount, click_high, click_low, click_avg, _click_trades = values[:6]
+        off_volume, off_amount, off_high, off_low, off_avg, _off_trades = values[6:12]
+        total_volume = (click_volume or 0.0) + (off_volume or 0.0)
+        total_amount = (click_amount or 0.0) + (off_amount or 0.0)
+        if total_volume <= 0:
+            continue
+        high_candidates = [value for value in (click_high, off_high) if value and value > 0]
+        low_candidates = [value for value in (click_low, off_low) if value and value > 0]
+        average_candidates = [
+            (click_avg, click_volume or 0.0),
+            (off_avg, off_volume or 0.0),
+        ]
+        weighted_average = weighted_price(average_candidates)
+        close_price = total_amount / total_volume if total_amount > 0 else weighted_average
+        if close_price is None or close_price <= 0:
+            continue
+        high_price = max(high_candidates, default=close_price)
+        low_price = min(low_candidates, default=close_price)
+        parsed_rows.append(
+            {
+                "date": date,
+                "ticker": ticker.strip().upper(),
+                "open": close_price,
+                "high": high_price,
+                "low": low_price,
+                "close": close_price,
+                "adj_close": close_price,
+                "volume": total_volume,
+            }
+        )
+    if not parsed_rows:
+        return pd.DataFrame(columns=OHLCV_COLUMNS)
+    frame = pd.DataFrame(parsed_rows)
+    return frame.drop_duplicates(subset=["date", "ticker"]).sort_values(["ticker", "date"])
+
+
+def weighted_price(values: list[tuple[float | None, float]]) -> float | None:
+    weighted_total = 0.0
+    weight_total = 0.0
+    for value, weight in values:
+        if value is None or value <= 0 or weight <= 0:
+            continue
+        weighted_total += value * weight
+        weight_total += weight
+    if weight_total <= 0:
+        return None
+    return weighted_total / weight_total
 
 
 def parse_minguo_date(value: str) -> str | None:

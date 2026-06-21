@@ -31,7 +31,7 @@ class OnDemandAnalysisSummary(BaseModel):
     status: Literal["success"] = "success"
     ticker: str
     run_id: str
-    market: Literal["auto", "us", "twse", "tpex"]
+    market: Literal["auto", "us", "twse", "tpex", "emerging"]
     interval: Literal["1d"]
     fresh_interval: Literal["5m"] | None = None
     fresh_status: Literal["success", "failed", "skipped"] = "skipped"
@@ -54,7 +54,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument(
         "--market",
-        choices=["auto", "us", "twse", "tpex"],
+        choices=["auto", "us", "twse", "tpex", "emerging"],
         default="auto",
         help="Provider ticker resolver. auto maps numeric tickers to TWSE symbols.",
     )
@@ -146,6 +146,12 @@ def run_on_demand_analysis(args: argparse.Namespace) -> OnDemandAnalysisSummary:
     )
     if result.ohlcv.empty:
         raise ValueError(f"No OHLCV rows downloaded for ticker {ticker}")
+    write_download_to_postgres(
+        database_url,
+        result,
+        provider="yfinance",
+        universe_name="on_demand",
+    )
 
     raw_dir.mkdir(parents=True, exist_ok=True)
     artifact_dir.mkdir(parents=True, exist_ok=True)

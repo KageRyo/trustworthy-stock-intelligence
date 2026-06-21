@@ -4,7 +4,9 @@ import pandas as pd
 
 from tsi.data.download import DownloadFrameResult, DownloadTicker
 from tsi.data.postgres import (
+    ResolvedTickerSchema,
     _resolve_prediction_record_ticker,
+    _upsert_prediction_ticker,
     build_ingestion_summary,
     build_market_bar_rows,
     build_resolved_tickers,
@@ -16,15 +18,52 @@ from tsi.data.postgres import (
 def test_infer_market_maps_provider_suffixes() -> None:
     assert infer_market("2330", "2330.TW") == "twse"
     assert infer_market("6488", "6488.TWO") == "tpex"
+    assert infer_market("5240", "5240.EMERGING") == "emerging"
     assert infer_market("NVDA", "NVDA") == "us"
 
 
 def test_prediction_record_resolver_maps_taiwan_alphanumeric_codes_to_twse() -> None:
-    resolved = _resolve_prediction_record_ticker("00981A")
+    resolved = _resolve_prediction_record_ticker(EmptyTickerLookupConnection(), "00981A")
 
     assert resolved.symbol == "00981A"
     assert resolved.query_symbol == "00981A.TW"
     assert resolved.market == "twse"
+
+
+def test_prediction_record_resolver_prefers_existing_emerging_ticker() -> None:
+    resolved = _resolve_prediction_record_ticker(
+        StaticTickerLookupConnection(("5240", "5240.EMERGING", "emerging")),
+        "5240",
+    )
+
+    assert resolved.symbol == "5240"
+    assert resolved.query_symbol == "5240.EMERGING"
+    assert resolved.market == "emerging"
+
+
+def test_prediction_ticker_upsert_merges_stale_taiwan_us_alias() -> None:
+    connection = RecordingTickerMergeConnection(stale_rows=[("stale-us-id",)])
+
+    ticker_id = _upsert_prediction_ticker(
+        connection,
+        ResolvedTickerSchema(symbol="00981A", query_symbol="00981A.TW", market="twse"),
+    )
+
+    assert ticker_id == "target-id"
+    assert any("SELECT id" in query and "market = 'us'" in query for query, _ in connection.calls)
+    assert ("DELETE FROM tickers WHERE id = %s", ("stale-us-id",)) in connection.normalized_calls
+
+
+def test_prediction_ticker_upsert_does_not_merge_us_ticker_alias() -> None:
+    connection = RecordingTickerMergeConnection(stale_rows=[("stale-us-id",)])
+
+    ticker_id = _upsert_prediction_ticker(
+        connection,
+        ResolvedTickerSchema(symbol="AAPL", query_symbol="AAPL", market="us"),
+    )
+
+    assert ticker_id == "target-id"
+    assert all("market = 'us'" not in query for query, _ in connection.calls)
 
 
 def test_validate_interval_accepts_database_supported_intervals() -> None:
@@ -109,3 +148,81 @@ def test_build_ingestion_summary_is_schema_first() -> None:
     assert summary.data_start == "2026-06-18T01:00:00+00:00"
     assert summary.data_end == "2026-06-18T01:05:00+00:00"
     assert build_resolved_tickers(result)[1].market == "twse"
+
+
+def test_build_market_bar_rows_uses_resolved_emerging_market() -> None:
+    result = DownloadFrameResult(
+        dataset_name="watchlist",
+        tickers=[DownloadTicker(ticker="5240", query_symbol="5240.EMERGING", market="emerging")],
+        ohlcv=pd.DataFrame(
+            {
+                "date": ["2026-06-18"],
+                "ticker": ["5240"],
+                "open": [23.0],
+                "high": [23.95],
+                "low": [23.0],
+                "close": [23.0],
+                "adj_close": [23.0],
+                "volume": [3001],
+            }
+        ),
+        start="2026-06-01",
+        end=None,
+        interval="1d",
+        failed_batches=[],
+    )
+
+    rows = build_market_bar_rows(result, provider="tpex")
+
+    assert rows[0].market == "emerging"
+    assert build_resolved_tickers(result)[0].market == "emerging"
+
+
+class EmptyTickerLookupConnection:
+    def execute(self, *_args, **_kwargs):
+        return StaticTickerLookupCursor(None)
+
+
+class StaticTickerLookupConnection:
+    def __init__(self, row):
+        self.row = row
+
+    def execute(self, *_args, **_kwargs):
+        return StaticTickerLookupCursor(self.row)
+
+
+class StaticTickerLookupCursor:
+    def __init__(self, row):
+        self.row = row
+
+    def fetchone(self):
+        return self.row
+
+
+class RecordingTickerMergeConnection:
+    def __init__(self, stale_rows):
+        self.stale_rows = stale_rows
+        self.calls = []
+        self.normalized_calls = []
+
+    def execute(self, query, params=()):
+        self.calls.append((query, params))
+        normalized_query = " ".join(query.split())
+        self.normalized_calls.append((normalized_query, params))
+        if normalized_query.startswith("INSERT INTO tickers"):
+            return RecordingCursor(fetchone_row=("target-id",))
+        if normalized_query.startswith("SELECT id FROM tickers"):
+            return RecordingCursor(fetchall_rows=self.stale_rows)
+        return RecordingCursor()
+
+
+class RecordingCursor:
+    def __init__(self, fetchone_row=None, fetchall_rows=None):
+        self.fetchone_row = fetchone_row
+        self.fetchall_rows = fetchall_rows or []
+
+    def fetchone(self):
+        return self.fetchone_row
+
+    def fetchall(self):
+        return self.fetchall_rows

@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS tickers (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     symbol TEXT NOT NULL,
     query_symbol TEXT NOT NULL,
-    market TEXT NOT NULL CHECK (market IN ('us', 'twse', 'tpex', 'taiwan', 'unknown')),
+    market TEXT NOT NULL CHECK (market IN ('us', 'twse', 'tpex', 'emerging', 'taiwan', 'unknown')),
     name TEXT NOT NULL DEFAULT '',
     currency TEXT NOT NULL DEFAULT '',
     exchange TEXT NOT NULL DEFAULT '',
