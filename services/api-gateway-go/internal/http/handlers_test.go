@@ -710,6 +710,36 @@ func TestHandlersSupportNumericTaiwanTicker(t *testing.T) {
 	}
 }
 
+func TestTickerListClassifiesTaiwanAlphanumericTickers(t *testing.T) {
+	batch := warnings.PredictionBatch{
+		SchemaVersion: "v1",
+		RunID:         "test",
+		DataAsOf:      "2026-06-19",
+		GeneratedAt:   "2026-06-19T00:00:00Z",
+		Records: []warnings.PredictionRecord{
+			{Ticker: "00981A", Date: "2026-06-19", WarningLevel: "abstain"},
+			{Ticker: "02001L", Date: "2026-06-19", WarningLevel: "watch"},
+			{Ticker: "5240.EMERGING", Date: "2026-06-19", WarningLevel: "watch"},
+			{Ticker: "AAPL", Date: "2026-06-19", WarningLevel: "no_alert"},
+		},
+	}
+
+	payload := buildTickerList(batch)
+	markets := map[string]string{}
+	for _, ticker := range payload.Tickers {
+		markets[ticker.Ticker] = ticker.Market
+	}
+
+	if markets["00981A"] != "taiwan" ||
+		markets["02001L"] != "taiwan" ||
+		markets["5240.EMERGING"] != "taiwan" {
+		t.Fatalf("taiwan tickers not classified as taiwan: %+v", markets)
+	}
+	if markets["AAPL"] != "us" {
+		t.Fatalf("AAPL market = %q, want us", markets["AAPL"])
+	}
+}
+
 func TestCurrentModelHandler(t *testing.T) {
 	response := getJSON(t, testRouter(t), "/api/v1/models/current")
 
@@ -901,6 +931,29 @@ func TestAddWatchlistTickerAcceptsTaiwanNumericTicker(t *testing.T) {
 	}
 	if ticker.HasLatestWarning {
 		t.Fatalf("expected newly added ticker without latest warning: %+v", ticker)
+	}
+}
+
+func TestAddWatchlistTickerAcceptsEmergingTicker(t *testing.T) {
+	router := testRouterWithWatchlist(t, &fakeWatchlistStore{})
+
+	response := postJSON(
+		t,
+		router,
+		"/api/v1/watchlists/default/tickers",
+		`{"schema_version":"watchlist_add.v1","ticker":"5240","market":"emerging","notes":""}`,
+	)
+
+	if response.Code != http.StatusCreated {
+		t.Fatalf("status = %d, want 201: %s", response.Code, response.Body.String())
+	}
+	var payload WatchlistResponse
+	if err := json.NewDecoder(response.Body).Decode(&payload); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	ticker := payload.Tickers[0]
+	if ticker.Ticker != "5240" || ticker.QuerySymbol != "5240.EMERGING" || ticker.Market != "emerging" {
+		t.Fatalf("unexpected ticker mapping: %+v", ticker)
 	}
 }
 

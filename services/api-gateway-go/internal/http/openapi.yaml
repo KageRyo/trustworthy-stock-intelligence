@@ -551,7 +551,7 @@ components:
           examples: ["NVDA", "2330"]
         market:
           type: string
-          enum: [auto, us, twse, tpex]
+          enum: [auto, us, twse, tpex, emerging]
         notes:
           type: string
     WatchlistResponse:
@@ -595,7 +595,7 @@ components:
           type: string
         market:
           type: string
-          enum: [us, twse, tpex, taiwan, unknown]
+          enum: [us, twse, tpex, emerging, taiwan, unknown]
         added_at:
           type: string
         notes:

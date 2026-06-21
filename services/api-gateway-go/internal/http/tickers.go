@@ -1,6 +1,7 @@
 package apihttp
 
 import (
+	"regexp"
 	"sort"
 	"strings"
 
@@ -8,6 +9,8 @@ import (
 )
 
 const tickerListSchemaVersion = "ticker_list.v1"
+
+var taiwanLocalTickerPattern = regexp.MustCompile(`^[0-9]{4,6}[A-Z]?$`)
 
 type TickerListResponse struct {
 	SchemaVersion string          `json:"schema_version"`
@@ -57,17 +60,22 @@ func inferTickerMarket(ticker string) string {
 	if value == "" {
 		return "unknown"
 	}
-	if isDigits(value) || strings.HasSuffix(value, ".TW") || strings.HasSuffix(value, ".TWO") {
+	if isTaiwanLocalTicker(value) ||
+		strings.HasSuffix(value, ".TW") ||
+		strings.HasSuffix(value, ".TWO") ||
+		strings.HasSuffix(value, ".EMERGING") {
 		return "taiwan"
 	}
 	return "us"
 }
 
-func isDigits(value string) bool {
-	for _, char := range value {
-		if char < '0' || char > '9' {
-			return false
-		}
-	}
-	return true
+func isTaiwanLocalTicker(value string) bool {
+	normalized := strings.TrimSuffix(
+		strings.TrimSuffix(
+			strings.TrimSuffix(strings.ToUpper(strings.TrimSpace(value)), ".TW"),
+			".TWO",
+		),
+		".EMERGING",
+	)
+	return taiwanLocalTickerPattern.MatchString(normalized)
 }
