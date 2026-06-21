@@ -218,6 +218,7 @@ export const translations = {
       taiwan: "Taiwan",
       twse: "TWSE",
       tpex: "TPEx",
+      emerging: "Emerging",
       unknown: "Unknown"
     },
     chart: {
@@ -389,6 +390,7 @@ export const translations = {
       taiwan: "台股",
       twse: "上市",
       tpex: "上櫃",
+      emerging: "興櫃",
       unknown: "未知"
     },
     chart: {

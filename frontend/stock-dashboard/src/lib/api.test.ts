@@ -195,6 +195,27 @@ describe("typed API client", () => {
     });
   });
 
+  it("parses emerging market watchlist tickers", async () => {
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse({
+        ...watchlistPayload(),
+        tickers: [
+          {
+            ...watchlistPayload().tickers[0],
+            ticker: "5240",
+            query_symbol: "5240.EMERGING",
+            market: "emerging"
+          }
+        ]
+      })
+    );
+
+    const watchlist = await fetchWatchlist("session-test");
+
+    expect(watchlist.tickers[0].market).toBe("emerging");
+    expect(watchlist.tickers[0].query_symbol).toBe("5240.EMERGING");
+  });
+
   it("adds watchlist tickers with a schema-first request body", async () => {
     fetchMock.mockResolvedValueOnce(jsonResponse(watchlistPayload(), 201));
 

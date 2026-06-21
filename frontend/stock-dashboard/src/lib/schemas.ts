@@ -131,7 +131,7 @@ export const watchlistTickerSchema = z
   .object({
     ticker: z.string(),
     query_symbol: z.string(),
-    market: z.enum(["us", "twse", "tpex", "taiwan", "unknown"]),
+    market: z.enum(["us", "twse", "tpex", "emerging", "taiwan", "unknown"]),
     added_at: z.string(),
     notes: z.string(),
     has_latest_warning: z.boolean(),
