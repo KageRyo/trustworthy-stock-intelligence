@@ -1,7 +1,7 @@
 # Trustworthy Stock Intelligence
 
 [![CI](https://github.com/KageRyo/trustworthy-stock-intelligence/actions/workflows/ci.yml/badge.svg)](https://github.com/KageRyo/trustworthy-stock-intelligence/actions/workflows/ci.yml)
-![Version](https://img.shields.io/badge/version-0.2.0-blue)
+![Version](https://img.shields.io/badge/version-0.3.0-blue)
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
 ![Go](https://img.shields.io/badge/go-1.25-blue)
 ![TypeScript](https://img.shields.io/badge/typescript-5.6-blue)
@@ -33,8 +33,17 @@ auditable data, model, and API contracts.
 
 ## Current Status
 
-Version `0.2.0` is the first dashboard-oriented release:
+Version `0.3.0` is the research-evidence-hardening release:
 
+- Experiment 007 uses purged walk-forward train/calibration/test boundaries and
+  per-row `label_end_date` overlap checks.
+- Calibration results report ECE, Brier score, simple no-feature baselines, and
+  breakdowns by fold, ticker, and year without presenting limited predictive
+  skill as a trading edge.
+- A dedicated AUC invariance audit records per-fold sample identity, recovered
+  Platt parameters, ranking behavior, and mean-fold, weighted, and pooled AUC.
+- Repository controls include required CI, Dependabot, vulnerability analysis,
+  race tests, and full-history secret scanning with SHA-pinned Node 24 actions.
 - PostgreSQL is the source of truth for tickers, watchlists, market bars,
   prediction batches, and warning records.
 - The Go API requires PostgreSQL at startup and serves schema-owned API
@@ -294,7 +303,7 @@ Project targets:
 
 | Runtime | Version |
 | --- | --- |
-| Python package | `0.2.0` |
+| Python package | `0.3.0` |
 | Python | `>=3.10`, CI uses `3.11` |
 | Go API | `1.25.x` |
 | Node.js CI runtime | `22.x` |

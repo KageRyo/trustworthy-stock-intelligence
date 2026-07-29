@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.3.0 - 2026-07-29
+
 ### Added
 
 - Purged walk-forward research protocol with label-horizon gaps at
@@ -15,6 +17,9 @@
   dependency audit, SHA-pinned Gitleaks history scanning,
   repository-settings guidance, and a security policy.
 - Data/model licensing and public/private boundary documentation.
+- A reproducible Platt AUC invariance audit with per-fold sample hashes,
+  calibrator diagnostics, ranking checks, and distinct mean-fold, weighted, and
+  pooled AUC summaries.
 
 ### Changed
 
@@ -35,6 +40,8 @@
   by Dependabot and `govulncheck`.
 - Go CI now runs source-aware vulnerability analysis with pinned
   `govulncheck v1.6.0` and the race detector.
+- GitHub Actions are SHA-pinned to Node 24-compatible releases, removing the
+  runner-level Node 20 deprecation path without changing application runtimes.
 
 ## 0.2.0 - 2026-06-21
 
