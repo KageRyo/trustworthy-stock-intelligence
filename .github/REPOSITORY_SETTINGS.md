@@ -5,9 +5,9 @@ GitHub after the workflows on `main` have completed at least once.
 
 Applied on 2026-07-29:
 
-- `main` requires pull requests, conversation resolution, and the three
-  existing CI checks; force pushes, deletion, and administrator bypass are
-  disabled
+- `main` requires pull requests, conversation resolution, the three CI jobs,
+  and the Gitleaks secret scan; force pushes, deletion, and administrator
+  bypass are disabled
 - Dependabot vulnerability alerts and automatic security updates are enabled
 
 ## Branches
@@ -30,8 +30,7 @@ Target `main` and configure:
   - `Python tests and lint`
   - `Go API tests`
   - `Frontend tests and build`
-  - `Gitleaks secret scan` after the workflow has completed successfully on
-    this pull request
+  - `Gitleaks secret scan`
 
 For a solo-maintainer repository, required approvals can remain at zero while
 the pull-request and CI gates remain active. Raise the approval count when
