@@ -11,8 +11,8 @@
 - SHA-256 fingerprints for downloaded OHLCV and ticker artifacts.
 - Explicit false-discovery metrics alongside the legacy false-alarm/false-
   positive metric name.
-- Dependabot configuration, CodeQL analysis, frontend dependency audit,
-  repository-settings guidance, and a security policy.
+- Dependabot configuration, cross-language basic static analysis, frontend
+  dependency audit, repository-settings guidance, and a security policy.
 - Data/model licensing and public/private boundary documentation.
 
 ### Changed
@@ -24,6 +24,8 @@
   evidence; Experiment 007 is the current calibration report.
 - Public documentation uses deployment placeholders instead of a specific
   server address or private filesystem path.
+- Ruff is constrained to the compatible `0.15.x` lint baseline; CI also runs
+  `go vet`, while TypeScript remains checked by the production build.
 
 ## 0.2.0 - 2026-06-21
 
