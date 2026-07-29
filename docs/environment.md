@@ -6,7 +6,7 @@
 | --- | --- |
 | Python package | `0.2.0` |
 | Python | `>=3.10`, CI uses `3.11` |
-| Go API | `1.22.x` |
+| Go API | `1.25.x` |
 | Node.js CI runtime | `22.x` |
 | TypeScript | `5.6.x` |
 | PostgreSQL container | `17-alpine` |

@@ -3,7 +3,7 @@
 [![CI](https://github.com/KageRyo/trustworthy-stock-intelligence/actions/workflows/ci.yml/badge.svg)](https://github.com/KageRyo/trustworthy-stock-intelligence/actions/workflows/ci.yml)
 ![Version](https://img.shields.io/badge/version-0.2.0-blue)
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
-![Go](https://img.shields.io/badge/go-1.22-blue)
+![Go](https://img.shields.io/badge/go-1.25-blue)
 ![TypeScript](https://img.shields.io/badge/typescript-5.6-blue)
 ![License](https://img.shields.io/badge/license-Apache--2.0-green)
 
@@ -268,7 +268,9 @@ python -m pytest
 python -m ruff check src tests scripts dashboard
 cd services/api-gateway-go
 GOCACHE=/tmp/tsi-go-build-cache CGO_ENABLED=0 go vet ./...
+GOCACHE=/tmp/tsi-go-build-cache CGO_ENABLED=0 go run golang.org/x/vuln/cmd/govulncheck@v1.6.0 ./...
 GOCACHE=/tmp/tsi-go-build-cache CGO_ENABLED=0 go test ./...
+GOCACHE=/tmp/tsi-go-build-cache CGO_ENABLED=1 go test -race ./...
 cd ../../frontend/stock-dashboard
 npm test -- --run
 npm run build
@@ -277,13 +279,14 @@ npm audit --audit-level=moderate
 
 CI runs Python tests/lint, Go API tests, and frontend tests/build on push and
 pull request events. Dependabot covers Python, Go, npm, and GitHub Actions.
-Basic static analysis covers Python with Ruff, Go with `go vet`, and TypeScript
-through the production build's typecheck. A least-privilege, SHA-pinned
-Gitleaks workflow scans repository history because native GitHub secret
-scanning is not available for this user-owned private repository. CodeQL can
-replace or supplement the static checks when the repository is public or
-GitHub Code Security is enabled. Applied remote controls and remaining
-plan-dependent settings are recorded in `.github/REPOSITORY_SETTINGS.md`.
+Basic static analysis covers Python with Ruff, Go with `go vet`, pinned
+`govulncheck`, and race tests, and TypeScript through the production build's
+typecheck. A least-privilege, SHA-pinned Gitleaks workflow scans repository
+history because native GitHub secret scanning is not available for this
+user-owned private repository. CodeQL can replace or supplement the static
+checks when the repository is public or GitHub Code Security is enabled.
+Applied remote controls and remaining plan-dependent settings are recorded in
+`.github/REPOSITORY_SETTINGS.md`.
 
 ## Environment Versions
 
@@ -293,7 +296,7 @@ Project targets:
 | --- | --- |
 | Python package | `0.2.0` |
 | Python | `>=3.10`, CI uses `3.11` |
-| Go API | `1.22.x` |
+| Go API | `1.25.x` |
 | Node.js CI runtime | `22.x` |
 | TypeScript | `5.6.x` |
 | PostgreSQL container | `17-alpine` |
