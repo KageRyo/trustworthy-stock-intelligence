@@ -1,0 +1,40 @@
+{
+  "experiment_id": "007_research_evidence",
+  "run_id": "sp100_logistic_platt_purged",
+  "executed_on": "2026-07-29",
+  "base_git_commit": "b09b9e70fee133869452455b64690c3155f7342d",
+  "working_tree_changes_present": true,
+  "dataset": {
+    "provider": "Yahoo Finance via yfinance",
+    "downloaded_at_utc": "2026-05-08T02:50:28.018207+00:00",
+    "universe": "sp100",
+    "ticker_count": 101,
+    "row_count": 283289,
+    "ohlcv_sha256": "6b1357c8414888cb0a467eb717df0261ff69bd3b8e9b0244ff115be820395ba6",
+    "tickers_sha256": "3023bcc40e666c0151ac3aeb895aae9f8d1f04f9da6db01977a1f8204ef2d890"
+  },
+  "protocol": {
+    "feature_interval": "1d",
+    "horizon": 5,
+    "drawdown_threshold": -0.05,
+    "train_size": 252,
+    "purge_size": 5,
+    "calibration_size": 63,
+    "test_size": 63,
+    "fold_count": 39,
+    "model": "logistic_regression",
+    "calibration_method": "platt",
+    "threshold_objective": "f1"
+  },
+  "environment": {
+    "python": "3.11.15",
+    "numpy": "2.4.4",
+    "pandas": "3.0.2",
+    "scikit_learn": "1.8.0"
+  },
+  "artifacts": {
+    "summary_sha256": "265f5a9d10d36cde4c19fc3350d89fd89779be811b79e76286a615d6bc1ad65e",
+    "calibration_comparison_sha256": "bc7fb825bd539084612f28371a7a9990f830cfabd5f2e45346742a23d3b68a0e",
+    "predictions_sha256": "ce5cf9e63e445af12da449e1f398914064989879c680e35bbf87ae611414529e"
+  }
+}

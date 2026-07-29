@@ -62,11 +62,18 @@ Each walk-forward fold should define:
 
 ```text
 training window
+purge gap of at least the label horizon
 calibration or validation window
+purge gap of at least the label horizon
 test window
 ```
 
 The calibration window must occur after the training window and before the test window.
+For the five-day future drawdown label, exclude at least five trading dates at
+both boundaries. This prevents a label in the earlier window from reading
+prices that belong to the next model-selection or evaluation window. Also
+record each row's actual label end date and remove any row whose outcome window
+reaches the next split; this second check handles mixed-market calendars.
 
 ## Model Families
 
@@ -145,4 +152,5 @@ The main protocol must not use:
 - normalization fit on the full dataset
 - calibration fit on test data
 - threshold tuning on the test window
+- label horizons that overlap the following calibration or test window
 - survivorship assumptions without documentation

@@ -86,6 +86,12 @@ The label should be computed from `adj_close` unless an experiment explicitly do
 
 Rows near the end of each ticker's time series may not have enough future observations to compute a full `H`-day label. These rows must be excluded from supervised training and evaluation.
 
+Rows at train/calibration/test boundaries need a separate guard. The splitter
+must exclude at least `H` dates between windows so an earlier label cannot use
+prices from the following window. Dropping only the final unavailable labels
+does not prevent this boundary overlap. The labeler records `label_end_date`,
+and the splitter checks it against the next window in addition to the date gap.
+
 Rows with missing or non-positive adjusted close prices must also be excluded from label computation.
 
 ## Leakage Checklist

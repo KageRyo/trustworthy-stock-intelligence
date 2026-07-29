@@ -39,12 +39,19 @@ Lead Time
 Suggested definitions:
 
 ```text
-False Alarm Rate = false alerts / all alerts
+False Positive Rate = false positives / all actual negatives
+False Discovery Rate = false positives / all issued positive alerts
 Miss Rate = missed risk events / all risk events
 Lead Time = number of trading days between the first warning and the realized risk event
 ```
 
-False alarm and miss rate should be reported together. A model that never alerts has low false alarms but unacceptable misses.
+Historical artifacts retain the key `false_alarm_rate` for compatibility, but
+it is calculated as the false-positive rate. New reports must also include
+`false_discovery_rate` so "how many negatives were alerted" is not confused
+with "how many alerts were wrong."
+
+False-positive, false-discovery, and miss rates should be reported together. A
+model that never alerts has low false positives but unacceptable misses.
 
 ## Calibration Metrics
 
@@ -112,3 +119,11 @@ Each experiment should report:
 - calibration before and after calibration
 - threshold settings
 - coverage under selective prediction
+
+## Transaction Costs
+
+Transaction cost is not part of probability calibration or warning-quality
+evaluation because the current system does not define or execute a trading
+strategy. Any future return, portfolio, or strategy backtest must specify
+turnover, commissions, bid-ask spread, slippage, market impact assumptions, and
+the timestamp at which a warning could actually be acted upon.
