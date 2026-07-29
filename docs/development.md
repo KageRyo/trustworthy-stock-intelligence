@@ -25,6 +25,7 @@ Run focused tests while developing and the full relevant suite before commit:
 python -m pytest
 python -m ruff check src tests scripts dashboard
 cd services/api-gateway-go
+GOCACHE=/tmp/tsi-go-build-cache CGO_ENABLED=0 go vet ./...
 GOCACHE=/tmp/tsi-go-build-cache CGO_ENABLED=0 go test ./...
 cd ../../frontend/stock-dashboard
 npm test -- --run
@@ -51,9 +52,13 @@ GitHub Actions workflow:
 CI runs:
 
 - Python tests and Ruff
-- Go API tests
-- frontend Vitest tests, production build, and moderate dependency audit
-- separate CodeQL analysis for Python, Go, and JavaScript/TypeScript
+- Go API tests and `go vet`
+- frontend Vitest tests, production build with TypeScript typechecking, and
+  moderate dependency audit
+
+The development dependency range keeps Ruff on the compatible `0.15.x`
+baseline. CodeQL can supplement these checks after the repository is public or
+GitHub Code Security is enabled for the private repository.
 
 The CI badge in `README.md` points to the latest workflow result on GitHub.
 

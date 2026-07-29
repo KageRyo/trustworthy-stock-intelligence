@@ -23,7 +23,6 @@ Target `main` and configure:
   - `Python tests and lint`
   - `Go API tests`
   - `Frontend tests and build`
-- require CodeQL results for Python, Go, and JavaScript/TypeScript
 
 For a solo-maintainer repository, required approvals can remain at zero while
 the pull-request and CI gates remain active. Raise the approval count when
@@ -34,8 +33,9 @@ another regular reviewer is available.
 - keep Dependabot alerts and security updates enabled
 - commit `.github/dependabot.yml` to enable scheduled version-update PRs
 - keep secret scanning and push protection enabled
-- use the committed CodeQL advanced workflow; do not enable CodeQL default
-  setup at the same time
+- keep Ruff, `go vet`, and the TypeScript production-build typecheck required
+- if the repository becomes public or GitHub Code Security is enabled, add
+  CodeQL and require its Python, Go, and JavaScript/TypeScript results
 - review `npm audit --audit-level=moderate` in CI
 
 Public repositories receive GitHub secret scanning, but push protection and

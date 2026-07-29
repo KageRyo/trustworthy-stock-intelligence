@@ -267,6 +267,7 @@ Run the same checks before commit:
 python -m pytest
 python -m ruff check src tests scripts dashboard
 cd services/api-gateway-go
+GOCACHE=/tmp/tsi-go-build-cache CGO_ENABLED=0 go vet ./...
 GOCACHE=/tmp/tsi-go-build-cache CGO_ENABLED=0 go test ./...
 cd ../../frontend/stock-dashboard
 npm test -- --run
@@ -276,9 +277,12 @@ npm audit --audit-level=moderate
 
 CI runs Python tests/lint, Go API tests, and frontend tests/build on push and
 pull request events. Dependabot covers Python, Go, npm, and GitHub Actions.
-CodeQL scans Python, Go, and JavaScript/TypeScript. Remote branch protection,
-secret scanning, and push protection must be verified in GitHub settings; the
-recommended configuration is recorded in `.github/REPOSITORY_SETTINGS.md`.
+Basic static analysis covers Python with Ruff, Go with `go vet`, and TypeScript
+through the production build's typecheck. CodeQL can replace or supplement
+these checks when the repository is public or GitHub Code Security is enabled.
+Remote branch protection, secret scanning, and push protection must be verified
+in GitHub settings; the recommended configuration is recorded in
+`.github/REPOSITORY_SETTINGS.md`.
 
 ## Environment Versions
 
