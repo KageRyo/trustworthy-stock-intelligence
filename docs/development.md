@@ -29,6 +29,7 @@ GOCACHE=/tmp/tsi-go-build-cache CGO_ENABLED=0 go test ./...
 cd ../../frontend/stock-dashboard
 npm test -- --run
 npm run build
+npm audit --audit-level=moderate
 ```
 
 Coverage priorities:
@@ -51,7 +52,8 @@ CI runs:
 
 - Python tests and Ruff
 - Go API tests
-- frontend Vitest tests and production build
+- frontend Vitest tests, production build, and moderate dependency audit
+- separate CodeQL analysis for Python, Go, and JavaScript/TypeScript
 
 The CI badge in `README.md` points to the latest workflow result on GitHub.
 

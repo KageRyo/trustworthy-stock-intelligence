@@ -141,10 +141,10 @@ func deleteJSON(t *testing.T, router http.Handler, path string) *httptest.Respon
 func TestCORSAllowsConfiguredOrigin(t *testing.T) {
 	router := NewRouter(
 		NewHandlers(mustFileStore(t)),
-		CORSConfig{AllowedOrigins: []string{"http://140.123.105.126:5175"}},
+		CORSConfig{AllowedOrigins: []string{"https://dashboard.example.test"}},
 	)
 	request := httptest.NewRequest(http.MethodOptions, "/api/v1/status", nil)
-	request.Header.Set("Origin", "http://140.123.105.126:5175")
+	request.Header.Set("Origin", "https://dashboard.example.test")
 	request.Header.Set("Access-Control-Request-Method", "GET")
 	response := httptest.NewRecorder()
 
@@ -153,7 +153,7 @@ func TestCORSAllowsConfiguredOrigin(t *testing.T) {
 	if response.Code != http.StatusNoContent {
 		t.Fatalf("status = %d, want 204", response.Code)
 	}
-	if got := response.Header().Get("Access-Control-Allow-Origin"); got != "http://140.123.105.126:5175" {
+	if got := response.Header().Get("Access-Control-Allow-Origin"); got != "https://dashboard.example.test" {
 		t.Fatalf("allow origin = %q, want configured origin", got)
 	}
 	if got := response.Header().Get("Access-Control-Allow-Methods"); !strings.Contains(got, "POST") {
@@ -164,10 +164,10 @@ func TestCORSAllowsConfiguredOrigin(t *testing.T) {
 func TestCORSAddsHeadersOnGET(t *testing.T) {
 	router := NewRouter(
 		NewHandlers(mustFileStore(t)),
-		CORSConfig{AllowedOrigins: []string{"http://140.123.105.126:5175"}},
+		CORSConfig{AllowedOrigins: []string{"https://dashboard.example.test"}},
 	)
 	request := httptest.NewRequest(http.MethodGet, "/api/v1/status", nil)
-	request.Header.Set("Origin", "http://140.123.105.126:5175")
+	request.Header.Set("Origin", "https://dashboard.example.test")
 	response := httptest.NewRecorder()
 
 	router.ServeHTTP(response, request)
@@ -175,7 +175,7 @@ func TestCORSAddsHeadersOnGET(t *testing.T) {
 	if response.Code != http.StatusOK {
 		t.Fatalf("status = %d, want 200", response.Code)
 	}
-	if got := response.Header().Get("Access-Control-Allow-Origin"); got != "http://140.123.105.126:5175" {
+	if got := response.Header().Get("Access-Control-Allow-Origin"); got != "https://dashboard.example.test" {
 		t.Fatalf("allow origin = %q, want configured origin", got)
 	}
 }
