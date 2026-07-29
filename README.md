@@ -278,11 +278,12 @@ npm audit --audit-level=moderate
 CI runs Python tests/lint, Go API tests, and frontend tests/build on push and
 pull request events. Dependabot covers Python, Go, npm, and GitHub Actions.
 Basic static analysis covers Python with Ruff, Go with `go vet`, and TypeScript
-through the production build's typecheck. CodeQL can replace or supplement
-these checks when the repository is public or GitHub Code Security is enabled.
-Remote branch protection, secret scanning, and push protection must be verified
-in GitHub settings; the recommended configuration is recorded in
-`.github/REPOSITORY_SETTINGS.md`.
+through the production build's typecheck. A least-privilege, SHA-pinned
+Gitleaks workflow scans repository history because native GitHub secret
+scanning is not available for this user-owned private repository. CodeQL can
+replace or supplement the static checks when the repository is public or
+GitHub Code Security is enabled. Applied remote controls and remaining
+plan-dependent settings are recorded in `.github/REPOSITORY_SETTINGS.md`.
 
 ## Environment Versions
 

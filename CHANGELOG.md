@@ -12,7 +12,8 @@
 - Explicit false-discovery metrics alongside the legacy false-alarm/false-
   positive metric name.
 - Dependabot configuration, cross-language basic static analysis, frontend
-  dependency audit, repository-settings guidance, and a security policy.
+  dependency audit, SHA-pinned Gitleaks history scanning,
+  repository-settings guidance, and a security policy.
 - Data/model licensing and public/private boundary documentation.
 
 ### Changed
@@ -26,6 +27,8 @@
   server address or private filesystem path.
 - Ruff is constrained to the compatible `0.15.x` lint baseline; CI also runs
   `go vet`, while TypeScript remains checked by the production build.
+- Remote `main` protection, Dependabot vulnerability alerts, and automatic
+  security updates are enabled.
 
 ## 0.2.0 - 2026-06-21
 
