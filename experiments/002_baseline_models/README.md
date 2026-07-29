@@ -1,5 +1,12 @@
 # Experiment 002: Baseline Models
 
+## Historical Status
+
+This document records the original preliminary pilot. Its fold boundaries did
+not purge the five-day label horizon and it is no longer the primary
+calibration claim. Use `experiments/007_research_evidence/README.md` for the
+current purged result. The historical numbers remain here for provenance.
+
 ## Dataset
 
 ```text

@@ -15,22 +15,17 @@ official exchange data
 
 ## Conda Environment
 
-The local environment used for pilot downloads is:
-
-```text
-/mnt/8tb_hdd/ryo/miniconda3/envs/stock
-```
-
-It was created with:
+Create and activate a local Python 3.11 environment:
 
 ```bash
-/mnt/8tb_hdd/ryo/miniconda3/bin/conda create -n stock python=3.11 -y
+conda create -n stock python=3.11 -y
+conda activate stock
 ```
 
 Install the project into the environment:
 
 ```bash
-/mnt/8tb_hdd/ryo/miniconda3/envs/stock/bin/pip install -e .
+python -m pip install -e .
 ```
 
 ## Download Commands
@@ -38,7 +33,7 @@ Install the project into the environment:
 Download S&P 100:
 
 ```bash
-/mnt/8tb_hdd/ryo/miniconda3/envs/stock/bin/python -m scripts.prepare_data \
+python -m scripts.prepare_data \
   --universe sp100 \
   --start 2015-01-01 \
   --output-root data/raw \
@@ -48,7 +43,7 @@ Download S&P 100:
 Download S&P 500:
 
 ```bash
-/mnt/8tb_hdd/ryo/miniconda3/envs/stock/bin/python -m scripts.prepare_data \
+python -m scripts.prepare_data \
   --universe sp500 \
   --start 2015-01-01 \
   --output-root data/raw \
@@ -58,7 +53,7 @@ Download S&P 500:
 Download both:
 
 ```bash
-/mnt/8tb_hdd/ryo/miniconda3/envs/stock/bin/python -m scripts.prepare_data \
+python -m scripts.prepare_data \
   --universe all \
   --start 2015-01-01 \
   --output-root data/raw \
@@ -95,6 +90,11 @@ data/raw/<universe>/ohlcv.csv
 data/raw/<universe>/tickers.csv
 data/raw/<universe>/metadata.json
 ```
+
+`metadata.json` records the provider, download timestamp, requested interval,
+failed batches, and SHA-256 fingerprints for `ohlcv.csv` and `tickers.csv`.
+The hashes identify an exact snapshot so later provider corrections can be
+detected; they do not by themselves explain why a provider revised data.
 
 The OHLCV schema is:
 

@@ -17,7 +17,9 @@ tickers.csv
 metadata.json
 ```
 
-These artifacts are intentionally excluded from git because they can be large and may be vendor-adjusted over time.
+These artifacts are intentionally excluded from git because they can be large
+and may be vendor-adjusted over time. Downloader metadata includes SHA-256
+fingerprints so an experiment can identify the exact input snapshot.
 
 Current local validation on this machine produced:
 
