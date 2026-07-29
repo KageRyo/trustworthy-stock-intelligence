@@ -40,6 +40,7 @@ def test_parse_args_supports_trust_score_method() -> None:
 
     assert args.trust_score_method == "subtractive"
     assert args.model_output is None
+    assert args.purge_size is None
 
     args = train_deep.parse_args(
         [

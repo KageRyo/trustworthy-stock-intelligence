@@ -35,6 +35,7 @@ def test_trust_warning_metrics_match_alert_confusion_matrix() -> None:
     assert math.isclose(metrics["alert_precision"], 0.5)
     assert math.isclose(metrics["alert_recall"], 1 / 3)
     assert math.isclose(metrics["alert_false_alarm_rate"], 0.5)
+    assert math.isclose(metrics["alert_false_discovery_rate"], 0.5)
     assert math.isclose(metrics["alert_miss_rate"], 2 / 3)
     assert math.isclose(metrics["coverage"], 3 / 5)
     assert math.isclose(metrics["abstain_rate"], 1 / 5)

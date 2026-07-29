@@ -19,6 +19,7 @@ def test_classification_metrics_match_confusion_matrix() -> None:
     assert math.isclose(metrics["recall"], 0.5)
     assert math.isclose(metrics["f1"], 0.5)
     assert math.isclose(metrics["false_alarm_rate"], 0.5)
+    assert math.isclose(metrics["false_discovery_rate"], 0.5)
     assert math.isclose(metrics["miss_rate"], 0.5)
     assert math.isclose(metrics["brier_score"], 0.255)
     assert math.isclose(metrics["auc"], 0.75)
