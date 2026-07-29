@@ -64,6 +64,7 @@ def classification_metrics(
     recall = tp / (tp + fn) if (tp + fn) else 0.0
     f1 = 2 * precision * recall / (precision + recall) if (precision + recall) else 0.0
     false_alarm_rate = fp / (fp + tn) if (fp + tn) else 0.0
+    false_discovery_rate = fp / (tp + fp) if (tp + fp) else 0.0
     miss_rate = fn / (fn + tp) if (fn + tp) else 0.0
     brier_score = float(np.mean((y_prob - y_true) ** 2))
     ece = expected_calibration_error(y_true, y_prob, n_bins=ece_bins)
@@ -77,7 +78,9 @@ def classification_metrics(
         "recall": float(recall),
         "f1": float(f1),
         "auc": auc,
+        # Kept for artifact compatibility; this is the false-positive rate.
         "false_alarm_rate": float(false_alarm_rate),
+        "false_discovery_rate": float(false_discovery_rate),
         "miss_rate": float(miss_rate),
         "brier_score": brier_score,
         "ece": ece,

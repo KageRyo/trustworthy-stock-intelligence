@@ -7,6 +7,7 @@ from collections.abc import Sequence
 import json
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
 from tsi.data.csv import read_ohlcv_csv
@@ -48,6 +49,15 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         type=int,
         default=None,
         help="Date step between folds. Defaults to test-size.",
+    )
+    parser.add_argument(
+        "--purge-size",
+        type=int,
+        default=None,
+        help=(
+            "Dates excluded between train/calibration and calibration/test. "
+            "Defaults to horizon and cannot be smaller than horizon."
+        ),
     )
     parser.add_argument(
         "--output",
@@ -107,6 +117,16 @@ def prepare_training_frame(
     return training_frame
 
 
+def constant_prior_probabilities(train_labels: np.ndarray, *, output_size: int) -> np.ndarray:
+    """Predict the training-window event rate as a no-feature benchmark."""
+
+    if len(train_labels) == 0:
+        raise ValueError("train_labels must not be empty")
+    if output_size < 0:
+        raise ValueError("output_size must be non-negative")
+    return np.full(output_size, float(np.asarray(train_labels, dtype=float).mean()))
+
+
 def run_training(args: argparse.Namespace) -> dict[str, object]:
     """Train one logistic model per walk-forward fold and return metrics."""
 
@@ -116,6 +136,9 @@ def run_training(args: argparse.Namespace) -> dict[str, object]:
         horizon=args.horizon,
         drawdown_threshold=args.drawdown_threshold,
     )
+    purge_size = args.horizon if args.purge_size is None else args.purge_size
+    if purge_size < args.horizon:
+        raise ValueError("purge_size must be at least horizon to prevent label-window leakage")
 
     folds = build_walk_forward_splits(
         training_frame,
@@ -123,6 +146,8 @@ def run_training(args: argparse.Namespace) -> dict[str, object]:
         calibration_size=args.calibration_size,
         test_size=args.test_size,
         step_size=args.step_size,
+        purge_size=purge_size,
+        label_end_date_col="label_end_date",
     )
 
     calibration_method: CalibrationMethod = args.calibration_method
@@ -135,6 +160,10 @@ def run_training(args: argparse.Namespace) -> dict[str, object]:
         train_labels = train_frame["risk_label"].to_numpy()
         calibration_labels = calibration_frame["risk_label"].to_numpy()
         test_labels = test_frame["risk_label"].to_numpy()
+        prior_probabilities = constant_prior_probabilities(
+            train_labels,
+            output_size=len(test_labels),
+        )
 
         unique_train_classes = pd.Series(train_labels).nunique()
         if unique_train_classes < 2:
@@ -165,6 +194,7 @@ def run_training(args: argparse.Namespace) -> dict[str, object]:
         )
         tuned_probabilities = calibrated_probabilities
         tuned_threshold = threshold_selection.threshold
+        prior_metrics = classification_metrics(test_labels, prior_probabilities)
         raw_metrics = classification_metrics(test_labels, probabilities)
         calibrated_metrics = classification_metrics(test_labels, calibrated_probabilities)
         tuned_metrics = classification_metrics(test_labels, tuned_probabilities, threshold=tuned_threshold)
@@ -178,6 +208,7 @@ def run_training(args: argparse.Namespace) -> dict[str, object]:
             .assign(
                 fold_id=fold.fold_id,
                 model=model_name,
+                prior_risk_probability=prior_probabilities,
                 risk_probability=probabilities,
                 calibrated_risk_probability=calibrated_probabilities,
                 calibration_method=calibration_method,
@@ -191,6 +222,7 @@ def run_training(args: argparse.Namespace) -> dict[str, object]:
             {
                 "fold_id": fold.fold_id,
                 "model": model_name,
+                "purge_size": purge_size,
                 "train_start": str(fold.train_dates[0].date()),
                 "train_end": str(fold.train_dates[-1].date()),
                 "calibration_start": str(fold.calibration_dates[0].date()),
@@ -200,6 +232,9 @@ def run_training(args: argparse.Namespace) -> dict[str, object]:
                 "train_rows": len(fold.train_index),
                 "calibration_rows": len(fold.calibration_index),
                 "test_rows": len(fold.test_index),
+                "train_label_overlap_removed": fold.train_label_overlap_removed,
+                "calibration_label_overlap_removed": fold.calibration_label_overlap_removed,
+                "prior_metrics": prior_metrics,
                 "threshold_selection": {
                     "objective": threshold_selection.objective,
                     "threshold": threshold_selection.threshold,
@@ -212,10 +247,17 @@ def run_training(args: argparse.Namespace) -> dict[str, object]:
             }
         )
 
+    prior_metric_names = list(fold_results[0]["prior_metrics"].keys()) if fold_results else []
     raw_metric_names = list(fold_results[0]["raw_metrics"].keys()) if fold_results else []
     calibrated_metric_names = list(fold_results[0]["calibrated_metrics"].keys()) if fold_results else []
     tuned_metric_names = list(fold_results[0]["tuned_metrics"].keys()) if fold_results else []
     summary = {
+        "prior": {
+            name: float(
+                pd.Series([fold["prior_metrics"][name] for fold in fold_results]).mean(skipna=True)
+            )
+            for name in prior_metric_names
+        },
         "raw": {
             name: float(pd.Series([fold["raw_metrics"][name] for fold in fold_results]).mean(skipna=True))
             for name in raw_metric_names
@@ -239,6 +281,34 @@ def run_training(args: argparse.Namespace) -> dict[str, object]:
             ),
         },
     }
+    summary_std = {
+        "prior": {
+            name: float(
+                pd.Series([fold["prior_metrics"][name] for fold in fold_results]).std(skipna=True)
+            )
+            for name in prior_metric_names
+        },
+        "raw": {
+            name: float(
+                pd.Series([fold["raw_metrics"][name] for fold in fold_results]).std(skipna=True)
+            )
+            for name in raw_metric_names
+        },
+        "calibrated": {
+            name: float(
+                pd.Series([fold["calibrated_metrics"][name] for fold in fold_results]).std(
+                    skipna=True
+                )
+            )
+            for name in calibrated_metric_names
+        },
+        "tuned": {
+            name: float(
+                pd.Series([fold["tuned_metrics"][name] for fold in fold_results]).std(skipna=True)
+            )
+            for name in tuned_metric_names
+        },
+    }
 
     predictions = pd.concat(prediction_rows, ignore_index=True) if prediction_rows else pd.DataFrame()
 
@@ -247,6 +317,7 @@ def run_training(args: argparse.Namespace) -> dict[str, object]:
         "model_type": args.model_type,
         "feature_columns": DEFAULT_FEATURE_COLUMNS,
         "horizon": args.horizon,
+        "purge_size": purge_size,
         "drawdown_threshold": args.drawdown_threshold,
         "calibration_method": calibration_method,
         "threshold_objective": args.threshold_objective,
@@ -254,6 +325,7 @@ def run_training(args: argparse.Namespace) -> dict[str, object]:
         "rows_after_filtering": len(training_frame),
         "folds": fold_results,
         "summary": summary,
+        "summary_std": summary_std,
         "predictions": predictions,
     }
 

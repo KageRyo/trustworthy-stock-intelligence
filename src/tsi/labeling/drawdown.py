@@ -39,11 +39,13 @@ def add_future_drawdown_label(
         future_min = prices.shift(-1).rolling(window=future_window, min_periods=future_window).min()
         future_min = future_min.shift(-(future_window - 1))
         future_drawdown = future_min / prices - 1.0
+        label_end_date = group[date_col].shift(-future_window)
 
         result = group.copy()
         result[ticker_col] = group.name
         result["future_min_price"] = future_min
         result["future_max_drawdown"] = future_drawdown
+        result["label_end_date"] = label_end_date
         result["label_available"] = future_drawdown.notna()
         result[label_col] = pd.Series(pd.NA, index=result.index, dtype="Int64")
         available_mask = result["label_available"]
