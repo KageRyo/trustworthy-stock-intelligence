@@ -19,9 +19,11 @@ def test_drawdown_label_uses_future_window_only() -> None:
     labeled = add_future_drawdown_label(frame, horizon=3, threshold=-0.05)
 
     assert round(float(labeled.loc[0, "future_max_drawdown"]), 4) == -0.06
+    assert labeled.loc[0, "label_end_date"] == pd.Timestamp("2024-01-04")
     assert int(labeled.loc[0, "risk_label"]) == 1
     assert int(labeled.loc[1, "risk_label"]) == 0
     assert bool(labeled.loc[4, "label_available"]) is False
+    assert pd.isna(labeled.loc[4, "label_end_date"])
     assert pd.isna(labeled.loc[4, "risk_label"])
 
 
