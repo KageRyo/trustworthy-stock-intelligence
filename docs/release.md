@@ -1,17 +1,21 @@
 # Release Checklist
 
-## 0.2.0 Scope
+## 0.3.0 Scope
 
-`0.2.0` marks the first initially usable stock-risk dashboard release:
+`0.3.0` is the research-evidence-hardening release:
 
-- PostgreSQL-backed serving source of truth
-- Go API with Swagger/OpenAPI
-- TypeScript dashboard with English and 正體中文
-- browser-session watchlists
-- on-demand ticker analysis
-- US and Taiwan ticker handling, including alphanumeric Taiwan codes and TPEx
-  emerging fallback
-- schema-first tests across Python, Go, and frontend adapters
+- purged walk-forward train/calibration/test boundaries
+- per-row `label_end_date` leakage controls
+- ECE, Brier score, false-discovery metrics, and no-feature baselines
+- reproducible Experiment 007 evidence and artifact fingerprints
+- per-fold Platt AUC invariance and ranking diagnostics
+- explicit pilot-evidence, limitations, and data/model licensing boundaries
+- patched Python, Go, npm, and GitHub Actions dependencies
+- required CI, Dependabot, `govulncheck`, race tests, and Gitleaks history scans
+- SHA-pinned, Node 24-compatible GitHub Actions
+
+The release does not claim a high-precision warning policy, a trading edge, or
+cross-market external validity.
 
 ## Version Files
 
@@ -21,14 +25,12 @@ Update:
 pyproject.toml
 frontend/stock-dashboard/package.json
 frontend/stock-dashboard/package-lock.json
+frontend/stock-dashboard/README.md
 docs/api/openapi.yaml
 services/api-gateway-go/internal/http/openapi.yaml
+services/api-gateway-go/README.md
 README.md
 CHANGELOG.md
-LICENSE
-docs/README.md
-docs/user_guide.md
-docs/development.md
 docs/release.md
 ```
 
@@ -38,19 +40,23 @@ docs/release.md
 python -m pytest
 python -m ruff check src tests scripts dashboard
 cd services/api-gateway-go
-GOCACHE=/tmp/tsi-go-build-cache CGO_ENABLED=0 go test ./...
+go vet ./...
+govulncheck ./...
+go test ./...
+go test -race ./...
 cd ../../frontend/stock-dashboard
-npm test -- --run
+npm ci
+npm test
 npm run build
+npm audit --audit-level=moderate
 ```
 
-## Git Commands
+## Release Procedure
 
-```bash
-git status -sb
-git add README.md CHANGELOG.md LICENSE docs .github/workflows/ci.yml pyproject.toml frontend/stock-dashboard/package.json frontend/stock-dashboard/package-lock.json docs/api/openapi.yaml services/api-gateway-go/internal/http/openapi.yaml
-git commit -m "docs(release): prepare 0.2.0 documentation"
-git tag v0.2.0
-git push origin main
-git push origin v0.2.0
-```
+1. Prepare the version and changelog changes on a release branch.
+2. Merge the release PR only after all required checks pass.
+3. Confirm the merge commit is the current `main` head and rerun all checks.
+4. Create an annotated `vX.Y.Z` tag on that verified commit.
+5. Push the tag and create a GitHub Release with `--verify-tag`.
+6. Confirm the remote tag, release target, release notes, and downloadable
+   source archives.
