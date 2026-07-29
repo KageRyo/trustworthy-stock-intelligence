@@ -87,7 +87,7 @@ Open:
 
 ```text
 http://localhost:5175
-http://140.123.105.126:5175
+http://<dashboard-host>:5175
 ```
 
 The Vite dev server binds to `0.0.0.0`. It proxies API calls to
@@ -143,6 +143,7 @@ GOCACHE=/tmp/tsi-go-build-cache CGO_ENABLED=0 go test ./...
 cd ../../frontend/stock-dashboard
 npm test -- --run
 npm run build
+npm audit --audit-level=moderate
 ```
 
 ## Optional Streamlit Dashboard
