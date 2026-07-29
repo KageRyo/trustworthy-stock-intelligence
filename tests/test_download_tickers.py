@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 import pandas as pd
 import pytest
 
@@ -11,6 +13,7 @@ from tsi.data.download import (
     _normalize_download_frame,
     configure_yfinance_cache,
     download_ticker_frame,
+    file_sha256,
     resolve_yfinance_ticker,
 )
 
@@ -113,6 +116,15 @@ def test_configure_yfinance_cache_uses_writable_env_path(monkeypatch, tmp_path) 
 
     assert cache_dir.is_dir()
     assert calls == [str(cache_dir)]
+
+
+def test_file_sha256_fingerprints_downloaded_artifacts(tmp_path: Path) -> None:
+    artifact = tmp_path / "ohlcv.csv"
+    artifact.write_bytes(b"date,ticker\n2026-01-01,0050\n")
+
+    assert file_sha256(artifact) == (
+        "1062f289431d190e90b8719b66b3678ad290e97e9c38f595741b9dbcfa68b6c6"
+    )
 
 
 def test_download_ticker_frame_falls_back_to_twse_daily_for_taiwan_code(monkeypatch) -> None:
