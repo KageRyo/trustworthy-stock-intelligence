@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import os
 import re
+from hashlib import sha256
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -74,6 +75,16 @@ class TaiwanFallbackResult:
     ohlcv: pd.DataFrame
     query_symbol: str
     market: ResolvedTickerMarket
+
+
+def file_sha256(path: Path) -> str:
+    """Return a stable SHA-256 fingerprint for a downloaded artifact."""
+
+    digest = sha256()
+    with path.open("rb") as artifact:
+        for chunk in iter(lambda: artifact.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 class TWSEStockDayResponse(BaseModel):
@@ -346,6 +357,8 @@ def download_ohlcv(
         "downloaded_ticker_count": int(ohlcv["ticker"].nunique()),
         "row_count": int(len(ohlcv)),
         "columns": OHLCV_COLUMNS,
+        "ohlcv_sha256": file_sha256(ohlcv_path),
+        "tickers_sha256": file_sha256(tickers_path),
         "failed_batches": failed_batches,
         "research_note": "Yahoo Finance is used for pilot experiments only.",
     }
@@ -413,6 +426,8 @@ def download_ticker_list(
         "downloaded_ticker_count": int(result.ohlcv["ticker"].nunique()),
         "row_count": int(len(result.ohlcv)),
         "columns": OHLCV_COLUMNS,
+        "ohlcv_sha256": file_sha256(ohlcv_path),
+        "tickers_sha256": file_sha256(tickers_path),
         "tickers": [asdict(ticker) for ticker in result.tickers],
         "failed_batches": result.failed_batches,
         "research_note": "Yahoo Finance is used for pilot experiments only.",
