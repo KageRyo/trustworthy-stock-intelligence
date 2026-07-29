@@ -38,6 +38,8 @@ entry point for finding the right document.
 | `trustworthy_ai_checklist.md` | TAI dimensions mapped to this stock-risk system. |
 | `reproducibility.md` | Reproducibility requirements for experiments and artifacts. |
 | `evaluation_metrics.md` | Alert-oriented and calibration-aware evaluation metrics. |
+| `data_and_model_licenses.md` | Code, provider-data, model, and redistribution boundaries. |
+| `public_private_boundary.md` | What belongs in public source versus private operations. |
 
 ## Research Protocol
 
@@ -54,6 +56,9 @@ entry point for finding the right document.
 
 Experiment reports live under `../experiments/`. They are retained as research
 artifacts and are separate from the live dashboard runbooks.
+
+The current primary pilot evidence is
+`../experiments/007_research_evidence/README.md`.
 
 ## Release Notes
 

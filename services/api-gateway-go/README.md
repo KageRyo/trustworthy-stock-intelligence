@@ -32,7 +32,7 @@ explicit dashboard origins.
 Example for a shared local dashboard:
 
 ```bash
-export TSI_CORS_ALLOWED_ORIGINS="http://140.123.105.126:5175,http://localhost:5175,http://127.0.0.1:5175"
+export TSI_CORS_ALLOWED_ORIGINS="http://<dashboard-host>:5175,http://localhost:5175"
 ```
 
 For local interactive ticker search, set:
@@ -94,9 +94,9 @@ GET /openapi.yaml
 GET /swagger/
 GET /api/v1/status
 GET /api/v1/tickers
-GET /api/v1/watchlists/default
-POST /api/v1/watchlists/default/tickers
-DELETE /api/v1/watchlists/default/tickers/{ticker}
+GET /api/v1/watchlists/{name}
+POST /api/v1/watchlists/{name}/tickers
+DELETE /api/v1/watchlists/{name}/tickers/{ticker}
 GET /api/v1/analysis/{ticker}
 GET /api/v1/warnings/latest
 GET /api/v1/warnings/latest?level=watch&limit=20

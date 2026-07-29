@@ -64,7 +64,7 @@ http://localhost:5175
 For LAN testing, use:
 
 ```text
-http://140.123.105.126:5175
+http://<dashboard-host>:5175
 ```
 
 The Vite dev server proxies `/api` and `/health` to `http://127.0.0.1:18080`

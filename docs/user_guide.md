@@ -23,7 +23,7 @@ Open:
 
 ```text
 http://localhost:5175
-http://140.123.105.126:5175
+http://<dashboard-host>:5175
 ```
 
 The dashboard supports English and 正體中文. The language setting is stored in the

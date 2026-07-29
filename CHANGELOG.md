@@ -1,5 +1,30 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- Purged walk-forward research protocol with label-horizon gaps at
+  train/calibration/test boundaries.
+- Reproducible S&P 100 calibration evidence with fold, ticker, and yearly
+  comparisons, plus a training-window event-rate baseline.
+- SHA-256 fingerprints for downloaded OHLCV and ticker artifacts.
+- Explicit false-discovery metrics alongside the legacy false-alarm/false-
+  positive metric name.
+- Dependabot configuration, CodeQL analysis, frontend dependency audit,
+  repository-settings guidance, and a security policy.
+- Data/model licensing and public/private boundary documentation.
+
+### Changed
+
+- README maturity is explicitly `Active Research`, with the product described as
+  an operational prototype and research claims limited to pilot evidence.
+- PostCSS is raised to a version that fixes GHSA-r28c-9q8g-f849.
+- Historical Experiment 002 results are marked as unpurged preliminary
+  evidence; Experiment 007 is the current calibration report.
+- Public documentation uses deployment placeholders instead of a specific
+  server address or private filesystem path.
+
 ## 0.2.0 - 2026-06-21
 
 ### Added
