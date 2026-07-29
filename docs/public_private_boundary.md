@@ -31,10 +31,14 @@
 - `.env.example` uses placeholders only.
 - public run reports commit aggregate metrics and hashes, not raw OHLCV or
   prediction rows.
-- Ruff, `go vet`, TypeScript typechecking, Dependabot, CI dependency audit,
-  secret scanning, and push protection should all be active.
+- Ruff, `go vet`, TypeScript typechecking, Dependabot, CI dependency audit, and
+  the SHA-pinned Gitleaks history scan should all be active.
 - Add CodeQL when the repository is public or GitHub Code Security is enabled
   for the private repository.
+- Native GitHub secret scanning and repository push protection are not
+  available for this user-owned private repository. Enable them if the
+  repository becomes public or account eligibility changes; Gitleaks is the
+  current repository-level compensating control.
 - Documentation uses `<dashboard-host>`, `<repo-root>`, and similar placeholders
   instead of an actual deployment address.
 

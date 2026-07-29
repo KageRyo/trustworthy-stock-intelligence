@@ -55,6 +55,7 @@ CI runs:
 - Go API tests and `go vet`
 - frontend Vitest tests, production build with TypeScript typechecking, and
   moderate dependency audit
+- a separate SHA-pinned Gitleaks scan over repository history
 
 The development dependency range keeps Ruff on the compatible `0.15.x`
 baseline. CodeQL can supplement these checks after the repository is public or
