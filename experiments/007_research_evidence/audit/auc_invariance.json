@@ -1,0 +1,131 @@
+{
+  "schema_version": 1,
+  "audit": "raw-versus-platt-auc-invariance",
+  "input": {
+    "predictions_path": "experiments/007_research_evidence/runs/sp100_logistic_platt_purged/predictions.csv",
+    "predictions_sha256": "ce5cf9e63e445af12da449e1f398914064989879c680e35bbf87ae611414529e",
+    "summary_path": "experiments/007_research_evidence/runs/sp100_logistic_platt_purged/summary.json",
+    "summary_sha256": "265f5a9d10d36cde4c19fc3350d89fd89779be811b79e76286a615d6bc1ad65e",
+    "comparison_path": "experiments/007_research_evidence/runs/sp100_logistic_platt_purged/calibration_comparison.json",
+    "comparison_sha256": "bc7fb825bd539084612f28371a7a9990f830cfabd5f2e45346742a23d3b68a0e"
+  },
+  "sample_key_columns": [
+    "fold_id",
+    "ticker",
+    "date",
+    "risk_label"
+  ],
+  "coefficient_source": "Reconstructed by least squares from logit(calibrated_probability) = coefficient * raw_probability + intercept.",
+  "fold_count": 39,
+  "valid_auc_fold_count": 39,
+  "sample_totals": {
+    "raw_sample_count": 244268,
+    "calibrated_sample_count": 244268,
+    "raw_positive_count": 24948,
+    "calibrated_positive_count": 24948,
+    "raw_sample_key_hash": "sha256:598b8df8987dd573b0a3be72e83fc07eb41df4b1de06d34f13c85cc9b6faff36",
+    "calibrated_sample_key_hash": "sha256:598b8df8987dd573b0a3be72e83fc07eb41df4b1de06d34f13c85cc9b6faff36"
+  },
+  "mapping_summary": {
+    "positive_coefficient_fold_count": 38,
+    "negative_coefficient_fold_count": 1,
+    "zero_coefficient_fold_count": 0,
+    "unavailable_coefficient_fold_count": 0,
+    "max_platt_reconstruction_abs_error": 7.993605777301127e-15
+  },
+  "aggregation_definitions": {
+    "mean_fold_auc": "Unweighted arithmetic mean of valid per-fold AUC values.",
+    "weighted_mean_fold_auc": "Mean of valid per-fold AUC values weighted by each fold's raw sample count.",
+    "pooled_auc": "AUC after concatenating all fold predictions; fold-specific Platt mappings can change cross-fold ordering."
+  },
+  "auc_aggregations": {
+    "mean_fold_auc": {
+      "raw": 0.615325028765219,
+      "calibrated": 0.6086152841760357,
+      "delta_calibrated_minus_raw": -0.006709744589183275
+    },
+    "weighted_mean_fold_auc": {
+      "raw": 0.6154442978096846,
+      "calibrated": 0.6088301995215293,
+      "delta_calibrated_minus_raw": -0.00661409828815529
+    },
+    "pooled_auc": {
+      "raw": 0.6677972515496833,
+      "calibrated": 0.6118034042634322,
+      "delta_calibrated_minus_raw": -0.05599384728625112
+    }
+  },
+  "invariants": {
+    "identical_sample_keys": {
+      "passed": true,
+      "failed_fold_ids": []
+    },
+    "unique_sample_keys": {
+      "passed": true,
+      "failed_fold_ids": []
+    },
+    "positive_coefficient_auc_invariance": {
+      "passed": true,
+      "eligible_fold_count": 38,
+      "failed_fold_ids": [],
+      "tolerance": 1e-12
+    },
+    "negative_coefficient_rank_reversal": {
+      "passed": true,
+      "eligible_fold_count": 1,
+      "failed_fold_ids": [],
+      "expected_relation": "calibrated_auc = 1 - raw_auc",
+      "tolerance": 1e-12
+    },
+    "single_class_auc_consistency": {
+      "passed": true,
+      "single_class_fold_count": 0,
+      "failed_fold_ids": []
+    },
+    "platt_mapping_reconstruction": {
+      "passed": true,
+      "failed_fold_ids": [],
+      "max_abs_error_tolerance": 1e-10
+    },
+    "reported_aggregations_match_recomputation": {
+      "passed": true,
+      "checks": [
+        {
+          "source": "summary.json",
+          "aggregation": "mean_fold_auc",
+          "recorded_raw_auc": 0.615325028765219,
+          "recorded_calibrated_auc": 0.6086152841760357,
+          "recomputed_raw_auc": 0.615325028765219,
+          "recomputed_calibrated_auc": 0.6086152841760357,
+          "raw_abs_delta": 0.0,
+          "calibrated_abs_delta": 0.0,
+          "passed": true
+        },
+        {
+          "source": "calibration_comparison.json",
+          "aggregation": "pooled_auc",
+          "recorded_raw_auc": 0.6677972515496833,
+          "recorded_calibrated_auc": 0.6118034042634322,
+          "recomputed_raw_auc": 0.6677972515496833,
+          "recomputed_calibrated_auc": 0.6118034042634322,
+          "raw_abs_delta": 0.0,
+          "calibrated_abs_delta": 0.0,
+          "passed": true
+        }
+      ],
+      "failed_sources": []
+    }
+  },
+  "all_invariants_passed": true,
+  "finding": {
+    "negative_coefficient_fold_ids": [
+      8
+    ],
+    "negative_coefficient_fold_count": 1,
+    "mean_fold_auc_delta": -0.006709744589183275,
+    "negative_fold_mean_delta_contribution": -0.006709744589183326,
+    "negative_folds_explain_mean_fold_auc_delta": true,
+    "conclusion": "The reported mean-fold AUC difference is explained by folds with a negative Platt coefficient; positive-coefficient folds preserve AUC.",
+    "pooled_auc_note": "Pooled AUC is a separate cross-fold ranking statistic and is not the AUC aggregation reported in the Experiment 007 main table."
+  }
+}

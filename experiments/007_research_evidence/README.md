@@ -85,6 +85,34 @@ separately as `FP / (TP + FP)`.
 
 Mean tuned threshold: `0.1055 ± 0.0607`.
 
+### AUC Invariance Audit
+
+The raw-versus-Platt AUC difference has been audited without changing the
+original artifacts or reported values. All 244,268 paired predictions use
+identical `fold_id | ticker | date | risk_label` sample keys.
+
+In 38/39 folds, the reconstructed Platt coefficient is positive and raw versus
+calibrated AUC is identical within `1e-12`. Fold 8 is the exception: its
+coefficient is `-0.798373`, so it reverses ranking exactly:
+
+```text
+raw AUC:         0.630840
+calibrated AUC:  0.369160 = 1 - raw AUC
+fold AUC delta: -0.261680
+mean contribution across 39 folds: -0.0067097
+```
+
+That one fold fully explains the main table's mean AUC change from `0.615325`
+to `0.608615`. It is distinct from the COVID calibration failure in fold 15.
+Fold 8 used a 2018-01-25 through 2018-04-25 calibration window and a 2018-05-03
+through 2018-08-01 test window.
+
+The main table is unweighted mean-fold AUC. Pooled AUC is a different statistic:
+fold-specific coefficients and intercepts can change cross-fold ranking even
+when every mapping is increasing. Definitions, per-fold sample hashes,
+coefficients, ranking diagnostics, executable invariants, and reproduction
+instructions are in [`audit/README.md`](audit/README.md).
+
 ### Calibration Effectiveness
 
 - Versus raw logistic probabilities, Brier and ECE improved in 38/39 folds.
