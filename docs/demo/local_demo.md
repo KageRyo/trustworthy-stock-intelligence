@@ -23,7 +23,7 @@ npm ci
 cd ../..
 ```
 
-Go `1.22.x` or newer is required for the API gateway. Node `22.x` is used in
+Go `1.25.x` or newer is required for the API gateway. Node `22.x` is used in
 CI for the dashboard.
 
 Create local environment configuration:

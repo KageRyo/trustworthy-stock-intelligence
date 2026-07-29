@@ -43,7 +43,8 @@ another regular reviewer is available.
 - commit `.github/dependabot.yml` to enable scheduled version-update PRs
 - keep the committed Gitleaks history scan required; its third-party actions
   are pinned to immutable commit SHAs
-- keep Ruff, `go vet`, and the TypeScript production-build typecheck required
+- keep Ruff, `go vet`, pinned `govulncheck`, Go race tests, and the TypeScript
+  production-build typecheck required
 - if the repository becomes public or GitHub Code Security is enabled, add
   CodeQL and require its Python, Go, and JavaScript/TypeScript results
 - native GitHub secret scanning and repository push protection are unavailable

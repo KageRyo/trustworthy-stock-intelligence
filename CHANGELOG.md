@@ -29,6 +29,12 @@
   `go vet`, while TypeScript remains checked by the production build.
 - Remote `main` protection, Dependabot vulnerability alerts, and automatic
   security updates are enabled.
+- The Go baseline is raised from `1.22.x` to `1.25.x`; `pgx/v5` is upgraded to
+  `5.9.2`, the obsolete vulnerable `golang.org/x/crypto` dependency is removed,
+  and `golang.org/x/text` is upgraded to `0.39.0` to address advisories exposed
+  by Dependabot and `govulncheck`.
+- Go CI now runs source-aware vulnerability analysis with pinned
+  `govulncheck v1.6.0` and the race detector.
 
 ## 0.2.0 - 2026-06-21
 

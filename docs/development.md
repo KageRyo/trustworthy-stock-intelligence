@@ -26,7 +26,9 @@ python -m pytest
 python -m ruff check src tests scripts dashboard
 cd services/api-gateway-go
 GOCACHE=/tmp/tsi-go-build-cache CGO_ENABLED=0 go vet ./...
+GOCACHE=/tmp/tsi-go-build-cache CGO_ENABLED=0 go run golang.org/x/vuln/cmd/govulncheck@v1.6.0 ./...
 GOCACHE=/tmp/tsi-go-build-cache CGO_ENABLED=0 go test ./...
+GOCACHE=/tmp/tsi-go-build-cache CGO_ENABLED=1 go test -race ./...
 cd ../../frontend/stock-dashboard
 npm test -- --run
 npm run build
@@ -52,7 +54,7 @@ GitHub Actions workflow:
 CI runs:
 
 - Python tests and Ruff
-- Go API tests and `go vet`
+- Go API tests, race tests, `go vet`, and pinned `govulncheck`
 - frontend Vitest tests, production build with TypeScript typechecking, and
   moderate dependency audit
 - a separate SHA-pinned Gitleaks scan over repository history
