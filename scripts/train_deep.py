@@ -48,6 +48,15 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--calibration-size", type=int, default=63)
     parser.add_argument("--test-size", type=int, default=63)
     parser.add_argument("--step-size", type=int, default=None)
+    parser.add_argument(
+        "--purge-size",
+        type=int,
+        default=None,
+        help=(
+            "Dates excluded between train/calibration and calibration/test. "
+            "Defaults to horizon and cannot be smaller than horizon."
+        ),
+    )
     parser.add_argument("--epochs", type=int, default=20)
     parser.add_argument("--batch-size", type=int, default=256)
     parser.add_argument("--learning-rate", type=float, default=1e-4)
@@ -235,6 +244,9 @@ def run_training(args: argparse.Namespace) -> dict[str, object]:
     )
     if len(sequence_dataset.y) == 0:
         raise ValueError("No sequence samples were created; reduce lookback or check input data")
+    purge_size = args.horizon if args.purge_size is None else args.purge_size
+    if purge_size < args.horizon:
+        raise ValueError("purge_size must be at least horizon to prevent label-window leakage")
 
     folds = build_walk_forward_splits(
         training_frame,
@@ -242,6 +254,8 @@ def run_training(args: argparse.Namespace) -> dict[str, object]:
         calibration_size=args.calibration_size,
         test_size=args.test_size,
         step_size=args.step_size,
+        purge_size=purge_size,
+        label_end_date_col="label_end_date",
     )
     if args.max_folds is not None:
         folds = folds[: args.max_folds]
@@ -362,6 +376,7 @@ def run_training(args: argparse.Namespace) -> dict[str, object]:
             {
                 "fold_id": fold.fold_id,
                 "model": "temporal_transformer",
+                "purge_size": purge_size,
                 "train_start": str(fold.train_dates[0].date()),
                 "train_end": str(fold.train_dates[-1].date()),
                 "calibration_start": str(fold.calibration_dates[0].date()),
@@ -371,6 +386,8 @@ def run_training(args: argparse.Namespace) -> dict[str, object]:
                 "train_rows": int(len(train_dataset.y)),
                 "calibration_rows": int(len(calibration_dataset.y)),
                 "test_rows": int(len(test_dataset.y)),
+                "train_label_overlap_removed": fold.train_label_overlap_removed,
+                "calibration_label_overlap_removed": fold.calibration_label_overlap_removed,
                 "training": {
                     "epochs": args.epochs,
                     "batch_size": args.batch_size,
@@ -426,6 +443,28 @@ def run_training(args: argparse.Namespace) -> dict[str, object]:
             for name in tuned_metric_names
         },
     }
+    summary_std = {
+        "raw": {
+            name: float(
+                pd.Series([fold["raw_metrics"][name] for fold in fold_results]).std(skipna=True)
+            )
+            for name in raw_metric_names
+        },
+        "calibrated": {
+            name: float(
+                pd.Series([fold["calibrated_metrics"][name] for fold in fold_results]).std(
+                    skipna=True
+                )
+            )
+            for name in calibrated_metric_names
+        },
+        "tuned": {
+            name: float(
+                pd.Series([fold["tuned_metrics"][name] for fold in fold_results]).std(skipna=True)
+            )
+            for name in tuned_metric_names
+        },
+    }
     predictions = pd.concat(prediction_rows, ignore_index=True) if prediction_rows else pd.DataFrame()
     gpu_counts = [fold["training"]["gpu_count"] for fold in fold_results]
     used_data_parallel = any(fold["training"]["used_data_parallel"] for fold in fold_results)
@@ -465,6 +504,7 @@ def run_training(args: argparse.Namespace) -> dict[str, object]:
         "feature_columns": DEFAULT_FEATURE_COLUMNS,
         "lookback": args.lookback,
         "horizon": args.horizon,
+        "purge_size": purge_size,
         "drawdown_threshold": args.drawdown_threshold,
         "model_config": model_config,
         "trust_config": trust_config,
@@ -475,6 +515,7 @@ def run_training(args: argparse.Namespace) -> dict[str, object]:
         "sequence_count": len(sequence_dataset.y),
         "folds": fold_results,
         "summary": summary,
+        "summary_std": summary_std,
         "predictions": predictions,
     }
 

@@ -42,7 +42,9 @@ def _binary_alert_metrics(labels: np.ndarray, alert_mask: np.ndarray) -> dict[st
     return {
         "alert_precision": float(tp / (tp + fp)) if (tp + fp) else 0.0,
         "alert_recall": float(tp / (tp + fn)) if (tp + fn) else 0.0,
+        # Kept for artifact compatibility; this is the false-positive rate.
         "alert_false_alarm_rate": float(fp / (fp + tn)) if (fp + tn) else 0.0,
+        "alert_false_discovery_rate": float(fp / (tp + fp)) if (tp + fp) else 0.0,
         "alert_miss_rate": float(fn / (fn + tp)) if (fn + tp) else 0.0,
     }
 
