@@ -12,6 +12,11 @@ import pandas as pd
 
 from tsi.data.csv import read_ohlcv_csv
 from tsi.data.split import build_walk_forward_splits
+from tsi.data.universe import (
+    PointInTimeUniverse,
+    filter_frame_by_point_in_time_universe,
+    load_point_in_time_universe,
+)
 from tsi.evaluation.metrics import classification_metrics
 from tsi.features.technical import DEFAULT_FEATURE_COLUMNS, build_technical_features
 from tsi.labeling.drawdown import add_future_drawdown_label
@@ -24,6 +29,15 @@ from tsi.trust.calibration import CalibrationMethod, fit_probability_calibrator
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--input", type=Path, required=True, help="Path to OHLCV CSV input.")
+    parser.add_argument(
+        "--universe-membership",
+        type=Path,
+        default=None,
+        help="Optional point-in-time membership CSV used to filter rows by evaluation date.",
+    )
+    parser.add_argument("--universe-name", default="point_in_time")
+    parser.add_argument("--membership-source", default="")
+    parser.add_argument("--membership-source-license", default="")
     parser.add_argument(
         "--horizon",
         type=int,
@@ -101,9 +115,12 @@ def prepare_training_frame(
     *,
     horizon: int,
     drawdown_threshold: float,
+    universe_membership: PointInTimeUniverse | None = None,
 ) -> pd.DataFrame:
     """Build features and labels, then drop rows that cannot be trained or evaluated."""
 
+    if universe_membership is not None:
+        ohlcv = filter_frame_by_point_in_time_universe(ohlcv, universe_membership)
     featured = build_technical_features(ohlcv)
     labeled = add_future_drawdown_label(
         featured,
@@ -131,10 +148,19 @@ def run_training(args: argparse.Namespace) -> dict[str, object]:
     """Train one logistic model per walk-forward fold and return metrics."""
 
     ohlcv = read_ohlcv_csv(args.input)
+    universe_membership = None
+    if args.universe_membership is not None:
+        universe_membership = load_point_in_time_universe(
+            args.universe_membership,
+            name=args.universe_name,
+            source=args.membership_source,
+            source_license=args.membership_source_license,
+        )
     training_frame = prepare_training_frame(
         ohlcv,
         horizon=args.horizon,
         drawdown_threshold=args.drawdown_threshold,
+        universe_membership=universe_membership,
     )
     purge_size = args.horizon if args.purge_size is None else args.purge_size
     if purge_size < args.horizon:
@@ -327,6 +353,14 @@ def run_training(args: argparse.Namespace) -> dict[str, object]:
         "threshold_objective": args.threshold_objective,
         "fold_count": len(fold_results),
         "rows_after_filtering": len(training_frame),
+        "universe_membership": (
+            universe_membership.manifest()
+            if universe_membership is not None
+            else {
+                "status": "not_supplied",
+                "note": "The benchmark uses the input snapshot without point-in-time membership filtering.",
+            }
+        ),
         "folds": fold_results,
         "summary": summary,
         "summary_std": summary_std,
