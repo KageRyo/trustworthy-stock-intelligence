@@ -2,6 +2,7 @@ package warnings
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -199,7 +200,7 @@ func (s *PostgresStore) loadLatestBatch(
 		       model, model_bundle, risk_probability,
 		       calibrated_risk_probability, calibration_method,
 		       uncertainty_score, trust_score, alert_threshold,
-		       watch_threshold, warning_level, reason_codes
+		       watch_threshold, warning_level, reason_codes, feature_attributions
 		FROM (
 			SELECT DISTINCT ON (t.symbol)
 			       wr.prediction_date, t.symbol, pb.run_id, pb.data_as_of,
@@ -227,6 +228,7 @@ func (s *PostgresStore) loadLatestBatch(
 		var predictionDate time.Time
 		var recordDataAsOf time.Time
 		var recordGeneratedAt time.Time
+		var featureAttributionsJSON []byte
 		var record PredictionRecord
 		if err := rows.Scan(
 			&predictionDate,
@@ -245,8 +247,13 @@ func (s *PostgresStore) loadLatestBatch(
 			&record.WatchThreshold,
 			&record.WarningLevel,
 			&record.ReasonCodes,
+			&featureAttributionsJSON,
 		); err != nil {
 			return PredictionBatch{}, nil, fmt.Errorf("scan warning record: %w", err)
+		}
+		record.FeatureAttributions, err = decodeFeatureAttributions(featureAttributionsJSON)
+		if err != nil {
+			return PredictionBatch{}, nil, fmt.Errorf("decode warning record attributions: %w", err)
 		}
 		record.Date = formatDataTime(predictionDate)
 		record.DataAsOf = formatDataTime(recordDataAsOf)
@@ -267,6 +274,20 @@ func (s *PostgresStore) loadLatestBatch(
 		Records:       records,
 	}
 	return batch, byKey, nil
+}
+
+func decodeFeatureAttributions(payload []byte) ([]FeatureAttribution, error) {
+	if len(payload) == 0 {
+		return []FeatureAttribution{}, nil
+	}
+	var attributions []FeatureAttribution
+	if err := json.Unmarshal(payload, &attributions); err != nil {
+		return nil, err
+	}
+	if attributions == nil {
+		return []FeatureAttribution{}, nil
+	}
+	return attributions, nil
 }
 
 func emptyBatch() PredictionBatch {

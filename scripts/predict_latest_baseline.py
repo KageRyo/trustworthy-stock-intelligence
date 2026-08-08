@@ -23,6 +23,7 @@ from tsi.trust.decision import (
     assign_trust_decisions,
     compute_watch_threshold,
 )
+from tsi.trust.explainability import build_logistic_feature_attributions
 from tsi.trust.reason_codes import build_reason_codes
 from tsi.trust.trust_score import TrustScoreMethod, compute_trust_score
 from tsi.trust.uncertainty import binary_entropy_uncertainty, margin_uncertainty
@@ -218,6 +219,11 @@ def run_prediction(args: argparse.Namespace) -> pd.DataFrame:
         warning_levels=warning_levels,
         config=decision_config,
     )
+    feature_attributions = build_logistic_feature_attributions(
+        model,
+        latest_frame[DEFAULT_FEATURE_COLUMNS].to_numpy(),
+        DEFAULT_FEATURE_COLUMNS,
+    )
     predictions = latest_frame.loc[:, ["date", "ticker"]].assign(
         model=model_name,
         risk_probability=probabilities,
@@ -229,6 +235,7 @@ def run_prediction(args: argparse.Namespace) -> pd.DataFrame:
         watch_threshold=watch_threshold,
         warning_level=warning_levels,
         model_bundle=f"baseline_latest:{args.input}",
+        feature_attributions=feature_attributions,
     )
 
     args.output.parent.mkdir(parents=True, exist_ok=True)

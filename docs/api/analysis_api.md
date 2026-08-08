@@ -47,6 +47,7 @@ should not be coerced to numbers.
 | `model` | `ModelAnalysis` | Model name and model bundle path used for the prediction. |
 | `data_freshness` | `DataFreshness` | Serving freshness metadata from the loaded DB warning batch. |
 | `reasons` | `ReasonExplanation[]` | Typed explanations derived from reason codes. |
+| `feature_attributions` | `FeatureAttribution[]` | Top model-specific feature contributions when the model supports them. |
 | `limitations` | `string[]` | Fixed limitations shown by clients. |
 
 ### `WarningAnalysis`
@@ -96,6 +97,22 @@ should not be coerced to numbers.
 | `severity` | string | One of `info`, `watch`, or `alert`. |
 | `title` | string | Short human-readable reason title. |
 | `detail` | string | Reason detail suitable for dashboard display. |
+
+### `FeatureAttribution`
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `feature` | string | Input feature name. |
+| `value` | number or null | Input value used for the prediction, when available. |
+| `contribution` | number | Standardized log-odds contribution for the supported model. |
+| `direction` | string | `positive`, `negative`, or `neutral` relative to drawdown-risk log-odds. |
+| `method` | string | Versioned attribution method identifier. |
+
+The current logistic baseline emits `standardized_logit_v1`: the fitted
+positive-class coefficient multiplied by the imputed and standardized feature
+value. This is a reproducible model diagnostic, not a causal explanation and
+not investment advice. Tree and deep model attribution methods remain separate
+because their stability and semantics differ.
 
 ## Error Schema
 

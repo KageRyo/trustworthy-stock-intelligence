@@ -45,6 +45,15 @@ func writeRouterFixture(t *testing.T) string {
         "trust_below_alert_threshold",
         "uncertainty_below_threshold",
         "warning_level_watch"
+      ],
+      "feature_attributions": [
+        {
+          "feature": "return_1d",
+          "value": -0.02,
+          "contribution": 0.31,
+          "direction": "positive",
+          "method": "standardized_logit_v1"
+        }
       ]
     },
     {
@@ -513,6 +522,9 @@ func TestTickerAnalysisHandler(t *testing.T) {
 	}
 	if len(payload.Limitations) == 0 {
 		t.Fatal("expected limitations")
+	}
+	if len(payload.FeatureAttributions) != 1 || payload.FeatureAttributions[0].Feature != "return_1d" {
+		t.Fatalf("unexpected feature attributions: %+v", payload.FeatureAttributions)
 	}
 }
 

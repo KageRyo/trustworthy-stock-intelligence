@@ -44,6 +44,7 @@ export type DashboardCopy = {
     calibratedRisk: string;
     trustAndModel: string;
     reasonCodes: string;
+    featureAttributions: string;
     sessionWatchlist: string;
     latestWarnings: string;
     tickerTimeline: string;
@@ -67,6 +68,7 @@ export type DashboardCopy = {
     action: string;
     level: string;
     date: string;
+    contribution: string;
   };
   states: {
     loadingAnalysis: string;
@@ -103,6 +105,7 @@ export type DashboardCopy = {
     uncertainty: string;
     warningLevel: string;
   };
+  attributionNote: string;
   reasonCodes: Record<string, TextPair>;
 };
 
@@ -145,6 +148,7 @@ export const translations = {
       calibratedRisk: "Calibrated Risk",
       trustAndModel: "Trust And Model",
       reasonCodes: "Reason Codes",
+      featureAttributions: "Feature Attribution",
       sessionWatchlist: "Session Watchlist",
       latestWarnings: "Latest Warnings",
       tickerTimeline: "Ticker Timeline"
@@ -167,7 +171,8 @@ export const translations = {
       latest: "Latest",
       action: "Action",
       level: "Level",
-      date: "Date"
+      date: "Date",
+      contribution: "Contribution"
     },
     states: {
       loadingAnalysis: "Loading analysis",
@@ -237,6 +242,8 @@ export const translations = {
       uncertainty: "Uncertainty",
       warningLevel: "Warning Level"
     },
+    attributionNote:
+      "These are model-specific standardized log-odds contributions, not causal explanations or investment advice.",
     reasonCodes: {
       probability_above_alert_threshold: {
         title: "Risk probability above alert threshold",
@@ -324,6 +331,7 @@ export const translations = {
       calibratedRisk: "校準後風險",
       trustAndModel: "信任與模型",
       reasonCodes: "原因代碼",
+      featureAttributions: "特徵貢獻",
       sessionWatchlist: "本次瀏覽觀察清單",
       latestWarnings: "最新風險訊號",
       tickerTimeline: "股票風險時間線"
@@ -346,7 +354,8 @@ export const translations = {
       latest: "最新",
       action: "操作",
       level: "等級",
-      date: "日期"
+      date: "日期",
+      contribution: "貢獻"
     },
     states: {
       loadingAnalysis: "正在載入分析",
@@ -414,6 +423,7 @@ export const translations = {
       uncertainty: "不確定性",
       warningLevel: "警示等級"
     },
+    attributionNote: "這些是模型特定的標準化 log-odds 貢獻，不是因果解釋，也不是投資建議。",
     reasonCodes: {
       probability_above_alert_threshold: {
         title: "風險機率高於警示門檻",

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+import json
 from datetime import UTC, datetime
 from typing import Any, Literal, cast
 
@@ -302,9 +303,9 @@ def write_prediction_batch_to_postgres(
                         batch_id, ticker_id, prediction_date, risk_probability,
                         calibrated_risk_probability, calibration_method,
                         uncertainty_score, trust_score, alert_threshold,
-                        watch_threshold, warning_level, reason_codes
+                        watch_threshold, warning_level, reason_codes, feature_attributions
                     )
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb)
                     ON CONFLICT (batch_id, ticker_id)
                     DO UPDATE SET
                         prediction_date = EXCLUDED.prediction_date,
@@ -316,7 +317,8 @@ def write_prediction_batch_to_postgres(
                         alert_threshold = EXCLUDED.alert_threshold,
                         watch_threshold = EXCLUDED.watch_threshold,
                         warning_level = EXCLUDED.warning_level,
-                        reason_codes = EXCLUDED.reason_codes
+                        reason_codes = EXCLUDED.reason_codes,
+                        feature_attributions = EXCLUDED.feature_attributions
                     """,
                     (
                         batch_id,
@@ -331,6 +333,10 @@ def write_prediction_batch_to_postgres(
                         record.watch_threshold,
                         record.warning_level,
                         record.reason_codes,
+                        json.dumps(
+                            [item.model_dump(mode="json") for item in record.feature_attributions],
+                            separators=(",", ":"),
+                        ),
                     ),
                 )
         connection.commit()

@@ -9,18 +9,19 @@ import (
 const analysisSchemaVersion = "analysis.v1"
 
 type TickerAnalysisResponse struct {
-	SchemaVersion string              `json:"schema_version"`
-	Ticker        string              `json:"ticker"`
-	Date          string              `json:"date"`
-	RunID         string              `json:"run_id"`
-	DataAsOf      string              `json:"data_as_of"`
-	GeneratedAt   string              `json:"generated_at"`
-	Warning       WarningAnalysis     `json:"warning"`
-	Trust         TrustAssessment     `json:"trust"`
-	Model         ModelAnalysis       `json:"model"`
-	DataFreshness DataFreshness       `json:"data_freshness"`
-	Reasons       []ReasonExplanation `json:"reasons"`
-	Limitations   []string            `json:"limitations"`
+	SchemaVersion       string                        `json:"schema_version"`
+	Ticker              string                        `json:"ticker"`
+	Date                string                        `json:"date"`
+	RunID               string                        `json:"run_id"`
+	DataAsOf            string                        `json:"data_as_of"`
+	GeneratedAt         string                        `json:"generated_at"`
+	Warning             WarningAnalysis               `json:"warning"`
+	Trust               TrustAssessment               `json:"trust"`
+	Model               ModelAnalysis                 `json:"model"`
+	DataFreshness       DataFreshness                 `json:"data_freshness"`
+	Reasons             []ReasonExplanation           `json:"reasons"`
+	FeatureAttributions []warnings.FeatureAttribution `json:"feature_attributions"`
+	Limitations         []string                      `json:"limitations"`
 }
 
 type WarningAnalysis struct {
@@ -102,9 +103,17 @@ func buildTickerAnalysis(
 			FileModifiedAt: status.FileModifiedAt,
 			RecordCount:    status.RecordCount,
 		},
-		Reasons:     explainReasonCodes(record.ReasonCodes),
-		Limitations: analysisLimitations(),
+		Reasons:             explainReasonCodes(record.ReasonCodes),
+		FeatureAttributions: nonNilFeatureAttributions(record.FeatureAttributions),
+		Limitations:         analysisLimitations(),
 	}
+}
+
+func nonNilFeatureAttributions(attributions []warnings.FeatureAttribution) []warnings.FeatureAttribution {
+	if attributions == nil {
+		return []warnings.FeatureAttribution{}
+	}
+	return attributions
 }
 
 func valueOrDefault(value string, fallback string) string {
