@@ -143,6 +143,27 @@ The interval is a fold-level uncertainty summary, not a claim that the model
 is stable across future regimes. It uses seed `42`, 4,000 resamples, and no
 multiple-comparison correction.
 
+### Calibration Drift Gate
+
+The [`calibration_drift_audit.json`](runs/sp100_logistic_platt_purged/calibration_drift_audit.json)
+artifact applies a conservative research gate to the same folds. It marks a
+fold degraded when the later test window has an absolute event-rate shift of at
+least `0.10`, ECE increases by at least `0.05`, or Brier score increases by at
+least `0.05`. Two or more simultaneous signals trigger fold-level abstention;
+any signal lowers the heuristic trust multiplier to `0.5`.
+
+| Gate result | Count/value |
+| --- | ---: |
+| Degraded folds | 13 / 39 |
+| Abstained folds | 10 / 39 |
+| Coverage after fold abstention | 0.7441 |
+| Selective risk on retained folds | 0.0875 |
+| Known regime-shift fold 15 | degraded and abstained |
+
+This is a safety-oriented research gate, not a calibrated statistical detector
+or a serving guarantee. It catches the documented fold-15 reliability failure,
+but it also produces false alarms and abstains entire folds in this audit.
+
 Fold 15 is the retained failure case. Its calibration window had a 3.8% event
 rate, while its 2020-02-04 through 2020-05-04 test window had a 40.3% event
 rate. Platt calibration worsened Brier by `0.0020` and ECE by `0.0241`. This is
@@ -185,6 +206,10 @@ python -m scripts.paired_bootstrap \
   --baseline raw \
   --comparison calibrated \
   --output experiments/007_research_evidence/runs/sp100_logistic_platt_purged/paired_bootstrap_raw_vs_calibrated.json
+
+python -m scripts.audit_calibration_drift \
+  --summary experiments/007_research_evidence/runs/sp100_logistic_platt_purged/summary.json \
+  --output experiments/007_research_evidence/runs/sp100_logistic_platt_purged/calibration_drift_audit.json
 ```
 
 The prediction CSV is gitignored because it contains provider-derived rows.
@@ -199,6 +224,9 @@ bc7fb825bd539084612f28371a7a9990f830cfabd5f2e45346742a23d3b68a0e
 
 paired_bootstrap_raw_vs_calibrated.json SHA-256:
 d25ca9ca5eaa76480a1f314c329552f7db20d453b96b3e6c98119142f019a10e
+
+calibration_drift_audit.json SHA-256:
+6ca916417371647fc341921b6d529feee1ff552919c8f015c98f844b3d4f0fc4
 ```
 
 Execution environment:
