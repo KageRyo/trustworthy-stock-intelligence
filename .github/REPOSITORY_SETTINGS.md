@@ -10,8 +10,9 @@ Verified on 2026-08-09:
   and the Gitleaks secret scan; force pushes, deletion, and administrator
   bypass are disabled; required approvals remain at zero for solo maintenance
 - Dependabot vulnerability alerts and automatic security updates are enabled
-- the CodeQL workflow is committed and should be observed on the next push or
-  pull request before it is considered a release gate
+- CodeQL passed on PR #30 for Go, JavaScript/TypeScript, and Python; its checks
+  should be added to the required branch gates after the next successful run
+  on `main`
 - native Secret Scanning and Push Protection are enabled
 
 ## Branches
