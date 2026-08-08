@@ -64,7 +64,8 @@ artifacts, but PostgreSQL is the serving source of truth.
 
 Complete the remaining repository-level public-readiness checks:
 
-1. Verify native GitHub Secret Scanning and Push Protection settings.
+1. Native GitHub Secret Scanning and Push Protection are enabled and verified
+   on 2026-08-09.
 2. Review the full Git history and commit-email privacy decision without
    rewriting history unless the maintainer explicitly requests it.
 3. Keep CodeQL, Gitleaks, Dependabot, and required CI checks healthy.

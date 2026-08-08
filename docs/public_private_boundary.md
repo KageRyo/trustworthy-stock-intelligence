@@ -39,10 +39,9 @@ public or redistributable.
 - Ruff, `go vet`, pinned `govulncheck`, Go race tests, TypeScript typechecking,
   Dependabot, CI dependency audit, the SHA-pinned Gitleaks history scan, and
   the SHA-pinned CodeQL workflow should all be active.
-- Native GitHub Secret Scanning and Push Protection are repository settings,
-  not workflow files. Verify their enabled status in GitHub before treating
-  public-release hardening as complete; Gitleaks remains the repository-level
-  history scan and compensating control.
+- Native GitHub Secret Scanning and Push Protection are enabled and were
+  verified in repository settings on 2026-08-09. Gitleaks remains the
+  repository-level full-history scan and complementary control.
 - Branch protection and required checks are recorded in
   `.github/REPOSITORY_SETTINGS.md`; the settings should be re-verified after
   changes to workflow names.
