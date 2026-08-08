@@ -149,6 +149,7 @@ func loadFile(path string) (PredictionBatch, map[string]PredictionRecord, time.T
 	if batch.RunID == "" {
 		batch.RunID = "unknown"
 	}
+	batch.CalibrationDrift = normalizeCalibrationDrift(batch.CalibrationDrift)
 	if batch.RecordCount != len(batch.Records) {
 		return PredictionBatch{}, nil, time.Time{}, fmt.Errorf(
 			"warnings file %q has record_count=%d but %d records",
@@ -169,6 +170,21 @@ func loadFile(path string) (PredictionBatch, map[string]PredictionRecord, time.T
 		byKey[strings.ToUpper(record.Ticker)] = record
 	}
 	return batch, byKey, info.ModTime(), nil
+}
+
+func normalizeCalibrationDrift(metadata CalibrationDriftMetadata) CalibrationDriftMetadata {
+	if metadata.Status == "" {
+		metadata.Status = "not_evaluated"
+		metadata.Method = "calibration_drift_gate_v1"
+		metadata.TrustMultiplier = 1.0
+	}
+	if metadata.Method == "" {
+		metadata.Method = "calibration_drift_gate_v1"
+	}
+	if metadata.Signals == nil {
+		metadata.Signals = []string{}
+	}
+	return metadata
 }
 
 func formatTime(value time.Time) string {

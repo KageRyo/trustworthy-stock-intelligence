@@ -1,12 +1,28 @@
 package warnings
 
 type PredictionBatch struct {
-	SchemaVersion string             `json:"schema_version"`
-	RunID         string             `json:"run_id"`
-	DataAsOf      string             `json:"data_as_of"`
-	GeneratedAt   string             `json:"generated_at"`
-	RecordCount   int                `json:"record_count"`
-	Records       []PredictionRecord `json:"records"`
+	SchemaVersion    string                   `json:"schema_version"`
+	RunID            string                   `json:"run_id"`
+	DataAsOf         string                   `json:"data_as_of"`
+	GeneratedAt      string                   `json:"generated_at"`
+	RecordCount      int                      `json:"record_count"`
+	CalibrationDrift CalibrationDriftMetadata `json:"calibration_drift"`
+	Records          []PredictionRecord       `json:"records"`
+}
+
+type CalibrationDriftMetadata struct {
+	Status          string   `json:"status"`
+	Method          string   `json:"method"`
+	EventRateDelta  *float64 `json:"event_rate_delta"`
+	ECEDelta        *float64 `json:"ece_delta"`
+	BrierDelta      *float64 `json:"brier_delta"`
+	Signals         []string `json:"signals"`
+	Degraded        bool     `json:"degraded"`
+	Abstain         bool     `json:"abstain"`
+	TrustMultiplier float64  `json:"trust_multiplier"`
+	CalibrationRows int      `json:"calibration_rows"`
+	RecentRows      int      `json:"recent_rows"`
+	Note            string   `json:"note"`
 }
 
 type PredictionRecord struct {

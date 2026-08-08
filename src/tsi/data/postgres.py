@@ -637,7 +637,12 @@ def _upsert_prediction_batch(
             model_bundle,
             feature_interval,
             len(batch.records),
-            Jsonb({"source_schema": batch.schema_version}),
+            Jsonb(
+                {
+                    "source_schema": batch.schema_version,
+                    "calibration_drift": batch.calibration_drift.model_dump(mode="json"),
+                }
+            ),
         ),
     )
     return str(cursor.fetchone()[0])

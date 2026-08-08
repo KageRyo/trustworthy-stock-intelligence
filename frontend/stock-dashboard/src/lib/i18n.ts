@@ -43,6 +43,7 @@ export type DashboardCopy = {
     noTickerSelected: string;
     calibratedRisk: string;
     trustAndModel: string;
+    calibrationDrift: string;
     reasonCodes: string;
     featureAttributions: string;
     sessionWatchlist: string;
@@ -69,6 +70,13 @@ export type DashboardCopy = {
     level: string;
     date: string;
     contribution: string;
+    driftStatus: string;
+    driftSignals: string;
+    eventRateDelta: string;
+    eceDelta: string;
+    brierDelta: string;
+    calibrationRows: string;
+    recentRows: string;
   };
   states: {
     loadingAnalysis: string;
@@ -89,11 +97,15 @@ export type DashboardCopy = {
   warningSummaries: Record<WarningLevel, string>;
   trustStatuses: Record<string, string>;
   uncertaintyStatuses: Record<string, string>;
+  driftStatuses: Record<string, string>;
   trustSummaries: {
     insufficientHistory: string;
     highUncertainty: string;
     trustedForAlert: string;
     limitedTrust: string;
+    calibrationDriftDetected: string;
+    calibrationDriftAbstain: string;
+    calibrationDriftNotEvaluated: string;
     default: string;
   };
   severity: Record<ReasonSeverity, string>;
@@ -147,6 +159,7 @@ export const translations = {
       noTickerSelected: "No ticker selected",
       calibratedRisk: "Calibrated Risk",
       trustAndModel: "Trust And Model",
+      calibrationDrift: "Calibration Drift",
       reasonCodes: "Reason Codes",
       featureAttributions: "Feature Attribution",
       sessionWatchlist: "Session Watchlist",
@@ -172,7 +185,14 @@ export const translations = {
       action: "Action",
       level: "Level",
       date: "Date",
-      contribution: "Contribution"
+      contribution: "Contribution",
+      driftStatus: "Drift Status",
+      driftSignals: "Signals",
+      eventRateDelta: "Event-rate Δ",
+      eceDelta: "ECE Δ",
+      brierDelta: "Brier Δ",
+      calibrationRows: "Calibration Rows",
+      recentRows: "Recent Rows"
     },
     states: {
       loadingAnalysis: "Loading analysis",
@@ -200,7 +220,7 @@ export const translations = {
     warningSummaries: {
       alert: "High calibrated drawdown-risk signal with enough trust to issue an alert.",
       watch: "Moderate or elevated drawdown-risk signal that should remain on watch.",
-      abstain: "Model uncertainty is too high for a confident warning decision.",
+      abstain: "Model uncertainty or calibration drift is too high for a confident warning decision.",
       no_alert: "No material drawdown-risk warning in the latest available data."
     },
     trustStatuses: {
@@ -213,6 +233,11 @@ export const translations = {
       acceptable_uncertainty: "Acceptable uncertainty",
       unknown: "Unknown"
     },
+    driftStatuses: {
+      not_evaluated: "Not evaluated",
+      stable: "Stable",
+      degraded: "Degraded"
+    },
     trustSummaries: {
       insufficientHistory:
         "The ticker has market data, but not enough labeled history for a calibrated risk prediction.",
@@ -220,6 +245,9 @@ export const translations = {
         "Uncertainty is above the configured threshold, so the model output should be treated cautiously.",
       trustedForAlert: "Trust score is above the configured alert threshold for this batch.",
       limitedTrust: "Trust score is below the configured alert threshold for this batch.",
+      calibrationDriftDetected: "Calibration drift was detected and the trust score was reduced.",
+      calibrationDriftAbstain: "Calibration drift crossed the abstention gate; treat this output as non-actionable.",
+      calibrationDriftNotEvaluated: "Calibration drift was not evaluated because no later labeled window was available.",
       default: "Trust assessment is based on calibrated probability and uncertainty for this batch."
     },
     severity: {
@@ -330,6 +358,7 @@ export const translations = {
       noTickerSelected: "尚未選擇股票代號",
       calibratedRisk: "校準後風險",
       trustAndModel: "信任與模型",
+      calibrationDrift: "校準漂移",
       reasonCodes: "原因代碼",
       featureAttributions: "特徵貢獻",
       sessionWatchlist: "本次瀏覽觀察清單",
@@ -355,7 +384,14 @@ export const translations = {
       action: "操作",
       level: "等級",
       date: "日期",
-      contribution: "貢獻"
+      contribution: "貢獻",
+      driftStatus: "漂移狀態",
+      driftSignals: "訊號",
+      eventRateDelta: "事件率變化 Δ",
+      eceDelta: "ECE 變化 Δ",
+      brierDelta: "Brier 變化 Δ",
+      calibrationRows: "校準資料列數",
+      recentRows: "近期資料列數"
     },
     states: {
       loadingAnalysis: "正在載入分析",
@@ -383,7 +419,7 @@ export const translations = {
     warningSummaries: {
       alert: "校準後回撤風險偏高，且信任條件足以發出警示。",
       watch: "回撤風險中等或偏高，建議維持觀察。",
-      abstain: "模型不確定性過高，暫不給出高信心警示。",
+      abstain: "模型不確定性或校準漂移過高，暫不給出高信心警示。",
       no_alert: "最新可用資料未顯示明顯回撤風險警示。"
     },
     trustStatuses: {
@@ -396,11 +432,19 @@ export const translations = {
       acceptable_uncertainty: "可接受不確定性",
       unknown: "未知"
     },
+    driftStatuses: {
+      not_evaluated: "尚未評估",
+      stable: "穩定",
+      degraded: "劣化"
+    },
     trustSummaries: {
       insufficientHistory: "此股票有市場資料，但標註歷史不足，無法產生校準後風險預測。",
       highUncertainty: "不確定性高於設定門檻，模型輸出應保守解讀。",
       trustedForAlert: "此批次的信任分數高於警示門檻。",
       limitedTrust: "此批次的信任分數低於警示門檻。",
+      calibrationDriftDetected: "偵測到校準漂移，信任分數已降低。",
+      calibrationDriftAbstain: "校準漂移跨越暫不判斷門檻，這項輸出不可直接採取行動。",
+      calibrationDriftNotEvaluated: "沒有較晚的標註資料窗，因此尚未評估校準漂移。",
       default: "信任評估基於校準後機率與不確定性。"
     },
     severity: {

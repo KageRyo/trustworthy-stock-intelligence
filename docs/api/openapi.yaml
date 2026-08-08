@@ -429,6 +429,7 @@ components:
         - data_as_of
         - generated_at
         - record_count
+        - calibration_drift
         - records
       properties:
         schema_version:
@@ -443,6 +444,8 @@ components:
         record_count:
           type: integer
           minimum: 0
+        calibration_drift:
+          $ref: "#/components/schemas/CalibrationDriftMetadata"
         records:
           type: array
           items:
@@ -673,6 +676,7 @@ components:
         - trust
         - model
         - data_freshness
+        - calibration_drift
         - reasons
         - feature_attributions
         - limitations
@@ -699,6 +703,8 @@ components:
           $ref: "#/components/schemas/ModelAnalysis"
         data_freshness:
           $ref: "#/components/schemas/DataFreshness"
+        calibration_drift:
+          $ref: "#/components/schemas/CalibrationDriftMetadata"
         reasons:
           type: array
           items:
@@ -879,6 +885,54 @@ components:
         uncertainty_status:
           type: string
         summary:
+          type: string
+    CalibrationDriftMetadata:
+      type: object
+      additionalProperties: false
+      required:
+        - status
+        - method
+        - event_rate_delta
+        - ece_delta
+        - brier_delta
+        - signals
+        - degraded
+        - abstain
+        - trust_multiplier
+        - calibration_rows
+        - recent_rows
+        - note
+      properties:
+        status:
+          type: string
+          enum: [not_evaluated, stable, degraded]
+        method:
+          type: string
+        event_rate_delta:
+          type: [number, "null"]
+        ece_delta:
+          type: [number, "null"]
+        brier_delta:
+          type: [number, "null"]
+        signals:
+          type: array
+          items:
+            type: string
+        degraded:
+          type: boolean
+        abstain:
+          type: boolean
+        trust_multiplier:
+          type: number
+          minimum: 0
+          maximum: 1
+        calibration_rows:
+          type: integer
+          minimum: 0
+        recent_rows:
+          type: integer
+          minimum: 0
+        note:
           type: string
     ModelAnalysis:
       type: object
