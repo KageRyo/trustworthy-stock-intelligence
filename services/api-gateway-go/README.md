@@ -98,6 +98,7 @@ GET /api/v1/watchlists/{name}
 POST /api/v1/watchlists/{name}/tickers
 DELETE /api/v1/watchlists/{name}/tickers/{ticker}
 GET /api/v1/analysis/{ticker}
+GET /api/v1/analysis/{ticker}/history
 GET /api/v1/warnings/latest
 GET /api/v1/warnings/latest?level=watch&limit=20
 GET /api/v1/warnings/latest?level=alert&sort=trust_score&order=desc&limit=20

@@ -18,6 +18,9 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
+  Legend,
+  Line,
+  LineChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -30,6 +33,7 @@ import {
   fetchLatestWarnings,
   fetchStatus,
   fetchTickerAnalysis,
+  fetchTickerHistory,
   fetchTickers,
   fetchWatchlist,
   removeWatchlistTicker
@@ -50,6 +54,7 @@ import type {
   ReasonExplanation,
   TickerList,
   TickerAnalysis,
+  WarningHistory,
   Watchlist,
   WatchlistTicker,
   WarningLevel
@@ -200,6 +205,7 @@ export default function App() {
   const [tickerList, setTickerList] = useState<TickerList | null>(null);
   const [watchlist, setWatchlist] = useState<Watchlist | null>(null);
   const [analysis, setAnalysis] = useState<TickerAnalysis | null>(null);
+  const [history, setHistory] = useState<WarningHistory | null>(null);
   const [tickerInput, setTickerInput] = useState("");
   const [selectedTicker, setSelectedTicker] = useState("");
   const [batchState, setBatchState] = useState<LoadState>("idle");
@@ -207,6 +213,8 @@ export default function App() {
   const [batchError, setBatchError] = useState("");
   const [analysisError, setAnalysisError] = useState("");
   const [analysisNotice, setAnalysisNotice] = useState("");
+  const [historyState, setHistoryState] = useState<LoadState>("idle");
+  const [historyError, setHistoryError] = useState("");
   const [watchlistError, setWatchlistError] = useState("");
 
   const copy = translations[locale];
@@ -265,10 +273,26 @@ export default function App() {
     setAnalysisState("loading");
     setAnalysisError("");
     setAnalysisNotice("");
+    setHistory(null);
+    setHistoryState("loading");
+    setHistoryError("");
     try {
       const nextAnalysis = await fetchTickerAnalysis(normalized);
       setAnalysis(nextAnalysis);
       setAnalysisState("ready");
+      try {
+        const nextHistory = await fetchTickerHistory(normalized);
+        setHistory(nextHistory);
+        setHistoryState("ready");
+      } catch (historyLoadError) {
+        setHistory(null);
+        if (historyLoadError instanceof APIClientError && historyLoadError.code === "ticker_not_found") {
+          setHistoryState("ready");
+        } else {
+          setHistoryError(errorMessage(historyLoadError, copy));
+          setHistoryState("error");
+        }
+      }
       try {
         await rememberViewedTicker(normalized);
       } catch (watchlistAddError) {
@@ -276,6 +300,8 @@ export default function App() {
       }
     } catch (error) {
       setAnalysis(null);
+      setHistory(null);
+      setHistoryState("idle");
       if (error instanceof APIClientError && error.code === "ticker_not_found") {
         setAnalysisError(copy.errors.noMarketData(normalized));
         setAnalysisState("error");
@@ -441,6 +467,14 @@ export default function App() {
           />
           <TrustPanel analysis={analysis} model={model} status={status} copy={copy} />
         </section>
+
+        <WarningTimelinePanel
+          history={history}
+          state={historyState}
+          error={historyError}
+          copy={copy}
+          locale={locale}
+        />
 
         <section className="grid gap-5 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
           <WatchlistPanel
@@ -672,6 +706,105 @@ function TrustPanel({
         <p className="mt-4 rounded-md border border-line bg-emerald-50 p-3 text-sm leading-6 text-emerald-900">
           {localizedTrustSummary(analysis, copy)}
         </p>
+      ) : null}
+    </section>
+  );
+}
+
+function WarningTimelinePanel({
+  history,
+  state,
+  error,
+  copy,
+  locale
+}: {
+  history: WarningHistory | null;
+  state: LoadState;
+  error: string;
+  copy: DashboardCopy;
+  locale: Locale;
+}) {
+  const records = history?.records ?? [];
+  const chartData = records.map((record) => ({
+    date: record.date,
+    risk: record.risk_probability,
+    calibrated: record.calibrated_risk_probability,
+    trust: record.trust_score,
+    uncertainty: record.uncertainty_score
+  }));
+
+  return (
+    <section className="rounded-lg border border-line bg-white p-5 shadow-panel">
+      <div className="mb-4 flex flex-col gap-2 border-b border-line pb-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 className="text-lg font-semibold tracking-normal">{copy.panels.tickerTimeline}</h2>
+          <p className="mt-1 text-sm text-slate-500">
+            {history?.ticker ?? copy.common.noAnalysis} · {formatNumber(records.length, locale, copy.common.na)} {copy.common.rows}
+          </p>
+        </div>
+        <Activity className="text-data" size={22} aria-hidden="true" />
+      </div>
+      {state === "loading" ? <PanelState label={copy.states.loadingHistory} /> : null}
+      {state === "error" ? <ErrorBanner message={error || copy.errors.historyUnavailable} /> : null}
+      {state !== "loading" && state !== "error" && records.length === 0 ? (
+        <PanelState label={copy.states.noHistory} />
+      ) : null}
+      {records.length > 0 ? (
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,1.4fr)_minmax(360px,0.9fr)]">
+          <div className="min-h-[300px]">
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={chartData} margin={{ top: 8, right: 8, bottom: 0, left: -24 }}>
+                <CartesianGrid stroke="#e5e7eb" vertical={false} />
+                <XAxis dataKey="date" tickLine={false} axisLine={false} minTickGap={24} />
+                <YAxis domain={[0, 1]} tickFormatter={(value) => `${Number(value) * 100}%`} />
+                <Tooltip formatter={(value) => formatPercent(Number(value), copy.common.na)} />
+                <Legend />
+                <Line type="monotone" dataKey="risk" name={copy.chart.risk} stroke="#c2410c" dot={false} />
+                <Line
+                  type="monotone"
+                  dataKey="calibrated"
+                  name={copy.chart.calibrated}
+                  stroke="#0369a1"
+                  dot={false}
+                />
+                <Line type="monotone" dataKey="trust" name={copy.chart.trust} stroke="#166534" dot={false} />
+                <Line
+                  type="monotone"
+                  dataKey="uncertainty"
+                  name={copy.chart.uncertainty}
+                  stroke="#b45309"
+                  dot={false}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="max-h-[300px] overflow-auto rounded-md border border-line">
+            <table className="min-w-[520px] w-full border-collapse text-left text-sm">
+              <thead className="sticky top-0 bg-slate-50">
+                <tr className="border-b border-line text-xs uppercase tracking-normal text-slate-500">
+                  <th className="px-3 py-3 font-semibold">{copy.labels.date}</th>
+                  <th className="px-3 py-3 font-semibold">{copy.labels.calibratedRisk}</th>
+                  <th className="px-3 py-3 font-semibold">{copy.labels.trustScore}</th>
+                  <th className="px-3 py-3 font-semibold">{copy.labels.uncertainty}</th>
+                  <th className="px-3 py-3 font-semibold">{copy.labels.level}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {records.map((record) => (
+                  <tr key={`${record.run_id}-${record.date}`} className="border-b border-line last:border-0">
+                    <td className="px-3 py-3 font-medium whitespace-nowrap">{record.date}</td>
+                    <td className="px-3 py-3">{formatPercent(record.calibrated_risk_probability, copy.common.na)}</td>
+                    <td className="px-3 py-3">{formatPercent(record.trust_score, copy.common.na)}</td>
+                    <td className="px-3 py-3">{formatPercent(record.uncertainty_score, copy.common.na)}</td>
+                    <td className="px-3 py-3">
+                      <LevelBadge level={record.warning_level} copy={copy} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       ) : null}
     </section>
   );

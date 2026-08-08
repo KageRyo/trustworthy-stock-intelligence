@@ -516,6 +516,42 @@ func TestTickerAnalysisHandler(t *testing.T) {
 	}
 }
 
+func TestTickerWarningHistoryHandler(t *testing.T) {
+	response := getJSON(t, testRouter(t), "/api/v1/analysis/aapl/history?limit=10")
+
+	if response.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200", response.Code)
+	}
+	var payload WarningHistoryResponse
+	if err := json.NewDecoder(response.Body).Decode(&payload); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if payload.SchemaVersion != "warning_history.v1" || payload.Ticker != "AAPL" {
+		t.Fatalf("unexpected history metadata: %+v", payload)
+	}
+	if payload.RecordCount != 1 || len(payload.Records) != 1 {
+		t.Fatalf("record_count = %d, records = %d, want one", payload.RecordCount, len(payload.Records))
+	}
+	if payload.Records[0].Ticker != "AAPL" || payload.Records[0].WarningLevel != "watch" {
+		t.Fatalf("unexpected history record: %+v", payload.Records[0])
+	}
+}
+
+func TestTickerWarningHistoryHandlerRejectsInvalidLimit(t *testing.T) {
+	response := getJSON(t, testRouter(t), "/api/v1/analysis/AAPL/history?limit=0")
+
+	if response.Code != http.StatusBadRequest {
+		t.Fatalf("status = %d, want 400", response.Code)
+	}
+	var payload ErrorResponse
+	if err := json.NewDecoder(response.Body).Decode(&payload); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if payload.Error.Code != "invalid_history_limit" {
+		t.Fatalf("error code = %q, want invalid_history_limit", payload.Error.Code)
+	}
+}
+
 func TestBuildTickerAnalysisPrefersRecordMetadata(t *testing.T) {
 	payload := buildTickerAnalysis(
 		warnings.PredictionRecord{
@@ -1036,6 +1072,20 @@ func (s *mutableWarningStore) Batch() warnings.PredictionBatch {
 func (s *mutableWarningStore) FindTicker(ticker string) (warnings.PredictionRecord, bool) {
 	record, ok := s.records[strings.ToUpper(ticker)]
 	return record, ok
+}
+
+func (s *mutableWarningStore) History(
+	ticker string,
+	limit int,
+) ([]warnings.WarningHistoryRecord, error) {
+	if limit < 1 {
+		return []warnings.WarningHistoryRecord{}, nil
+	}
+	record, ok := s.FindTicker(ticker)
+	if !ok {
+		return []warnings.WarningHistoryRecord{}, nil
+	}
+	return []warnings.WarningHistoryRecord{warnings.HistoryRecordFromPrediction(record)}, nil
 }
 
 func (s *mutableWarningStore) Refresh() error {

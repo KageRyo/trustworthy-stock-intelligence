@@ -243,6 +243,35 @@ paths:
           $ref: "#/components/responses/NotFound"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
+  /api/v1/analysis/{ticker}/history:
+    get:
+      tags: [Analysis]
+      summary: Read historical risk and trust observations for a ticker.
+      description: Returns chronological warning observations retained in PostgreSQL.
+      operationId: getTickerWarningHistory
+      parameters:
+        - $ref: "#/components/parameters/TickerPath"
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 3650
+            default: 90
+      responses:
+        "200":
+          description: Chronological ticker warning history.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WarningHistoryResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
   /api/v1/models/current:
     get:
       tags: [Models]
@@ -669,6 +698,95 @@ components:
           items:
             $ref: "#/components/schemas/ReasonExplanation"
         limitations:
+          type: array
+          items:
+            type: string
+    WarningHistoryResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - schema_version
+        - ticker
+        - record_count
+        - records
+      properties:
+        schema_version:
+          type: string
+          const: warning_history.v1
+        ticker:
+          type: string
+        record_count:
+          type: integer
+          minimum: 0
+        records:
+          type: array
+          items:
+            $ref: "#/components/schemas/WarningHistoryRecord"
+    WarningHistoryRecord:
+      type: object
+      additionalProperties: false
+      required:
+        - run_id
+        - data_as_of
+        - generated_at
+        - date
+        - ticker
+        - model
+        - model_bundle
+        - risk_probability
+        - calibrated_risk_probability
+        - calibration_method
+        - uncertainty_score
+        - trust_score
+        - alert_threshold
+        - watch_threshold
+        - warning_level
+        - reason_codes
+      properties:
+        run_id:
+          type: string
+        data_as_of:
+          type: string
+        generated_at:
+          type: string
+        date:
+          type: string
+          format: date
+        ticker:
+          type: string
+        model:
+          type: string
+        model_bundle:
+          type: string
+        risk_probability:
+          type: number
+          minimum: 0
+          maximum: 1
+        calibrated_risk_probability:
+          type: number
+          minimum: 0
+          maximum: 1
+        calibration_method:
+          type: string
+        uncertainty_score:
+          type: number
+          minimum: 0
+          maximum: 1
+        trust_score:
+          type: number
+          minimum: 0
+          maximum: 1
+        alert_threshold:
+          type: number
+          minimum: 0
+          maximum: 1
+        watch_threshold:
+          type: number
+          minimum: 0
+          maximum: 1
+        warning_level:
+          $ref: "#/components/schemas/WarningLevel"
+        reason_codes:
           type: array
           items:
             type: string
