@@ -18,7 +18,10 @@ The system focuses on trustworthy AI behavior: calibration, uncertainty,
 abstention, transparency, auditability, and clear limitations. It is not an
 investment recommendation system or automated trading system.
 
-## Current State: 0.2.0
+## Current State: 0.3.0
+
+Version `0.3.0` is the research-evidence-hardening release. It is a
+reproducible pilot, not externally validated research or investment advice.
 
 Completed:
 
@@ -33,6 +36,12 @@ Completed:
 - on-demand Python analysis bridge for missing ticker records
 - US and Taiwan ticker handling, including Taiwan alphanumeric codes and TPEx
   emerging-stock fallback
+- purged walk-forward evaluation with label-overlap checks, calibration
+  diagnostics, baseline comparisons, and Experiment 007 audit artifacts
+- required Python, Go, frontend, dependency, race-test, and full-history
+  Gitleaks CI checks
+- public-source documentation for licensing, security boundaries, citation, and
+  contribution workflow
 
 ## Target Architecture
 
@@ -49,9 +58,47 @@ Provider APIs
 The optional JSON export remains useful for notifications, snapshots, and debug
 artifacts, but PostgreSQL is the serving source of truth.
 
-## Next Milestone: 0.3.0
+## Next Milestones
 
-Recommended focus:
+### 0.3.x: Public Release Hardening
+
+Complete the remaining repository-level public-readiness checks:
+
+1. Native GitHub Secret Scanning and Push Protection are enabled and verified
+   on 2026-08-09.
+2. Review the full Git history and commit-email privacy decision without
+   rewriting history unless the maintainer explicitly requests it.
+3. Keep CodeQL, Gitleaks, Dependabot, and required CI checks healthy.
+4. Keep citation, contribution, release, and public/private-boundary documents
+   aligned with the actual repository settings.
+
+### 0.4.0: Comparative Evidence
+
+Use the same purged walk-forward protocol, data fingerprint, and alert-oriented
+metrics for the baseline families before making model claims:
+
+1. Compare logistic, tree, and deep models under identical splits.
+2. Add confidence intervals and paired bootstrap comparisons.
+3. Report calibration, false alarm rate, miss rate, lead time, coverage, and
+   selective risk for every model family.
+
+### 0.5.0: Taiwan and Cross-Market Evidence
+
+1. Evaluate Taiwan listed, TPEx listed, and TPEx emerging symbols within
+   market, with explicit coverage and data-quality metadata.
+2. Evaluate cross-market transfer only after within-market evaluation is
+   reproducible and limitations are recorded.
+
+### 0.6.0: Drift and Trust Under Shift
+
+1. Monitor calibration drift and trust-score degradation over time.
+2. Test stale data, provider revisions, market-noise perturbations, and
+   abstention thresholds under distribution shift.
+
+## Product Track After the Evidence Milestones
+
+The dashboard remains the main product surface. Product work should preserve
+the DB-backed, schema-first serving boundary while research evidence matures:
 
 1. Scheduled 5-minute ingestion for user/session watchlists.
 2. Warning history and change detection:
@@ -72,28 +119,15 @@ low-trust warning
 5. Market coverage metadata for US, TWSE, TPEx listed, and TPEx emerging
    symbols.
 
-## Later Milestones
+Later product work includes queue-based prediction jobs, a model-run TAI audit
+artifact, feature attribution beyond reason codes, provider health monitoring,
+and richer portfolio/watchlist grouping. These do not replace the evidence
+milestones above.
 
-0.4.0:
+## Later Research
 
-- queue-based prediction jobs instead of request-time synchronous analysis
-- warning change endpoint and dashboard page
-- watchlist ingestion scheduler
-- model run audit artifact aligned with the TAI checklist
-
-0.5.0:
-
-- intraday-trained model path if 5-minute labels/features are validated
-- feature attribution beyond reason codes
-- provider health and coverage monitoring
-- richer portfolio/watchlist grouping
-
-Research track:
-
-- preserve leakage-aware evaluation
-- compare model families under walk-forward validation
-- report calibration, false alarm rate, miss rate, lead time, coverage, and
-  selective risk
+- Build a point-in-time universe to measure survivorship and membership bias.
+- Repeat provider-revision audits with licensed, versioned formal-research data.
 
 ## Engineering Rules
 
@@ -104,3 +138,5 @@ Research track:
 - Do not commit `.env`, downloaded data, model bundles, or generated caches.
 - Keep ticker symbols as strings.
 - Keep Go serving dependent on PostgreSQL; missing DB should fail startup.
+- Keep research claims scoped to the protocol, coverage, and evidence actually
+  available in the corresponding experiment report.

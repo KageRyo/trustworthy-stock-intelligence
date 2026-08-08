@@ -43,7 +43,7 @@ Version `0.3.0` is the research-evidence-hardening release:
 - A dedicated AUC invariance audit records per-fold sample identity, recovered
   Platt parameters, ranking behavior, and mean-fold, weighted, and pooled AUC.
 - Repository controls include required CI, Dependabot, vulnerability analysis,
-  race tests, and full-history secret scanning with SHA-pinned Node 24 actions.
+  race tests, full-history Gitleaks scanning, and SHA-pinned CodeQL analysis.
 - PostgreSQL is the source of truth for tickers, watchlists, market bars,
   prediction batches, and warning records.
 - The Go API requires PostgreSQL at startup and serves schema-owned API
@@ -266,6 +266,7 @@ High-traffic documents:
 | Review data/model licensing | `docs/data_and_model_licenses.md` |
 | Review public/private boundaries | `docs/public_private_boundary.md` |
 | Develop and test changes | `docs/development.md` |
+| Cite or contribute | `CITATION.cff`, `CONTRIBUTING.md` |
 | Review release notes | `CHANGELOG.md` |
 
 ## Development Checks
@@ -291,9 +292,9 @@ pull request events. Dependabot covers Python, Go, npm, and GitHub Actions.
 Basic static analysis covers Python with Ruff, Go with `go vet`, pinned
 `govulncheck`, and race tests, and TypeScript through the production build's
 typecheck. A least-privilege, SHA-pinned Gitleaks workflow scans repository
-history because native GitHub secret scanning is not available for this
-user-owned private repository. CodeQL can replace or supplement the static
-checks when the repository is public or GitHub Code Security is enabled.
+history, while the SHA-pinned CodeQL workflow analyzes Python, Go, and
+JavaScript/TypeScript. Native GitHub Secret Scanning and Push Protection are
+enabled; their status is recorded in `.github/REPOSITORY_SETTINGS.md`.
 Applied remote controls and remaining plan-dependent settings are recorded in
 `.github/REPOSITORY_SETTINGS.md`.
 
