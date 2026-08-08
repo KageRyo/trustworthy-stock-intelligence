@@ -3,7 +3,7 @@ title: "Trustworthy Stock Intelligence"
 message: "If you use this software, please cite it as below."
 type: software
 authors:
-  - name: "KageRyo"
+  - name: "Chien-Hsun Chang"
 repository-code: "https://github.com/KageRyo/trustworthy-stock-intelligence"
 url: "https://github.com/KageRyo/trustworthy-stock-intelligence"
 license: "Apache-2.0"
