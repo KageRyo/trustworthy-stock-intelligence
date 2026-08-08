@@ -1,0 +1,398 @@
+{
+  "experiment_id": "008_model_family_comparison",
+  "protocol": {
+    "feature_columns": [
+      "return_1d",
+      "return_5d",
+      "sma_5_gap",
+      "sma_10_gap",
+      "volatility_5d",
+      "volatility_10d",
+      "volume_ratio_5d"
+    ],
+    "horizon": 5,
+    "purge_size": 5,
+    "train_size": 252,
+    "calibration_size": 63,
+    "test_size": 63,
+    "step_size": 63,
+    "drawdown_threshold": -0.05,
+    "calibration_method": "platt",
+    "threshold_objective": "f1",
+    "fold_count": 39,
+    "rows_after_filtering": 281774
+  },
+  "sample_key_audit": {
+    "key_columns": [
+      "fold_id",
+      "ticker",
+      "date",
+      "risk_label"
+    ],
+    "identical": true,
+    "shared_row_count": 244268,
+    "row_counts": {
+      "logistic": 244268,
+      "random_forest": 244268,
+      "hist_gradient_boosting": 244268
+    },
+    "sha256_by_model": {
+      "logistic": "a171bcaba0ccc61e4d4345aad70f6835ae76af8d052e31ba886627c344329e80",
+      "random_forest": "a171bcaba0ccc61e4d4345aad70f6835ae76af8d052e31ba886627c344329e80",
+      "hist_gradient_boosting": "a171bcaba0ccc61e4d4345aad70f6835ae76af8d052e31ba886627c344329e80"
+    }
+  },
+  "models": [
+    {
+      "model": "logistic",
+      "implementation_name": "logistic_regression",
+      "fold_count": 39,
+      "test_rows": 244268,
+      "metrics": {
+        "prior": {
+          "auc": 0.5,
+          "pr_auc": 0.10199085735524216,
+          "brier_score": 0.09351115869532858,
+          "ece": 0.06550079278632712,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "false_alarm_rate": 0.0,
+          "false_discovery_rate": 0.0
+        },
+        "raw": {
+          "auc": 0.615325028765219,
+          "pr_auc": 0.15513810808959558,
+          "brier_score": 0.23183679718238773,
+          "ece": 0.3736383869914281,
+          "precision": 0.14318368019222613,
+          "recall": 0.4502221869790334,
+          "f1": 0.21006999632363518,
+          "false_alarm_rate": 0.30769730219441427,
+          "false_discovery_rate": 0.8568163198077738
+        },
+        "calibrated": {
+          "auc": 0.6086152841760357,
+          "pr_auc": 0.15398320721543296,
+          "brier_score": 0.09168756835657958,
+          "ece": 0.05464072709258678,
+          "precision": 0.062188383073892906,
+          "recall": 0.001546460145811966,
+          "f1": 0.0030109056948961297,
+          "false_alarm_rate": 0.00032316010107470656,
+          "false_discovery_rate": 0.14293982205431222
+        },
+        "tuned": {
+          "auc": 0.6086152841760357,
+          "pr_auc": 0.15398320721543296,
+          "brier_score": 0.09168756835657958,
+          "ece": 0.05464072709258678,
+          "precision": 0.14689176180982724,
+          "recall": 0.43435610117096346,
+          "f1": 0.20765714176579111,
+          "false_alarm_rate": 0.3087567188448941,
+          "false_discovery_rate": 0.8531082381901728
+        }
+      },
+      "summary_std": {
+        "prior": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "auc": 0.0,
+          "pr_auc": 0.07351519629328752,
+          "false_alarm_rate": 0.0,
+          "false_discovery_rate": 0.0,
+          "miss_rate": 0.0,
+          "brier_score": 0.059210207203820094,
+          "ece": 0.05453671181229361,
+          "positive_rate": 0.07351519629328752,
+          "prediction_rate": 0.0,
+          "support": 70.77464187492308
+        },
+        "raw": {
+          "precision": 0.07872616835655,
+          "recall": 0.1919400034273014,
+          "f1": 0.10571828986956736,
+          "auc": 0.041771695298712934,
+          "pr_auc": 0.09225749974131146,
+          "false_alarm_rate": 0.18765055700239147,
+          "false_discovery_rate": 0.07872616835655,
+          "miss_rate": 0.19194000342730136,
+          "brier_score": 0.046895648603559194,
+          "ece": 0.04271055291971273,
+          "positive_rate": 0.07351519629328752,
+          "prediction_rate": 0.19236867956898768,
+          "support": 70.77464187492308
+        },
+        "calibrated": {
+          "precision": 0.17820398804239712,
+          "recall": 0.004801940640815778,
+          "f1": 0.009333787799396271,
+          "auc": 0.05733235099610225,
+          "pr_auc": 0.09349488223917742,
+          "false_alarm_rate": 0.0008636801516240011,
+          "false_discovery_rate": 0.31246253416896835,
+          "miss_rate": 0.004801940640815777,
+          "brier_score": 0.05905787931589813,
+          "ece": 0.06094432891284914,
+          "positive_rate": 0.07351519629328752,
+          "prediction_rate": 0.0015630775028656063,
+          "support": 70.77464187492308
+        },
+        "tuned": {
+          "precision": 0.07983982352660787,
+          "recall": 0.21231547083823868,
+          "f1": 0.10490854142408543,
+          "auc": 0.05733235099610225,
+          "pr_auc": 0.09349488223917742,
+          "false_alarm_rate": 0.21765971159276506,
+          "false_discovery_rate": 0.07983982352660789,
+          "miss_rate": 0.21231547083823865,
+          "brier_score": 0.05905787931589813,
+          "ece": 0.06094432891284914,
+          "positive_rate": 0.07351519629328752,
+          "prediction_rate": 0.2201957736979086,
+          "support": 70.77464187492308
+        }
+      }
+    },
+    {
+      "model": "random_forest",
+      "implementation_name": "random_forest",
+      "fold_count": 39,
+      "test_rows": 244268,
+      "metrics": {
+        "prior": {
+          "auc": 0.5,
+          "pr_auc": 0.10199085735524216,
+          "brier_score": 0.09351115869532858,
+          "ece": 0.06550079278632712,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "false_alarm_rate": 0.0,
+          "false_discovery_rate": 0.0
+        },
+        "raw": {
+          "auc": 0.5735782903098928,
+          "pr_auc": 0.135485675494659,
+          "brier_score": 0.09156878113195532,
+          "ece": 0.051426986082801045,
+          "precision": 0.22076301577169874,
+          "recall": 0.00803363238812543,
+          "f1": 0.01464315123402545,
+          "false_alarm_rate": 0.002650904503832636,
+          "false_discovery_rate": 0.6253908303821474
+        },
+        "calibrated": {
+          "auc": 0.5682787463190576,
+          "pr_auc": 0.13469742826866196,
+          "brier_score": 0.09383190977468422,
+          "ece": 0.058735559573223364,
+          "precision": 0.04986802413273001,
+          "recall": 0.0012851725020063256,
+          "f1": 0.002339953350001669,
+          "false_alarm_rate": 0.0005817622365586898,
+          "false_discovery_rate": 0.07833710407239819
+        },
+        "tuned": {
+          "auc": 0.5682787463190576,
+          "pr_auc": 0.13469742826866196,
+          "brier_score": 0.09383190977468422,
+          "ece": 0.058735559573223364,
+          "precision": 0.12505704732825362,
+          "recall": 0.5055909638567453,
+          "f1": 0.1878797303821993,
+          "false_alarm_rate": 0.42702581367187104,
+          "false_discovery_rate": 0.8749429526717464
+        }
+      },
+      "summary_std": {
+        "prior": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "auc": 0.0,
+          "pr_auc": 0.07351519629328752,
+          "false_alarm_rate": 0.0,
+          "false_discovery_rate": 0.0,
+          "miss_rate": 0.0,
+          "brier_score": 0.059210207203820094,
+          "ece": 0.05453671181229361,
+          "positive_rate": 0.07351519629328752,
+          "prediction_rate": 0.0,
+          "support": 70.77464187492308
+        },
+        "raw": {
+          "precision": 0.22171164773107926,
+          "recall": 0.013674925831945794,
+          "f1": 0.023992446634416065,
+          "auc": 0.039537111927859095,
+          "pr_auc": 0.0883588281117625,
+          "false_alarm_rate": 0.0043471417473537385,
+          "false_discovery_rate": 0.3362211430688783,
+          "miss_rate": 0.013674925831945793,
+          "brier_score": 0.05306984494823522,
+          "ece": 0.03706126765183844,
+          "positive_rate": 0.07351519629328752,
+          "prediction_rate": 0.005899161608428227,
+          "support": 70.77464187492308
+        },
+        "calibrated": {
+          "precision": 0.17839666389826042,
+          "recall": 0.005730225555791213,
+          "f1": 0.010174295270335084,
+          "auc": 0.048319193358663304,
+          "pr_auc": 0.08910942440278555,
+          "false_alarm_rate": 0.002661319633256007,
+          "false_discovery_rate": 0.23936938896377274,
+          "miss_rate": 0.005730225555791212,
+          "brier_score": 0.06325781617492515,
+          "ece": 0.06871632006551776,
+          "positive_rate": 0.07351519629328752,
+          "prediction_rate": 0.003090312793112334,
+          "support": 70.77464187492308
+        },
+        "tuned": {
+          "precision": 0.07661722306621278,
+          "recall": 0.2639341192126293,
+          "f1": 0.10395059999494635,
+          "auc": 0.048319193358663304,
+          "pr_auc": 0.08910942440278555,
+          "false_alarm_rate": 0.28250448832388547,
+          "false_discovery_rate": 0.07661722306621277,
+          "miss_rate": 0.2639341192126293,
+          "brier_score": 0.06325781617492515,
+          "ece": 0.06871632006551776,
+          "positive_rate": 0.07351519629328752,
+          "prediction_rate": 0.2821623851034543,
+          "support": 70.77464187492308
+        }
+      }
+    },
+    {
+      "model": "hist_gradient_boosting",
+      "implementation_name": "hist_gradient_boosting",
+      "fold_count": 39,
+      "test_rows": 244268,
+      "metrics": {
+        "prior": {
+          "auc": 0.5,
+          "pr_auc": 0.10199085735524216,
+          "brier_score": 0.09351115869532858,
+          "ece": 0.06550079278632712,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "false_alarm_rate": 0.0,
+          "false_discovery_rate": 0.0
+        },
+        "raw": {
+          "auc": 0.6007062630428242,
+          "pr_auc": 0.1469388505510016,
+          "brier_score": 0.08944381560770859,
+          "ece": 0.046250190826179025,
+          "precision": 0.17871299572192326,
+          "recall": 0.006361480928441637,
+          "f1": 0.011339933693347988,
+          "false_alarm_rate": 0.0019654044135466856,
+          "false_discovery_rate": 0.38538956838064087
+        },
+        "calibrated": {
+          "auc": 0.5942363396367217,
+          "pr_auc": 0.14566329009004517,
+          "brier_score": 0.09291713250607014,
+          "ece": 0.057354050902707045,
+          "precision": 0.07180784647745,
+          "recall": 0.0036282776766093324,
+          "f1": 0.00631251709692376,
+          "false_alarm_rate": 0.0011838215774562992,
+          "false_discovery_rate": 0.13332035865075512
+        },
+        "tuned": {
+          "auc": 0.5942363396367217,
+          "pr_auc": 0.14566329009004517,
+          "brier_score": 0.09291713250607014,
+          "ece": 0.057354050902707045,
+          "precision": 0.13781177988172236,
+          "recall": 0.44409793928122837,
+          "f1": 0.19823530572252582,
+          "false_alarm_rate": 0.3355648929688058,
+          "false_discovery_rate": 0.8621882201182777
+        }
+      },
+      "summary_std": {
+        "prior": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "auc": 0.0,
+          "pr_auc": 0.07351519629328752,
+          "false_alarm_rate": 0.0,
+          "false_discovery_rate": 0.0,
+          "miss_rate": 0.0,
+          "brier_score": 0.059210207203820094,
+          "ece": 0.05453671181229361,
+          "positive_rate": 0.07351519629328752,
+          "prediction_rate": 0.0,
+          "support": 70.77464187492308
+        },
+        "raw": {
+          "precision": 0.2624488389803913,
+          "recall": 0.014069708385772591,
+          "f1": 0.023939617825056735,
+          "auc": 0.04178837442774381,
+          "pr_auc": 0.0886286308088936,
+          "false_alarm_rate": 0.00442024154378377,
+          "false_discovery_rate": 0.4016714640860803,
+          "miss_rate": 0.014069708385772591,
+          "brier_score": 0.0520094940677077,
+          "ece": 0.036473995766825196,
+          "positive_rate": 0.07351519629328752,
+          "prediction_rate": 0.005280224011296428,
+          "support": 70.77464187492308
+        },
+        "calibrated": {
+          "precision": 0.1607654155206049,
+          "recall": 0.012907529637809228,
+          "f1": 0.02107828930344132,
+          "auc": 0.055142751975619915,
+          "pr_auc": 0.08988529119272638,
+          "false_alarm_rate": 0.00501956857953587,
+          "false_discovery_rate": 0.27572953914727183,
+          "miss_rate": 0.012907529637809233,
+          "brier_score": 0.06163555168771833,
+          "ece": 0.06518842887254567,
+          "positive_rate": 0.07351519629328752,
+          "prediction_rate": 0.006151041456471793,
+          "support": 70.77464187492308
+        },
+        "tuned": {
+          "precision": 0.0797033720374225,
+          "recall": 0.2225788779671516,
+          "f1": 0.10870211858015272,
+          "auc": 0.055142751975619915,
+          "pr_auc": 0.08988529119272638,
+          "false_alarm_rate": 0.22388917246199688,
+          "false_discovery_rate": 0.07970337203742249,
+          "miss_rate": 0.22257887796715162,
+          "brier_score": 0.06163555168771833,
+          "ece": 0.06518842887254567,
+          "positive_rate": 0.07351519629328752,
+          "prediction_rate": 0.22600597469537875,
+          "support": 70.77464187492308
+        }
+      }
+    }
+  ],
+  "deep_model_status": {
+    "included": false,
+    "reason": "The current temporal model uses sequence lookback windows and therefore does not emit the exact row-level sample keys used by this baseline audit. It must be aligned separately before a deep-vs-baseline claim."
+  },
+  "limitations": [
+    "The benchmark uses the current-universe S&P 100 snapshot and inherits survivorship bias.",
+    "Tree hyperparameters are fixed before the test windows; no test data are used for selection.",
+    "Results are pilot evidence and do not establish trading performance or investment advice."
+  ]
+}

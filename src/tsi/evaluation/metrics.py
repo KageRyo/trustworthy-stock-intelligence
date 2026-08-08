@@ -5,7 +5,7 @@ from __future__ import annotations
 import math
 
 import numpy as np
-from sklearn.metrics import roc_auc_score
+from sklearn.metrics import average_precision_score, roc_auc_score
 
 
 def expected_calibration_error(
@@ -70,14 +70,17 @@ def classification_metrics(
     ece = expected_calibration_error(y_true, y_prob, n_bins=ece_bins)
 
     auc = float("nan")
+    pr_auc = float("nan")
     if len(np.unique(y_true)) > 1:
         auc = float(roc_auc_score(y_true, y_prob))
+        pr_auc = float(average_precision_score(y_true, y_prob))
 
     return {
         "precision": float(precision),
         "recall": float(recall),
         "f1": float(f1),
         "auc": auc,
+        "pr_auc": pr_auc,
         # Kept for artifact compatibility; this is the false-positive rate.
         "false_alarm_rate": float(false_alarm_rate),
         "false_discovery_rate": float(false_discovery_rate),

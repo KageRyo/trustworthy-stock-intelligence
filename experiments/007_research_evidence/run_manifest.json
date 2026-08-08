@@ -35,6 +35,7 @@
   "artifacts": {
     "summary_sha256": "265f5a9d10d36cde4c19fc3350d89fd89779be811b79e76286a615d6bc1ad65e",
     "calibration_comparison_sha256": "bc7fb825bd539084612f28371a7a9990f830cfabd5f2e45346742a23d3b68a0e",
-    "predictions_sha256": "ce5cf9e63e445af12da449e1f398914064989879c680e35bbf87ae611414529e"
+    "predictions_sha256": "ce5cf9e63e445af12da449e1f398914064989879c680e35bbf87ae611414529e",
+    "paired_bootstrap_sha256": "d25ca9ca5eaa76480a1f314c329552f7db20d453b96b3e6c98119142f019a10e"
   }
 }

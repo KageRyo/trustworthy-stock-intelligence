@@ -122,6 +122,27 @@ instructions are in [`audit/README.md`](audit/README.md).
 - Versus the no-feature prior, improvements were much smaller: mean Brier
   `0.0935 -> 0.0917` and ECE `0.0655 -> 0.0546`.
 
+### Paired Confidence Intervals
+
+The committed
+[`paired_bootstrap_raw_vs_calibrated.json`](runs/sp100_logistic_platt_purged/paired_bootstrap_raw_vs_calibrated.json)
+artifact adds 95% percentile bootstrap intervals over the 39 temporal test
+folds. Each resample selects whole fold units, and the calibrated-minus-raw
+delta keeps the same fold paired between variants. This respects the
+walk-forward structure but does not make observations within a fold
+independent.
+
+| Metric | Raw mean [95% CI] | Calibrated mean [95% CI] | Delta (calibrated - raw) [95% CI] |
+| --- | ---: | ---: | ---: |
+| AUC | 0.6153 [0.6020, 0.6277] | 0.6086 [0.5901, 0.6247] | -0.0067 [-0.0201, 0.0000] |
+| Brier | 0.2318 [0.2176, 0.2465] | 0.0917 [0.0755, 0.1111] | -0.1401 [-0.1512, -0.1278] |
+| ECE | 0.3736 [0.3607, 0.3868] | 0.0546 [0.0381, 0.0743] | -0.3190 [-0.3394, -0.2933] |
+| F1 | 0.2101 [0.1798, 0.2439] | 0.0030 [0.0004, 0.0062] | -0.2071 [-0.2418, -0.1777] |
+
+The interval is a fold-level uncertainty summary, not a claim that the model
+is stable across future regimes. It uses seed `42`, 4,000 resamples, and no
+multiple-comparison correction.
+
 Fold 15 is the retained failure case. Its calibration window had a 3.8% event
 rate, while its 2020-02-04 through 2020-05-04 test window had a 40.3% event
 rate. Platt calibration worsened Brier by `0.0020` and ECE by `0.0241`. This is
@@ -158,6 +179,12 @@ python -m scripts.compare_calibration \
   --group-cols fold_id ticker \
   --period year \
   --output experiments/007_research_evidence/runs/sp100_logistic_platt_purged/calibration_comparison.json
+
+python -m scripts.paired_bootstrap \
+  --summary experiments/007_research_evidence/runs/sp100_logistic_platt_purged/summary.json \
+  --baseline raw \
+  --comparison calibrated \
+  --output experiments/007_research_evidence/runs/sp100_logistic_platt_purged/paired_bootstrap_raw_vs_calibrated.json
 ```
 
 The prediction CSV is gitignored because it contains provider-derived rows.
@@ -169,6 +196,9 @@ summary.json SHA-256:
 
 calibration_comparison.json SHA-256:
 bc7fb825bd539084612f28371a7a9990f830cfabd5f2e45346742a23d3b68a0e
+
+paired_bootstrap_raw_vs_calibrated.json SHA-256:
+d25ca9ca5eaa76480a1f314c329552f7db20d453b96b3e6c98119142f019a10e
 ```
 
 Execution environment:
@@ -188,7 +218,8 @@ scikit-learn: 1.8.0
 - No purged random-forest or gradient-boosting comparison yet.
 - No Taiwan, cross-market, sector, liquidity, or market-cap evaluation.
 - No point-in-time universe membership or delisting treatment.
-- No confidence intervals or multiple-comparison corrections.
+- No multiple-comparison correction; the interval artifact is a fold-level
+  uncertainty summary rather than formal external validation.
 - ECE is equal-width 10-bin ECE and remains bin-sensitive.
 - No provider re-download diff or correction-latency study; hashes only identify
   the exact local snapshot.
