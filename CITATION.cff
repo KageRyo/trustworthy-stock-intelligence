@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+title: "Trustworthy Stock Intelligence"
+message: "If you use this software, please cite it as below."
+type: software
+authors:
+  - name: "KageRyo"
+repository-code: "https://github.com/KageRyo/trustworthy-stock-intelligence"
+url: "https://github.com/KageRyo/trustworthy-stock-intelligence"
+license: "Apache-2.0"
+version: "0.3.0"
+date-released: "2026-07-29"
+abstract: >-
+  Research software for schema-first, human-in-the-loop stock drawdown-risk
+  analysis with temporal validation, calibration, uncertainty, trust scores,
+  and warning explanations. Version 0.3.0 is a reproducible pilot release,
+  not externally validated research or investment advice.
+keywords:
+  - stock risk
+  - trustworthy AI
+  - calibration
+  - uncertainty estimation
+  - temporal validation
+  - financial machine learning

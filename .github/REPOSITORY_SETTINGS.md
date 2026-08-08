@@ -1,14 +1,19 @@
 # Recommended Repository Settings
 
-These settings cannot be enforced by files in the repository. Apply them in
-GitHub after the workflows on `main` have completed at least once.
+These settings cannot be enforced by files in the repository. Apply and
+re-verify them in GitHub after workflow names or repository visibility change.
 
-Applied on 2026-07-29:
+Verified on 2026-08-09:
 
+- repository visibility is `public`
 - `main` requires pull requests, conversation resolution, the three CI jobs,
   and the Gitleaks secret scan; force pushes, deletion, and administrator
-  bypass are disabled
+  bypass are disabled; required approvals remain at zero for solo maintenance
 - Dependabot vulnerability alerts and automatic security updates are enabled
+- the CodeQL workflow is committed and should be observed on the next push or
+  pull request before it is considered a release gate
+- native Secret Scanning and Push Protection status still requires explicit
+  verification in the repository security settings
 
 ## Branches
 
@@ -44,15 +49,14 @@ another regular reviewer is available.
   are pinned to immutable commit SHAs
 - keep Ruff, `go vet`, pinned `govulncheck`, Go race tests, and the TypeScript
   production-build typecheck required
-- if the repository becomes public or GitHub Code Security is enabled, add
-  CodeQL and require its Python, Go, and JavaScript/TypeScript results
-- native GitHub secret scanning and repository push protection are unavailable
-  for this user-owned private repository; enable them if visibility or account
-  eligibility changes
+- keep the CodeQL workflow enabled for Python, Go, and JavaScript/TypeScript;
+  require its checks after the workflow has completed successfully on `main`
+- enable and verify native GitHub Secret Scanning and repository Push
+  Protection in the public repository settings
 - review `npm audit --audit-level=moderate` in CI
 
-Public repositories receive GitHub secret scanning, but push protection and
-repository-specific policy still need to be verified in the GitHub settings UI.
+Native scanning availability and repository-specific push-protection policy
+still need to be verified in the GitHub settings UI/API.
 
 ## Releases
 
