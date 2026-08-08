@@ -23,8 +23,8 @@ If a secret is exposed:
 The source repository is public. The repository uses required CI checks,
 Dependabot updates, a full-history Gitleaks workflow, and a SHA-pinned CodeQL
 workflow for Go, JavaScript/TypeScript, and Python. Native GitHub Secret
-Scanning and Push Protection are managed in repository settings and must be
-verified there; they are not implied by the presence of a workflow file.
+Scanning and Push Protection are enabled and were verified in repository
+settings on 2026-08-09; they are not implied by the presence of a workflow file.
 
 The current public-history review found research notebooks and aggregate
 experiment CSVs, but no `.env` files, credentials, private keys, database

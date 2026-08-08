@@ -294,8 +294,7 @@ Basic static analysis covers Python with Ruff, Go with `go vet`, pinned
 typecheck. A least-privilege, SHA-pinned Gitleaks workflow scans repository
 history, while the SHA-pinned CodeQL workflow analyzes Python, Go, and
 JavaScript/TypeScript. Native GitHub Secret Scanning and Push Protection are
-managed in repository settings and their status is recorded in
-`.github/REPOSITORY_SETTINGS.md`.
+enabled; their status is recorded in `.github/REPOSITORY_SETTINGS.md`.
 Applied remote controls and remaining plan-dependent settings are recorded in
 `.github/REPOSITORY_SETTINGS.md`.
 

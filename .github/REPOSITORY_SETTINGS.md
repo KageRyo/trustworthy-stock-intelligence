@@ -12,8 +12,7 @@ Verified on 2026-08-09:
 - Dependabot vulnerability alerts and automatic security updates are enabled
 - the CodeQL workflow is committed and should be observed on the next push or
   pull request before it is considered a release gate
-- native Secret Scanning and Push Protection status still requires explicit
-  verification in the repository security settings
+- native Secret Scanning and Push Protection are enabled
 
 ## Branches
 
@@ -51,12 +50,11 @@ another regular reviewer is available.
   production-build typecheck required
 - keep the CodeQL workflow enabled for Python, Go, and JavaScript/TypeScript;
   require its checks after the workflow has completed successfully on `main`
-- enable and verify native GitHub Secret Scanning and repository Push
-  Protection in the public repository settings
+- native GitHub Secret Scanning and repository Push Protection are enabled;
+  re-check them after changes to repository visibility or security policy
 - review `npm audit --audit-level=moderate` in CI
 
-Native scanning availability and repository-specific push-protection policy
-still need to be verified in the GitHub settings UI/API.
+Native scanning status was verified through the repository API on 2026-08-09.
 
 ## Releases
 
