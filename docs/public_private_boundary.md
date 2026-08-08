@@ -1,5 +1,9 @@
 # Public And Private Boundary
 
+The GitHub repository is public as of 2026-08-09. Public source does not make
+local market-data downloads, credentials, deployments, or user-specific state
+public or redistributable.
+
 ## Public By Default
 
 - source code and tests
@@ -10,6 +14,7 @@
   fingerprints
 - synthetic sample data and API mocks
 - changelog and release tags
+- contribution and citation metadata that identify the public software
 
 ## Private By Default
 
@@ -32,16 +37,21 @@
 - public run reports commit aggregate metrics and hashes, not raw OHLCV or
   prediction rows.
 - Ruff, `go vet`, pinned `govulncheck`, Go race tests, TypeScript typechecking,
-  Dependabot, CI dependency audit, and the SHA-pinned Gitleaks history scan
-  should all be active.
-- Add CodeQL when the repository is public or GitHub Code Security is enabled
-  for the private repository.
-- Native GitHub secret scanning and repository push protection are not
-  available for this user-owned private repository. Enable them if the
-  repository becomes public or account eligibility changes; Gitleaks is the
-  current repository-level compensating control.
+  Dependabot, CI dependency audit, the SHA-pinned Gitleaks history scan, and
+  the SHA-pinned CodeQL workflow should all be active.
+- Native GitHub Secret Scanning and Push Protection are repository settings,
+  not workflow files. Verify their enabled status in GitHub before treating
+  public-release hardening as complete; Gitleaks remains the repository-level
+  history scan and compensating control.
+- Branch protection and required checks are recorded in
+  `.github/REPOSITORY_SETTINGS.md`; the settings should be re-verified after
+  changes to workflow names.
 - Documentation uses `<dashboard-host>`, `<repo-root>`, and similar placeholders
   instead of an actual deployment address.
 
 Before making any artifact public, verify both content sensitivity and license
 rights. A file being technically reproducible does not make it redistributable.
+The current history audit found research notebooks and aggregate experiment CSVs
+but no environment files, credentials, private keys, database files, or model
+weights. An older commit author email is documented for review; no history
+rewrite is performed by default.
