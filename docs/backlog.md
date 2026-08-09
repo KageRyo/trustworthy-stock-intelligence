@@ -1,72 +1,42 @@
 # Backlog
 
-This backlog tracks work after `0.2.0`. Items are grouped by product area, not
-by implementation language.
+This backlog tracks the work after `0.3.0`. The roadmap groups the work by
+release evidence and product maturity; issue numbers below are the canonical
+discussion threads.
 
-## Near Term
+## Completed: 0.3.x Public Release Hardening
+
+```text
+[Docs #18] Align roadmap and backlog with the 0.3.0 research-evidence release.
+[Docs #19] Add repository citation metadata in CITATION.cff.
+[Docs #20] Add contributor setup, tests, research protocol, and PR guidance.
+[Security #28] Add SHA-pinned CodeQL workflow and verify native GitHub scanning
+             settings in the repository UI/API.
+[Security] Keep the full-history Gitleaks scan, Dependabot, and branch gates
+          healthy; document the commit-email privacy decision.
+```
+
+## v0.4.0 Product And Open-Source Readiness
 
 ```text
 [Data] Schedule 5-minute ingestion for active watchlists.
-[Data] Track provider freshness and provider coverage per ticker.
-[API] Add warning changes endpoint.
-[API] Add warning history/date endpoints.
-[Dashboard] Add ticker detail timelines.
-[Dashboard] Add warning changes page.
-[Dashboard] Add freshness and low-trust badges.
-[Trust] Generate model-run TAI audit artifacts.
-[Docs] Keep release notes and documentation index current.
+[Data] Add provider health, retry, freshness, and coverage state per ticker.
+[Model] Add queue-backed prediction jobs consuming PostgreSQL market_bars.
+[Model] Keep daily and intraday model metadata and stale-state rules separate.
+[API] Add warning-change detection on top of the completed warning-history API.
+[Dashboard] Add freshness, stale, low-trust, coverage, loading, and error states.
+[Dashboard] Add richer session-scoped watchlist grouping, filters, and cleanup.
 ```
 
-## Data And Providers
+## Research-Quality Enhancements
 
 ```text
-[Data] Build broad US ticker universe metadata.
-[Data] Build TWSE/TPEx listed universe metadata.
-[Data] Build TPEx emerging universe metadata.
-[Data] Add provider health checks and outage reporting.
-[Data] Record provider source and query symbol for all market bars.
+[Research #29] Build a point-in-time universe and quantify survivorship bias.
+[Research] Extend the current Taiwan and cross-market pilots only with explicit
+           dated-membership, coverage, and provider-data boundaries.
 [Data] Validate intraday 5-minute data quality before model training.
-```
-
-## Modeling And Trust
-
-```text
-[Model] Add prediction job that consumes PostgreSQL market_bars directly.
-[Model] Separate daily and intraday model metadata.
-[Model] Add drift and stale-data monitoring.
-[Trust] Add feature attribution for ticker detail pages.
-[Trust] Add calibration monitoring over time.
-[Trust] Add abstain-rate and coverage monitoring.
-```
-
-## API
-
-```text
-[API] GET /api/v1/warnings/changes
-[API] GET /api/v1/history/dates
-[API] GET /api/v1/history/{date}
-[API] GET /api/v1/warnings/{ticker}/history
-[API] GET /api/v1/watchlists
-[API] Add schema version docs for every request/response model.
-```
-
-## Dashboard
-
-```text
-[Dashboard] Ticker detail page with probability, trust, uncertainty, and level timelines.
-[Dashboard] Watchlist grouping and filtering.
-[Dashboard] Warning changes page.
-[Dashboard] Coverage state for unsupported/provider-missing symbols.
-[Dashboard] Better empty, loading, stale, and error states.
-```
-
-## Research
-
-```text
-[Research] Keep walk-forward validation as the default.
-[Research] Compare logistic, tree, and deep models under identical splits.
-[Research] Report calibration, false alarm rate, miss rate, lead time, coverage, and selective risk.
-[Research] Keep experiment reports under experiments/.
+[Data] Review provider revisions and licensed formal-research datasets.
+[Research] Keep experiment reports reproducible and under experiments/.
 ```
 
 ## Deferred

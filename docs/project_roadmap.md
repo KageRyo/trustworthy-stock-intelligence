@@ -2,8 +2,9 @@
 
 ## Goal
 
-Trustworthy Stock Intelligence is a human-in-the-loop stock risk assessment
-system. The main user flow is:
+Trustworthy Stock Intelligence is a public open-source and portfolio project
+for human-in-the-loop stock risk assessment. It is not a thesis vehicle. The
+main user flow is:
 
 ```text
 stock ticker
@@ -18,7 +19,10 @@ The system focuses on trustworthy AI behavior: calibration, uncertainty,
 abstention, transparency, auditability, and clear limitations. It is not an
 investment recommendation system or automated trading system.
 
-## Current State: 0.2.0
+## Current State: 0.3.0
+
+Version `0.3.0` is the research-evidence-hardening release. It is a
+reproducible pilot, not externally validated research or investment advice.
 
 Completed:
 
@@ -33,6 +37,18 @@ Completed:
 - on-demand Python analysis bridge for missing ticker records
 - US and Taiwan ticker handling, including Taiwan alphanumeric codes and TPEx
   emerging-stock fallback
+- purged walk-forward evaluation with label-overlap checks, calibration
+  diagnostics, baseline comparisons, paired bootstrap intervals,
+  calibration-drift audits, and Experiment 007 audit artifacts
+- Taiwan and US/Taiwan cross-market pilots with explicit provider,
+  current-universe, and coverage limitations
+- typed ticker feature attributions and warning-history timelines in the Go
+  API and TypeScript dashboard
+- per-run TAI audit artifacts that record evidence, limitations, and open risks
+- required Python, Go, frontend, dependency, race-test, and full-history
+  Gitleaks CI checks
+- public-source documentation for licensing, security boundaries, citation, and
+  contribution workflow
 
 ## Target Architecture
 
@@ -49,12 +65,20 @@ Provider APIs
 The optional JSON export remains useful for notifications, snapshots, and debug
 artifacts, but PostgreSQL is the serving source of truth.
 
-## Next Milestone: 0.3.0
+## v0.4.0: Product and Open-Source Readiness
 
-Recommended focus:
+The dashboard is the main product surface. The next release prioritizes a
+usable, observable, DB-backed analysis flow over thesis-style novelty:
 
-1. Scheduled 5-minute ingestion for user/session watchlists.
-2. Warning history and change detection:
+1. Schedule 5-minute ingestion for session watchlists, with explicit provider
+   health, retry, and coverage state.
+2. Make data freshness actionable in the API and dashboard: show the feature
+   interval, flag stale predictions, and downgrade or block non-actionable
+   outputs.
+3. Move request-time on-demand analysis to queue-backed prediction jobs with
+   progress and failure state, while retaining a usable local lookup bridge.
+4. Build on the completed warning history/timeline with explicit warning-change
+   detection:
 
 ```text
 new alert
@@ -66,34 +90,28 @@ persistent alert
 low-trust warning
 ```
 
-3. Ticker detail timelines for risk probability, trust score, uncertainty, and
-   warning level.
-4. Freshness badges and stale-data downgrade behavior in API/dashboard.
-5. Market coverage metadata for US, TWSE, TPEx listed, and TPEx emerging
-   symbols.
+5. Add richer session-scoped watchlist grouping, filtering, and cleanup while
+   preserving the current no-auth privacy boundary.
+6. Publish per-market coverage metadata for US, TWSE, TPEx listed, and TPEx
+   emerging symbols.
 
-## Later Milestones
+## Maintenance and Release Hygiene
 
-0.4.0:
+1. Keep CodeQL, Gitleaks, Dependabot, required CI checks, citation,
+   contribution, release, and public/private-boundary documents accurate.
+2. Review commit-email privacy and Git history without rewriting history unless
+   the maintainer explicitly requests it.
+3. Keep the reproducible experiments, model limitations, and TAI audit output
+   linked from the public documentation.
 
-- queue-based prediction jobs instead of request-time synchronous analysis
-- warning change endpoint and dashboard page
-- watchlist ingestion scheduler
-- model run audit artifact aligned with the TAI checklist
+## Research-Quality Enhancements (Not v0.4.0 Blockers)
 
-0.5.0:
-
-- intraday-trained model path if 5-minute labels/features are validated
-- feature attribution beyond reason codes
-- provider health and coverage monitoring
-- richer portfolio/watchlist grouping
-
-Research track:
-
-- preserve leakage-aware evaluation
-- compare model families under walk-forward validation
-- report calibration, false alarm rate, miss rate, lead time, coverage, and
-  selective risk
+- Build a legally usable point-in-time universe and quantify survivorship bias
+  (#29); preserve its current status as the sole open issue.
+- Expand the Taiwan pilots to dated membership, broader stratification, and
+  reliable TPEx emerging history before making broad coverage claims.
+- Re-run provider-revision, distribution-shift, and external-data studies with
+  licensed, versioned research data where appropriate.
 
 ## Engineering Rules
 
@@ -104,3 +122,5 @@ Research track:
 - Do not commit `.env`, downloaded data, model bundles, or generated caches.
 - Keep ticker symbols as strings.
 - Keep Go serving dependent on PostgreSQL; missing DB should fail startup.
+- Keep research claims scoped to the protocol, coverage, and evidence actually
+  available in the corresponding experiment report.

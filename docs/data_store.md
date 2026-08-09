@@ -172,8 +172,8 @@ Taiwan symbols are stored as strings. Leading zeroes and suffix letters such as
 
 ## Current Limitation
 
-The DB-backed API, watchlist state, local on-demand ticker analysis bridge, and
-Taiwan provider fallbacks are available. The remaining gap is coverage
-automation: broad US/Taiwan ticker universe ingestion, scheduled 5-minute
-updates, warning history/change detection, and intraday-trained models still
-need to be implemented.
+The DB-backed API, watchlist state, local on-demand ticker analysis bridge,
+Taiwan provider fallbacks, and warning-history timeline are available. The
+remaining gap is coverage automation: broad US/Taiwan ticker universe
+ingestion, scheduled 5-minute updates, warning-change detection, actionable
+stale-state handling, and intraday-trained models still need to be implemented.

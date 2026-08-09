@@ -16,7 +16,7 @@ dimensions to this stock drawdown-risk warning project.
 | Resilience | Support US and Taiwan symbols, numeric Taiwan codes, 1m/5m/1d bars, provider replacement, scheduled ingestion, and recovery after provider failures. |
 | Transparency | Persist run IDs, model bundle names, data_as_of, generated_at, feature interval, reason codes, logs, and audit metadata. |
 | Accountability | Keep API schemas, tests, dependency/license review, run notes, and Python/Go/dashboard responsibility boundaries explicit. |
-| Explainability | Provide reason-code explanations now; add feature attribution and ticker-level warning history next. |
+| Explainability | Provide reason-code explanations, typed feature attributions, and ticker-level warning history; document their model-specific, non-causal limits. |
 | Autonomy | Keep the dashboard human-over-the-loop. Users control watchlists, and the system must not automate trading actions. |
 | Privacy | Minimize data collection. Protect `.env`, DB credentials, logs, and any future user holdings/watchlist-sensitive data. |
 | Fairness | Track coverage bias across US/Taiwan markets, sectors, liquidity, market cap, and provider availability. Do not claim all-stock coverage until measured. |
@@ -54,15 +54,13 @@ After modeling:
 
 ## Near-Term Tasks
 
-- Add scheduled 5-minute watchlist ingestion into PostgreSQL.
-- Add a prediction job that consumes fresh DB market bars and writes
+- Schedule 5-minute watchlist ingestion into PostgreSQL with provider health,
+  retry, and coverage records.
+- Add queue-backed prediction jobs that consume fresh DB market bars and write
   `prediction_batches` / `warning_records`.
-- Add warning history and change detection endpoints.
-- Add ticker-level timelines for risk probability, trust score, uncertainty,
-  and warning level.
-- Add feature attribution to complement current reason codes.
+- Add warning-change detection on top of the available history and timeline
+  contracts.
 - Add API/dashboard freshness badges that block or downgrade stale predictions.
 - Add universe coverage metadata for US and Taiwan markets.
-- Add a TAI audit artifact for each model run summarizing data freshness,
-  coverage, calibration, uncertainty, trust behavior, known limitations, and
-  open risks.
+- Use the available TAI audit artifact for every published model run, and keep
+  deployment-specific evidence, known limitations, and open risks explicit.
