@@ -1,0 +1,43 @@
+name: taiwan_listed_tpex_stratified_current_pilot
+description: >
+  Current-universe Taiwan research sample with three TWSE and three TPEx-listed
+  companies. It is not a point-in-time or all-Taiwan universe.
+as_of_catalogue:
+  source: official TWSE and TPEx current-company OpenAPI catalogues
+  as_of: "2026-08-08"
+  member_catalogue_sha256: 5084ffde87af1855635dbd2c531993a08c74ac512c50335a7b342b0a7111d8c3
+markets:
+  twse:
+    tickers: ["2330", "2317", "2454"]
+    provider_suffix: .TW
+  tpex:
+    tickers: ["3260", "6147", "8069"]
+    provider_suffix: .TWO
+  emerging:
+    candidate_tickers: ["3097", "3585", "3595"]
+    provider_suffix: .EMERGING
+    status: >
+      Excluded from the long-horizon benchmark because the official historical
+      fallback did not complete reliably in this environment. Do not infer
+      emerging-market coverage from this experiment.
+frequency: daily
+data_source:
+  pilot: Yahoo Finance via yfinance for TWSE and TPEx components
+  emerging_fallback: TPEx official emerging monthly historical endpoint
+  rights_note: docs/data_and_model_licenses.md
+label:
+  task: 5-day drawdown risk warning
+  horizon_trading_days: 5
+  future_max_drawdown_threshold: -0.05
+split:
+  protocol: purged walk-forward
+  train_dates: 252
+  calibration_dates: 63
+  test_dates: 63
+  purge_dates: 5
+  step_dates: 63
+  fold_count: 39
+  random_split_allowed: false
+artifacts:
+  raw_data_committed: false
+  aggregate_metrics_committed: true
