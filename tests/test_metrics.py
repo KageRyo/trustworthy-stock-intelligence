@@ -23,6 +23,7 @@ def test_classification_metrics_match_confusion_matrix() -> None:
     assert math.isclose(metrics["miss_rate"], 0.5)
     assert math.isclose(metrics["brier_score"], 0.255)
     assert math.isclose(metrics["auc"], 0.75)
+    assert 0.0 < metrics["pr_auc"] < 1.0
 
 
 def test_expected_calibration_error_handles_perfect_calibration() -> None:
