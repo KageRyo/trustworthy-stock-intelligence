@@ -58,10 +58,12 @@ CI runs:
 - frontend Vitest tests, production build with TypeScript typechecking, and
   moderate dependency audit
 - a separate SHA-pinned Gitleaks scan over repository history
+- a SHA-pinned CodeQL workflow for Python, Go, and JavaScript/TypeScript
 
 The development dependency range keeps Ruff on the compatible `0.15.x`
-baseline. CodeQL can supplement these checks after the repository is public or
-GitHub Code Security is enabled for the private repository.
+baseline. CodeQL is run by `.github/workflows/codeql.yml`; native GitHub Secret
+Scanning and Push Protection remain repository settings documented in
+`.github/REPOSITORY_SETTINGS.md`.
 
 The CI badge in `README.md` points to the latest workflow result on GitHub.
 
