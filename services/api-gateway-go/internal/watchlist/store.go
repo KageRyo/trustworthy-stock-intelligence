@@ -495,13 +495,13 @@ func (s *PostgresStore) moveTickerReferences(
 		    batch_id, ticker_id, prediction_date, risk_probability,
 		    calibrated_risk_probability, calibration_method,
 		    uncertainty_score, trust_score, alert_threshold,
-		    watch_threshold, warning_level, reason_codes, created_at
+		    watch_threshold, warning_level, reason_codes, feature_attributions, created_at
 		)
 		SELECT
 		    batch_id, $1, prediction_date, risk_probability,
 		    calibrated_risk_probability, calibration_method,
 		    uncertainty_score, trust_score, alert_threshold,
-		    watch_threshold, warning_level, reason_codes, created_at
+		    watch_threshold, warning_level, reason_codes, feature_attributions, created_at
 		FROM warning_records
 		WHERE ticker_id = $2
 		ON CONFLICT (batch_id, ticker_id)
@@ -515,7 +515,8 @@ func (s *PostgresStore) moveTickerReferences(
 		    alert_threshold = EXCLUDED.alert_threshold,
 		    watch_threshold = EXCLUDED.watch_threshold,
 		    warning_level = EXCLUDED.warning_level,
-		    reason_codes = EXCLUDED.reason_codes
+		    reason_codes = EXCLUDED.reason_codes,
+		    feature_attributions = EXCLUDED.feature_attributions
 		`,
 		`DELETE FROM warning_records WHERE ticker_id = $2 AND $1::text <> ''`,
 		`DELETE FROM tickers WHERE id::text = $2 AND $1::text <> ''`,

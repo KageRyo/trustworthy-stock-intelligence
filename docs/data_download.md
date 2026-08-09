@@ -69,6 +69,28 @@ python -m scripts.download_tickers \
   --output-dir data/raw/watchlist
 ```
 
+The reproducible Taiwan baseline pilot uses the explicit six-ticker list in
+[`configs/dataset/taiwan_pilot.yaml`](../configs/dataset/taiwan_pilot.yaml) and
+is documented in
+[`experiments/009_taiwan_pilot/README.md`](../experiments/009_taiwan_pilot/README.md).
+It commits only snapshot fingerprints and aggregate metrics; raw provider data
+and prediction rows remain gitignored.
+
+For a current-company TWSE plus TPEx-listed research sample, download each
+market with its explicit resolver and then combine the compatible artifacts
+without losing their input fingerprints:
+
+```bash
+python -m scripts.combine_download_artifacts \
+  --input-dir /secure/tsi/twse --input-dir /secure/tsi/tpex \
+  --output-dir /secure/tsi/listed-tpex \
+  --dataset-name taiwan_listed_tpex_stratified_current_pilot
+```
+
+The exact sample and its coverage boundary are recorded in
+[`configs/dataset/taiwan_listed_tpex_stratified_pilot.yaml`](../configs/dataset/taiwan_listed_tpex_stratified_pilot.yaml)
+and [`experiments/014_taiwan_listed_tpex_pilot`](../experiments/014_taiwan_listed_tpex_pilot/).
+
 For intraday freshness checks, request 5-minute bars. Numeric Taiwan tickers are
 resolved to yfinance provider symbols such as `2330.TW`, while the output keeps
 the user-facing ticker as `2330`.

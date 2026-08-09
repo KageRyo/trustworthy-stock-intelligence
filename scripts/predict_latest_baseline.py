@@ -12,17 +12,28 @@ import pandas as pd
 
 from tsi.data.csv import read_ohlcv_csv
 from tsi.data.postgres import write_prediction_batch_to_postgres
+from tsi.evaluation.drift import (
+    CalibrationDriftAssessment,
+    assess_calibration_drift,
+    calibration_drift_reason_codes,
+)
+from tsi.evaluation.metrics import classification_metrics
 from tsi.features.technical import DEFAULT_FEATURE_COLUMNS, build_technical_features
 from tsi.labeling.drawdown import add_future_drawdown_label
 from tsi.labeling.warning_level import select_alert_threshold
 from tsi.models.logistic import LogisticRiskModel
-from tsi.serving.schema import build_prediction_batch, write_prediction_batch_json
+from tsi.serving.schema import (
+    CalibrationDriftMetadata,
+    build_prediction_batch,
+    write_prediction_batch_json,
+)
 from tsi.trust.calibration import CalibrationMethod, fit_probability_calibrator
 from tsi.trust.decision import (
     TrustDecisionConfig,
     assign_trust_decisions,
     compute_watch_threshold,
 )
+from tsi.trust.explainability import build_logistic_feature_attributions
 from tsi.trust.reason_codes import build_reason_codes
 from tsi.trust.trust_score import TrustScoreMethod, compute_trust_score
 from tsi.trust.uncertainty import binary_entropy_uncertainty, margin_uncertainty
@@ -36,6 +47,12 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--horizon", type=int, default=5)
     parser.add_argument("--drawdown-threshold", type=float, default=-0.05)
     parser.add_argument("--calibration-size", type=int, default=63)
+    parser.add_argument(
+        "--drift-size",
+        type=int,
+        default=21,
+        help="Later labeled dates used only to evaluate calibration drift; zero disables the gate.",
+    )
     parser.add_argument("--train-size", type=int, default=None)
     parser.add_argument(
         "--calibration-method",
@@ -130,14 +147,40 @@ def split_train_calibration(
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Split historical labeled rows into train and later calibration windows."""
 
+    train_frame, calibration_frame, _ = split_train_calibration_recent(
+        training_frame,
+        calibration_size=calibration_size,
+        drift_size=0,
+        train_size=train_size,
+    )
+    return train_frame, calibration_frame
+
+
+def split_train_calibration_recent(
+    training_frame: pd.DataFrame,
+    *,
+    calibration_size: int,
+    drift_size: int,
+    train_size: int | None,
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """Split rows into train, calibration reference, and later drift windows."""
+
     if calibration_size < 1:
         raise ValueError("calibration_size must be at least 1")
+    if drift_size < 0:
+        raise ValueError("drift_size must be non-negative")
     unique_dates = pd.Index(sorted(pd.to_datetime(training_frame["date"]).unique()))
-    if len(unique_dates) <= calibration_size:
-        raise ValueError("Not enough labeled dates for the requested calibration_size")
+    required_window_size = calibration_size + drift_size
+    if len(unique_dates) <= required_window_size:
+        raise ValueError(
+            "Not enough labeled dates for the requested calibration and drift windows"
+        )
 
-    calibration_dates = set(unique_dates[-calibration_size:])
-    train_dates = unique_dates[:-calibration_size]
+    recent_dates = set(unique_dates[-drift_size:]) if drift_size else set()
+    calibration_end = len(unique_dates) - drift_size if drift_size else len(unique_dates)
+    calibration_start = calibration_end - calibration_size
+    calibration_dates = set(unique_dates[calibration_start:calibration_end])
+    train_dates = unique_dates[:calibration_start]
     if train_size is not None:
         if train_size < 1:
             raise ValueError("train_size must be at least 1 when provided")
@@ -146,14 +189,17 @@ def split_train_calibration(
 
     train_frame = training_frame[training_frame["date"].isin(train_date_set)].copy()
     calibration_frame = training_frame[training_frame["date"].isin(calibration_dates)].copy()
-    if train_frame.empty or calibration_frame.empty:
-        raise ValueError("train and calibration frames must not be empty")
-    return train_frame, calibration_frame
+    recent_frame = training_frame[training_frame["date"].isin(recent_dates)].copy()
+    if train_frame.empty or calibration_frame.empty or (drift_size and recent_frame.empty):
+        raise ValueError("train, calibration, and drift frames must not be empty")
+    return train_frame, calibration_frame, recent_frame
 
 
 def run_prediction(args: argparse.Namespace) -> pd.DataFrame:
     """Train a baseline on historical labels and write latest predictions."""
 
+    if args.drift_size < 0:
+        raise ValueError("--drift-size must be non-negative")
     ohlcv = read_ohlcv_csv(args.input)
     training_frame, latest_frame = prepare_frames(
         ohlcv,
@@ -163,11 +209,32 @@ def run_prediction(args: argparse.Namespace) -> pd.DataFrame:
     if latest_frame.empty:
         raise ValueError("No latest feature rows were created; check input data")
 
-    train_frame, calibration_frame = split_train_calibration(
+    drift_evaluated = args.drift_size > 0 and _has_drift_history(
         training_frame,
         calibration_size=args.calibration_size,
-        train_size=args.train_size,
+        drift_size=args.drift_size,
     )
+    drift_note = (
+        "Calibration drift evaluation was disabled by --drift-size=0."
+        if args.drift_size == 0
+        else "No later labeled window was available for drift evaluation."
+    )
+    if drift_evaluated:
+        drift_note = "Compared a fitted calibration reference window with later labeled rows."
+    if drift_evaluated:
+        train_frame, calibration_frame, recent_frame = split_train_calibration_recent(
+            training_frame,
+            calibration_size=args.calibration_size,
+            drift_size=args.drift_size,
+            train_size=args.train_size,
+        )
+    else:
+        train_frame, calibration_frame = split_train_calibration(
+            training_frame,
+            calibration_size=args.calibration_size,
+            train_size=args.train_size,
+        )
+        recent_frame = training_frame.iloc[0:0].copy()
     model, model_name = fit_baseline_model(train_frame)
     calibration_probabilities = model.predict_proba(calibration_frame[DEFAULT_FEATURE_COLUMNS].to_numpy())
     probabilities = model.predict_proba(latest_frame[DEFAULT_FEATURE_COLUMNS].to_numpy())
@@ -180,6 +247,14 @@ def run_prediction(args: argparse.Namespace) -> pd.DataFrame:
     )
     calibrated_calibration_probabilities = calibrator.predict(calibration_probabilities)
     calibrated_probabilities = calibrator.predict(probabilities)
+    drift_assessment, calibration_drift = evaluate_calibration_drift(
+        model,
+        calibrator,
+        calibration_frame,
+        recent_frame,
+        evaluated=drift_evaluated,
+        note=drift_note,
+    )
     threshold_selection = select_alert_threshold(
         calibration_frame["risk_label"].to_numpy(),
         calibrated_calibration_probabilities,
@@ -199,6 +274,8 @@ def run_prediction(args: argparse.Namespace) -> pd.DataFrame:
         uncertainty_penalty=args.uncertainty_penalty,
         method=trust_score_method,
     )
+    if drift_assessment is not None:
+        trust_scores = np.clip(trust_scores * drift_assessment.trust_multiplier, 0.0, 1.0)
     decision_config = TrustDecisionConfig(
         alert_threshold=alert_threshold,
         watch_threshold=watch_threshold,
@@ -211,12 +288,24 @@ def run_prediction(args: argparse.Namespace) -> pd.DataFrame:
         trust_scores=trust_scores,
         config=decision_config,
     )
+    if drift_assessment is not None and drift_assessment.abstain:
+        warning_levels = np.full(warning_levels.shape, "abstain", dtype=object)
+    drift_reason_codes = calibration_drift_reason_codes(
+        drift_assessment,
+        evaluated=drift_evaluated,
+    )
     reason_codes = build_reason_codes(
         calibrated_probabilities=calibrated_probabilities,
         uncertainty_scores=uncertainty,
         trust_scores=trust_scores,
         warning_levels=warning_levels,
         config=decision_config,
+        extra_reason_codes=drift_reason_codes,
+    )
+    feature_attributions = build_logistic_feature_attributions(
+        model,
+        latest_frame[DEFAULT_FEATURE_COLUMNS].to_numpy(),
+        DEFAULT_FEATURE_COLUMNS,
     )
     predictions = latest_frame.loc[:, ["date", "ticker"]].assign(
         model=model_name,
@@ -229,12 +318,17 @@ def run_prediction(args: argparse.Namespace) -> pd.DataFrame:
         watch_threshold=watch_threshold,
         warning_level=warning_levels,
         model_bundle=f"baseline_latest:{args.input}",
+        feature_attributions=feature_attributions,
     )
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
     predictions.to_csv(args.output, index=False)
     serving_frame = predictions.assign(reason_codes=reason_codes)
-    batch = build_prediction_batch(serving_frame, run_id=args.run_id)
+    batch = build_prediction_batch(
+        serving_frame,
+        run_id=args.run_id,
+        calibration_drift=calibration_drift,
+    )
     write_prediction_batch_json(batch, args.json_output)
     if args.write_db:
         if not args.database_url:
@@ -245,6 +339,63 @@ def run_prediction(args: argparse.Namespace) -> pd.DataFrame:
             feature_interval=args.feature_interval,
         )
     return predictions
+
+
+def _has_drift_history(
+    training_frame: pd.DataFrame,
+    *,
+    calibration_size: int,
+    drift_size: int,
+) -> bool:
+    unique_dates = pd.Index(sorted(pd.to_datetime(training_frame["date"]).unique()))
+    return drift_size > 0 and len(unique_dates) > calibration_size + drift_size
+
+
+def evaluate_calibration_drift(
+    model: LogisticRiskModel | ConstantProbabilityModel,
+    calibrator: object,
+    calibration_frame: pd.DataFrame,
+    recent_frame: pd.DataFrame,
+    *,
+    evaluated: bool,
+    note: str,
+) -> tuple[CalibrationDriftAssessment | None, CalibrationDriftMetadata]:
+    """Evaluate later labeled rows without fitting on the recent window."""
+
+    if not evaluated or recent_frame.empty:
+        return None, CalibrationDriftMetadata(
+            note=note,
+            calibration_rows=len(calibration_frame),
+        )
+
+    calibration_probabilities = calibrator.predict(
+        model.predict_proba(calibration_frame[DEFAULT_FEATURE_COLUMNS].to_numpy())
+    )
+    recent_probabilities = calibrator.predict(
+        model.predict_proba(recent_frame[DEFAULT_FEATURE_COLUMNS].to_numpy())
+    )
+    calibration_metrics = classification_metrics(
+        calibration_frame["risk_label"].to_numpy(),
+        calibration_probabilities,
+    )
+    recent_metrics = classification_metrics(
+        recent_frame["risk_label"].to_numpy(),
+        recent_probabilities,
+    )
+    assessment = assess_calibration_drift(calibration_metrics, recent_metrics)
+    return assessment, CalibrationDriftMetadata(
+        status="degraded" if assessment.degraded else "stable",
+        event_rate_delta=assessment.event_rate_delta,
+        ece_delta=assessment.ece_delta,
+        brier_delta=assessment.brier_delta,
+        signals=list(assessment.signals),
+        degraded=assessment.degraded,
+        abstain=assessment.abstain,
+        trust_multiplier=assessment.trust_multiplier,
+        calibration_rows=len(calibration_frame),
+        recent_rows=len(recent_frame),
+        note=note,
+    )
 
 
 def fit_baseline_model(train_frame: pd.DataFrame) -> tuple[LogisticRiskModel, str]:

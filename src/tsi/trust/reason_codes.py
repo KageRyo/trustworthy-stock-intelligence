@@ -16,6 +16,7 @@ def reason_codes_for_prediction(
     trust_score: float,
     warning_level: WarningDecision,
     config: TrustDecisionConfig,
+    extra_reason_codes: Sequence[str] = (),
 ) -> tuple[str, ...]:
     """Generate concise audit reason codes for one warning decision."""
 
@@ -44,6 +45,7 @@ def reason_codes_for_prediction(
     else:
         codes.append("uncertainty_below_threshold")
 
+    codes.extend(str(code) for code in extra_reason_codes)
     codes.append(f"warning_level_{warning_level}")
     return tuple(codes)
 
@@ -55,6 +57,7 @@ def build_reason_codes(
     trust_scores: np.ndarray,
     warning_levels: Sequence[WarningDecision],
     config: TrustDecisionConfig,
+    extra_reason_codes: Sequence[str] = (),
 ) -> list[list[str]]:
     """Generate reason code lists for vectorized prediction outputs."""
 
@@ -75,6 +78,7 @@ def build_reason_codes(
                 trust_score=trust_score,
                 warning_level=level,
                 config=config,
+                extra_reason_codes=extra_reason_codes,
             )
         )
         for probability, uncertainty_score, trust_score, level in zip(
@@ -85,4 +89,3 @@ def build_reason_codes(
             strict=True,
         )
     ]
-

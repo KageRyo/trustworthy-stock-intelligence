@@ -598,5 +598,3 @@
     "The gate is evaluated at fold level and abstains a whole fold in this audit.",
     "Selective risk here is the observed positive-label rate among non-abstained folds.",
     "Serving integration and future rolling-window validation remain open work."
-  ]
-}

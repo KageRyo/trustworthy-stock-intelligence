@@ -53,6 +53,19 @@ func (s *FileStore) FindTicker(ticker string) (PredictionRecord, bool) {
 	return record, ok
 }
 
+func (s *FileStore) History(ticker string, limit int) ([]WarningHistoryRecord, error) {
+	if limit < 1 {
+		return []WarningHistoryRecord{}, nil
+	}
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	record, ok := s.byKey[strings.ToUpper(ticker)]
+	if !ok {
+		return []WarningHistoryRecord{}, nil
+	}
+	return []WarningHistoryRecord{HistoryRecordFromPrediction(record)}, nil
+}
+
 func (s *FileStore) Refresh() error {
 	info, err := os.Stat(s.path)
 	if err != nil {
@@ -136,6 +149,7 @@ func loadFile(path string) (PredictionBatch, map[string]PredictionRecord, time.T
 	if batch.RunID == "" {
 		batch.RunID = "unknown"
 	}
+	batch.CalibrationDrift = normalizeCalibrationDrift(batch.CalibrationDrift)
 	if batch.RecordCount != len(batch.Records) {
 		return PredictionBatch{}, nil, time.Time{}, fmt.Errorf(
 			"warnings file %q has record_count=%d but %d records",
@@ -149,10 +163,28 @@ func loadFile(path string) (PredictionBatch, map[string]PredictionRecord, time.T
 		record.RunID = batch.RunID
 		record.DataAsOf = batch.DataAsOf
 		record.GeneratedAt = batch.GeneratedAt
+		if record.FeatureAttributions == nil {
+			record.FeatureAttributions = []FeatureAttribution{}
+		}
 		batch.Records[index] = record
 		byKey[strings.ToUpper(record.Ticker)] = record
 	}
 	return batch, byKey, info.ModTime(), nil
+}
+
+func normalizeCalibrationDrift(metadata CalibrationDriftMetadata) CalibrationDriftMetadata {
+	if metadata.Status == "" {
+		metadata.Status = "not_evaluated"
+		metadata.Method = "calibration_drift_gate_v1"
+		metadata.TrustMultiplier = 1.0
+	}
+	if metadata.Method == "" {
+		metadata.Method = "calibration_drift_gate_v1"
+	}
+	if metadata.Signals == nil {
+		metadata.Signals = []string{}
+	}
+	return metadata
 }
 
 func formatTime(value time.Time) string {

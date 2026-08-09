@@ -10,20 +10,36 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from tsi.data.csv import read_ohlcv_csv
+from tsi.data.csv import file_sha256, read_ohlcv_csv
 from tsi.data.split import build_walk_forward_splits
+from tsi.data.universe import (
+    PointInTimeUniverse,
+    filter_frame_by_point_in_time_universe,
+    load_point_in_time_universe,
+)
 from tsi.evaluation.metrics import classification_metrics
 from tsi.features.technical import DEFAULT_FEATURE_COLUMNS, build_technical_features
 from tsi.labeling.drawdown import add_future_drawdown_label
 from tsi.labeling.warning_level import assign_warning_levels, select_alert_threshold
 from tsi.models.logistic import LogisticRiskModel
 from tsi.models.tree import TreeRiskModel
+from tsi.training.dataset import build_sequence_dataset
 from tsi.trust.calibration import CalibrationMethod, fit_probability_calibrator
+from tsi.trust.decision import compute_watch_threshold
 
 
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--input", type=Path, required=True, help="Path to OHLCV CSV input.")
+    parser.add_argument(
+        "--universe-membership",
+        type=Path,
+        default=None,
+        help="Optional point-in-time membership CSV used to filter rows by evaluation date.",
+    )
+    parser.add_argument("--universe-name", default="point_in_time")
+    parser.add_argument("--membership-source", default="")
+    parser.add_argument("--membership-source-license", default="")
     parser.add_argument(
         "--horizon",
         type=int,
@@ -93,6 +109,18 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         default="f1",
         help="Metric optimized on the calibration window when selecting alert thresholds.",
     )
+    parser.add_argument(
+        "--max-folds",
+        type=int,
+        default=None,
+        help="Optional fold cap for reproducible protocol-specific reruns.",
+    )
+    parser.add_argument(
+        "--sequence-lookback",
+        type=int,
+        default=None,
+        help="Require deep-model-eligible target rows with this lookback before baseline splitting.",
+    )
     return parser.parse_args(argv)
 
 
@@ -101,9 +129,12 @@ def prepare_training_frame(
     *,
     horizon: int,
     drawdown_threshold: float,
+    universe_membership: PointInTimeUniverse | None = None,
 ) -> pd.DataFrame:
     """Build features and labels, then drop rows that cannot be trained or evaluated."""
 
+    if universe_membership is not None:
+        ohlcv = filter_frame_by_point_in_time_universe(ohlcv, universe_membership)
     featured = build_technical_features(ohlcv)
     labeled = add_future_drawdown_label(
         featured,
@@ -131,11 +162,26 @@ def run_training(args: argparse.Namespace) -> dict[str, object]:
     """Train one logistic model per walk-forward fold and return metrics."""
 
     ohlcv = read_ohlcv_csv(args.input)
+    universe_membership = None
+    if args.universe_membership is not None:
+        universe_membership = load_point_in_time_universe(
+            args.universe_membership,
+            name=args.universe_name,
+            source=args.membership_source,
+            source_license=args.membership_source_license,
+        )
     training_frame = prepare_training_frame(
         ohlcv,
         horizon=args.horizon,
         drawdown_threshold=args.drawdown_threshold,
+        universe_membership=universe_membership,
     )
+    sequence_eligible_indices: set[int] | None = None
+    if args.sequence_lookback is not None:
+        sequence_eligible_indices = sequence_eligible_source_indices(
+            training_frame,
+            lookback=args.sequence_lookback,
+        )
     purge_size = args.horizon if args.purge_size is None else args.purge_size
     if purge_size < args.horizon:
         raise ValueError("purge_size must be at least horizon to prevent label-window leakage")
@@ -149,6 +195,10 @@ def run_training(args: argparse.Namespace) -> dict[str, object]:
         purge_size=purge_size,
         label_end_date_col="label_end_date",
     )
+    if args.max_folds is not None:
+        if args.max_folds < 1:
+            raise ValueError("max_folds must be at least 1")
+        folds = folds[: args.max_folds]
 
     calibration_method: CalibrationMethod = args.calibration_method
     fold_results: list[dict[str, object]] = []
@@ -157,6 +207,14 @@ def run_training(args: argparse.Namespace) -> dict[str, object]:
         train_frame = training_frame.loc[list(fold.train_index)]
         calibration_frame = training_frame.loc[list(fold.calibration_index)]
         test_frame = training_frame.loc[list(fold.test_index)]
+        if sequence_eligible_indices is not None:
+            train_frame = train_frame.loc[train_frame.index.isin(sequence_eligible_indices)]
+            calibration_frame = calibration_frame.loc[
+                calibration_frame.index.isin(sequence_eligible_indices)
+            ]
+            test_frame = test_frame.loc[test_frame.index.isin(sequence_eligible_indices)]
+        if train_frame.empty or calibration_frame.empty or test_frame.empty:
+            continue
         train_labels = train_frame["risk_label"].to_numpy()
         calibration_labels = calibration_frame["risk_label"].to_numpy()
         test_labels = test_frame["risk_label"].to_numpy()
@@ -201,7 +259,11 @@ def run_training(args: argparse.Namespace) -> dict[str, object]:
         warning_levels = assign_warning_levels(
             tuned_probabilities,
             alert_threshold=tuned_threshold,
-            watch_threshold=max(0.01, tuned_threshold * 0.5),
+            watch_threshold=compute_watch_threshold(
+                tuned_threshold,
+                watch_threshold_ratio=0.5,
+                min_watch_threshold=0.01,
+            ),
         )
         prediction_rows.append(
             test_frame.loc[:, ["date", "ticker", "risk_label"]]
@@ -314,6 +376,7 @@ def run_training(args: argparse.Namespace) -> dict[str, object]:
 
     return {
         "input": str(args.input),
+        "input_sha256": file_sha256(args.input),
         "model_type": args.model_type,
         "feature_columns": DEFAULT_FEATURE_COLUMNS,
         "horizon": args.horizon,
@@ -322,16 +385,39 @@ def run_training(args: argparse.Namespace) -> dict[str, object]:
         "calibration_size": args.calibration_size,
         "test_size": args.test_size,
         "step_size": args.step_size if args.step_size is not None else args.test_size,
+        "sequence_lookback": args.sequence_lookback,
+        "sequence_eligible_count": (
+            len(sequence_eligible_indices) if sequence_eligible_indices is not None else None
+        ),
         "drawdown_threshold": args.drawdown_threshold,
         "calibration_method": calibration_method,
         "threshold_objective": args.threshold_objective,
         "fold_count": len(fold_results),
         "rows_after_filtering": len(training_frame),
+        "universe_membership": (
+            universe_membership.manifest()
+            if universe_membership is not None
+            else {
+                "status": "not_supplied",
+                "note": "The benchmark uses the input snapshot without point-in-time membership filtering.",
+            }
+        ),
         "folds": fold_results,
         "summary": summary,
         "summary_std": summary_std,
         "predictions": predictions,
     }
+
+
+def sequence_eligible_source_indices(frame: pd.DataFrame, *, lookback: int) -> set[int]:
+    """Return target-row indices that the sequence trainer can represent exactly."""
+
+    dataset = build_sequence_dataset(
+        frame,
+        feature_columns=DEFAULT_FEATURE_COLUMNS,
+        lookback=lookback,
+    )
+    return set(dataset.metadata["source_index"].to_numpy(dtype=int))
 
 
 def build_baseline_model(args: argparse.Namespace) -> tuple[LogisticRiskModel | TreeRiskModel, str]:

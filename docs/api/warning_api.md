@@ -144,6 +144,46 @@ PostgreSQL-backed warning records, and returns the newly generated analysis.
 
 See `docs/api/analysis_api.md` for the response schema.
 
+### `GET /api/v1/analysis/{ticker}/history`
+
+Returns a chronological, PostgreSQL-backed history for the requested ticker.
+The dashboard uses this endpoint for risk, calibrated risk, trust, uncertainty,
+warning-level, and warning-transition timelines. The optional `limit` defaults
+to 90 records and accepts values from 1 through 3650.
+
+```json
+{
+  "schema_version": "warning_history.v1",
+  "ticker": "AAPL",
+  "record_count": 2,
+  "records": [
+    {
+      "run_id": "daily_2026_06_08",
+      "data_as_of": "2026-06-08",
+      "generated_at": "2026-06-08T22:00:00Z",
+      "date": "2026-06-06",
+      "ticker": "AAPL",
+      "model": "logistic_regression_latest",
+      "model_bundle": "baseline_daily_v1",
+      "risk_probability": 0.18,
+      "calibrated_risk_probability": 0.12,
+      "calibration_method": "platt",
+      "uncertainty_score": 0.43,
+      "trust_score": 0.09,
+      "alert_threshold": 0.20,
+      "watch_threshold": 0.16,
+      "warning_level": "watch",
+      "reason_codes": ["warning_level_watch"]
+    }
+  ]
+}
+```
+
+The API returns records in ascending prediction-date order so clients can plot
+the timeline without reordering. A ticker with one available warning record is
+still a valid history response; missing tickers return the same typed `404`
+error as the latest analysis endpoint.
+
 ### `GET /api/v1/models/current`
 
 Returns the model metadata from the current batch.
@@ -169,6 +209,20 @@ Returns the model metadata from the current batch.
   "data_as_of": "2026-06-08",
   "generated_at": "2026-06-10T00:00:00+00:00",
   "record_count": 101,
+  "calibration_drift": {
+    "status": "stable",
+    "method": "calibration_drift_gate_v1",
+    "event_rate_delta": 0.01,
+    "ece_delta": 0.02,
+    "brier_delta": 0.01,
+    "signals": [],
+    "degraded": false,
+    "abstain": false,
+    "trust_multiplier": 1.0,
+    "calibration_rows": 63,
+    "recent_rows": 21,
+    "note": "Compared a fitted calibration reference window with later labeled rows."
+  },
   "records": []
 }
 ```
@@ -193,6 +247,15 @@ Returns the model metadata from the current batch.
     "probability_above_watch_threshold",
     "trust_below_alert_threshold",
     "warning_level_watch"
+  ],
+  "feature_attributions": [
+    {
+      "feature": "return_1d",
+      "value": -0.021,
+      "contribution": 0.31,
+      "direction": "positive",
+      "method": "standardized_logit_v1"
+    }
   ]
 }
 ```

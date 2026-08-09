@@ -46,6 +46,25 @@ class CalibrationDriftAssessment:
         }
 
 
+def calibration_drift_reason_codes(
+    assessment: CalibrationDriftAssessment | None,
+    *,
+    evaluated: bool,
+) -> tuple[str, ...]:
+    """Return stable reason codes for a serving batch's drift state."""
+
+    if not evaluated or assessment is None:
+        return ("calibration_drift_not_evaluated",)
+    if not assessment.degraded:
+        return ("calibration_drift_stable",)
+
+    codes = ["calibration_drift_detected"]
+    codes.extend(f"calibration_drift_{signal}" for signal in assessment.signals)
+    if assessment.abstain:
+        codes.append("calibration_drift_abstain")
+    return tuple(codes)
+
+
 def assess_calibration_drift(
     calibration_metrics: Mapping[str, object],
     recent_metrics: Mapping[str, object],

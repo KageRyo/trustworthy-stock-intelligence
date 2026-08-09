@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 from scripts.audit_calibration_drift import build_drift_report
 
 
@@ -50,3 +53,15 @@ def test_drift_report_computes_coverage_after_abstention() -> None:
     assert report["aggregate"]["abstain_fold_ids"] == [0]
     assert report["aggregate"]["coverage"] == 0.5
     assert report["aggregate"]["selective_risk"] == 0.1
+
+
+def test_experiment_007_regime_shift_fold_is_detected() -> None:
+    path = Path("experiments/007_research_evidence/runs/sp100_logistic_platt_purged/summary.json")
+    summary = json.loads(path.read_text(encoding="utf-8"))
+
+    report = build_drift_report(summary)
+
+    fold = next(item for item in report["folds"] if item["fold_id"] == 15)
+    assert fold["degraded"] is True
+    assert fold["abstain"] is True
+    assert report["aggregate"]["coverage"] < 1.0

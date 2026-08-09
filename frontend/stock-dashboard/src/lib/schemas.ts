@@ -2,12 +2,39 @@ import { z } from "zod";
 
 export const warningLevelSchema = z.enum(["alert", "watch", "abstain", "no_alert"]);
 
+export const calibrationDriftSchema = z
+  .object({
+    status: z.enum(["not_evaluated", "stable", "degraded"]),
+    method: z.string(),
+    event_rate_delta: z.number().nullable(),
+    ece_delta: z.number().nullable(),
+    brier_delta: z.number().nullable(),
+    signals: z.array(z.string()),
+    degraded: z.boolean(),
+    abstain: z.boolean(),
+    trust_multiplier: z.number().min(0).max(1),
+    calibration_rows: z.number().int().nonnegative(),
+    recent_rows: z.number().int().nonnegative(),
+    note: z.string()
+  })
+  .strict();
+
 export const reasonExplanationSchema = z
   .object({
     code: z.string(),
     severity: z.enum(["info", "watch", "alert"]),
     title: z.string(),
     detail: z.string()
+  })
+  .strict();
+
+export const featureAttributionSchema = z
+  .object({
+    feature: z.string(),
+    value: z.number().nullable(),
+    contribution: z.number(),
+    direction: z.enum(["positive", "negative", "neutral"]),
+    method: z.string()
   })
   .strict();
 
@@ -62,8 +89,40 @@ export const tickerAnalysisSchema = z
     trust: trustAssessmentSchema,
     model: modelAnalysisSchema,
     data_freshness: dataFreshnessSchema,
+    calibration_drift: calibrationDriftSchema,
     reasons: z.array(reasonExplanationSchema),
+    feature_attributions: z.array(featureAttributionSchema).optional(),
     limitations: z.array(z.string())
+  })
+  .strict();
+
+export const warningHistoryRecordSchema = z
+  .object({
+    run_id: z.string(),
+    data_as_of: z.string(),
+    generated_at: z.string(),
+    date: z.string(),
+    ticker: z.string(),
+    model: z.string(),
+    model_bundle: z.string(),
+    risk_probability: z.number().min(0).max(1),
+    calibrated_risk_probability: z.number().min(0).max(1),
+    calibration_method: z.string(),
+    uncertainty_score: z.number().min(0).max(1),
+    trust_score: z.number().min(0).max(1),
+    alert_threshold: z.number().min(0).max(1),
+    watch_threshold: z.number().min(0).max(1),
+    warning_level: warningLevelSchema,
+    reason_codes: z.array(z.string())
+  })
+  .strict();
+
+export const warningHistorySchema = z
+  .object({
+    schema_version: z.literal("warning_history.v1"),
+    ticker: z.string(),
+    record_count: z.number().int().nonnegative(),
+    records: z.array(warningHistoryRecordSchema)
   })
   .strict();
 
@@ -81,7 +140,8 @@ export const predictionRecordSchema = z
     alert_threshold: z.number().min(0).max(1),
     watch_threshold: z.number().min(0).max(1),
     warning_level: warningLevelSchema,
-    reason_codes: z.array(z.string())
+    reason_codes: z.array(z.string()),
+    feature_attributions: z.array(featureAttributionSchema).optional()
   })
   .strict();
 
@@ -92,6 +152,7 @@ export const predictionBatchSchema = z
     data_as_of: z.string(),
     generated_at: z.string(),
     record_count: z.number().int().nonnegative(),
+    calibration_drift: calibrationDriftSchema,
     records: z.array(predictionRecordSchema)
   })
   .strict();
@@ -188,8 +249,12 @@ export const apiErrorSchema = z
   .strict();
 
 export type WarningLevel = z.infer<typeof warningLevelSchema>;
+export type CalibrationDriftMetadata = z.infer<typeof calibrationDriftSchema>;
 export type ReasonExplanation = z.infer<typeof reasonExplanationSchema>;
+export type FeatureAttribution = z.infer<typeof featureAttributionSchema>;
 export type TickerAnalysis = z.infer<typeof tickerAnalysisSchema>;
+export type WarningHistory = z.infer<typeof warningHistorySchema>;
+export type WarningHistoryRecord = z.infer<typeof warningHistoryRecordSchema>;
 export type PredictionRecord = z.infer<typeof predictionRecordSchema>;
 export type PredictionBatch = z.infer<typeof predictionBatchSchema>;
 export type TickerSummary = z.infer<typeof tickerSummarySchema>;

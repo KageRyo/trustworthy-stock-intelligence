@@ -1,8 +1,10 @@
 package warnings
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 )
@@ -71,6 +73,53 @@ func TestFileStoreLoadsPredictionBatch(t *testing.T) {
 	}
 	if batch.Records[0].Ticker != "AAPL" {
 		t.Fatalf("first ticker = %q, want AAPL", batch.Records[0].Ticker)
+	}
+}
+
+func TestDecodeCalibrationDriftReadsBatchMetadata(t *testing.T) {
+	metadata, err := decodeCalibrationDrift([]byte(`{
+    "source_schema": "v1",
+    "calibration_drift": {
+      "status": "degraded",
+      "method": "calibration_drift_gate_v1",
+      "signals": ["event_rate_shift"],
+      "degraded": true,
+      "abstain": false,
+      "trust_multiplier": 0.5,
+      "calibration_rows": 63,
+      "recent_rows": 21,
+      "note": "fixture"
+    }
+  }`))
+	if err != nil {
+		t.Fatalf("decodeCalibrationDrift returned error: %v", err)
+	}
+	if metadata.Status != "degraded" || metadata.TrustMultiplier != 0.5 {
+		t.Fatalf("unexpected drift metadata: %+v", metadata)
+	}
+	if len(metadata.Signals) != 1 || metadata.Signals[0] != "event_rate_shift" {
+		t.Fatalf("unexpected drift signals: %+v", metadata.Signals)
+	}
+}
+
+func TestPredictionBatchJSONIncludesCalibrationDrift(t *testing.T) {
+	batch := PredictionBatch{
+		SchemaVersion: "v1",
+		RunID:         "run",
+		CalibrationDrift: CalibrationDriftMetadata{
+			Status:          "stable",
+			Method:          "calibration_drift_gate_v1",
+			Signals:         []string{},
+			TrustMultiplier: 1.0,
+		},
+		Records: []PredictionRecord{},
+	}
+	payload, err := json.Marshal(batch)
+	if err != nil {
+		t.Fatalf("marshal batch: %v", err)
+	}
+	if !strings.Contains(string(payload), `"calibration_drift"`) {
+		t.Fatalf("batch JSON missing calibration_drift: %s", payload)
 	}
 }
 

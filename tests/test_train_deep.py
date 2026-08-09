@@ -41,6 +41,7 @@ def test_parse_args_supports_trust_score_method() -> None:
     assert args.trust_score_method == "subtractive"
     assert args.model_output is None
     assert args.purge_size is None
+    assert args.universe_membership is None
 
     args = train_deep.parse_args(
         [
@@ -50,11 +51,17 @@ def test_parse_args_supports_trust_score_method() -> None:
             "multiplicative",
             "--model-output",
             "bundle",
+            "--universe-membership",
+            "membership.csv",
+            "--universe-name",
+            "sp100_point_in_time",
         ]
     )
 
     assert args.trust_score_method == "multiplicative"
     assert str(args.model_output) == "bundle"
+    assert str(args.universe_membership) == "membership.csv"
+    assert args.universe_name == "sp100_point_in_time"
 
 
 def test_build_prediction_frame_matches_baseline_schema() -> None:

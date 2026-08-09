@@ -243,6 +243,35 @@ paths:
           $ref: "#/components/responses/NotFound"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
+  /api/v1/analysis/{ticker}/history:
+    get:
+      tags: [Analysis]
+      summary: Read historical risk and trust observations for a ticker.
+      description: Returns chronological warning observations retained in PostgreSQL.
+      operationId: getTickerWarningHistory
+      parameters:
+        - $ref: "#/components/parameters/TickerPath"
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 3650
+            default: 90
+      responses:
+        "200":
+          description: Chronological ticker warning history.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WarningHistoryResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
   /api/v1/models/current:
     get:
       tags: [Models]
@@ -400,6 +429,7 @@ components:
         - data_as_of
         - generated_at
         - record_count
+        - calibration_drift
         - records
       properties:
         schema_version:
@@ -414,6 +444,8 @@ components:
         record_count:
           type: integer
           minimum: 0
+        calibration_drift:
+          $ref: "#/components/schemas/CalibrationDriftMetadata"
         records:
           type: array
           items:
@@ -435,6 +467,7 @@ components:
         - watch_threshold
         - warning_level
         - reason_codes
+        - feature_attributions
       properties:
         date:
           type: string
@@ -477,6 +510,10 @@ components:
           type: array
           items:
             type: string
+        feature_attributions:
+          type: array
+          items:
+            $ref: "#/components/schemas/FeatureAttribution"
     TickerListResponse:
       type: object
       additionalProperties: false
@@ -639,7 +676,9 @@ components:
         - trust
         - model
         - data_freshness
+        - calibration_drift
         - reasons
+        - feature_attributions
         - limitations
       properties:
         schema_version:
@@ -664,14 +703,131 @@ components:
           $ref: "#/components/schemas/ModelAnalysis"
         data_freshness:
           $ref: "#/components/schemas/DataFreshness"
+        calibration_drift:
+          $ref: "#/components/schemas/CalibrationDriftMetadata"
         reasons:
           type: array
           items:
             $ref: "#/components/schemas/ReasonExplanation"
+        feature_attributions:
+          type: array
+          items:
+            $ref: "#/components/schemas/FeatureAttribution"
         limitations:
           type: array
           items:
             type: string
+    WarningHistoryResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - schema_version
+        - ticker
+        - record_count
+        - records
+      properties:
+        schema_version:
+          type: string
+          const: warning_history.v1
+        ticker:
+          type: string
+        record_count:
+          type: integer
+          minimum: 0
+        records:
+          type: array
+          items:
+            $ref: "#/components/schemas/WarningHistoryRecord"
+    WarningHistoryRecord:
+      type: object
+      additionalProperties: false
+      required:
+        - run_id
+        - data_as_of
+        - generated_at
+        - date
+        - ticker
+        - model
+        - model_bundle
+        - risk_probability
+        - calibrated_risk_probability
+        - calibration_method
+        - uncertainty_score
+        - trust_score
+        - alert_threshold
+        - watch_threshold
+        - warning_level
+        - reason_codes
+      properties:
+        run_id:
+          type: string
+        data_as_of:
+          type: string
+        generated_at:
+          type: string
+        date:
+          type: string
+          format: date
+        ticker:
+          type: string
+        model:
+          type: string
+        model_bundle:
+          type: string
+        risk_probability:
+          type: number
+          minimum: 0
+          maximum: 1
+        calibrated_risk_probability:
+          type: number
+          minimum: 0
+          maximum: 1
+        calibration_method:
+          type: string
+        uncertainty_score:
+          type: number
+          minimum: 0
+          maximum: 1
+        trust_score:
+          type: number
+          minimum: 0
+          maximum: 1
+        alert_threshold:
+          type: number
+          minimum: 0
+          maximum: 1
+        watch_threshold:
+          type: number
+          minimum: 0
+          maximum: 1
+        warning_level:
+          $ref: "#/components/schemas/WarningLevel"
+        reason_codes:
+          type: array
+          items:
+            type: string
+    FeatureAttribution:
+      type: object
+      additionalProperties: false
+      required:
+        - feature
+        - value
+        - contribution
+        - direction
+        - method
+      properties:
+        feature:
+          type: string
+        value:
+          type: [number, "null"]
+        contribution:
+          type: number
+        direction:
+          type: string
+          enum: [positive, negative, neutral]
+        method:
+          type: string
+      description: Model-specific contribution; it is not a causal explanation.
     WarningAnalysis:
       type: object
       additionalProperties: false
@@ -729,6 +885,54 @@ components:
         uncertainty_status:
           type: string
         summary:
+          type: string
+    CalibrationDriftMetadata:
+      type: object
+      additionalProperties: false
+      required:
+        - status
+        - method
+        - event_rate_delta
+        - ece_delta
+        - brier_delta
+        - signals
+        - degraded
+        - abstain
+        - trust_multiplier
+        - calibration_rows
+        - recent_rows
+        - note
+      properties:
+        status:
+          type: string
+          enum: [not_evaluated, stable, degraded]
+        method:
+          type: string
+        event_rate_delta:
+          type: [number, "null"]
+        ece_delta:
+          type: [number, "null"]
+        brier_delta:
+          type: [number, "null"]
+        signals:
+          type: array
+          items:
+            type: string
+        degraded:
+          type: boolean
+        abstain:
+          type: boolean
+        trust_multiplier:
+          type: number
+          minimum: 0
+          maximum: 1
+        calibration_rows:
+          type: integer
+          minimum: 0
+        recent_rows:
+          type: integer
+          minimum: 0
+        note:
           type: string
     ModelAnalysis:
       type: object

@@ -14,7 +14,21 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 WarningLevel = Literal["alert", "watch", "abstain", "no_alert"]
+AttributionDirection = Literal["positive", "negative", "neutral"]
+CalibrationDriftStatus = Literal["not_evaluated", "stable", "degraded"]
 DEFAULT_SCHEMA_VERSION = "v1"
+
+
+class FeatureAttribution(BaseModel):
+    """One model-specific, non-causal feature contribution."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    feature: str
+    value: float | None = None
+    contribution: float
+    direction: AttributionDirection
+    method: str
 
 
 class PredictionRecord(BaseModel):
@@ -35,6 +49,26 @@ class PredictionRecord(BaseModel):
     watch_threshold: float = Field(ge=0.0, le=1.0)
     warning_level: WarningLevel
     reason_codes: list[str]
+    feature_attributions: list[FeatureAttribution] = Field(default_factory=list)
+
+
+class CalibrationDriftMetadata(BaseModel):
+    """Serving metadata for the chronological calibration-drift gate."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    status: CalibrationDriftStatus = "not_evaluated"
+    method: str = "calibration_drift_gate_v1"
+    event_rate_delta: float | None = None
+    ece_delta: float | None = None
+    brier_delta: float | None = None
+    signals: list[str] = Field(default_factory=list)
+    degraded: bool = False
+    abstain: bool = False
+    trust_multiplier: float = Field(default=1.0, ge=0.0, le=1.0)
+    calibration_rows: int = Field(default=0, ge=0)
+    recent_rows: int = Field(default=0, ge=0)
+    note: str = ""
 
 
 class PredictionBatch(BaseModel):
@@ -47,6 +81,7 @@ class PredictionBatch(BaseModel):
     data_as_of: str = ""
     generated_at: str = Field(default_factory=lambda: datetime.now(UTC).isoformat())
     record_count: int | None = None
+    calibration_drift: CalibrationDriftMetadata = Field(default_factory=CalibrationDriftMetadata)
     records: list[PredictionRecord]
 
     def model_post_init(self, __context: object) -> None:
@@ -67,6 +102,7 @@ def build_prediction_batch(
     generated_at: str | None = None,
     run_id: str | None = None,
     data_as_of: str | None = None,
+    calibration_drift: CalibrationDriftMetadata | dict[str, object] | None = None,
 ) -> PredictionBatch:
     """Build a serving JSON batch from prediction rows."""
 
@@ -104,6 +140,7 @@ def build_prediction_batch(
             watch_threshold=float(row["watch_threshold"]),
             warning_level=row["warning_level"],
             reason_codes=list(row["reason_codes"]),
+            feature_attributions=list(row.get("feature_attributions", [])),
         )
         for _, row in frame.iterrows()
     ]
@@ -111,6 +148,7 @@ def build_prediction_batch(
         run_id=run_id or _infer_run_id(frame),
         data_as_of=data_as_of or _infer_data_as_of(frame),
         generated_at=generated_at or datetime.now(UTC).isoformat(),
+        calibration_drift=calibration_drift or CalibrationDriftMetadata(),
         records=records,
     )
 

@@ -26,6 +26,20 @@ func writeRouterFixture(t *testing.T) string {
   "data_as_of": "2026-06-08",
   "generated_at": "2026-06-10T00:00:00+00:00",
   "record_count": 2,
+  "calibration_drift": {
+    "status": "degraded",
+    "method": "calibration_drift_gate_v1",
+    "event_rate_delta": 0.31,
+    "ece_delta": 0.08,
+    "brier_delta": 0.06,
+    "signals": ["event_rate_shift", "ece_increase"],
+    "degraded": true,
+    "abstain": true,
+    "trust_multiplier": 0.5,
+    "calibration_rows": 63,
+    "recent_rows": 21,
+    "note": "fixture"
+  },
   "records": [
     {
       "date": "2026-06-08",
@@ -45,6 +59,15 @@ func writeRouterFixture(t *testing.T) string {
         "trust_below_alert_threshold",
         "uncertainty_below_threshold",
         "warning_level_watch"
+      ],
+      "feature_attributions": [
+        {
+          "feature": "return_1d",
+          "value": -0.02,
+          "contribution": 0.31,
+          "direction": "positive",
+          "method": "standardized_logit_v1"
+        }
       ]
     },
     {
@@ -489,6 +512,9 @@ func TestTickerAnalysisHandler(t *testing.T) {
 			payload.Warning.CalibratedRiskProbability,
 		)
 	}
+	if payload.CalibrationDrift.Status != "degraded" || !payload.CalibrationDrift.Abstain {
+		t.Fatalf("unexpected calibration drift metadata: %+v", payload.CalibrationDrift)
+	}
 	if payload.Trust.TrustStatus != "limited_trust" {
 		t.Fatalf("trust status = %q, want limited_trust", payload.Trust.TrustStatus)
 	}
@@ -513,6 +539,45 @@ func TestTickerAnalysisHandler(t *testing.T) {
 	}
 	if len(payload.Limitations) == 0 {
 		t.Fatal("expected limitations")
+	}
+	if len(payload.FeatureAttributions) != 1 || payload.FeatureAttributions[0].Feature != "return_1d" {
+		t.Fatalf("unexpected feature attributions: %+v", payload.FeatureAttributions)
+	}
+}
+
+func TestTickerWarningHistoryHandler(t *testing.T) {
+	response := getJSON(t, testRouter(t), "/api/v1/analysis/aapl/history?limit=10")
+
+	if response.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200", response.Code)
+	}
+	var payload WarningHistoryResponse
+	if err := json.NewDecoder(response.Body).Decode(&payload); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if payload.SchemaVersion != "warning_history.v1" || payload.Ticker != "AAPL" {
+		t.Fatalf("unexpected history metadata: %+v", payload)
+	}
+	if payload.RecordCount != 1 || len(payload.Records) != 1 {
+		t.Fatalf("record_count = %d, records = %d, want one", payload.RecordCount, len(payload.Records))
+	}
+	if payload.Records[0].Ticker != "AAPL" || payload.Records[0].WarningLevel != "watch" {
+		t.Fatalf("unexpected history record: %+v", payload.Records[0])
+	}
+}
+
+func TestTickerWarningHistoryHandlerRejectsInvalidLimit(t *testing.T) {
+	response := getJSON(t, testRouter(t), "/api/v1/analysis/AAPL/history?limit=0")
+
+	if response.Code != http.StatusBadRequest {
+		t.Fatalf("status = %d, want 400", response.Code)
+	}
+	var payload ErrorResponse
+	if err := json.NewDecoder(response.Body).Decode(&payload); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if payload.Error.Code != "invalid_history_limit" {
+		t.Fatalf("error code = %q, want invalid_history_limit", payload.Error.Code)
 	}
 }
 
@@ -541,6 +606,7 @@ func TestBuildTickerAnalysisPrefersRecordMetadata(t *testing.T) {
 			DataAsOf:    "2026-06-20",
 			GeneratedAt: "2026-06-20T08:47:11Z",
 		},
+		warnings.CalibrationDriftMetadata{Status: "stable", Method: "calibration_drift_gate_v1"},
 	)
 
 	if payload.RunID != "record_run" {
@@ -559,6 +625,17 @@ func TestExplainReasonCodeSupportsInsufficientHistory(t *testing.T) {
 	}
 	if !strings.Contains(strings.ToLower(reason.Detail), "not enough labeled history") {
 		t.Fatalf("unexpected detail: %+v", reason)
+	}
+}
+
+func TestTrustStatusDoesNotClaimAlertTrustDuringCalibrationDrift(t *testing.T) {
+	status := trustStatus([]string{
+		"trust_above_alert_threshold",
+		"calibration_drift_detected",
+	})
+
+	if status != "limited_trust" {
+		t.Fatalf("trust status = %q, want limited_trust", status)
 	}
 }
 
@@ -1036,6 +1113,20 @@ func (s *mutableWarningStore) Batch() warnings.PredictionBatch {
 func (s *mutableWarningStore) FindTicker(ticker string) (warnings.PredictionRecord, bool) {
 	record, ok := s.records[strings.ToUpper(ticker)]
 	return record, ok
+}
+
+func (s *mutableWarningStore) History(
+	ticker string,
+	limit int,
+) ([]warnings.WarningHistoryRecord, error) {
+	if limit < 1 {
+		return []warnings.WarningHistoryRecord{}, nil
+	}
+	record, ok := s.FindTicker(ticker)
+	if !ok {
+		return []warnings.WarningHistoryRecord{}, nil
+	}
+	return []warnings.WarningHistoryRecord{warnings.HistoryRecordFromPrediction(record)}, nil
 }
 
 func (s *mutableWarningStore) Refresh() error {

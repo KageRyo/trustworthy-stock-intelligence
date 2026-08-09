@@ -9,9 +9,9 @@ from __future__ import annotations
 import json
 import os
 import re
-from hashlib import sha256
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
+from hashlib import sha256
 from pathlib import Path
 from typing import Iterable, Literal
 from urllib.parse import urlencode
@@ -440,6 +440,139 @@ def download_ticker_list(
         row_count=len(result.ohlcv),
         start=start,
         end=end,
+        output_dir=str(output_dir),
+        ohlcv_path=str(ohlcv_path),
+        tickers_path=str(tickers_path),
+        metadata_path=str(metadata_path),
+    )
+
+
+def combine_download_artifacts(
+    input_dirs: list[Path],
+    output_dir: Path,
+    *,
+    dataset_name: str,
+) -> DownloadResult:
+    """Combine compatible explicit-ticker download artifacts without losing provenance.
+
+    This is intended for research samples that deliberately use distinct market
+    resolvers, such as TWSE and TPEx.  It refuses mixed date ranges, intervals,
+    ticker definitions, and overlapping OHLCV rows instead of silently
+    de-duplicating them.
+    """
+
+    if not input_dirs:
+        raise ValueError("input_dirs must not be empty")
+
+    components: list[dict[str, object]] = []
+    ohlcv_frames: list[pd.DataFrame] = []
+    ticker_frames: list[pd.DataFrame] = []
+    expected_start: str | None = None
+    expected_end: str | None = None
+    expected_interval: str | None = None
+
+    for input_dir in input_dirs:
+        metadata_path = input_dir / "metadata.json"
+        ohlcv_path = input_dir / "ohlcv.csv"
+        tickers_path = input_dir / "tickers.csv"
+        missing = [str(path) for path in (metadata_path, ohlcv_path, tickers_path) if not path.is_file()]
+        if missing:
+            raise ValueError(f"download artifact is incomplete: {', '.join(missing)}")
+
+        metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+        if not isinstance(metadata, dict):
+            raise ValueError(f"{metadata_path} must contain a JSON object")
+        start = metadata.get("start")
+        end = metadata.get("end")
+        interval = metadata.get("interval")
+        if not isinstance(start, str) or not isinstance(interval, str):
+            raise ValueError(f"{metadata_path} is missing a string start or interval")
+        if end is not None and not isinstance(end, str):
+            raise ValueError(f"{metadata_path} has an invalid end")
+        if expected_start is None:
+            expected_start, expected_end, expected_interval = start, end, interval
+        elif (start, end, interval) != (expected_start, expected_end, expected_interval):
+            raise ValueError("download artifacts must share start, end, and interval")
+
+        ohlcv = pd.read_csv(ohlcv_path, dtype={"ticker": "string"})
+        missing_columns = [column for column in OHLCV_COLUMNS if column not in ohlcv.columns]
+        if missing_columns:
+            raise ValueError(f"{ohlcv_path} is missing OHLCV columns: {missing_columns}")
+        ohlcv = ohlcv.loc[:, OHLCV_COLUMNS]
+        if ohlcv.empty:
+            raise ValueError(f"{ohlcv_path} is empty")
+
+        tickers = pd.read_csv(tickers_path, dtype={"ticker": "string"})
+        ticker_columns = ["ticker", "query_symbol", "market"]
+        missing_ticker_columns = [column for column in ticker_columns if column not in tickers.columns]
+        if missing_ticker_columns:
+            raise ValueError(f"{tickers_path} is missing ticker columns: {missing_ticker_columns}")
+        tickers = tickers.loc[:, ticker_columns]
+        ohlcv_tickers = set(ohlcv["ticker"].astype(str))
+        defined_tickers = set(tickers["ticker"].astype(str))
+        if ohlcv_tickers != defined_tickers:
+            raise ValueError(f"{input_dir} has incompatible OHLCV and ticker definitions")
+
+        components.append(
+            {
+                "universe": metadata.get("universe"),
+                "ohlcv_sha256": metadata.get("ohlcv_sha256"),
+                "tickers_sha256": metadata.get("tickers_sha256"),
+                "ticker_count": metadata.get("ticker_count"),
+                "row_count": metadata.get("row_count"),
+            }
+        )
+        ohlcv_frames.append(ohlcv)
+        ticker_frames.append(tickers)
+
+    combined_ohlcv = pd.concat(ohlcv_frames, ignore_index=True)
+    duplicate_rows = combined_ohlcv.duplicated(subset=["date", "ticker"], keep=False)
+    if duplicate_rows.any():
+        duplicate_count = int(duplicate_rows.sum())
+        raise ValueError(f"combined artifacts contain {duplicate_count} overlapping ticker-date rows")
+    combined_ohlcv = combined_ohlcv.sort_values(["ticker", "date"]).reset_index(drop=True)
+
+    combined_tickers = pd.concat(ticker_frames, ignore_index=True)
+    duplicate_tickers = combined_tickers["ticker"].duplicated(keep=False)
+    if duplicate_tickers.any():
+        duplicate_count = int(duplicate_tickers.sum())
+        raise ValueError(f"combined artifacts contain {duplicate_count} duplicate ticker definitions")
+    combined_tickers = combined_tickers.sort_values("ticker").reset_index(drop=True)
+
+    if expected_start is None or expected_interval is None:
+        raise AssertionError("at least one validated download artifact is required")
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+    ohlcv_path = output_dir / "ohlcv.csv"
+    tickers_path = output_dir / "tickers.csv"
+    metadata_path = output_dir / "metadata.json"
+    combined_ohlcv.to_csv(ohlcv_path, index=False)
+    combined_tickers.to_csv(tickers_path, index=False)
+
+    metadata = {
+        "universe": dataset_name,
+        "source": "Combined explicit-ticker component downloads",
+        "downloaded_at_utc": datetime.now(UTC).isoformat(),
+        "start": expected_start,
+        "end": expected_end,
+        "interval": expected_interval,
+        "ticker_count": int(len(combined_tickers)),
+        "downloaded_ticker_count": int(combined_ohlcv["ticker"].nunique()),
+        "row_count": int(len(combined_ohlcv)),
+        "columns": OHLCV_COLUMNS,
+        "ohlcv_sha256": file_sha256(ohlcv_path),
+        "tickers_sha256": file_sha256(tickers_path),
+        "components": components,
+        "research_note": "Component data remain subject to their provider terms and pilot limits.",
+    }
+    metadata_path.write_text(json.dumps(metadata, indent=2), encoding="utf-8")
+
+    return DownloadResult(
+        universe=dataset_name,
+        ticker_count=int(len(combined_tickers)),
+        row_count=int(len(combined_ohlcv)),
+        start=expected_start,
+        end=expected_end,
         output_dir=str(output_dir),
         ohlcv_path=str(ohlcv_path),
         tickers_path=str(tickers_path),

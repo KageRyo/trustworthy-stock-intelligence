@@ -1,0 +1,56 @@
+{
+  "experiment_id": "009_taiwan_pilot",
+  "status": "pilot_partial_issue_23",
+  "base_git_commit": "6532f2d257c1f79b2d249c3162c83d7a37a3591b",
+  "snapshot": {
+    "provider": "Yahoo Finance via yfinance",
+    "downloaded_at_utc": "2026-08-08T19:31:55.083553+00:00",
+    "requested_start": "2015-01-01",
+    "interval": "1d",
+    "tickers": ["2330", "2317", "2454", "2881", "2882", "0050"],
+    "row_count": 16921,
+    "downloaded_ticker_count": 6,
+    "ohlcv_sha256": "2bd86eea9c5411d75b3f1920c55ea218c2fe06255d887391578770890b341c5f",
+    "tickers_sha256": "ad35f2e64297b83bdfef3dad4975cf1f22b3fffcd2e91ba4c72322c4ceec178d"
+  },
+  "protocol": {
+    "horizon": 5,
+    "drawdown_threshold": -0.05,
+    "train_size": 252,
+    "calibration_size": 63,
+    "test_size": 63,
+    "purge_size": 5,
+    "step_size": 63,
+    "calibration_method": "platt",
+    "threshold_objective": "f1",
+    "fold_count": 39,
+    "rows_after_filtering": 16828,
+    "shared_test_rows": 14734,
+    "shared_sample_fingerprint_sha256": "fab43a5c11bb55890ba33e2f486406239f9158619f306b09eb272538a9f1d536"
+  },
+  "models": [
+    {
+      "model": "logistic_regression",
+      "hyperparameters": {},
+      "calibrated": {"auc": 0.5176945828, "pr_auc": 0.1004328150, "brier_score": 0.0710445106, "ece": 0.0619973317},
+      "tuned": {"precision": 0.1003222927, "recall": 0.3485077397, "f1": 0.1264288785, "false_discovery_rate": 0.8996777073}
+    },
+    {
+      "model": "random_forest",
+      "hyperparameters": {"n_estimators": 100},
+      "calibrated": {"auc": 0.5098348114, "pr_auc": 0.0924178371, "brier_score": 0.0717535328, "ece": 0.0635018742},
+      "tuned": {"precision": 0.0781423164, "recall": 0.3655105562, "f1": 0.0967137789, "false_discovery_rate": 0.9218576836}
+    },
+    {
+      "model": "hist_gradient_boosting",
+      "hyperparameters": {"max_iter": 100},
+      "calibrated": {"auc": 0.5100562070, "pr_auc": 0.1015860232, "brier_score": 0.0717824075, "ece": 0.0636238102},
+      "tuned": {"precision": 0.0778981120, "recall": 0.3850235339, "f1": 0.1066479313, "false_discovery_rate": 0.9221018880}
+    }
+  ],
+  "known_gaps": [
+    "Full Taiwan universe and point-in-time membership source are not included.",
+    "TPEx listed and TPEx emerging symbols are supported by ingestion code but not in this run.",
+    "Cross-market transfer and deep-model row-key alignment remain open."
+  ]
+}

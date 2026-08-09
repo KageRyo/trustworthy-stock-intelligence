@@ -1,0 +1,85 @@
+{
+  "experiment_id": "010_cross_market_transfer",
+  "status": "pilot_partial_issue_24",
+  "protocol": {
+    "model": "logistic_regression",
+    "feature_columns": [
+      "return_1d",
+      "return_5d",
+      "sma_5_gap",
+      "sma_10_gap",
+      "volatility_5d",
+      "volatility_10d",
+      "volume_ratio_5d"
+    ],
+    "horizon": 5,
+    "drawdown_threshold": -0.05,
+    "train_size": 252,
+    "calibration_size": 63,
+    "test_size": 63,
+    "purge_size": 5,
+    "step_size": 63,
+    "calibration_method": "platt",
+    "threshold_objective": "f1",
+    "evaluated_folds": 39
+  },
+  "snapshots": {
+    "us": {
+      "name": "sp100",
+      "provider": "Yahoo Finance via yfinance",
+      "downloaded_at_utc": "2026-05-08T02:50:28.018207+00:00",
+      "raw_rows": 283289,
+      "ticker_count": 101,
+      "ohlcv_sha256": "6b1357c8414888cb0a467eb717df0261ff69bd3b8e9b0244ff115be820395ba6",
+      "tickers_sha256": "3023bcc40e666c0151ac3aeb895aae9f8d1f04f9da6db01977a1f8204ef2d890"
+    },
+    "taiwan": {
+      "name": "taiwan_pilot",
+      "provider": "Yahoo Finance via yfinance",
+      "downloaded_at_utc": "2026-08-08T19:31:55.083553+00:00",
+      "raw_rows": 16921,
+      "ticker_count": 6,
+      "ohlcv_sha256": "2bd86eea9c5411d75b3f1920c55ea218c2fe06255d887391578770890b341c5f",
+      "tickers_sha256": "ad35f2e64297b83bdfef3dad4975cf1f22b3fffcd2e91ba4c72322c4ceec178d"
+    }
+  },
+  "evaluations": [
+    {
+      "source_market": "us",
+      "target_market": "us",
+      "kind": "within_market",
+      "target_calibrated": {"auc": 0.608615, "pr_auc": 0.153983, "brier_score": 0.091688, "ece": 0.054641},
+      "target_tuned": {"f1": 0.207657, "false_discovery_rate": 0.853108},
+      "calibration_degradation": {"event_rate_delta": 0.001175, "brier_delta": 0.007920, "ece_delta": 0.049879}
+    },
+    {
+      "source_market": "taiwan",
+      "target_market": "taiwan",
+      "kind": "within_market",
+      "target_calibrated": {"auc": 0.517695, "pr_auc": 0.100433, "brier_score": 0.071045, "ece": 0.061997},
+      "target_tuned": {"f1": 0.126429, "false_discovery_rate": 0.899678},
+      "calibration_degradation": {"event_rate_delta": 0.001762, "brier_delta": 0.008998, "ece_delta": 0.057139}
+    },
+    {
+      "source_market": "us",
+      "target_market": "taiwan",
+      "kind": "cross_market",
+      "target_calibrated": {"auc": 0.639657, "pr_auc": 0.128819, "brier_score": 0.067551, "ece": 0.065520},
+      "target_tuned": {"f1": 0.146156, "false_discovery_rate": 0.898807},
+      "calibration_degradation": {"event_rate_delta": -0.031215, "brier_delta": -0.016216, "ece_delta": 0.060758}
+    },
+    {
+      "source_market": "taiwan",
+      "target_market": "us",
+      "kind": "cross_market",
+      "target_calibrated": {"auc": 0.555737, "pr_auc": 0.139518, "brier_score": 0.096102, "ece": 0.058247},
+      "target_tuned": {"f1": 0.179883, "false_discovery_rate": 0.862113},
+      "calibration_degradation": {"event_rate_delta": 0.032654, "brier_delta": 0.034055, "ece_delta": 0.053389}
+    }
+  ],
+  "known_gaps": [
+    "Taiwan coverage is six current TWSE symbols, not a full or point-in-time universe.",
+    "No TPEx listed/emerging, sector/liquidity stratification, confidence intervals, or economic-cost analysis.",
+    "Deep-model transfer is excluded until sequence outputs share row-level sample keys."
+  ]
+}

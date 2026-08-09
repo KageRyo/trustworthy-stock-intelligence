@@ -2,6 +2,7 @@ package warnings
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -63,6 +64,77 @@ func (s *PostgresStore) FindTicker(ticker string) (PredictionRecord, bool) {
 	return record, ok
 }
 
+func (s *PostgresStore) History(ticker string, limit int) ([]WarningHistoryRecord, error) {
+	if limit < 1 {
+		return []WarningHistoryRecord{}, nil
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	rows, err := s.pool.Query(
+		ctx,
+		`
+		SELECT wr.prediction_date, t.symbol, pb.run_id, pb.data_as_of, pb.generated_at,
+		       pb.model, pb.model_bundle, wr.risk_probability,
+		       wr.calibrated_risk_probability, wr.calibration_method,
+		       wr.uncertainty_score, wr.trust_score, wr.alert_threshold,
+		       wr.watch_threshold, wr.warning_level, wr.reason_codes
+		FROM warning_records wr
+		JOIN prediction_batches pb ON pb.id = wr.batch_id
+		JOIN tickers t ON t.id = wr.ticker_id
+		WHERE upper(t.symbol) = upper($1)
+		ORDER BY wr.prediction_date DESC, pb.generated_at DESC, pb.created_at DESC
+		LIMIT $2
+		`,
+		ticker,
+		limit,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("load warning history for %q: %w", ticker, err)
+	}
+	defer rows.Close()
+
+	history := []WarningHistoryRecord{}
+	for rows.Next() {
+		var predictionDate time.Time
+		var recordDataAsOf time.Time
+		var recordGeneratedAt time.Time
+		var record PredictionRecord
+		if err := rows.Scan(
+			&predictionDate,
+			&record.Ticker,
+			&record.RunID,
+			&recordDataAsOf,
+			&recordGeneratedAt,
+			&record.Model,
+			&record.ModelBundle,
+			&record.RiskProbability,
+			&record.CalibratedRiskProbability,
+			&record.CalibrationMethod,
+			&record.UncertaintyScore,
+			&record.TrustScore,
+			&record.AlertThreshold,
+			&record.WatchThreshold,
+			&record.WarningLevel,
+			&record.ReasonCodes,
+		); err != nil {
+			return nil, fmt.Errorf("scan warning history for %q: %w", ticker, err)
+		}
+		record.Date = formatDataTime(predictionDate)
+		record.DataAsOf = formatDataTime(recordDataAsOf)
+		record.GeneratedAt = recordGeneratedAt.UTC().Format(time.RFC3339)
+		history = append(history, HistoryRecordFromPrediction(record))
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate warning history for %q: %w", ticker, err)
+	}
+
+	for left, right := 0, len(history)-1; left < right; left, right = left+1, right-1 {
+		history[left], history[right] = history[right], history[left]
+	}
+	return history, nil
+}
+
 func (s *PostgresStore) Refresh() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -105,20 +177,25 @@ func (s *PostgresStore) loadLatestBatch(
 	var runID string
 	var dataAsOf time.Time
 	var generatedAt time.Time
+	var metadataJSON []byte
 	err := s.pool.QueryRow(
 		ctx,
 		`
-		SELECT schema_version, run_id, data_as_of, generated_at
+		SELECT schema_version, run_id, data_as_of, generated_at, metadata
 		FROM prediction_batches
 		ORDER BY generated_at DESC, created_at DESC
 		LIMIT 1
 		`,
-	).Scan(&schemaVersion, &runID, &dataAsOf, &generatedAt)
+	).Scan(&schemaVersion, &runID, &dataAsOf, &generatedAt, &metadataJSON)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return emptyBatch(), map[string]PredictionRecord{}, nil
 	}
 	if err != nil {
 		return PredictionBatch{}, nil, fmt.Errorf("load latest prediction batch metadata: %w", err)
+	}
+	calibrationDrift, err := decodeCalibrationDrift(metadataJSON)
+	if err != nil {
+		return PredictionBatch{}, nil, fmt.Errorf("decode calibration drift metadata: %w", err)
 	}
 
 	rows, err := s.pool.Query(
@@ -128,7 +205,7 @@ func (s *PostgresStore) loadLatestBatch(
 		       model, model_bundle, risk_probability,
 		       calibrated_risk_probability, calibration_method,
 		       uncertainty_score, trust_score, alert_threshold,
-		       watch_threshold, warning_level, reason_codes
+		       watch_threshold, warning_level, reason_codes, feature_attributions
 		FROM (
 			SELECT DISTINCT ON (t.symbol)
 			       wr.prediction_date, t.symbol, pb.run_id, pb.data_as_of,
@@ -156,6 +233,7 @@ func (s *PostgresStore) loadLatestBatch(
 		var predictionDate time.Time
 		var recordDataAsOf time.Time
 		var recordGeneratedAt time.Time
+		var featureAttributionsJSON []byte
 		var record PredictionRecord
 		if err := rows.Scan(
 			&predictionDate,
@@ -174,8 +252,13 @@ func (s *PostgresStore) loadLatestBatch(
 			&record.WatchThreshold,
 			&record.WarningLevel,
 			&record.ReasonCodes,
+			&featureAttributionsJSON,
 		); err != nil {
 			return PredictionBatch{}, nil, fmt.Errorf("scan warning record: %w", err)
+		}
+		record.FeatureAttributions, err = decodeFeatureAttributions(featureAttributionsJSON)
+		if err != nil {
+			return PredictionBatch{}, nil, fmt.Errorf("decode warning record attributions: %w", err)
 		}
 		record.Date = formatDataTime(predictionDate)
 		record.DataAsOf = formatDataTime(recordDataAsOf)
@@ -188,24 +271,54 @@ func (s *PostgresStore) loadLatestBatch(
 	}
 
 	batch := PredictionBatch{
-		SchemaVersion: schemaVersion,
-		RunID:         runID,
-		DataAsOf:      formatDataTime(dataAsOf),
-		GeneratedAt:   generatedAt.UTC().Format(time.RFC3339),
-		RecordCount:   len(records),
-		Records:       records,
+		SchemaVersion:    schemaVersion,
+		RunID:            runID,
+		DataAsOf:         formatDataTime(dataAsOf),
+		GeneratedAt:      generatedAt.UTC().Format(time.RFC3339),
+		RecordCount:      len(records),
+		CalibrationDrift: calibrationDrift,
+		Records:          records,
 	}
 	return batch, byKey, nil
 }
 
+func decodeFeatureAttributions(payload []byte) ([]FeatureAttribution, error) {
+	if len(payload) == 0 {
+		return []FeatureAttribution{}, nil
+	}
+	var attributions []FeatureAttribution
+	if err := json.Unmarshal(payload, &attributions); err != nil {
+		return nil, err
+	}
+	if attributions == nil {
+		return []FeatureAttribution{}, nil
+	}
+	return attributions, nil
+}
+
+func decodeCalibrationDrift(payload []byte) (CalibrationDriftMetadata, error) {
+	metadata := CalibrationDriftMetadata{}
+	if len(payload) > 0 {
+		var batchMetadata struct {
+			CalibrationDrift CalibrationDriftMetadata `json:"calibration_drift"`
+		}
+		if err := json.Unmarshal(payload, &batchMetadata); err != nil {
+			return CalibrationDriftMetadata{}, err
+		}
+		metadata = batchMetadata.CalibrationDrift
+	}
+	return normalizeCalibrationDrift(metadata), nil
+}
+
 func emptyBatch() PredictionBatch {
 	return PredictionBatch{
-		SchemaVersion: "v1",
-		RunID:         "none",
-		DataAsOf:      "",
-		GeneratedAt:   "",
-		RecordCount:   0,
-		Records:       []PredictionRecord{},
+		SchemaVersion:    "v1",
+		RunID:            "none",
+		DataAsOf:         "",
+		GeneratedAt:      "",
+		RecordCount:      0,
+		CalibrationDrift: normalizeCalibrationDrift(CalibrationDriftMetadata{}),
+		Records:          []PredictionRecord{},
 	}
 }
 

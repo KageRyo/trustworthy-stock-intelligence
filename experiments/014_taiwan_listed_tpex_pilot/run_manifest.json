@@ -1,0 +1,71 @@
+{
+  "experiment_id": "014_taiwan_listed_tpex_pilot",
+  "status": "partial_issue_23_listed_market_pilot",
+  "executed_on": "2026-08-09",
+  "current_catalogue": {
+    "as_of": "2026-08-08",
+    "member_count_by_market": {"twse": 1093, "tpex": 890, "emerging": 360},
+    "member_catalogue_sha256": "5084ffde87af1855635dbd2c531993a08c74ac512c50335a7b342b0a7111d8c3"
+  },
+  "dataset": {
+    "universe": "taiwan_listed_tpex_stratified_current_pilot",
+    "provider": "Yahoo Finance via yfinance for TWSE and TPEx listed components",
+    "downloaded_at_utc": "2026-08-09T06:39:41.157233+00:00",
+    "requested_start": "2015-01-01",
+    "interval": "1d",
+    "tickers_by_market": {
+      "twse": ["2330", "2317", "2454"],
+      "tpex": ["3260", "6147", "8069"],
+      "emerging_excluded": ["3097", "3585", "3595"]
+    },
+    "row_count": 16920,
+    "ohlcv_sha256": "f7dc98cf2fb9adaac1dd0921baaaaa2d6a713dd92a9cda2043a8ddfe94854b29",
+    "tickers_sha256": "2062303a24cf5eea5aeb112ccc48afc3c81dd084aa7c55aef08c14720649a0f5",
+    "components": [
+      {"market": "twse", "row_count": 8460, "ohlcv_sha256": "3347a2978840249f0100e1e4ef58ff85557c81bfdc977e2603810592bd6b9194"},
+      {"market": "tpex", "row_count": 8460, "ohlcv_sha256": "680995fb26de79ee456dbc10a4934365a4aa7fdf021e80703aa674946cfe2e77"}
+    ]
+  },
+  "protocol": {
+    "feature_columns": ["return_1d", "return_5d", "sma_5_gap", "sma_10_gap", "volatility_5d", "volatility_10d", "volume_ratio_5d"],
+    "horizon": 5,
+    "drawdown_threshold": -0.05,
+    "train_size": 252,
+    "purge_size": 5,
+    "calibration_size": 63,
+    "test_size": 63,
+    "step_size": 63,
+    "fold_count": 39,
+    "calibration_method": "platt",
+    "threshold_objective": "f1",
+    "rows_after_filtering": 16828,
+    "shared_test_rows": 14740,
+    "shared_rows_sha256": "92c1a3f6dbede80270811f83bcd309c437e3a0baaf0c8f6239ec8040b2c8672d"
+  },
+  "models": [
+    {
+      "model": "logistic_regression",
+      "hyperparameters": {},
+      "calibrated": {"auc": 0.5559907048, "pr_auc": 0.1903632791, "brier_score": 0.1235624082, "ece": 0.0895030752},
+      "tuned": {"precision": 0.1639864422, "recall": 0.4803711011, "f1": 0.2073907562, "false_alarm_rate": 0.4225013771, "false_discovery_rate": 0.8360135578, "alert_coverage": 0.4304556095}
+    },
+    {
+      "model": "random_forest",
+      "hyperparameters": {"n_estimators": 100},
+      "calibrated": {"auc": 0.5283082533, "pr_auc": 0.1624148555, "brier_score": 0.1236985727, "ece": 0.0864251706},
+      "tuned": {"precision": 0.1500414658, "recall": 0.5557957757, "f1": 0.2024475705, "false_alarm_rate": 0.5208208070, "false_discovery_rate": 0.8499585342, "alert_coverage": 0.5248919717}
+    },
+    {
+      "model": "hist_gradient_boosting",
+      "hyperparameters": {"max_iter": 100},
+      "calibrated": {"auc": 0.5041156810, "pr_auc": 0.1600918765, "brier_score": 0.1238068337, "ece": 0.0860750943},
+      "tuned": {"precision": 0.1446622220, "recall": 0.5086396574, "f1": 0.2009910453, "false_alarm_rate": 0.4933242121, "false_discovery_rate": 0.8553377780, "alert_coverage": 0.4982092704}
+    }
+  ],
+  "limitations": [
+    "The current-company catalogue is not point-in-time membership and has survivorship bias.",
+    "The benchmark covers a six-company TWSE and TPEx-listed sample only.",
+    "Emerging long-horizon fallback did not complete reliably in this environment; no emerging coverage claim is made.",
+    "Raw provider data and prediction rows remain outside Git and subject to provider rights."
+  ]
+}

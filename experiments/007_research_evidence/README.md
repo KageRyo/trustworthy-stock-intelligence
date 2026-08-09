@@ -164,6 +164,16 @@ This is a safety-oriented research gate, not a calibrated statistical detector
 or a serving guarantee. It catches the documented fold-15 reliability failure,
 but it also produces false alarms and abstains entire folds in this audit.
 
+The same gate is now available in the latest baseline serving path. The
+`scripts.predict_latest_baseline` command reserves the later `--drift-size`
+dates as an evaluation window (default `21`), keeps them out of model fitting
+and calibration, writes `calibration_drift` metadata into the serving batch,
+and adds drift reason codes. A degraded assessment multiplies trust by `0.5`;
+two or more signals force all current records to `abstain`. If the input lacks
+enough labeled dates, the batch is explicitly marked `not_evaluated` rather
+than presenting the probabilities as equally trustworthy. Set
+`--drift-size 0` only when deliberately disabling this gate.
+
 Fold 15 is the retained failure case. Its calibration window had a 3.8% event
 rate, while its 2020-02-04 through 2020-05-04 test window had a 40.3% event
 rate. Platt calibration worsened Brier by `0.0020` and ECE by `0.0241`. This is
@@ -245,7 +255,10 @@ scikit-learn: 1.8.0
 
 - No purged random-forest or gradient-boosting comparison yet.
 - No Taiwan, cross-market, sector, liquidity, or market-cap evaluation.
-- No point-in-time universe membership or delisting treatment.
+- The repository now provides a point-in-time membership validator and benchmark
+  filter ([docs/point_in_time_universe.md](../../docs/point_in_time_universe.md)),
+  but this pilot still has no legally selected historical membership source or
+  re-run using it.
 - No multiple-comparison correction; the interval artifact is a fold-level
   uncertainty summary rather than formal external validation.
 - ECE is equal-width 10-bin ECE and remains bin-sensitive.

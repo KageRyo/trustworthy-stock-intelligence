@@ -6,12 +6,14 @@ import {
   statusSchema,
   tickerListSchema,
   tickerAnalysisSchema,
+  warningHistorySchema,
   watchlistSchema,
   type APIStatus,
   type CurrentModel,
   type PredictionBatch,
   type TickerList,
   type TickerAnalysis,
+  type WarningHistory,
   type Watchlist
 } from "./schemas";
 
@@ -147,6 +149,14 @@ export function fetchTickerAnalysis(ticker: string): Promise<TickerAnalysis> {
   return fetchSchema(
     `/api/v1/analysis/${encodeURIComponent(ticker.trim().toUpperCase())}`,
     tickerAnalysisSchema
+  );
+}
+
+export function fetchTickerHistory(ticker: string, limit = 90): Promise<WarningHistory> {
+  return fetchSchema(
+    `/api/v1/analysis/${encodeURIComponent(ticker.trim().toUpperCase())}/history`,
+    warningHistorySchema,
+    { limit }
   );
 }
 

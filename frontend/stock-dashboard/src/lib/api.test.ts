@@ -4,6 +4,7 @@ import {
   addWatchlistTicker,
   fetchStatus,
   fetchTickerAnalysis,
+  fetchTickerHistory,
   fetchTickers,
   fetchWatchlist,
   removeWatchlistTicker
@@ -70,6 +71,20 @@ function analysisPayload(ticker = "2330") {
       file_modified_at: "2026-06-19T00:00:30Z",
       record_count: 2
     },
+    calibration_drift: {
+      status: "stable",
+      method: "calibration_drift_gate_v1",
+      event_rate_delta: 0.02,
+      ece_delta: 0.01,
+      brier_delta: 0.01,
+      signals: [],
+      degraded: false,
+      abstain: false,
+      trust_multiplier: 1,
+      calibration_rows: 63,
+      recent_rows: 21,
+      note: "Compared a fitted calibration reference window with later labeled rows."
+    },
     reasons: [
       {
         code: "probability_above_watch_threshold",
@@ -78,7 +93,44 @@ function analysisPayload(ticker = "2330") {
         detail: "The calibrated risk probability is at or above the configured watch threshold."
       }
     ],
+    feature_attributions: [
+      {
+        feature: "return_1d",
+        value: -0.02,
+        contribution: 0.31,
+        direction: "positive",
+        method: "standardized_logit_v1"
+      }
+    ],
     limitations: ["This is a drawdown-risk warning signal, not investment advice."]
+  };
+}
+
+function historyPayload(ticker = "2330") {
+  return {
+    schema_version: "warning_history.v1",
+    ticker,
+    record_count: 1,
+    records: [
+      {
+        run_id: "fixture_run",
+        data_as_of: "2026-06-19",
+        generated_at: "2026-06-19T00:00:00Z",
+        date: "2026-06-19",
+        ticker,
+        model: "temporal_transformer",
+        model_bundle: "fixture_bundle",
+        risk_probability: 0.31,
+        calibrated_risk_probability: 0.22,
+        calibration_method: "platt",
+        uncertainty_score: 0.25,
+        trust_score: 0.18,
+        alert_threshold: 0.3,
+        watch_threshold: 0.15,
+        warning_level: "watch",
+        reason_codes: ["warning_level_watch"]
+      }
+    ]
   };
 }
 
@@ -159,7 +211,23 @@ describe("typed API client", () => {
     const analysis = await fetchTickerAnalysis("2330");
 
     expect(analysis.ticker).toBe("2330");
+    expect(analysis.feature_attributions?.[0].feature).toBe("return_1d");
+    expect(analysis.calibration_drift.status).toBe("stable");
     expect(fetchMock).toHaveBeenCalledWith("/api/v1/analysis/2330", {
+      headers: {
+        Accept: "application/json"
+      }
+    });
+  });
+
+  it("parses typed ticker warning history with a bounded limit", async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse(historyPayload("2330")));
+
+    const history = await fetchTickerHistory("2330", 30);
+
+    expect(history.ticker).toBe("2330");
+    expect(history.records[0].warning_level).toBe("watch");
+    expect(fetchMock).toHaveBeenCalledWith("/api/v1/analysis/2330/history?limit=30", {
       headers: {
         Accept: "application/json"
       }
