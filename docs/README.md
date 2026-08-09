@@ -21,7 +21,7 @@ entry point for finding the right document.
 | `environment.md` | Python, Go, Node, CUDA, and local environment versions. |
 | `development.md` | Development rules, tests, schema-first policy, and commit/release workflow. |
 | `project_roadmap.md` | Current milestone state and next implementation tasks. |
-| `backlog.md` | Prioritized task backlog after `0.3.0`. |
+| `backlog.md` | Prioritized task backlog after `0.3.1`. |
 
 ## API Contracts
 

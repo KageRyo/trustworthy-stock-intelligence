@@ -2,6 +2,35 @@
 
 ## Unreleased
 
+## 0.3.1 - 2026-08-09
+
+### Added
+
+- Ticker warning-history timelines and typed feature attributions across the
+  PostgreSQL-backed Go API and TypeScript dashboard.
+- Calibration-drift assessment/reason codes and a schema-first per-run TAI
+  audit artifact that records evidence, limitations, and open risks.
+- Reproducible current-universe Taiwan and US/Taiwan transfer pilots, aligned
+  logistic/tree/GPU deep-model pilot evidence, and paired bootstrap artifacts.
+- Official TWSE, TPEx listed, and TPEx emerging current-catalogue capture,
+  with explicit market identity and coverage boundaries.
+- `CITATION.cff`, contribution guidance, SHA-pinned CodeQL, and documented
+  native GitHub Secret Scanning and Push Protection controls.
+
+### Changed
+
+- Repositioned the project as a public open-source portfolio project; v0.4 now
+  prioritizes ingestion, freshness, prediction jobs, warning changes, and
+  session-scoped watchlists over thesis-style novelty.
+- Synchronized release metadata, OpenAPI documents, dashboard/API guides,
+  environment guidance, local demo, roadmap, backlog, and citation data to
+  version `0.3.1`.
+
+### Security
+
+- Continued full-history Gitleaks, CodeQL, Dependabot, CI, Go vulnerability,
+  and race-test controls for the public repository.
+
 ## 0.3.0 - 2026-07-29
 
 ### Added

@@ -2,8 +2,9 @@
 
 ## Goal
 
-Trustworthy Stock Intelligence is a human-in-the-loop stock risk assessment
-system. The main user flow is:
+Trustworthy Stock Intelligence is a public open-source and portfolio project
+for human-in-the-loop stock risk assessment. It is not a thesis vehicle. The
+main user flow is:
 
 ```text
 stock ticker
@@ -18,10 +19,11 @@ The system focuses on trustworthy AI behavior: calibration, uncertainty,
 abstention, transparency, auditability, and clear limitations. It is not an
 investment recommendation system or automated trading system.
 
-## Current State: 0.3.0
+## Current State: 0.3.1
 
-Version `0.3.0` is the research-evidence-hardening release. It is a
-reproducible pilot, not externally validated research or investment advice.
+Version `0.3.1` is the public open-source release built on the
+research-evidence-hardening foundation. It remains a reproducible pilot, not
+externally validated research or investment advice.
 
 Completed:
 
@@ -37,7 +39,13 @@ Completed:
 - US and Taiwan ticker handling, including Taiwan alphanumeric codes and TPEx
   emerging-stock fallback
 - purged walk-forward evaluation with label-overlap checks, calibration
-  diagnostics, baseline comparisons, and Experiment 007 audit artifacts
+  diagnostics, baseline comparisons, paired bootstrap intervals,
+  calibration-drift audits, and Experiment 007 audit artifacts
+- Taiwan and US/Taiwan cross-market pilots with explicit provider,
+  current-universe, and coverage limitations
+- typed ticker feature attributions and warning-history timelines in the Go
+  API and TypeScript dashboard
+- per-run TAI audit artifacts that record evidence, limitations, and open risks
 - required Python, Go, frontend, dependency, race-test, and full-history
   Gitleaks CI checks
 - public-source documentation for licensing, security boundaries, citation, and
@@ -58,50 +66,20 @@ Provider APIs
 The optional JSON export remains useful for notifications, snapshots, and debug
 artifacts, but PostgreSQL is the serving source of truth.
 
-## Next Milestones
+## v0.4.0: Product and Open-Source Readiness
 
-### 0.3.x: Public Release Hardening
+The dashboard is the main product surface. The next release prioritizes a
+usable, observable, DB-backed analysis flow over thesis-style novelty:
 
-Complete the remaining repository-level public-readiness checks:
-
-1. Native GitHub Secret Scanning and Push Protection are enabled and verified
-   on 2026-08-09.
-2. Review the full Git history and commit-email privacy decision without
-   rewriting history unless the maintainer explicitly requests it.
-3. Keep CodeQL, Gitleaks, Dependabot, and required CI checks healthy.
-4. Keep citation, contribution, release, and public/private-boundary documents
-   aligned with the actual repository settings.
-
-### 0.4.0: Comparative Evidence
-
-Use the same purged walk-forward protocol, data fingerprint, and alert-oriented
-metrics for the baseline families before making model claims:
-
-1. Compare logistic, tree, and deep models under identical splits.
-2. Add confidence intervals and paired bootstrap comparisons.
-3. Report calibration, false alarm rate, miss rate, lead time, coverage, and
-   selective risk for every model family.
-
-### 0.5.0: Taiwan and Cross-Market Evidence
-
-1. Evaluate Taiwan listed, TPEx listed, and TPEx emerging symbols within
-   market, with explicit coverage and data-quality metadata.
-2. Evaluate cross-market transfer only after within-market evaluation is
-   reproducible and limitations are recorded.
-
-### 0.6.0: Drift and Trust Under Shift
-
-1. Monitor calibration drift and trust-score degradation over time.
-2. Test stale data, provider revisions, market-noise perturbations, and
-   abstention thresholds under distribution shift.
-
-## Product Track After the Evidence Milestones
-
-The dashboard remains the main product surface. Product work should preserve
-the DB-backed, schema-first serving boundary while research evidence matures:
-
-1. Scheduled 5-minute ingestion for user/session watchlists.
-2. Warning history and change detection:
+1. Schedule 5-minute ingestion for session watchlists, with explicit provider
+   health, retry, and coverage state.
+2. Make data freshness actionable in the API and dashboard: show the feature
+   interval, flag stale predictions, and downgrade or block non-actionable
+   outputs.
+3. Move request-time on-demand analysis to queue-backed prediction jobs with
+   progress and failure state, while retaining a usable local lookup bridge.
+4. Build on the completed warning history/timeline with explicit warning-change
+   detection:
 
 ```text
 new alert
@@ -113,21 +91,28 @@ persistent alert
 low-trust warning
 ```
 
-3. Ticker detail timelines for risk probability, trust score, uncertainty, and
-   warning level.
-4. Freshness badges and stale-data downgrade behavior in API/dashboard.
-5. Market coverage metadata for US, TWSE, TPEx listed, and TPEx emerging
-   symbols.
+5. Add richer session-scoped watchlist grouping, filtering, and cleanup while
+   preserving the current no-auth privacy boundary.
+6. Publish per-market coverage metadata for US, TWSE, TPEx listed, and TPEx
+   emerging symbols.
 
-Later product work includes queue-based prediction jobs, a model-run TAI audit
-artifact, feature attribution beyond reason codes, provider health monitoring,
-and richer portfolio/watchlist grouping. These do not replace the evidence
-milestones above.
+## Maintenance and Release Hygiene
 
-## Later Research
+1. Keep CodeQL, Gitleaks, Dependabot, required CI checks, citation,
+   contribution, release, and public/private-boundary documents accurate.
+2. Review commit-email privacy and Git history without rewriting history unless
+   the maintainer explicitly requests it.
+3. Keep the reproducible experiments, model limitations, and TAI audit output
+   linked from the public documentation.
 
-- Build a point-in-time universe to measure survivorship and membership bias.
-- Repeat provider-revision audits with licensed, versioned formal-research data.
+## Research-Quality Enhancements (Not v0.4.0 Blockers)
+
+- Build a legally usable point-in-time universe and quantify survivorship bias
+  (#29); preserve its current status as the sole open issue.
+- Expand the Taiwan pilots to dated membership, broader stratification, and
+  reliable TPEx emerging history before making broad coverage claims.
+- Re-run provider-revision, distribution-shift, and external-data studies with
+  licensed, versioned research data where appropriate.
 
 ## Engineering Rules
 

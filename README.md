@@ -1,16 +1,17 @@
 # Trustworthy Stock Intelligence
 
 [![CI](https://github.com/KageRyo/trustworthy-stock-intelligence/actions/workflows/ci.yml/badge.svg)](https://github.com/KageRyo/trustworthy-stock-intelligence/actions/workflows/ci.yml)
-![Version](https://img.shields.io/badge/version-0.3.0-blue)
+![Version](https://img.shields.io/badge/version-0.3.1-blue)
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
 ![Go](https://img.shields.io/badge/go-1.25-blue)
 ![TypeScript](https://img.shields.io/badge/typescript-5.6-blue)
 ![License](https://img.shields.io/badge/license-Apache--2.0-green)
 
-**Status: Active Research**
+**Status: Active Open-Source Project**
 
-Software maturity: operational prototype. Evidence maturity: reproducible pilot,
-not externally validated research.
+Software maturity: operational prototype. This is a public portfolio project
+for trustworthy ML and backend systems, with reproducible pilot evidence rather
+than externally validated research.
 
 ## What Problem Does This Solve?
 
@@ -33,7 +34,8 @@ auditable data, model, and API contracts.
 
 ## Current Status
 
-Version `0.3.0` is the research-evidence-hardening release:
+Version `0.3.1` packages the open-source product and research-quality work
+built on the `0.3.0` evidence-hardening foundation:
 
 - Experiment 007 uses purged walk-forward train/calibration/test boundaries and
   per-row `label_end_date` overlap checks.
@@ -42,6 +44,10 @@ Version `0.3.0` is the research-evidence-hardening release:
   skill as a trading edge.
 - A dedicated AUC invariance audit records per-fold sample identity, recovered
   Platt parameters, ranking behavior, and mean-fold, weighted, and pooled AUC.
+- Model-family comparisons, paired bootstrap intervals, and calibration-drift
+  audits make uncertainty and failure cases inspectable rather than implied.
+- Reproducible Taiwan and US/Taiwan transfer pilots are recorded with explicit
+  current-universe, coverage, and provider-data limitations.
 - Repository controls include required CI, Dependabot, vulnerability analysis,
   race tests, full-history Gitleaks scanning, and SHA-pinned CodeQL analysis.
 - PostgreSQL is the source of truth for tickers, watchlists, market bars,
@@ -55,6 +61,9 @@ Version `0.3.0` is the research-evidence-hardening release:
 - US stocks, Taiwan listed stocks, TPEx listed stocks, Taiwan alphanumeric ETF
   codes, and TPEx emerging-stock daily fallback data are supported where the
   providers have coverage.
+- Ticker-level feature attributions, warning-history timelines, calibration
+  drift state, and per-run TAI audit artifacts are available through typed
+  contracts and reproducible artifacts.
 - The dashboard supports English and 正體中文.
 
 ## Quick Start
@@ -228,14 +237,22 @@ failure case. Improvements over the no-feature prior are modest, and the fixed
 `experiments/007_research_evidence/README.md` for dates, hashes, standard
 deviations, subgroup checks, commands, and limitations.
 
+The evidence record now also includes a paired model-family comparison with
+bootstrap intervals, Taiwan current-universe pilots, and a US/Taiwan
+cross-market transfer pilot. These artifacts demonstrate reproducible
+engineering and expose failure modes; they do not claim a production-ready
+warning policy or comprehensive market coverage.
+
 ## Limitations
 
 - This is an S&P 100 daily-data pilot with survivorship and provider-revision
   risk, not evidence of all-market or intraday performance.
-- Taiwan, cross-market, sector, liquidity, and market-cap comparisons have not
-  yet been run under the purged protocol.
-- ECE depends on binning; confidence intervals and statistical significance
-  tests are not yet reported.
+- Taiwan and cross-market pilots are available, but their current-universe,
+  selected-symbol, provider, sector, liquidity, and market-cap coverage limits
+  mean they are not all-market validation.
+- Paired bootstrap intervals are reported for the documented comparisons. ECE
+  remains bin-dependent, and pilot intervals do not remove data-selection or
+  external-validation limitations.
 - Transaction cost is outside the current risk-probability claim because the
   project does not execute a trading strategy. It becomes mandatory for any
   future strategy backtest.
@@ -304,7 +321,7 @@ Project targets:
 
 | Runtime | Version |
 | --- | --- |
-| Python package | `0.3.0` |
+| Python package | `0.3.1` |
 | Python | `>=3.10`, CI uses `3.11` |
 | Go API | `1.25.x` |
 | Node.js CI runtime | `22.x` |
@@ -338,17 +355,13 @@ terms and separately review redistribution or commercial use. See
 
 ## Roadmap
 
-Next research milestones:
-
-1. repeat all baseline families under the purged protocol
-2. add Taiwan and US cross-market evaluation with sector/liquidity coverage
-3. add confidence intervals, calibration drift, and provider-revision audits
-4. evaluate trust/abstention policies against calibrated baselines
-5. move from pilot provider data to a licensed, versioned formal dataset
-
-Product milestones remain PostgreSQL-backed 5-minute ingestion, warning
-history, feature attribution, and production job orchestration. Detailed tasks
-live in `docs/project_roadmap.md` and `docs/backlog.md`.
+The v0.4.0 scope is product and open-source readiness: scheduled 5-minute
+watchlist ingestion, provider health and freshness/stale-state handling,
+queue-backed prediction jobs, warning-change detection, and richer
+session-scoped watchlists. Point-in-time universe membership and licensed
+historical data remain valuable research-quality enhancements, but are not
+blockers for using or contributing to the project. Detailed work lives in
+`docs/project_roadmap.md` and `docs/backlog.md`.
 
 ## License
 

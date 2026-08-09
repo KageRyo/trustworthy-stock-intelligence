@@ -1,6 +1,6 @@
 # Local Demo Walkthrough
 
-This walkthrough runs the `0.2.0` local dashboard demo:
+This walkthrough runs the `0.3.1` local dashboard demo:
 
 ```text
 Provider APIs
@@ -165,4 +165,4 @@ http://localhost:8501
 
 `latest_warnings.json` can still be generated for debug snapshots,
 notifications, or report exports. It is not the primary serving source for the
-Go API in the `0.2.0` dashboard path.
+Go API in the `0.3.1` dashboard path.
