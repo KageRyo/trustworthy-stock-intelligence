@@ -69,6 +69,13 @@ python -m scripts.download_tickers \
   --output-dir data/raw/watchlist
 ```
 
+The reproducible Taiwan baseline pilot uses the explicit six-ticker list in
+[`configs/dataset/taiwan_pilot.yaml`](../configs/dataset/taiwan_pilot.yaml) and
+is documented in
+[`experiments/009_taiwan_pilot/README.md`](../experiments/009_taiwan_pilot/README.md).
+It commits only snapshot fingerprints and aggregate metrics; raw provider data
+and prediction rows remain gitignored.
+
 For intraday freshness checks, request 5-minute bars. Numeric Taiwan tickers are
 resolved to yfinance provider symbols such as `2330.TW`, while the output keeps
 the user-facing ticker as `2330`.

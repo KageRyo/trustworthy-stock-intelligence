@@ -24,6 +24,7 @@ from tsi.labeling.warning_level import assign_warning_levels, select_alert_thres
 from tsi.models.logistic import LogisticRiskModel
 from tsi.models.tree import TreeRiskModel
 from tsi.trust.calibration import CalibrationMethod, fit_probability_calibrator
+from tsi.trust.decision import compute_watch_threshold
 
 
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
@@ -227,7 +228,11 @@ def run_training(args: argparse.Namespace) -> dict[str, object]:
         warning_levels = assign_warning_levels(
             tuned_probabilities,
             alert_threshold=tuned_threshold,
-            watch_threshold=max(0.01, tuned_threshold * 0.5),
+            watch_threshold=compute_watch_threshold(
+                tuned_threshold,
+                watch_threshold_ratio=0.5,
+                min_watch_threshold=0.01,
+            ),
         )
         prediction_rows.append(
             test_frame.loc[:, ["date", "ticker", "risk_label"]]

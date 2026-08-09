@@ -1,0 +1,44 @@
+name: taiwan_pilot
+description: Small Taiwan listed-stock pilot for leakage-aware drawdown-risk evaluation.
+market: Taiwan listed (TWSE symbols resolved with .TW by the pilot downloader)
+tickers:
+  - "2330"
+  - "2317"
+  - "2454"
+  - "2881"
+  - "2882"
+  - "0050"
+frequency: daily
+data_source:
+  pilot: Yahoo Finance via yfinance
+  provider_symbol_suffix: .TW
+  formal_research_preferred:
+    - official TWSE data with redistribution rights cleared
+    - WRDS/CRSP or another licensed research vendor
+  rights_note: docs/data_and_model_licenses.md
+schema:
+  - date
+  - ticker
+  - open
+  - high
+  - low
+  - close
+  - adj_close
+  - volume
+features:
+  - daily OHLCV
+  - technical indicators
+label:
+  task: 5-day drawdown risk warning
+  horizon_trading_days: 5
+  future_max_drawdown_threshold: -0.05
+split:
+  protocol: purged walk-forward
+  train_dates: 252
+  calibration_dates: 63
+  test_dates: 63
+  purge_dates: 5
+  random_split_allowed: false
+artifacts:
+  raw_data_committed: false
+  aggregate_metrics_committed: true
