@@ -65,6 +65,14 @@ redistributing provider data, recheck the project's
 [TWSE terms](https://www.twse.com.tw/en/terms/use.html) and
 [TPEx terms](https://www.tpex.org.tw/en-us/gtsm_disclaimer.html).
 
+The first multi-market evidence is the 39-fold current-company pilot in
+[`experiments/014_taiwan_listed_tpex_pilot`](../experiments/014_taiwan_listed_tpex_pilot/).
+It covers an explicit three-TWSE / three-TPEx-listed sample, uses only
+calibration-window fitting, and records both the input and shared-row
+fingerprints. It is deliberately partial: the TPEx emerging long-horizon
+fallback did not complete reliably in this environment, so no emerging-market
+coverage claim is made.
+
 ## Issue #29: Point-in-Time S&P Membership
 
 The current S&P 100 list cannot solve survivorship bias, even if its rows have
