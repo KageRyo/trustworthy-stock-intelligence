@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pandas as pd
@@ -11,6 +12,7 @@ from tsi.data.download import (
     TPEXEmergingHistoricalTable,
     TWSEStockDayResponse,
     _normalize_download_frame,
+    combine_download_artifacts,
     configure_yfinance_cache,
     download_ticker_frame,
     file_sha256,
@@ -125,6 +127,124 @@ def test_file_sha256_fingerprints_downloaded_artifacts(tmp_path: Path) -> None:
     assert file_sha256(artifact) == (
         "1062f289431d190e90b8719b66b3678ad290e97e9c38f595741b9dbcfa68b6c6"
     )
+
+
+def test_combine_download_artifacts_keeps_component_provenance(tmp_path: Path) -> None:
+    def write_component(directory: Path, *, ticker: str, market: str) -> None:
+        directory.mkdir()
+        pd.DataFrame(
+            [
+                {
+                    "date": "2026-01-02",
+                    "ticker": ticker,
+                    "open": 10.0,
+                    "high": 11.0,
+                    "low": 9.0,
+                    "close": 10.5,
+                    "adj_close": 10.5,
+                    "volume": 1000.0,
+                }
+            ]
+        ).to_csv(directory / "ohlcv.csv", index=False)
+        pd.DataFrame(
+            [{"ticker": ticker, "query_symbol": f"{ticker}.TW", "market": market}]
+        ).to_csv(directory / "tickers.csv", index=False)
+        (directory / "metadata.json").write_text(
+            '{"universe":"component","start":"2026-01-01","end":null,'
+            '"interval":"1d","ticker_count":1,"row_count":1,'
+            '"ohlcv_sha256":"input-ohlcv","tickers_sha256":"input-tickers"}',
+            encoding="utf-8",
+        )
+
+    twse_dir = tmp_path / "twse"
+    tpex_dir = tmp_path / "tpex"
+    write_component(twse_dir, ticker="2330", market="twse")
+    write_component(tpex_dir, ticker="6488", market="tpex")
+
+    result = combine_download_artifacts(
+        [twse_dir, tpex_dir],
+        tmp_path / "combined",
+        dataset_name="taiwan_stratified_pilot",
+    )
+
+    assert result.ticker_count == 2
+    assert result.row_count == 2
+    combined = pd.read_csv(result.ohlcv_path, dtype={"ticker": "string"})
+    assert combined["ticker"].tolist() == ["2330", "6488"]
+    metadata = json.loads(Path(result.metadata_path).read_text(encoding="utf-8"))
+    assert metadata["components"][0]["ohlcv_sha256"] == "input-ohlcv"
+
+
+def test_combine_download_artifacts_rejects_overlapping_ticker_dates(tmp_path: Path) -> None:
+    def write_component(directory: Path) -> None:
+        directory.mkdir()
+        pd.DataFrame(
+            [
+                {
+                    "date": "2026-01-02",
+                    "ticker": "2330",
+                    "open": 10.0,
+                    "high": 11.0,
+                    "low": 9.0,
+                    "close": 10.5,
+                    "adj_close": 10.5,
+                    "volume": 1000.0,
+                }
+            ]
+        ).to_csv(directory / "ohlcv.csv", index=False)
+        pd.DataFrame(
+            [{"ticker": "2330", "query_symbol": "2330.TW", "market": "twse"}]
+        ).to_csv(directory / "tickers.csv", index=False)
+        (directory / "metadata.json").write_text(
+            '{"universe":"component","start":"2026-01-01","end":null,'
+            '"interval":"1d"}',
+            encoding="utf-8",
+        )
+
+    first_dir = tmp_path / "first"
+    second_dir = tmp_path / "second"
+    write_component(first_dir)
+    write_component(second_dir)
+
+    with pytest.raises(ValueError, match="overlapping ticker-date rows"):
+        combine_download_artifacts(
+            [first_dir, second_dir],
+            tmp_path / "combined",
+            dataset_name="taiwan_stratified_pilot",
+        )
+
+
+def test_combine_download_artifacts_rejects_mismatched_ticker_definitions(tmp_path: Path) -> None:
+    component_dir = tmp_path / "component"
+    component_dir.mkdir()
+    pd.DataFrame(
+        [
+            {
+                "date": "2026-01-02",
+                "ticker": "2330",
+                "open": 10.0,
+                "high": 11.0,
+                "low": 9.0,
+                "close": 10.5,
+                "adj_close": 10.5,
+                "volume": 1000.0,
+            }
+        ]
+    ).to_csv(component_dir / "ohlcv.csv", index=False)
+    pd.DataFrame(
+        [{"ticker": "2317", "query_symbol": "2317.TW", "market": "twse"}]
+    ).to_csv(component_dir / "tickers.csv", index=False)
+    (component_dir / "metadata.json").write_text(
+        '{"universe":"component","start":"2026-01-01","end":null,"interval":"1d"}',
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="incompatible OHLCV and ticker definitions"):
+        combine_download_artifacts(
+            [component_dir],
+            tmp_path / "combined",
+            dataset_name="taiwan_stratified_pilot",
+        )
 
 
 def test_download_ticker_frame_falls_back_to_twse_daily_for_taiwan_code(monkeypatch) -> None:
