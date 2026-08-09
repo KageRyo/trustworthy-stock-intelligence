@@ -26,6 +26,20 @@ func writeRouterFixture(t *testing.T) string {
   "data_as_of": "2026-06-08",
   "generated_at": "2026-06-10T00:00:00+00:00",
   "record_count": 2,
+  "calibration_drift": {
+    "status": "degraded",
+    "method": "calibration_drift_gate_v1",
+    "event_rate_delta": 0.31,
+    "ece_delta": 0.08,
+    "brier_delta": 0.06,
+    "signals": ["event_rate_shift", "ece_increase"],
+    "degraded": true,
+    "abstain": true,
+    "trust_multiplier": 0.5,
+    "calibration_rows": 63,
+    "recent_rows": 21,
+    "note": "fixture"
+  },
   "records": [
     {
       "date": "2026-06-08",
@@ -498,6 +512,9 @@ func TestTickerAnalysisHandler(t *testing.T) {
 			payload.Warning.CalibratedRiskProbability,
 		)
 	}
+	if payload.CalibrationDrift.Status != "degraded" || !payload.CalibrationDrift.Abstain {
+		t.Fatalf("unexpected calibration drift metadata: %+v", payload.CalibrationDrift)
+	}
 	if payload.Trust.TrustStatus != "limited_trust" {
 		t.Fatalf("trust status = %q, want limited_trust", payload.Trust.TrustStatus)
 	}
@@ -589,6 +606,7 @@ func TestBuildTickerAnalysisPrefersRecordMetadata(t *testing.T) {
 			DataAsOf:    "2026-06-20",
 			GeneratedAt: "2026-06-20T08:47:11Z",
 		},
+		warnings.CalibrationDriftMetadata{Status: "stable", Method: "calibration_drift_gate_v1"},
 	)
 
 	if payload.RunID != "record_run" {
@@ -607,6 +625,17 @@ func TestExplainReasonCodeSupportsInsufficientHistory(t *testing.T) {
 	}
 	if !strings.Contains(strings.ToLower(reason.Detail), "not enough labeled history") {
 		t.Fatalf("unexpected detail: %+v", reason)
+	}
+}
+
+func TestTrustStatusDoesNotClaimAlertTrustDuringCalibrationDrift(t *testing.T) {
+	status := trustStatus([]string{
+		"trust_above_alert_threshold",
+		"calibration_drift_detected",
+	})
+
+	if status != "limited_trust" {
+		t.Fatalf("trust status = %q, want limited_trust", status)
 	}
 }
 

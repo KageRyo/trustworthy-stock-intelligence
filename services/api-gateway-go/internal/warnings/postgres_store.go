@@ -177,20 +177,25 @@ func (s *PostgresStore) loadLatestBatch(
 	var runID string
 	var dataAsOf time.Time
 	var generatedAt time.Time
+	var metadataJSON []byte
 	err := s.pool.QueryRow(
 		ctx,
 		`
-		SELECT schema_version, run_id, data_as_of, generated_at
+		SELECT schema_version, run_id, data_as_of, generated_at, metadata
 		FROM prediction_batches
 		ORDER BY generated_at DESC, created_at DESC
 		LIMIT 1
 		`,
-	).Scan(&schemaVersion, &runID, &dataAsOf, &generatedAt)
+	).Scan(&schemaVersion, &runID, &dataAsOf, &generatedAt, &metadataJSON)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return emptyBatch(), map[string]PredictionRecord{}, nil
 	}
 	if err != nil {
 		return PredictionBatch{}, nil, fmt.Errorf("load latest prediction batch metadata: %w", err)
+	}
+	calibrationDrift, err := decodeCalibrationDrift(metadataJSON)
+	if err != nil {
+		return PredictionBatch{}, nil, fmt.Errorf("decode calibration drift metadata: %w", err)
 	}
 
 	rows, err := s.pool.Query(
@@ -266,12 +271,13 @@ func (s *PostgresStore) loadLatestBatch(
 	}
 
 	batch := PredictionBatch{
-		SchemaVersion: schemaVersion,
-		RunID:         runID,
-		DataAsOf:      formatDataTime(dataAsOf),
-		GeneratedAt:   generatedAt.UTC().Format(time.RFC3339),
-		RecordCount:   len(records),
-		Records:       records,
+		SchemaVersion:    schemaVersion,
+		RunID:            runID,
+		DataAsOf:         formatDataTime(dataAsOf),
+		GeneratedAt:      generatedAt.UTC().Format(time.RFC3339),
+		RecordCount:      len(records),
+		CalibrationDrift: calibrationDrift,
+		Records:          records,
 	}
 	return batch, byKey, nil
 }
@@ -290,14 +296,29 @@ func decodeFeatureAttributions(payload []byte) ([]FeatureAttribution, error) {
 	return attributions, nil
 }
 
+func decodeCalibrationDrift(payload []byte) (CalibrationDriftMetadata, error) {
+	metadata := CalibrationDriftMetadata{}
+	if len(payload) > 0 {
+		var batchMetadata struct {
+			CalibrationDrift CalibrationDriftMetadata `json:"calibration_drift"`
+		}
+		if err := json.Unmarshal(payload, &batchMetadata); err != nil {
+			return CalibrationDriftMetadata{}, err
+		}
+		metadata = batchMetadata.CalibrationDrift
+	}
+	return normalizeCalibrationDrift(metadata), nil
+}
+
 func emptyBatch() PredictionBatch {
 	return PredictionBatch{
-		SchemaVersion: "v1",
-		RunID:         "none",
-		DataAsOf:      "",
-		GeneratedAt:   "",
-		RecordCount:   0,
-		Records:       []PredictionRecord{},
+		SchemaVersion:    "v1",
+		RunID:            "none",
+		DataAsOf:         "",
+		GeneratedAt:      "",
+		RecordCount:      0,
+		CalibrationDrift: normalizeCalibrationDrift(CalibrationDriftMetadata{}),
+		Records:          []PredictionRecord{},
 	}
 }
 

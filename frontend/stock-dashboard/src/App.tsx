@@ -48,6 +48,7 @@ import {
 } from "./lib/i18n";
 import type {
   APIStatus,
+  CalibrationDriftMetadata,
   CurrentModel,
   FeatureAttribution,
   PredictionBatch,
@@ -184,6 +185,15 @@ function hasReason(analysis: TickerAnalysis, code: string): boolean {
 function localizedTrustSummary(analysis: TickerAnalysis, copy: DashboardCopy): string {
   if (hasReason(analysis, "insufficient_history")) {
     return copy.trustSummaries.insufficientHistory;
+  }
+  if (hasReason(analysis, "calibration_drift_abstain")) {
+    return copy.trustSummaries.calibrationDriftAbstain;
+  }
+  if (hasReason(analysis, "calibration_drift_detected")) {
+    return copy.trustSummaries.calibrationDriftDetected;
+  }
+  if (hasReason(analysis, "calibration_drift_not_evaluated")) {
+    return copy.trustSummaries.calibrationDriftNotEvaluated;
   }
   if (hasReason(analysis, "uncertainty_above_threshold")) {
     return copy.trustSummaries.highUncertainty;
@@ -709,6 +719,7 @@ function TrustPanel({
         </p>
       ) : null}
       {analysis ? <FeatureAttributionList attributions={analysis.feature_attributions ?? []} copy={copy} /> : null}
+      {analysis ? <CalibrationDriftPanel drift={analysis.calibration_drift} copy={copy} /> : null}
     </section>
   );
 }
@@ -854,6 +865,54 @@ function FeatureAttributionList({
           })}
         </div>
       )}
+    </div>
+  );
+}
+
+function CalibrationDriftPanel({
+  drift,
+  copy
+}: {
+  drift: CalibrationDriftMetadata;
+  copy: DashboardCopy;
+}) {
+  const statusClass =
+    drift.status === "degraded"
+      ? "border-red-200 bg-red-50 text-red-900"
+      : drift.status === "not_evaluated"
+        ? "border-amber-200 bg-amber-50 text-amber-900"
+        : "border-emerald-200 bg-emerald-50 text-emerald-900";
+  const formatDelta = (value: number | null) => (value === null ? copy.common.na : value.toFixed(4));
+
+  return (
+    <div className={`mt-5 rounded-md border p-4 ${statusClass}`}>
+      <div className="flex items-center justify-between gap-3">
+        <h3 className="text-sm font-semibold">{copy.panels.calibrationDrift}</h3>
+        <span className="text-xs font-semibold uppercase tracking-wide">
+          {copy.driftStatuses[drift.status] ?? drift.status}
+        </span>
+      </div>
+      <div className="mt-3 grid gap-1 text-xs sm:grid-cols-2">
+        <span>
+          {copy.labels.eventRateDelta}: {formatDelta(drift.event_rate_delta)}
+        </span>
+        <span>
+          {copy.labels.eceDelta}: {formatDelta(drift.ece_delta)}
+        </span>
+        <span>
+          {copy.labels.brierDelta}: {formatDelta(drift.brier_delta)}
+        </span>
+        <span>
+          {copy.labels.calibrationRows}: {drift.calibration_rows}
+        </span>
+        <span>
+          {copy.labels.recentRows}: {drift.recent_rows}
+        </span>
+        <span>
+          {copy.labels.driftSignals}: {drift.signals.length > 0 ? drift.signals.join(", ") : copy.common.na}
+        </span>
+      </div>
+      <p className="mt-3 text-xs leading-5">{drift.note || copy.common.na}</p>
     </div>
   );
 }

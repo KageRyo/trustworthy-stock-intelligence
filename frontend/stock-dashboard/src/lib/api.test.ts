@@ -71,6 +71,20 @@ function analysisPayload(ticker = "2330") {
       file_modified_at: "2026-06-19T00:00:30Z",
       record_count: 2
     },
+    calibration_drift: {
+      status: "stable",
+      method: "calibration_drift_gate_v1",
+      event_rate_delta: 0.02,
+      ece_delta: 0.01,
+      brier_delta: 0.01,
+      signals: [],
+      degraded: false,
+      abstain: false,
+      trust_multiplier: 1,
+      calibration_rows: 63,
+      recent_rows: 21,
+      note: "Compared a fitted calibration reference window with later labeled rows."
+    },
     reasons: [
       {
         code: "probability_above_watch_threshold",
@@ -198,6 +212,7 @@ describe("typed API client", () => {
 
     expect(analysis.ticker).toBe("2330");
     expect(analysis.feature_attributions?.[0].feature).toBe("return_1d");
+    expect(analysis.calibration_drift.status).toBe("stable");
     expect(fetchMock).toHaveBeenCalledWith("/api/v1/analysis/2330", {
       headers: {
         Accept: "application/json"

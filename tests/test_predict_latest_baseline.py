@@ -11,6 +11,7 @@ from scripts.predict_latest_baseline import (
     run_prediction,
     select_latest_feature_rows,
     split_train_calibration,
+    split_train_calibration_recent,
 )
 from tsi.features.technical import DEFAULT_FEATURE_COLUMNS, build_technical_features
 
@@ -65,6 +66,32 @@ def test_split_train_calibration_uses_later_dates_for_calibration() -> None:
     assert calibration["date"].max() == pd.Timestamp("2025-01-20")
 
 
+def test_split_train_calibration_recent_keeps_later_drift_window_out_of_fitting() -> None:
+    dates = pd.date_range("2025-01-01", periods=20, freq="D")
+    frame = pd.DataFrame(
+        {
+            "date": dates,
+            "ticker": ["2330"] * len(dates),
+            "risk_label": [0, 1] * 10,
+            **{column: np.arange(len(dates), dtype=float) for column in DEFAULT_FEATURE_COLUMNS},
+        }
+    )
+
+    train, calibration, recent = split_train_calibration_recent(
+        frame,
+        calibration_size=5,
+        drift_size=3,
+        train_size=8,
+    )
+
+    assert train["date"].min() == pd.Timestamp("2025-01-05")
+    assert train["date"].max() == pd.Timestamp("2025-01-12")
+    assert calibration["date"].min() == pd.Timestamp("2025-01-13")
+    assert calibration["date"].max() == pd.Timestamp("2025-01-17")
+    assert recent["date"].min() == pd.Timestamp("2025-01-18")
+    assert recent["date"].max() == pd.Timestamp("2025-01-20")
+
+
 def test_run_prediction_writes_serving_json_for_numeric_and_us_tickers(tmp_path: Path) -> None:
     input_path = tmp_path / "ohlcv.csv"
     output_path = tmp_path / "latest_predictions.csv"
@@ -79,6 +106,8 @@ def test_run_prediction_writes_serving_json_for_numeric_and_us_tickers(tmp_path:
             "--json-output",
             str(json_path),
             "--calibration-size",
+            "10",
+            "--drift-size",
             "10",
             "--train-size",
             "40",
@@ -97,6 +126,12 @@ def test_run_prediction_writes_serving_json_for_numeric_and_us_tickers(tmp_path:
     assert payload["run_id"] == "test_baseline_latest"
     assert payload["record_count"] == 2
     assert [record["ticker"] for record in payload["records"]] == ["2330", "NVDA"]
+    assert payload["calibration_drift"]["status"] in {"stable", "degraded"}
+    assert payload["calibration_drift"]["calibration_rows"] > 0
+    assert payload["calibration_drift"]["recent_rows"] > 0
+    assert any(
+        code.startswith("calibration_drift_") for code in payload["records"][0]["reason_codes"]
+    )
     assert output_path.exists()
 
 

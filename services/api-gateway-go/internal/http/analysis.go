@@ -9,19 +9,20 @@ import (
 const analysisSchemaVersion = "analysis.v1"
 
 type TickerAnalysisResponse struct {
-	SchemaVersion       string                        `json:"schema_version"`
-	Ticker              string                        `json:"ticker"`
-	Date                string                        `json:"date"`
-	RunID               string                        `json:"run_id"`
-	DataAsOf            string                        `json:"data_as_of"`
-	GeneratedAt         string                        `json:"generated_at"`
-	Warning             WarningAnalysis               `json:"warning"`
-	Trust               TrustAssessment               `json:"trust"`
-	Model               ModelAnalysis                 `json:"model"`
-	DataFreshness       DataFreshness                 `json:"data_freshness"`
-	Reasons             []ReasonExplanation           `json:"reasons"`
-	FeatureAttributions []warnings.FeatureAttribution `json:"feature_attributions"`
-	Limitations         []string                      `json:"limitations"`
+	SchemaVersion       string                            `json:"schema_version"`
+	Ticker              string                            `json:"ticker"`
+	Date                string                            `json:"date"`
+	RunID               string                            `json:"run_id"`
+	DataAsOf            string                            `json:"data_as_of"`
+	GeneratedAt         string                            `json:"generated_at"`
+	Warning             WarningAnalysis                   `json:"warning"`
+	Trust               TrustAssessment                   `json:"trust"`
+	Model               ModelAnalysis                     `json:"model"`
+	DataFreshness       DataFreshness                     `json:"data_freshness"`
+	Reasons             []ReasonExplanation               `json:"reasons"`
+	FeatureAttributions []warnings.FeatureAttribution     `json:"feature_attributions"`
+	CalibrationDrift    warnings.CalibrationDriftMetadata `json:"calibration_drift"`
+	Limitations         []string                          `json:"limitations"`
 }
 
 type WarningAnalysis struct {
@@ -65,6 +66,7 @@ type ReasonExplanation struct {
 func buildTickerAnalysis(
 	record warnings.PredictionRecord,
 	status warnings.StoreStatus,
+	calibrationDrift warnings.CalibrationDriftMetadata,
 ) TickerAnalysisResponse {
 	runID := valueOrDefault(record.RunID, status.RunID)
 	dataAsOf := valueOrDefault(record.DataAsOf, status.DataAsOf)
@@ -103,6 +105,7 @@ func buildTickerAnalysis(
 			FileModifiedAt: status.FileModifiedAt,
 			RecordCount:    status.RecordCount,
 		},
+		CalibrationDrift:    calibrationDrift,
 		Reasons:             explainReasonCodes(record.ReasonCodes),
 		FeatureAttributions: nonNilFeatureAttributions(record.FeatureAttributions),
 		Limitations:         analysisLimitations(),
@@ -130,7 +133,7 @@ func warningSummary(record warnings.PredictionRecord) string {
 	case "watch":
 		return "Moderate or elevated drawdown-risk signal that should remain on watch."
 	case "abstain":
-		return "Model uncertainty is too high for a confident warning decision."
+		return "Model uncertainty or calibration drift is too high for a confident warning decision."
 	case "no_alert":
 		return "No material drawdown-risk warning in the latest precomputed batch."
 	default:
@@ -139,6 +142,15 @@ func warningSummary(record warnings.PredictionRecord) string {
 }
 
 func trustSummary(record warnings.PredictionRecord) string {
+	if hasReason(record.ReasonCodes, "calibration_drift_abstain") {
+		return "Calibration drift crossed the abstention gate, so this output is not reliable enough for a warning."
+	}
+	if hasReason(record.ReasonCodes, "calibration_drift_detected") {
+		return "Calibration drift was detected and the trust score was reduced for this output."
+	}
+	if hasReason(record.ReasonCodes, "calibration_drift_not_evaluated") {
+		return "Calibration drift was not evaluated because no later labeled window was available."
+	}
 	if hasReason(record.ReasonCodes, "uncertainty_above_threshold") {
 		return "Uncertainty is above the configured threshold, so the model output should be treated cautiously."
 	}
@@ -152,6 +164,11 @@ func trustSummary(record warnings.PredictionRecord) string {
 }
 
 func trustStatus(reasonCodes []string) string {
+	if hasReason(reasonCodes, "calibration_drift_abstain") ||
+		hasReason(reasonCodes, "calibration_drift_detected") ||
+		hasReason(reasonCodes, "calibration_drift_not_evaluated") {
+		return "limited_trust"
+	}
 	if hasReason(reasonCodes, "trust_above_alert_threshold") {
 		return "trusted_for_alert"
 	}
@@ -257,6 +274,55 @@ func explainReasonCode(code string) ReasonExplanation {
 			Severity: "info",
 			Title:    "No alert warning level",
 			Detail:   "The final warning decision is no alert.",
+		}
+	case "calibration_drift_not_evaluated":
+		return ReasonExplanation{
+			Code:     code,
+			Severity: "watch",
+			Title:    "Calibration drift not evaluated",
+			Detail:   "No later labeled window was available, so serving could not check calibration drift.",
+		}
+	case "calibration_drift_stable":
+		return ReasonExplanation{
+			Code:     code,
+			Severity: "info",
+			Title:    "Calibration drift stable",
+			Detail:   "The later labeled window did not cross the configured event-rate, ECE, or Brier drift thresholds.",
+		}
+	case "calibration_drift_detected":
+		return ReasonExplanation{
+			Code:     code,
+			Severity: "watch",
+			Title:    "Calibration drift detected",
+			Detail:   "Calibration reliability degraded in the later labeled window, so trust was reduced.",
+		}
+	case "calibration_drift_event_rate_shift":
+		return ReasonExplanation{
+			Code:     code,
+			Severity: "watch",
+			Title:    "Event-rate shift",
+			Detail:   "The later labeled event rate shifted beyond the configured calibration-drift threshold.",
+		}
+	case "calibration_drift_ece_increase":
+		return ReasonExplanation{
+			Code:     code,
+			Severity: "watch",
+			Title:    "Calibration error increased",
+			Detail:   "The later window's expected calibration error increased beyond the configured threshold.",
+		}
+	case "calibration_drift_brier_increase":
+		return ReasonExplanation{
+			Code:     code,
+			Severity: "watch",
+			Title:    "Brier score degraded",
+			Detail:   "The later window's Brier score increased beyond the configured threshold.",
+		}
+	case "calibration_drift_abstain":
+		return ReasonExplanation{
+			Code:     code,
+			Severity: "watch",
+			Title:    "Calibration drift abstention",
+			Detail:   "Multiple calibration-drift signals crossed threshold, so the serving decision abstains.",
 		}
 	case "insufficient_history":
 		return ReasonExplanation{

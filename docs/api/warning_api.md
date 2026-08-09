@@ -209,6 +209,20 @@ Returns the model metadata from the current batch.
   "data_as_of": "2026-06-08",
   "generated_at": "2026-06-10T00:00:00+00:00",
   "record_count": 101,
+  "calibration_drift": {
+    "status": "stable",
+    "method": "calibration_drift_gate_v1",
+    "event_rate_delta": 0.01,
+    "ece_delta": 0.02,
+    "brier_delta": 0.01,
+    "signals": [],
+    "degraded": false,
+    "abstain": false,
+    "trust_multiplier": 1.0,
+    "calibration_rows": 63,
+    "recent_rows": 21,
+    "note": "Compared a fitted calibration reference window with later labeled rows."
+  },
   "records": []
 }
 ```

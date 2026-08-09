@@ -4,7 +4,11 @@ from __future__ import annotations
 
 import pytest
 
-from tsi.evaluation.drift import CalibrationDriftConfig, assess_calibration_drift
+from tsi.evaluation.drift import (
+    CalibrationDriftConfig,
+    assess_calibration_drift,
+    calibration_drift_reason_codes,
+)
 
 
 def _metrics(*, positive_rate: float, ece: float, brier_score: float) -> dict[str, float]:
@@ -50,3 +54,15 @@ def test_config_rejects_invalid_abstain_count() -> None:
             _metrics(positive_rate=0.1, ece=0.1, brier_score=0.1),
             config=CalibrationDriftConfig(abstain_signal_count=0),
         )
+
+
+def test_serving_reason_codes_expose_evaluation_state() -> None:
+    stable = assess_calibration_drift(
+        _metrics(positive_rate=0.1, ece=0.03, brier_score=0.08),
+        _metrics(positive_rate=0.12, ece=0.04, brier_score=0.09),
+    )
+
+    assert calibration_drift_reason_codes(stable, evaluated=True) == ("calibration_drift_stable",)
+    assert calibration_drift_reason_codes(None, evaluated=False) == (
+        "calibration_drift_not_evaluated",
+    )

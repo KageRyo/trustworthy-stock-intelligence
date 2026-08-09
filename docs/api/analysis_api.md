@@ -46,6 +46,7 @@ should not be coerced to numbers.
 | `trust` | `TrustAssessment` | Calibration, uncertainty, trust status, and summary. |
 | `model` | `ModelAnalysis` | Model name and model bundle path used for the prediction. |
 | `data_freshness` | `DataFreshness` | Serving freshness metadata from the loaded DB warning batch. |
+| `calibration_drift` | `CalibrationDriftMetadata` | Chronological calibration-drift status, signals, deltas, and trust multiplier for the batch. |
 | `reasons` | `ReasonExplanation[]` | Typed explanations derived from reason codes. |
 | `feature_attributions` | `FeatureAttribution[]` | Top model-specific feature contributions when the model supports them. |
 | `limitations` | `string[]` | Fixed limitations shown by clients. |
@@ -71,6 +72,30 @@ should not be coerced to numbers.
 | `trust_status` | string | Derived trust status, for example `trusted_for_alert` or `limited_trust`. |
 | `uncertainty_status` | string | Derived uncertainty status, for example `acceptable_uncertainty` or `high_uncertainty`. |
 | `summary` | string | Human-readable trust assessment. |
+
+### `CalibrationDriftMetadata`
+
+The serving command compares the fitted calibration reference window with a
+later labeled window when enough history exists. Drift detection does not fit
+on the later window. A degraded assessment reduces trust; two or more signals
+trigger `abstain`. If no later labeled window is available, the response marks
+the gate `not_evaluated` and emits a reason code rather than presenting the
+prediction as equally trustworthy.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `status` | string | `not_evaluated`, `stable`, or `degraded`. |
+| `method` | string | Versioned gate implementation name. |
+| `event_rate_delta` | number or null | Later labeled positive-rate minus reference positive-rate. |
+| `ece_delta` | number or null | Later expected calibration error minus reference ECE. |
+| `brier_delta` | number or null | Later Brier score minus reference Brier score. |
+| `signals` | `string[]` | Thresholds crossed by the later window. |
+| `degraded` | boolean | Whether at least one drift signal crossed threshold. |
+| `abstain` | boolean | Whether enough simultaneous signals force abstention. |
+| `trust_multiplier` | number | Multiplier applied to trust score when degraded. |
+| `calibration_rows` | integer | Rows in the reference calibration window. |
+| `recent_rows` | integer | Rows in the later labeled evaluation window. |
+| `note` | string | Evaluation or non-evaluation explanation. |
 
 ### `ModelAnalysis`
 
