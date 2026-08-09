@@ -31,7 +31,9 @@ discussion threads.
 ```text
 [Research #23] Evaluate Taiwan listed, TPEx listed, and TPEx emerging symbols
               within market with explicit coverage metadata.
-[Research #24] Evaluate cross-market transfer after within-market baselines.
+[Research #24] Evaluate cross-market transfer after within-market baselines;
+              Experiment 010 records the logistic US/Taiwan pilot and keeps
+              the formal-universe/deep-model gaps explicit.
 [Data] Build point-in-time universe metadata before claiming all-market
        coverage.
 ```
