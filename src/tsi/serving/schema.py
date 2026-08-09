@@ -14,7 +14,20 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 WarningLevel = Literal["alert", "watch", "abstain", "no_alert"]
+AttributionDirection = Literal["positive", "negative", "neutral"]
 DEFAULT_SCHEMA_VERSION = "v1"
+
+
+class FeatureAttribution(BaseModel):
+    """One model-specific, non-causal feature contribution."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    feature: str
+    value: float | None = None
+    contribution: float
+    direction: AttributionDirection
+    method: str
 
 
 class PredictionRecord(BaseModel):
@@ -35,6 +48,7 @@ class PredictionRecord(BaseModel):
     watch_threshold: float = Field(ge=0.0, le=1.0)
     warning_level: WarningLevel
     reason_codes: list[str]
+    feature_attributions: list[FeatureAttribution] = Field(default_factory=list)
 
 
 class PredictionBatch(BaseModel):
@@ -104,6 +118,7 @@ def build_prediction_batch(
             watch_threshold=float(row["watch_threshold"]),
             warning_level=row["warning_level"],
             reason_codes=list(row["reason_codes"]),
+            feature_attributions=list(row.get("feature_attributions", [])),
         )
         for _, row in frame.iterrows()
     ]

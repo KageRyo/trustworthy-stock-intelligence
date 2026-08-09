@@ -27,6 +27,17 @@ def test_prediction_batch_builds_records_from_frame() -> None:
             "watch_threshold": [0.16],
             "warning_level": ["watch"],
             "reason_codes": [["probability_above_watch_threshold"]],
+            "feature_attributions": [
+                [
+                    {
+                        "feature": "return_1d",
+                        "value": -0.02,
+                        "contribution": 0.31,
+                        "direction": "positive",
+                        "method": "standardized_logit_v1",
+                    }
+                ]
+            ],
         }
     )
 
@@ -40,6 +51,8 @@ def test_prediction_batch_builds_records_from_frame() -> None:
     assert batch.records[0].ticker == "AAPL"
     assert batch.records[0].date == "2026-06-08"
     assert batch.records[0].reason_codes == ["probability_above_watch_threshold"]
+    assert batch.records[0].feature_attributions[0].feature == "return_1d"
+    assert batch.records[0].feature_attributions[0].direction == "positive"
 
 
 def test_prediction_batch_json_round_trips(tmp_path: Path) -> None:

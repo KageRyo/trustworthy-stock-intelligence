@@ -162,6 +162,9 @@ func loadFile(path string) (PredictionBatch, map[string]PredictionRecord, time.T
 		record.RunID = batch.RunID
 		record.DataAsOf = batch.DataAsOf
 		record.GeneratedAt = batch.GeneratedAt
+		if record.FeatureAttributions == nil {
+			record.FeatureAttributions = []FeatureAttribution{}
+		}
 		batch.Records[index] = record
 		byKey[strings.ToUpper(record.Ticker)] = record
 	}

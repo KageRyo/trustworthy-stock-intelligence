@@ -11,6 +11,16 @@ export const reasonExplanationSchema = z
   })
   .strict();
 
+export const featureAttributionSchema = z
+  .object({
+    feature: z.string(),
+    value: z.number().nullable(),
+    contribution: z.number(),
+    direction: z.enum(["positive", "negative", "neutral"]),
+    method: z.string()
+  })
+  .strict();
+
 export const warningAnalysisSchema = z
   .object({
     level: warningLevelSchema,
@@ -63,6 +73,7 @@ export const tickerAnalysisSchema = z
     model: modelAnalysisSchema,
     data_freshness: dataFreshnessSchema,
     reasons: z.array(reasonExplanationSchema),
+    feature_attributions: z.array(featureAttributionSchema).optional(),
     limitations: z.array(z.string())
   })
   .strict();
@@ -111,7 +122,8 @@ export const predictionRecordSchema = z
     alert_threshold: z.number().min(0).max(1),
     watch_threshold: z.number().min(0).max(1),
     warning_level: warningLevelSchema,
-    reason_codes: z.array(z.string())
+    reason_codes: z.array(z.string()),
+    feature_attributions: z.array(featureAttributionSchema).optional()
   })
   .strict();
 
@@ -219,6 +231,7 @@ export const apiErrorSchema = z
 
 export type WarningLevel = z.infer<typeof warningLevelSchema>;
 export type ReasonExplanation = z.infer<typeof reasonExplanationSchema>;
+export type FeatureAttribution = z.infer<typeof featureAttributionSchema>;
 export type TickerAnalysis = z.infer<typeof tickerAnalysisSchema>;
 export type WarningHistory = z.infer<typeof warningHistorySchema>;
 export type WarningHistoryRecord = z.infer<typeof warningHistoryRecordSchema>;

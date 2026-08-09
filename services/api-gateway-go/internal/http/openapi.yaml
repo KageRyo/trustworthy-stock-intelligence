@@ -464,6 +464,7 @@ components:
         - watch_threshold
         - warning_level
         - reason_codes
+        - feature_attributions
       properties:
         date:
           type: string
@@ -506,6 +507,10 @@ components:
           type: array
           items:
             type: string
+        feature_attributions:
+          type: array
+          items:
+            $ref: "#/components/schemas/FeatureAttribution"
     TickerListResponse:
       type: object
       additionalProperties: false
@@ -669,6 +674,7 @@ components:
         - model
         - data_freshness
         - reasons
+        - feature_attributions
         - limitations
       properties:
         schema_version:
@@ -697,6 +703,10 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ReasonExplanation"
+        feature_attributions:
+          type: array
+          items:
+            $ref: "#/components/schemas/FeatureAttribution"
         limitations:
           type: array
           items:
@@ -790,6 +800,28 @@ components:
           type: array
           items:
             type: string
+    FeatureAttribution:
+      type: object
+      additionalProperties: false
+      required:
+        - feature
+        - value
+        - contribution
+        - direction
+        - method
+      properties:
+        feature:
+          type: string
+        value:
+          type: [number, "null"]
+        contribution:
+          type: number
+        direction:
+          type: string
+          enum: [positive, negative, neutral]
+        method:
+          type: string
+      description: Model-specific contribution; it is not a causal explanation.
     WarningAnalysis:
       type: object
       additionalProperties: false

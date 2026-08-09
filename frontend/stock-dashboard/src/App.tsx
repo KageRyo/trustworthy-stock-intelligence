@@ -49,6 +49,7 @@ import {
 import type {
   APIStatus,
   CurrentModel,
+  FeatureAttribution,
   PredictionBatch,
   PredictionRecord,
   ReasonExplanation,
@@ -707,6 +708,7 @@ function TrustPanel({
           {localizedTrustSummary(analysis, copy)}
         </p>
       ) : null}
+      {analysis ? <FeatureAttributionList attributions={analysis.feature_attributions ?? []} copy={copy} /> : null}
     </section>
   );
 }
@@ -807,6 +809,52 @@ function WarningTimelinePanel({
         </div>
       ) : null}
     </section>
+  );
+}
+
+function FeatureAttributionList({
+  attributions,
+  copy
+}: {
+  attributions: FeatureAttribution[];
+  copy: DashboardCopy;
+}) {
+  const sorted = [...attributions].sort(
+    (left, right) => Math.abs(right.contribution) - Math.abs(left.contribution)
+  );
+
+  return (
+    <div className="mt-5 rounded-md border border-line bg-slate-50 p-4">
+      <h3 className="text-sm font-semibold text-ink">{copy.panels.featureAttributions}</h3>
+      <p className="mt-1 text-xs leading-5 text-slate-600">{copy.attributionNote}</p>
+      {sorted.length === 0 ? (
+        <p className="mt-3 text-sm text-slate-500">{copy.common.na}</p>
+      ) : (
+        <div className="mt-3 grid gap-2">
+          {sorted.map((attribution) => {
+            const contributionClass =
+              attribution.direction === "positive" ? "text-risk" : "text-trust";
+            const sign = attribution.contribution >= 0 ? "+" : "";
+            return (
+              <div
+                key={`${attribution.feature}-${attribution.method}`}
+                className="flex items-center justify-between gap-3 rounded border border-line bg-white px-3 py-2"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium text-ink">{attribution.feature}</p>
+                  <p className="text-xs text-slate-500">
+                    {attribution.value === null ? copy.common.na : attribution.value.toFixed(4)} · {attribution.method}
+                  </p>
+                </div>
+                <span className={`shrink-0 font-mono text-sm font-semibold ${contributionClass}`}>
+                  {sign}{attribution.contribution.toFixed(4)}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }
 

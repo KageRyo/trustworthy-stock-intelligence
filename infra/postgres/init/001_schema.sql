@@ -119,6 +119,7 @@ CREATE TABLE IF NOT EXISTS warning_records (
     watch_threshold DOUBLE PRECISION NOT NULL CHECK (watch_threshold >= 0 AND watch_threshold <= 1),
     warning_level TEXT NOT NULL CHECK (warning_level IN ('alert', 'watch', 'abstain', 'no_alert')),
     reason_codes TEXT[] NOT NULL DEFAULT '{}',
+    feature_attributions JSONB NOT NULL DEFAULT '[]'::jsonb,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     PRIMARY KEY (batch_id, ticker_id)
 );

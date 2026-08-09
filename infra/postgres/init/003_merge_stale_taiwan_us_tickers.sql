@@ -135,7 +135,7 @@ INSERT INTO warning_records (
     batch_id, ticker_id, prediction_date, risk_probability,
     calibrated_risk_probability, calibration_method,
     uncertainty_score, trust_score, alert_threshold,
-    watch_threshold, warning_level, reason_codes, created_at
+    watch_threshold, warning_level, reason_codes, feature_attributions, created_at
 )
 SELECT
     wr.batch_id,
@@ -150,6 +150,7 @@ SELECT
     wr.watch_threshold,
     wr.warning_level,
     wr.reason_codes,
+    wr.feature_attributions,
     wr.created_at
 FROM warning_records wr
 JOIN stale_taiwan_us_ticker_aliases aliases ON aliases.stale_ticker_id = wr.ticker_id
@@ -164,7 +165,8 @@ DO UPDATE SET
     alert_threshold = EXCLUDED.alert_threshold,
     watch_threshold = EXCLUDED.watch_threshold,
     warning_level = EXCLUDED.warning_level,
-    reason_codes = EXCLUDED.reason_codes;
+    reason_codes = EXCLUDED.reason_codes,
+    feature_attributions = EXCLUDED.feature_attributions;
 
 DELETE FROM universe_tickers
 WHERE ticker_id IN (SELECT stale_ticker_id FROM stale_taiwan_us_ticker_aliases);

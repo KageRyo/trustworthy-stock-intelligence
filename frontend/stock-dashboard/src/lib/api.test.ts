@@ -79,6 +79,15 @@ function analysisPayload(ticker = "2330") {
         detail: "The calibrated risk probability is at or above the configured watch threshold."
       }
     ],
+    feature_attributions: [
+      {
+        feature: "return_1d",
+        value: -0.02,
+        contribution: 0.31,
+        direction: "positive",
+        method: "standardized_logit_v1"
+      }
+    ],
     limitations: ["This is a drawdown-risk warning signal, not investment advice."]
   };
 }
@@ -188,6 +197,7 @@ describe("typed API client", () => {
     const analysis = await fetchTickerAnalysis("2330");
 
     expect(analysis.ticker).toBe("2330");
+    expect(analysis.feature_attributions?.[0].feature).toBe("return_1d");
     expect(fetchMock).toHaveBeenCalledWith("/api/v1/analysis/2330", {
       headers: {
         Accept: "application/json"

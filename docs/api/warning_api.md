@@ -233,6 +233,15 @@ Returns the model metadata from the current batch.
     "probability_above_watch_threshold",
     "trust_below_alert_threshold",
     "warning_level_watch"
+  ],
+  "feature_attributions": [
+    {
+      "feature": "return_1d",
+      "value": -0.021,
+      "contribution": 0.31,
+      "direction": "positive",
+      "method": "standardized_logit_v1"
+    }
   ]
 }
 ```
