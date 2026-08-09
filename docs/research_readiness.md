@@ -28,8 +28,11 @@ mixed threshold values within a fold. Its JSON output records aggregate and
 per-fold ROC-AUC, PR-AUC, Brier, ECE, precision, recall, F1, false-positive
 rate, false-discovery rate, and alert coverage.
 
-The prior one-fold deep GPU smoke result remains an alignment check only. It is
-not a quality result, and it cannot be upgraded without a fresh 39-fold run.
+The prior one-fold deep GPU smoke result has been superseded by the full
+39-fold current-universe pilot in
+[`experiments/011_deep_alignment`](../experiments/011_deep_alignment/). That
+result remains bounded by its current-universe and provider limitations; it
+does not resolve point-in-time membership or establish investment usefulness.
 
 ## Issue #23: Taiwan Universe Capture
 

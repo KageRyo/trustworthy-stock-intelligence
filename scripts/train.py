@@ -23,6 +23,7 @@ from tsi.labeling.drawdown import add_future_drawdown_label
 from tsi.labeling.warning_level import assign_warning_levels, select_alert_threshold
 from tsi.models.logistic import LogisticRiskModel
 from tsi.models.tree import TreeRiskModel
+from tsi.training.dataset import build_sequence_dataset
 from tsi.trust.calibration import CalibrationMethod, fit_probability_calibrator
 from tsi.trust.decision import compute_watch_threshold
 
@@ -114,6 +115,12 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         default=None,
         help="Optional fold cap for reproducible protocol-specific reruns.",
     )
+    parser.add_argument(
+        "--sequence-lookback",
+        type=int,
+        default=None,
+        help="Require deep-model-eligible target rows with this lookback before baseline splitting.",
+    )
     return parser.parse_args(argv)
 
 
@@ -169,6 +176,12 @@ def run_training(args: argparse.Namespace) -> dict[str, object]:
         drawdown_threshold=args.drawdown_threshold,
         universe_membership=universe_membership,
     )
+    sequence_eligible_indices: set[int] | None = None
+    if args.sequence_lookback is not None:
+        sequence_eligible_indices = sequence_eligible_source_indices(
+            training_frame,
+            lookback=args.sequence_lookback,
+        )
     purge_size = args.horizon if args.purge_size is None else args.purge_size
     if purge_size < args.horizon:
         raise ValueError("purge_size must be at least horizon to prevent label-window leakage")
@@ -194,6 +207,14 @@ def run_training(args: argparse.Namespace) -> dict[str, object]:
         train_frame = training_frame.loc[list(fold.train_index)]
         calibration_frame = training_frame.loc[list(fold.calibration_index)]
         test_frame = training_frame.loc[list(fold.test_index)]
+        if sequence_eligible_indices is not None:
+            train_frame = train_frame.loc[train_frame.index.isin(sequence_eligible_indices)]
+            calibration_frame = calibration_frame.loc[
+                calibration_frame.index.isin(sequence_eligible_indices)
+            ]
+            test_frame = test_frame.loc[test_frame.index.isin(sequence_eligible_indices)]
+        if train_frame.empty or calibration_frame.empty or test_frame.empty:
+            continue
         train_labels = train_frame["risk_label"].to_numpy()
         calibration_labels = calibration_frame["risk_label"].to_numpy()
         test_labels = test_frame["risk_label"].to_numpy()
@@ -364,6 +385,10 @@ def run_training(args: argparse.Namespace) -> dict[str, object]:
         "calibration_size": args.calibration_size,
         "test_size": args.test_size,
         "step_size": args.step_size if args.step_size is not None else args.test_size,
+        "sequence_lookback": args.sequence_lookback,
+        "sequence_eligible_count": (
+            len(sequence_eligible_indices) if sequence_eligible_indices is not None else None
+        ),
         "drawdown_threshold": args.drawdown_threshold,
         "calibration_method": calibration_method,
         "threshold_objective": args.threshold_objective,
@@ -382,6 +407,17 @@ def run_training(args: argparse.Namespace) -> dict[str, object]:
         "summary_std": summary_std,
         "predictions": predictions,
     }
+
+
+def sequence_eligible_source_indices(frame: pd.DataFrame, *, lookback: int) -> set[int]:
+    """Return target-row indices that the sequence trainer can represent exactly."""
+
+    dataset = build_sequence_dataset(
+        frame,
+        feature_columns=DEFAULT_FEATURE_COLUMNS,
+        lookback=lookback,
+    )
+    return set(dataset.metadata["source_index"].to_numpy(dtype=int))
 
 
 def build_baseline_model(args: argparse.Namespace) -> tuple[LogisticRiskModel | TreeRiskModel, str]:

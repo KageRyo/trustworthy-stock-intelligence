@@ -8,7 +8,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from scripts.audit_deep_alignment import build_alignment_report, render_report
+from scripts.audit_deep_alignment import build_alignment_report, parse_args, render_report, run
 
 
 INPUT_SHA256 = "a" * 64
@@ -44,6 +44,7 @@ def _write_run(
         "calibration_size": 63,
         "test_size": 63,
         "step_size": 63,
+        "sequence_lookback": 60,
         "drawdown_threshold": -0.05,
         "calibration_method": "platt",
         "threshold_objective": "f1",
@@ -113,3 +114,29 @@ def test_alignment_report_rejects_a_cpu_deep_run(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="requires CUDA training"):
         build_alignment_report(baseline, deep, expected_fold_count=1)
+
+
+def test_audit_run_writes_json_with_native_fold_ids(tmp_path: Path) -> None:
+    baseline = _write_run(tmp_path, "logistic")
+    deep = _write_run(tmp_path, "temporal_transformer")
+    output = tmp_path / "audit.json"
+    report_path = tmp_path / "audit.md"
+
+    run(
+        parse_args(
+            [
+                "--baseline-summary",
+                str(baseline),
+                "--deep-summary",
+                str(deep),
+                "--expected-fold-count",
+                "1",
+                "--output",
+                str(output),
+                "--report",
+                str(report_path),
+            ]
+        )
+    )
+
+    assert json.loads(output.read_text(encoding="utf-8"))["fold_ids"] == [0]

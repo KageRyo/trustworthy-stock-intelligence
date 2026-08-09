@@ -3,8 +3,14 @@
 from __future__ import annotations
 
 import numpy as np
+import pandas as pd
 
-from scripts.train import build_baseline_model, constant_prior_probabilities, parse_args
+from scripts.train import (
+    build_baseline_model,
+    constant_prior_probabilities,
+    parse_args,
+    sequence_eligible_source_indices,
+)
 from tsi.models.logistic import LogisticRiskModel
 from tsi.models.tree import TreeRiskModel
 
@@ -20,6 +26,27 @@ def test_parse_args_supports_fold_cap() -> None:
     args = parse_args(["--input", "data.csv", "--max-folds", "39"])
 
     assert args.max_folds == 39
+
+
+def test_sequence_lookback_identifies_newly_eligible_targets() -> None:
+    frame = pd.DataFrame(
+        {
+            "date": pd.date_range("2024-01-01", periods=4, freq="D"),
+            "ticker": ["AAA"] * 4,
+            "return_1d": [0.1, 0.1, 0.1, 0.1],
+            "return_5d": [0.1, 0.1, 0.1, 0.1],
+            "sma_5_gap": [0.1, 0.1, 0.1, 0.1],
+            "sma_10_gap": [0.1, 0.1, 0.1, 0.1],
+            "volatility_5d": [0.1, 0.1, 0.1, 0.1],
+            "volatility_10d": [0.1, 0.1, 0.1, 0.1],
+            "volume_ratio_5d": [0.1, 0.1, 0.1, 0.1],
+            "risk_label": [0, 1, 0, 1],
+        }
+    )
+
+    source_indices = sequence_eligible_source_indices(frame, lookback=3)
+
+    assert source_indices == {2, 3}
 
 
 def test_build_baseline_model_supports_tree_models() -> None:

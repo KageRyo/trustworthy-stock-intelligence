@@ -30,6 +30,7 @@ PROTOCOL_COLUMNS = (
     "calibration_size",
     "test_size",
     "step_size",
+    "sequence_lookback",
     "drawdown_threshold",
     "calibration_method",
     "threshold_objective",
@@ -66,9 +67,12 @@ def build_alignment_report(
     baseline = _read_json(baseline_summary_path)
     deep = _read_json(deep_summary_path)
     protocol_mismatches = {
-        column: {"baseline": baseline.get(column), "deep": deep.get(column)}
+        column: {
+            "baseline": _protocol_value(baseline, column),
+            "deep": _protocol_value(deep, column),
+        }
         for column in PROTOCOL_COLUMNS
-        if baseline.get(column) != deep.get(column)
+        if _protocol_value(baseline, column) != _protocol_value(deep, column)
     }
     if protocol_mismatches:
         raise ValueError(f"protocol mismatch; deep comparison is not valid: {protocol_mismatches}")
@@ -108,7 +112,7 @@ def build_alignment_report(
         "expected_fold_count": expected_fold_count,
         "fold_count": len(baseline_fold_ids),
         "fold_ids": baseline_fold_ids,
-        "protocol": {column: baseline.get(column) for column in PROTOCOL_COLUMNS},
+        "protocol": {column: _protocol_value(baseline, column) for column in PROTOCOL_COLUMNS},
         "input_sha256": input_sha256,
         "universe_membership": universe_membership,
         "deep_training": deep_training,
@@ -277,7 +281,12 @@ def _validate_fold_inventory(
     artifact_name: str,
 ) -> list[int]:
     try:
-        fold_ids = sorted(pd.to_numeric(predictions["fold_id"], errors="raise").astype(int).unique())
+        fold_ids = [
+            int(fold_id)
+            for fold_id in sorted(
+                pd.to_numeric(predictions["fold_id"], errors="raise").astype(int).unique()
+            )
+        ]
     except (TypeError, ValueError) as exc:
         raise ValueError(f"{artifact_name} predictions have invalid fold IDs") from exc
     if not fold_ids:
@@ -378,6 +387,12 @@ def _keys_hash(frame: pd.DataFrame) -> str:
 
 def _canonical_json(value: dict[str, Any]) -> str:
     return json.dumps(value, sort_keys=True, separators=(",", ":"))
+
+
+def _protocol_value(summary: dict[str, Any], column: str) -> object:
+    if column == "sequence_lookback":
+        return summary.get(column, summary.get("lookback"))
+    return summary.get(column)
 
 
 def _model_name(summary: dict[str, Any]) -> str:

@@ -524,6 +524,7 @@ def run_training(args: argparse.Namespace) -> dict[str, object]:
         "model_type": "temporal_transformer",
         "feature_columns": DEFAULT_FEATURE_COLUMNS,
         "lookback": args.lookback,
+        "sequence_lookback": args.lookback,
         "horizon": args.horizon,
         "purge_size": purge_size,
         "train_size": args.train_size,
