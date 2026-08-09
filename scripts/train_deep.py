@@ -13,8 +13,9 @@ import torch
 
 from scripts.train import prepare_training_frame
 from tsi.artifacts.model_bundle import ModelBundleMetadata, save_model_bundle
-from tsi.data.csv import read_ohlcv_csv
+from tsi.data.csv import file_sha256, read_ohlcv_csv
 from tsi.data.split import build_walk_forward_splits
+from tsi.data.universe import PointInTimeUniverse, load_point_in_time_universe
 from tsi.evaluation.metrics import classification_metrics
 from tsi.features.technical import DEFAULT_FEATURE_COLUMNS
 from tsi.labeling.warning_level import select_alert_threshold
@@ -41,6 +42,15 @@ from tsi.trust.uncertainty import binary_entropy_uncertainty, margin_uncertainty
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--input", type=Path, required=True, help="Path to OHLCV CSV input.")
+    parser.add_argument(
+        "--universe-membership",
+        type=Path,
+        default=None,
+        help="Optional point-in-time membership CSV used to filter rows by evaluation date.",
+    )
+    parser.add_argument("--universe-name", default="point_in_time")
+    parser.add_argument("--membership-source", default="")
+    parser.add_argument("--membership-source-license", default="")
     parser.add_argument("--lookback", type=int, default=60, help="Sequence lookback window.")
     parser.add_argument("--horizon", type=int, default=5, help="Future label horizon.")
     parser.add_argument("--drawdown-threshold", type=float, default=-0.05)
@@ -232,10 +242,19 @@ def run_training(args: argparse.Namespace) -> dict[str, object]:
     device = resolve_training_device(args.device, allow_cpu=args.allow_cpu)
 
     ohlcv = read_ohlcv_csv(args.input)
+    universe_membership: PointInTimeUniverse | None = None
+    if args.universe_membership is not None:
+        universe_membership = load_point_in_time_universe(
+            args.universe_membership,
+            name=args.universe_name,
+            source=args.membership_source,
+            source_license=args.membership_source_license,
+        )
     training_frame = prepare_training_frame(
         ohlcv,
         horizon=args.horizon,
         drawdown_threshold=args.drawdown_threshold,
+        universe_membership=universe_membership,
     )
     sequence_dataset = build_sequence_dataset(
         training_frame,
@@ -501,8 +520,11 @@ def run_training(args: argparse.Namespace) -> dict[str, object]:
 
     return {
         "input": str(args.input),
+        "input_sha256": file_sha256(args.input),
+        "model_type": "temporal_transformer",
         "feature_columns": DEFAULT_FEATURE_COLUMNS,
         "lookback": args.lookback,
+        "sequence_lookback": args.lookback,
         "horizon": args.horizon,
         "purge_size": purge_size,
         "train_size": args.train_size,
@@ -519,6 +541,14 @@ def run_training(args: argparse.Namespace) -> dict[str, object]:
         "fold_count": len(fold_results),
         "rows_after_filtering": len(training_frame),
         "sequence_count": len(sequence_dataset.y),
+        "universe_membership": (
+            universe_membership.manifest()
+            if universe_membership is not None
+            else {
+                "status": "not_supplied",
+                "note": "The benchmark uses the input snapshot without point-in-time membership filtering.",
+            }
+        ),
         "folds": fold_results,
         "summary": summary,
         "summary_std": summary_std,
