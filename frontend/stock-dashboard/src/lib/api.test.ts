@@ -4,6 +4,7 @@ import {
   addWatchlistTicker,
   fetchStatus,
   fetchTickerAnalysis,
+  fetchTickerHistory,
   fetchTickers,
   fetchWatchlist,
   removeWatchlistTicker
@@ -79,6 +80,34 @@ function analysisPayload(ticker = "2330") {
       }
     ],
     limitations: ["This is a drawdown-risk warning signal, not investment advice."]
+  };
+}
+
+function historyPayload(ticker = "2330") {
+  return {
+    schema_version: "warning_history.v1",
+    ticker,
+    record_count: 1,
+    records: [
+      {
+        run_id: "fixture_run",
+        data_as_of: "2026-06-19",
+        generated_at: "2026-06-19T00:00:00Z",
+        date: "2026-06-19",
+        ticker,
+        model: "temporal_transformer",
+        model_bundle: "fixture_bundle",
+        risk_probability: 0.31,
+        calibrated_risk_probability: 0.22,
+        calibration_method: "platt",
+        uncertainty_score: 0.25,
+        trust_score: 0.18,
+        alert_threshold: 0.3,
+        watch_threshold: 0.15,
+        warning_level: "watch",
+        reason_codes: ["warning_level_watch"]
+      }
+    ]
   };
 }
 
@@ -160,6 +189,20 @@ describe("typed API client", () => {
 
     expect(analysis.ticker).toBe("2330");
     expect(fetchMock).toHaveBeenCalledWith("/api/v1/analysis/2330", {
+      headers: {
+        Accept: "application/json"
+      }
+    });
+  });
+
+  it("parses typed ticker warning history with a bounded limit", async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse(historyPayload("2330")));
+
+    const history = await fetchTickerHistory("2330", 30);
+
+    expect(history.ticker).toBe("2330");
+    expect(history.records[0].warning_level).toBe("watch");
+    expect(fetchMock).toHaveBeenCalledWith("/api/v1/analysis/2330/history?limit=30", {
       headers: {
         Accept: "application/json"
       }

@@ -63,6 +63,77 @@ func (s *PostgresStore) FindTicker(ticker string) (PredictionRecord, bool) {
 	return record, ok
 }
 
+func (s *PostgresStore) History(ticker string, limit int) ([]WarningHistoryRecord, error) {
+	if limit < 1 {
+		return []WarningHistoryRecord{}, nil
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	rows, err := s.pool.Query(
+		ctx,
+		`
+		SELECT wr.prediction_date, t.symbol, pb.run_id, pb.data_as_of, pb.generated_at,
+		       pb.model, pb.model_bundle, wr.risk_probability,
+		       wr.calibrated_risk_probability, wr.calibration_method,
+		       wr.uncertainty_score, wr.trust_score, wr.alert_threshold,
+		       wr.watch_threshold, wr.warning_level, wr.reason_codes
+		FROM warning_records wr
+		JOIN prediction_batches pb ON pb.id = wr.batch_id
+		JOIN tickers t ON t.id = wr.ticker_id
+		WHERE upper(t.symbol) = upper($1)
+		ORDER BY wr.prediction_date DESC, pb.generated_at DESC, pb.created_at DESC
+		LIMIT $2
+		`,
+		ticker,
+		limit,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("load warning history for %q: %w", ticker, err)
+	}
+	defer rows.Close()
+
+	history := []WarningHistoryRecord{}
+	for rows.Next() {
+		var predictionDate time.Time
+		var recordDataAsOf time.Time
+		var recordGeneratedAt time.Time
+		var record PredictionRecord
+		if err := rows.Scan(
+			&predictionDate,
+			&record.Ticker,
+			&record.RunID,
+			&recordDataAsOf,
+			&recordGeneratedAt,
+			&record.Model,
+			&record.ModelBundle,
+			&record.RiskProbability,
+			&record.CalibratedRiskProbability,
+			&record.CalibrationMethod,
+			&record.UncertaintyScore,
+			&record.TrustScore,
+			&record.AlertThreshold,
+			&record.WatchThreshold,
+			&record.WarningLevel,
+			&record.ReasonCodes,
+		); err != nil {
+			return nil, fmt.Errorf("scan warning history for %q: %w", ticker, err)
+		}
+		record.Date = formatDataTime(predictionDate)
+		record.DataAsOf = formatDataTime(recordDataAsOf)
+		record.GeneratedAt = recordGeneratedAt.UTC().Format(time.RFC3339)
+		history = append(history, HistoryRecordFromPrediction(record))
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate warning history for %q: %w", ticker, err)
+	}
+
+	for left, right := 0, len(history)-1; left < right; left, right = left+1, right-1 {
+		history[left], history[right] = history[right], history[left]
+	}
+	return history, nil
+}
+
 func (s *PostgresStore) Refresh() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()

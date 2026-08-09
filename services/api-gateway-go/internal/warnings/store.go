@@ -53,6 +53,19 @@ func (s *FileStore) FindTicker(ticker string) (PredictionRecord, bool) {
 	return record, ok
 }
 
+func (s *FileStore) History(ticker string, limit int) ([]WarningHistoryRecord, error) {
+	if limit < 1 {
+		return []WarningHistoryRecord{}, nil
+	}
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	record, ok := s.byKey[strings.ToUpper(ticker)]
+	if !ok {
+		return []WarningHistoryRecord{}, nil
+	}
+	return []WarningHistoryRecord{HistoryRecordFromPrediction(record)}, nil
+}
+
 func (s *FileStore) Refresh() error {
 	info, err := os.Stat(s.path)
 	if err != nil {

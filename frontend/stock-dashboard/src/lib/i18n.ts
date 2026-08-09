@@ -46,6 +46,7 @@ export type DashboardCopy = {
     reasonCodes: string;
     sessionWatchlist: string;
     latestWarnings: string;
+    tickerTimeline: string;
   };
   labels: {
     rawRisk: string;
@@ -69,12 +70,15 @@ export type DashboardCopy = {
   };
   states: {
     loadingAnalysis: string;
+    loadingHistory: string;
     noReasonCodes: string;
     noViewedTickers: string;
+    noHistory: string;
   };
   errors: {
     unexpected: string;
     noMarketData: (ticker: string) => string;
+    historyUnavailable: string;
   };
   notices: {
     watchlistJoinNotRefreshed: (ticker: string) => string;
@@ -97,6 +101,7 @@ export type DashboardCopy = {
     calibrated: string;
     trust: string;
     uncertainty: string;
+    warningLevel: string;
   };
   reasonCodes: Record<string, TextPair>;
 };
@@ -141,7 +146,8 @@ export const translations = {
       trustAndModel: "Trust And Model",
       reasonCodes: "Reason Codes",
       sessionWatchlist: "Session Watchlist",
-      latestWarnings: "Latest Warnings"
+      latestWarnings: "Latest Warnings",
+      tickerTimeline: "Ticker Timeline"
     },
     labels: {
       rawRisk: "Raw Risk",
@@ -165,13 +171,16 @@ export const translations = {
     },
     states: {
       loadingAnalysis: "Loading analysis",
+      loadingHistory: "Loading warning history",
       noReasonCodes: "No reason codes",
-      noViewedTickers: "No viewed tickers in this session"
+      noViewedTickers: "No viewed tickers in this session",
+      noHistory: "No historical warning records are available for this ticker."
     },
     errors: {
       unexpected: "Unexpected error",
       noMarketData: (ticker: string) =>
-        `No market data or model output could be generated for ${ticker}. Check the symbol and provider coverage.`
+        `No market data or model output could be generated for ${ticker}. Check the symbol and provider coverage.`,
+      historyUnavailable: "Warning history is temporarily unavailable."
     },
     notices: {
       watchlistJoinNotRefreshed: (ticker: string) =>
@@ -225,7 +234,8 @@ export const translations = {
       risk: "Risk",
       calibrated: "Calibrated",
       trust: "Trust",
-      uncertainty: "Uncertainty"
+      uncertainty: "Uncertainty",
+      warningLevel: "Warning Level"
     },
     reasonCodes: {
       probability_above_alert_threshold: {
@@ -315,7 +325,8 @@ export const translations = {
       trustAndModel: "信任與模型",
       reasonCodes: "原因代碼",
       sessionWatchlist: "本次瀏覽觀察清單",
-      latestWarnings: "最新風險訊號"
+      latestWarnings: "最新風險訊號",
+      tickerTimeline: "股票風險時間線"
     },
     labels: {
       rawRisk: "原始風險",
@@ -339,13 +350,16 @@ export const translations = {
     },
     states: {
       loadingAnalysis: "正在載入分析",
+      loadingHistory: "正在載入警示歷史",
       noReasonCodes: "沒有原因代碼",
-      noViewedTickers: "本次瀏覽尚未查看任何股票"
+      noViewedTickers: "本次瀏覽尚未查看任何股票",
+      noHistory: "此股票目前沒有可用的歷史警示資料。"
     },
     errors: {
       unexpected: "發生未預期錯誤",
       noMarketData: (ticker: string) =>
-        `無法為 ${ticker} 產生市場資料或模型輸出。請確認代號與資料來源涵蓋範圍。`
+        `無法為 ${ticker} 產生市場資料或模型輸出。請確認代號與資料來源涵蓋範圍。`,
+      historyUnavailable: "警示歷史暫時無法取得。"
     },
     notices: {
       watchlistJoinNotRefreshed: (ticker: string) =>
@@ -397,7 +411,8 @@ export const translations = {
       risk: "風險",
       calibrated: "校準後",
       trust: "信任",
-      uncertainty: "不確定性"
+      uncertainty: "不確定性",
+      warningLevel: "警示等級"
     },
     reasonCodes: {
       probability_above_alert_threshold: {

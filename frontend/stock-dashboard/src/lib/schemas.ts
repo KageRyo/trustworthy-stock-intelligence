@@ -67,6 +67,36 @@ export const tickerAnalysisSchema = z
   })
   .strict();
 
+export const warningHistoryRecordSchema = z
+  .object({
+    run_id: z.string(),
+    data_as_of: z.string(),
+    generated_at: z.string(),
+    date: z.string(),
+    ticker: z.string(),
+    model: z.string(),
+    model_bundle: z.string(),
+    risk_probability: z.number().min(0).max(1),
+    calibrated_risk_probability: z.number().min(0).max(1),
+    calibration_method: z.string(),
+    uncertainty_score: z.number().min(0).max(1),
+    trust_score: z.number().min(0).max(1),
+    alert_threshold: z.number().min(0).max(1),
+    watch_threshold: z.number().min(0).max(1),
+    warning_level: warningLevelSchema,
+    reason_codes: z.array(z.string())
+  })
+  .strict();
+
+export const warningHistorySchema = z
+  .object({
+    schema_version: z.literal("warning_history.v1"),
+    ticker: z.string(),
+    record_count: z.number().int().nonnegative(),
+    records: z.array(warningHistoryRecordSchema)
+  })
+  .strict();
+
 export const predictionRecordSchema = z
   .object({
     date: z.string(),
@@ -190,6 +220,8 @@ export const apiErrorSchema = z
 export type WarningLevel = z.infer<typeof warningLevelSchema>;
 export type ReasonExplanation = z.infer<typeof reasonExplanationSchema>;
 export type TickerAnalysis = z.infer<typeof tickerAnalysisSchema>;
+export type WarningHistory = z.infer<typeof warningHistorySchema>;
+export type WarningHistoryRecord = z.infer<typeof warningHistoryRecordSchema>;
 export type PredictionRecord = z.infer<typeof predictionRecordSchema>;
 export type PredictionBatch = z.infer<typeof predictionBatchSchema>;
 export type TickerSummary = z.infer<typeof tickerSummarySchema>;

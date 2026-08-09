@@ -16,6 +16,7 @@ import (
 type WarningStore interface {
 	Batch() warnings.PredictionBatch
 	FindTicker(ticker string) (warnings.PredictionRecord, bool)
+	History(ticker string, limit int) ([]warnings.WarningHistoryRecord, error)
 	Refresh() error
 	Status() warnings.StoreStatus
 }
@@ -60,6 +61,13 @@ type ErrorResponse struct {
 type ErrorBody struct {
 	Code    string `json:"code"`
 	Message string `json:"message"`
+}
+
+type WarningHistoryResponse struct {
+	SchemaVersion string                          `json:"schema_version"`
+	Ticker        string                          `json:"ticker"`
+	RecordCount   int                             `json:"record_count"`
+	Records       []warnings.WarningHistoryRecord `json:"records"`
 }
 
 func NewHandlers(store WarningStore, watchlistStores ...WatchlistStore) *Handlers {
@@ -192,6 +200,51 @@ func (h *Handlers) TickerAnalysis(response http.ResponseWriter, request *http.Re
 	writeJSON(response, http.StatusOK, buildTickerAnalysis(record, h.store.Status()))
 }
 
+func (h *Handlers) TickerWarningHistory(response http.ResponseWriter, request *http.Request) {
+	h.refreshStore()
+	ticker := strings.TrimPrefix(request.URL.Path, "/api/v1/analysis/")
+	ticker = strings.TrimSuffix(ticker, "/history")
+	ticker = strings.TrimSpace(ticker)
+	if ticker == "" || strings.Contains(ticker, "/") {
+		writeError(response, http.StatusNotFound, newHTTPError("ticker_not_found", "ticker not found"))
+		return
+	}
+
+	limit, err := parseHistoryLimit(request)
+	if err != nil {
+		writeError(response, http.StatusBadRequest, err)
+		return
+	}
+	history, err := h.store.History(ticker, limit)
+	if err != nil {
+		writeError(response, http.StatusServiceUnavailable, newHTTPError("history_unavailable", err.Error()))
+		return
+	}
+	if len(history) == 0 && h.onDemandAnalyzer != nil {
+		if err := h.onDemandAnalyzer.Analyze(request.Context(), ticker); err != nil {
+			writeError(response, http.StatusServiceUnavailable, newHTTPError("on_demand_analysis_failed", err.Error()))
+			return
+		}
+		h.refreshStore()
+		history, err = h.store.History(ticker, limit)
+		if err != nil {
+			writeError(response, http.StatusServiceUnavailable, newHTTPError("history_unavailable", err.Error()))
+			return
+		}
+	}
+	if len(history) == 0 {
+		writeError(response, http.StatusNotFound, newHTTPError("ticker_not_found", "ticker not found"))
+		return
+	}
+
+	writeJSON(response, http.StatusOK, WarningHistoryResponse{
+		SchemaVersion: "warning_history.v1",
+		Ticker:        history[0].Ticker,
+		RecordCount:   len(history),
+		Records:       history,
+	})
+}
+
 func (h *Handlers) CurrentModel(response http.ResponseWriter, _ *http.Request) {
 	h.refreshStore()
 	batch := h.store.Batch()
@@ -297,6 +350,23 @@ func filterBatch(batch warnings.PredictionBatch, request *http.Request) (warning
 	batch.Records = records
 	batch.RecordCount = len(records)
 	return batch, nil
+}
+
+func parseHistoryLimit(request *http.Request) (int, error) {
+	const defaultHistoryLimit = 90
+	const maxHistoryLimit = 3650
+	limitText := strings.TrimSpace(request.URL.Query().Get("limit"))
+	if limitText == "" {
+		return defaultHistoryLimit, nil
+	}
+	limit, err := strconv.Atoi(limitText)
+	if err != nil || limit < 1 || limit > maxHistoryLimit {
+		return 0, newHTTPError(
+			"invalid_history_limit",
+			"limit must be an integer between 1 and 3650",
+		)
+	}
+	return limit, nil
 }
 
 func validWarningLevel(level string) bool {
