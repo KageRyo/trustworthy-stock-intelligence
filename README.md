@@ -1,7 +1,7 @@
 # Trustworthy Stock Intelligence
 
 [![CI](https://github.com/KageRyo/trustworthy-stock-intelligence/actions/workflows/ci.yml/badge.svg)](https://github.com/KageRyo/trustworthy-stock-intelligence/actions/workflows/ci.yml)
-![Version](https://img.shields.io/badge/version-0.3.0-blue)
+![Version](https://img.shields.io/badge/version-0.3.1-blue)
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
 ![Go](https://img.shields.io/badge/go-1.25-blue)
 ![TypeScript](https://img.shields.io/badge/typescript-5.6-blue)
@@ -34,9 +34,8 @@ auditable data, model, and API contracts.
 
 ## Current Status
 
-Version `0.3.0` established the research-evidence-hardening foundation. The
-active main branch also includes the following product and research-quality
-work:
+Version `0.3.1` packages the open-source product and research-quality work
+built on the `0.3.0` evidence-hardening foundation:
 
 - Experiment 007 uses purged walk-forward train/calibration/test boundaries and
   per-row `label_end_date` overlap checks.
@@ -322,7 +321,7 @@ Project targets:
 
 | Runtime | Version |
 | --- | --- |
-| Python package | `0.3.0` |
+| Python package | `0.3.1` |
 | Python | `>=3.10`, CI uses `3.11` |
 | Go API | `1.25.x` |
 | Node.js CI runtime | `22.x` |

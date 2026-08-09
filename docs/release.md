@@ -1,21 +1,26 @@
 # Release Checklist
 
-## 0.3.0 Scope
+## 0.3.1 Scope
 
-`0.3.0` is the research-evidence-hardening release:
+`0.3.1` is the public open-source product and research-quality release:
 
-- purged walk-forward train/calibration/test boundaries
-- per-row `label_end_date` leakage controls
-- ECE, Brier score, false-discovery metrics, and no-feature baselines
-- reproducible Experiment 007 evidence and artifact fingerprints
-- per-fold Platt AUC invariance and ranking diagnostics
-- explicit pilot-evidence, limitations, and data/model licensing boundaries
-- patched Python, Go, npm, and GitHub Actions dependencies
-- required CI, Dependabot, `govulncheck`, race tests, and Gitleaks history scans
-- SHA-pinned, Node 24-compatible GitHub Actions
+- aligned logistic, tree, and GPU deep-model pilot comparison with documented
+  current-universe limits
+- paired bootstrap intervals, calibration-drift detection, and a schema-first
+  TAI audit artifact for each model run
+- reproducible Taiwan and US/Taiwan transfer pilots with explicit coverage,
+  provider, and current-universe limitations
+- typed feature attributions, warning-history timelines, and calibrated drift
+  state in the PostgreSQL-backed Go API and TypeScript dashboard
+- public-source contribution, citation, licensing, and public/private-boundary
+  documentation
+- required CI, Dependabot, `govulncheck`, race tests, Gitleaks, CodeQL, native
+  GitHub Secret Scanning, and Push Protection
+- v0.4 product priorities for 5-minute ingestion, provider health/freshness,
+  queue-backed prediction jobs, warning-change detection, and richer watchlists
 
-The release does not claim a high-precision warning policy, a trading edge, or
-cross-market external validity.
+The release does not claim a high-precision warning policy, a trading edge,
+all-market coverage, or externally validated cross-market suitability.
 
 ## Version Files
 

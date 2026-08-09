@@ -4,7 +4,7 @@
 
 | Component | Version |
 | --- | --- |
-| Python package | `0.2.0` |
+| Python package | `0.3.1` |
 | Python | `>=3.10`, CI uses `3.11` |
 | Go API | `1.25.x` |
 | Node.js CI runtime | `22.x` |

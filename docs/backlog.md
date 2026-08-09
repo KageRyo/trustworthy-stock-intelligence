@@ -1,13 +1,13 @@
 # Backlog
 
-This backlog tracks the work after `0.3.0`. The roadmap groups the work by
+This backlog tracks the work after `0.3.1`. The roadmap groups the work by
 release evidence and product maturity; issue numbers below are the canonical
 discussion threads.
 
 ## Completed: 0.3.x Public Release Hardening
 
 ```text
-[Docs #18] Align roadmap and backlog with the 0.3.0 research-evidence release.
+[Docs #18] Align roadmap and backlog with the 0.3.1 open-source release.
 [Docs #19] Add repository citation metadata in CITATION.cff.
 [Docs #20] Add contributor setup, tests, research protocol, and PR guidance.
 [Security #28] Add SHA-pinned CodeQL workflow and verify native GitHub scanning

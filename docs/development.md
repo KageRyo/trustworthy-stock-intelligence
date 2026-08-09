@@ -80,7 +80,7 @@ Examples:
 ```text
 feat(api): add on-demand ticker analysis
 fix(data): preserve taiwan ticker symbols
-docs(release): document 0.2.0 dashboard workflow
+docs(release): document 0.3.1 dashboard workflow
 ```
 
 Common types:
