@@ -1,0 +1,39 @@
+{
+  "experiment_id": "011_deep_alignment",
+  "status": "alignment_smoke_only",
+  "protocol": {
+    "feature_columns": [
+      "return_1d",
+      "return_5d",
+      "sma_5_gap",
+      "sma_10_gap",
+      "volatility_5d",
+      "volatility_10d",
+      "volume_ratio_5d"
+    ],
+    "horizon": 5,
+    "purge_size": 5,
+    "train_size": 252,
+    "calibration_size": 63,
+    "test_size": 63,
+    "step_size": 63,
+    "calibration_method": "platt",
+    "threshold_objective": "f1"
+  },
+  "smoke": {
+    "fold_count": 1,
+    "epochs": 1,
+    "device": "cuda",
+    "gpu_count": 2,
+    "used_data_parallel": true,
+    "baseline_test_rows": 6174,
+    "deep_test_rows": 6174,
+    "baseline_only_keys": 0,
+    "deep_only_keys": 0,
+    "sample_fingerprint_sha256": "71d0c2a59cf8b74a0fdab234756d0f14d0c60c55561e5cc3734cfad011b88c50"
+  },
+  "known_gaps": [
+    "No full 39-fold deep metrics are committed because the configured GPUs were occupied during this run.",
+    "No deep-vs-baseline quality or calibration claim is made from the one-epoch smoke run."
+  ]
+}
