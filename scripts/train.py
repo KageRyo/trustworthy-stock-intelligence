@@ -108,6 +108,12 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         default="f1",
         help="Metric optimized on the calibration window when selecting alert thresholds.",
     )
+    parser.add_argument(
+        "--max-folds",
+        type=int,
+        default=None,
+        help="Optional fold cap for reproducible protocol-specific reruns.",
+    )
     return parser.parse_args(argv)
 
 
@@ -176,6 +182,10 @@ def run_training(args: argparse.Namespace) -> dict[str, object]:
         purge_size=purge_size,
         label_end_date_col="label_end_date",
     )
+    if args.max_folds is not None:
+        if args.max_folds < 1:
+            raise ValueError("max_folds must be at least 1")
+        folds = folds[: args.max_folds]
 
     calibration_method: CalibrationMethod = args.calibration_method
     fold_results: list[dict[str, object]] = []

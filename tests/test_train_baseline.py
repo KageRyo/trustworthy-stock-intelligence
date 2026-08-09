@@ -16,6 +16,12 @@ def test_parse_args_defaults_to_logistic_model() -> None:
     assert args.purge_size is None
 
 
+def test_parse_args_supports_fold_cap() -> None:
+    args = parse_args(["--input", "data.csv", "--max-folds", "39"])
+
+    assert args.max_folds == 39
+
+
 def test_build_baseline_model_supports_tree_models() -> None:
     args = parse_args(
         [

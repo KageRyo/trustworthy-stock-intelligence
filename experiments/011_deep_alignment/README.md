@@ -47,7 +47,7 @@ PYTHONPATH=src python -m scripts.train \
   --input data/raw/sp100/ohlcv.csv \
   --model-type logistic --horizon 5 \
   --train-size 252 --calibration-size 63 --test-size 63 \
-  --step-size 63 --purge-size 5 --calibration-method platt \
+  --step-size 63 --purge-size 5 --max-folds 39 --calibration-method platt \
   --output /tmp/tsi-baseline-aligned/summary.json \
   --predictions-output /tmp/tsi-baseline-aligned/predictions.csv
 
@@ -55,7 +55,7 @@ PYTHONPATH=src python -m scripts.train_deep \
   --input data/raw/sp100/ohlcv.csv \
   --lookback 60 --horizon 5 \
   --train-size 252 --calibration-size 63 --test-size 63 \
-  --step-size 63 --purge-size 5 \
+  --step-size 63 --purge-size 5 --max-folds 39 \
   --epochs 20 --batch-size 256 --device cuda \
   --output /tmp/tsi-deep-aligned/summary.json \
   --predictions-output /tmp/tsi-deep-aligned/predictions.csv
