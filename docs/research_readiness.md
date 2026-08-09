@@ -33,6 +33,8 @@ The prior one-fold deep GPU smoke result has been superseded by the full
 [`experiments/011_deep_alignment`](../experiments/011_deep_alignment/). That
 result remains bounded by its current-universe and provider limitations; it
 does not resolve point-in-time membership or establish investment usefulness.
+The four-model result, including the two tree baselines, is recorded in
+[`experiments/013_aligned_model_family_benchmark`](../experiments/013_aligned_model_family_benchmark/).
 
 ## Issue #23: Taiwan Universe Capture
 
