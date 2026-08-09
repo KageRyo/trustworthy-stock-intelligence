@@ -39,6 +39,7 @@ entry point for finding the right document.
 | `reproducibility.md` | Reproducibility requirements for experiments and artifacts. |
 | `evaluation_metrics.md` | Alert-oriented and calibration-aware evaluation metrics. |
 | `data_and_model_licenses.md` | Code, provider-data, model, and redistribution boundaries. |
+| `research_readiness.md` | Evidence gates and source boundaries for open research issues. |
 | `public_private_boundary.md` | What belongs in public source versus private operations. |
 
 ## Research Protocol

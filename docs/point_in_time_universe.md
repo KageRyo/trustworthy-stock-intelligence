@@ -66,3 +66,17 @@ point-in-time run with the current-universe pilot without committing the raw
 membership file. A legally usable historical source and a re-run of the
 benchmark are still required before making a quantitative survivorship-bias
 claim.
+
+Use the same membership input and metadata for the deep trainer. This is
+required before comparing deep and baseline metrics:
+
+```bash
+PYTHONPATH=src python -m scripts.train_deep \
+  --input data/raw/sp100/ohlcv.csv \
+  --universe-membership /path/to/membership.csv \
+  --universe-name sp100_point_in_time \
+  --membership-source "licensed constituent archive" \
+  --membership-source-license "research-only; redistribution prohibited" \
+  --train-size 252 --calibration-size 63 --test-size 63 --purge-size 5 \
+  --device cuda
+```

@@ -1,0 +1,33 @@
+{
+  "schema_version": "taiwan_current_universe.v1",
+  "as_of": "2026-08-08",
+  "member_count": 2343,
+  "member_count_by_market": {
+    "twse": 1093,
+    "tpex": 890,
+    "emerging": 360
+  },
+  "member_catalogue_sha256": "5084ffde87af1855635dbd2c531993a08c74ac512c50335a7b342b0a7111d8c3",
+  "sources": {
+    "twse": {
+      "url": "https://openapi.twse.com.tw/v1/opendata/t187ap03_L",
+      "row_count": 1093,
+      "response_sha256": "671bab9baa3fd7ce4ec8282ed7a0b90465b68e34085672be3ebf987e81eb84a0"
+    },
+    "tpex": {
+      "url": "https://www.tpex.org.tw/openapi/v1/mopsfin_t187ap03_O",
+      "row_count": 890,
+      "response_sha256": "2e266c416a517dffb64715442ba037c3ff6f61f0cff8877cd37c8867bc3fac3f"
+    },
+    "emerging": {
+      "url": "https://www.tpex.org.tw/openapi/v1/mopsfin_t187ap03_R",
+      "row_count": 360,
+      "response_sha256": "09506869f1dade845a14f476702233a596b330d47a5d0bed3eaf50c7df878d8e"
+    }
+  },
+  "limitations": [
+    "This is a current-universe capture, not point-in-time historical membership.",
+    "It does not establish delisting, removal, suspension, or historical availability dates.",
+    "Keep the provider-derived member catalogue outside version control until rights are reviewed."
+  ]
+}

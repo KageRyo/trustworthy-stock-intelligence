@@ -3,9 +3,11 @@
 ## Status
 
 This is a partial implementation of Issue #21. The deep trainer now records
-the complete split protocol, and the fail-closed audit in
+the complete split protocol, input SHA-256, and point-in-time membership
+manifest. The fail-closed audit in
 [`scripts/audit_deep_alignment.py`](../../scripts/audit_deep_alignment.py)
-refuses a model comparison unless protocol metadata and every sample key match.
+refuses a model comparison unless protocol metadata, input snapshot,
+membership metadata, all folds, and every sample key match.
 
 The current evidence is a one-fold GPU smoke run, not a full deep-model
 benchmark. A full 39-fold run was not started because both configured GPUs were
@@ -35,10 +37,20 @@ reported as research evidence.
 
 ## Reproduce a full comparison
 
-Use a machine with enough free GPU memory. The raw/prediction artifacts below
-are deliberately kept outside git:
+Use a machine with enough free GPU memory. Re-run the baseline from the exact
+same private OHLCV file: the committed Experiment 008 summaries predate the
+input fingerprint and do not include private prediction rows. The raw and
+prediction artifacts below are deliberately kept outside git:
 
 ```bash
+PYTHONPATH=src python -m scripts.train \
+  --input data/raw/sp100/ohlcv.csv \
+  --model-type logistic --horizon 5 \
+  --train-size 252 --calibration-size 63 --test-size 63 \
+  --step-size 63 --purge-size 5 --calibration-method platt \
+  --output /tmp/tsi-baseline-aligned/summary.json \
+  --predictions-output /tmp/tsi-baseline-aligned/predictions.csv
+
 PYTHONPATH=src python -m scripts.train_deep \
   --input data/raw/sp100/ohlcv.csv \
   --lookback 60 --horizon 5 \
@@ -49,13 +61,16 @@ PYTHONPATH=src python -m scripts.train_deep \
   --predictions-output /tmp/tsi-deep-aligned/predictions.csv
 
 PYTHONPATH=src python -m scripts.audit_deep_alignment \
-  --baseline-summary experiments/008_model_family_comparison/runs/logistic/summary.json \
+  --baseline-summary /tmp/tsi-baseline-aligned/summary.json \
   --deep-summary /tmp/tsi-deep-aligned/summary.json \
+  --expected-fold-count 39 \
   --output /tmp/tsi-deep-aligned/alignment.json \
   --report /tmp/tsi-deep-aligned/alignment.md
 ```
 
-The audit is intentionally fail-closed: a different purge, calendar, fold
-set, duplicate, or row key raises an error instead of producing an apparently
-comparable metric table. After a full aligned run, the deep metrics can be
-added to the existing model-family evidence in a follow-up PR.
+The audit is intentionally fail-closed: a different input snapshot, membership
+manifest, purge, calendar, fold set, duplicate, or row key raises an error
+instead of producing an apparently comparable metric table. It recomputes
+aggregate and per-fold performance from prediction rows. After a full aligned
+run, the deep metrics can be added to the existing model-family evidence in a
+follow-up PR.

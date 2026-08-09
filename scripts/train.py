@@ -10,7 +10,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from tsi.data.csv import read_ohlcv_csv
+from tsi.data.csv import file_sha256, read_ohlcv_csv
 from tsi.data.split import build_walk_forward_splits
 from tsi.data.universe import (
     PointInTimeUniverse,
@@ -345,6 +345,7 @@ def run_training(args: argparse.Namespace) -> dict[str, object]:
 
     return {
         "input": str(args.input),
+        "input_sha256": file_sha256(args.input),
         "model_type": args.model_type,
         "feature_columns": DEFAULT_FEATURE_COLUMNS,
         "horizon": args.horizon,
