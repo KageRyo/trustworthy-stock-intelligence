@@ -66,3 +66,25 @@ After modeling:
 - Add a TAI audit artifact for each model run summarizing data freshness,
   coverage, calibration, uncertainty, trust behavior, known limitations, and
   open risks.
+
+## Per-Run Audit Artifact
+
+Generate a schema-first JSON audit after model training. It records supplied
+evidence and marks missing evidence as `partial` or `open`; it does not convert
+an unchecked control into a pass.
+
+```bash
+PYTHONPATH=src python -m scripts.generate_tai_audit \
+  --summary /secure/tsi/run/summary.json \
+  --data-manifest /secure/tsi/data/metadata.json \
+  --warning-eval /secure/tsi/run/warning_eval.json \
+  --feature-interval 1d \
+  --known-limitation "Current-universe membership is not point-in-time." \
+  --output /secure/tsi/run/tai_audit.json \
+  --markdown-output /secure/tsi/run/tai_audit.md
+```
+
+The artifact covers Accuracy, Reliability, Safety, Resilience, Transparency,
+Accountability, Explainability, Autonomy, Privacy, Fairness, and Security.
+It requires the run owner to supply deployment-specific evidence such as
+provider recovery, access controls, and user-facing human-control behavior.
