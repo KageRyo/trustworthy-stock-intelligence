@@ -4,6 +4,7 @@ import {
   addWatchlistTicker,
   createPredictionJob,
   fetchPredictionJob,
+  fetchProviderHealth,
   fetchStatus,
   fetchTickerAnalysis,
   fetchTickerHistory,
@@ -233,6 +234,32 @@ function predictionJobPayload(status: "queued" | "completed" = "queued") {
   };
 }
 
+function providerHealthPayload() {
+  return {
+    schema_version: "provider_health.v1",
+    generated_at: "2026-08-13T02:00:00Z",
+    record_count: 1,
+    records: [
+      {
+        schema_version: "provider_health.v1",
+        provider: "twse",
+        market: "taiwan",
+        ticker: "2330",
+        query_symbol: "2330.TW",
+        status: "healthy",
+        coverage: "available",
+        attempt_count: 2,
+        success_count: 2,
+        failure_count: 0,
+        consecutive_failures: 0,
+        last_success_at: "2026-08-13T02:00:00Z",
+        last_latency_ms: 120,
+        observed_at: "2026-08-13T02:00:00Z"
+      }
+    ]
+  };
+}
+
 function warningTransitionsPayload() {
   return {
     schema_version: "warning_transition.v1",
@@ -356,6 +383,20 @@ describe("typed API client", () => {
     expect(tickers.tickers[0].ticker).toBe("2330");
     expect(tickers.tickers[0].market).toBe("taiwan");
     expect(fetchMock).toHaveBeenCalledWith("/api/v1/tickers", {
+      headers: {
+        Accept: "application/json"
+      }
+    });
+  });
+
+  it("parses provider health and coverage observations", async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse(providerHealthPayload()));
+
+    const health = await fetchProviderHealth();
+
+    expect(health.records[0].status).toBe("healthy");
+    expect(health.records[0].coverage).toBe("available");
+    expect(fetchMock).toHaveBeenCalledWith("/api/v1/providers/health", {
       headers: {
         Accept: "application/json"
       }

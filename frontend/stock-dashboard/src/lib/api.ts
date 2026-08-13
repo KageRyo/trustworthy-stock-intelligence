@@ -4,6 +4,7 @@ import {
   currentModelSchema,
   predictionBatchSchema,
   predictionJobResponseSchema,
+  providerHealthResponseSchema,
   statusSchema,
   tickerListSchema,
   tickerAnalysisSchema,
@@ -14,6 +15,7 @@ import {
   type CurrentModel,
   type PredictionBatch,
   type PredictionJob,
+  type ProviderHealthResponse,
   type TickerList,
   type TickerAnalysis,
   type WarningHistory,
@@ -147,6 +149,10 @@ export function fetchStatus(): Promise<APIStatus> {
 
 export function fetchCurrentModel(): Promise<CurrentModel> {
   return fetchSchema("/api/v1/models/current", currentModelSchema);
+}
+
+export function fetchProviderHealth(): Promise<ProviderHealthResponse> {
+  return fetchSchema("/api/v1/providers/health", providerHealthResponseSchema);
 }
 
 export function createPredictionJob(

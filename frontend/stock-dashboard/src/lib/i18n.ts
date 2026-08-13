@@ -40,6 +40,7 @@ export type DashboardCopy = {
   };
   panels: {
     tickerAnalysis: string;
+    operationalStatus: string;
     noTickerSelected: string;
     calibratedRisk: string;
     trustAndModel: string;
@@ -79,6 +80,10 @@ export type DashboardCopy = {
     recentRows: string;
     freshness: string;
     freshnessReason: string;
+    analysisStatus: string;
+    providerStatus: string;
+    coverageStatus: string;
+    jobStatus: string;
   };
   states: {
     loadingAnalysis: string;
@@ -86,14 +91,27 @@ export type DashboardCopy = {
     noReasonCodes: string;
     noViewedTickers: string;
     noHistory: string;
+    loadingProviderHealth: string;
+    providerHealthUnavailable: string;
+    noProviderHealth: string;
+    loadingPrediction: string;
+    queuedPrediction: string;
+    runningPrediction: string;
+    completedPrediction: string;
+    failedPrediction: string;
+    cancelledPrediction: string;
+    unavailable: string;
   };
   errors: {
     unexpected: string;
     noMarketData: (ticker: string) => string;
     historyUnavailable: string;
+    providerHealthUnavailable: string;
+    predictionJobUnavailable: string;
   };
   notices: {
     watchlistJoinNotRefreshed: (ticker: string) => string;
+    predictionQueued: (ticker: string) => string;
   };
   warningLevels: Record<WarningLevel, string>;
   warningSummaries: Record<WarningLevel, string>;
@@ -102,6 +120,25 @@ export type DashboardCopy = {
   driftStatuses: Record<string, string>;
   freshnessStatuses: Record<string, string>;
   freshnessActions: Record<string, string>;
+  operational: {
+    fresh: string;
+    stale: string;
+    unusable: string;
+    healthy: string;
+    degraded: string;
+    unavailable: string;
+    available: string;
+    partial: string;
+    unknown: string;
+    trusted: string;
+    limited: string;
+    abstain: string;
+    queued: string;
+    running: string;
+    completed: string;
+    failed: string;
+    cancelled: string;
+  };
   trustSummaries: {
     insufficientHistory: string;
     highUncertainty: string;
@@ -160,6 +197,7 @@ export const translations = {
     },
     panels: {
       tickerAnalysis: "Ticker Analysis",
+      operationalStatus: "Operational Status",
       noTickerSelected: "No ticker selected",
       calibratedRisk: "Calibrated Risk",
       trustAndModel: "Trust And Model",
@@ -198,24 +236,42 @@ export const translations = {
       calibrationRows: "Calibration Rows",
       recentRows: "Recent Rows",
       freshness: "Data Freshness",
-      freshnessReason: "Freshness reason"
+      freshnessReason: "Freshness reason",
+      analysisStatus: "Analysis status",
+      providerStatus: "Provider health",
+      coverageStatus: "Coverage status",
+      jobStatus: "Prediction job"
     },
     states: {
       loadingAnalysis: "Loading analysis",
       loadingHistory: "Loading warning history",
       noReasonCodes: "No reason codes",
       noViewedTickers: "No viewed tickers in this session",
-      noHistory: "No historical warning records are available for this ticker."
+      noHistory: "No historical warning records are available for this ticker.",
+      loadingProviderHealth: "Loading provider health",
+      providerHealthUnavailable: "Provider health is unavailable",
+      noProviderHealth: "No provider observation is available for this ticker",
+      loadingPrediction: "Loading prediction",
+      queuedPrediction: "Prediction is queued",
+      runningPrediction: "Prediction is running",
+      completedPrediction: "Prediction completed",
+      failedPrediction: "Prediction failed",
+      cancelledPrediction: "Prediction was cancelled",
+      unavailable: "Unavailable"
     },
     errors: {
       unexpected: "Unexpected error",
       noMarketData: (ticker: string) =>
         `No market data or model output could be generated for ${ticker}. Check the symbol and provider coverage.`,
-      historyUnavailable: "Warning history is temporarily unavailable."
+      historyUnavailable: "Warning history is temporarily unavailable.",
+      providerHealthUnavailable: "Provider health could not be loaded; coverage may be unknown.",
+      predictionJobUnavailable: "The prediction job could not be queued."
     },
     notices: {
       watchlistJoinNotRefreshed: (ticker: string) =>
-        `${ticker} was analyzed, but the watchlist join has not refreshed yet.`
+        `${ticker} was analyzed, but the watchlist join has not refreshed yet.`,
+      predictionQueued: (ticker: string) =>
+        `${ticker} is queued for analysis. This screen will update when the worker completes it.`
     },
     warningLevels: {
       alert: "Alert",
@@ -253,6 +309,25 @@ export const translations = {
       allow: "Allowed",
       downgrade: "Downgrade confidence",
       block: "Blocked / abstain"
+    },
+    operational: {
+      fresh: "Fresh",
+      stale: "Stale",
+      unusable: "Unusable",
+      healthy: "Healthy",
+      degraded: "Degraded",
+      unavailable: "Unavailable",
+      available: "Available",
+      partial: "Partial",
+      unknown: "Unknown",
+      trusted: "Trusted",
+      limited: "Limited trust",
+      abstain: "Abstention",
+      queued: "Queued",
+      running: "Running",
+      completed: "Completed",
+      failed: "Failed",
+      cancelled: "Cancelled"
     },
     trustSummaries: {
       insufficientHistory:
@@ -371,6 +446,7 @@ export const translations = {
     },
     panels: {
       tickerAnalysis: "股票分析",
+      operationalStatus: "運作狀態",
       noTickerSelected: "尚未選擇股票代號",
       calibratedRisk: "校準後風險",
       trustAndModel: "信任與模型",
@@ -409,24 +485,42 @@ export const translations = {
       calibrationRows: "校準資料列數",
       recentRows: "近期資料列數",
       freshness: "資料新鮮度",
-      freshnessReason: "新鮮度原因"
+      freshnessReason: "新鮮度原因",
+      analysisStatus: "分析狀態",
+      providerStatus: "資料來源健康度",
+      coverageStatus: "涵蓋狀態",
+      jobStatus: "預測工作"
     },
     states: {
       loadingAnalysis: "正在載入分析",
       loadingHistory: "正在載入警示歷史",
       noReasonCodes: "沒有原因代碼",
       noViewedTickers: "本次瀏覽尚未查看任何股票",
-      noHistory: "此股票目前沒有可用的歷史警示資料。"
+      noHistory: "此股票目前沒有可用的歷史警示資料。",
+      loadingProviderHealth: "正在載入資料來源健康度",
+      providerHealthUnavailable: "資料來源健康度目前無法取得",
+      noProviderHealth: "此股票目前沒有資料來源觀測紀錄",
+      loadingPrediction: "正在載入預測",
+      queuedPrediction: "預測已排入佇列",
+      runningPrediction: "預測執行中",
+      completedPrediction: "預測已完成",
+      failedPrediction: "預測失敗",
+      cancelledPrediction: "預測已取消",
+      unavailable: "不可用"
     },
     errors: {
       unexpected: "發生未預期錯誤",
       noMarketData: (ticker: string) =>
         `無法為 ${ticker} 產生市場資料或模型輸出。請確認代號與資料來源涵蓋範圍。`,
-      historyUnavailable: "警示歷史暫時無法取得。"
+      historyUnavailable: "警示歷史暫時無法取得。",
+      providerHealthUnavailable: "無法載入資料來源健康度；涵蓋狀態可能未知。",
+      predictionJobUnavailable: "預測工作無法排入佇列。"
     },
     notices: {
       watchlistJoinNotRefreshed: (ticker: string) =>
-        `${ticker} 已完成分析，但觀察清單關聯尚未更新。`
+        `${ticker} 已完成分析，但觀察清單關聯尚未更新。`,
+      predictionQueued: (ticker: string) =>
+        `${ticker} 已排入分析佇列；工作完成後此畫面會自動更新。`
     },
     warningLevels: {
       alert: "警示",
@@ -464,6 +558,25 @@ export const translations = {
       allow: "可使用",
       downgrade: "降低信心",
       block: "阻擋／暫不判斷"
+    },
+    operational: {
+      fresh: "新鮮",
+      stale: "過期",
+      unusable: "不可用",
+      healthy: "健康",
+      degraded: "劣化",
+      unavailable: "不可用",
+      available: "可用",
+      partial: "部分可用",
+      unknown: "未知",
+      trusted: "可支援警示",
+      limited: "信任有限",
+      abstain: "暫不判斷",
+      queued: "已排隊",
+      running: "執行中",
+      completed: "已完成",
+      failed: "失敗",
+      cancelled: "已取消"
     },
     trustSummaries: {
       insufficientHistory: "此股票有市場資料，但標註歷史不足，無法產生校準後風險預測。",
