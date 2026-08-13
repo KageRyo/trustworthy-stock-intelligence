@@ -13,6 +13,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from tsi.data.download import DownloadFrameResult, is_taiwan_local_ticker
 from tsi.data.provider_health import ProviderHealthSnapshot
 from tsi.serving.schema import PredictionBatch
+from tsi.trust.transitions import WarningSnapshot, WarningTransition, detect_warning_transition
 
 MarketBarInterval = Literal["1m", "5m", "1d"]
 TickerMarketName = Literal["us", "twse", "tpex", "emerging", "taiwan", "unknown"]
@@ -383,9 +384,11 @@ def write_prediction_batch_to_postgres(
                 feature_interval=interval,
             )
             connection.execute("DELETE FROM warning_records WHERE batch_id = %s", (batch_id,))
+            ticker_ids_by_symbol: dict[str, str] = {}
             for record in batch.records:
                 resolved = _resolve_prediction_record_ticker(connection, record.ticker)
                 ticker_id = _upsert_prediction_ticker(connection, resolved)
+                ticker_ids_by_symbol[record.ticker.strip().upper()] = ticker_id
                 connection.execute(
                     """
                     INSERT INTO warning_records (
@@ -428,6 +431,7 @@ def write_prediction_batch_to_postgres(
                         ),
                     ),
                 )
+            _persist_warning_transitions(connection, batch, batch_id, ticker_ids_by_symbol)
         connection.commit()
 
     return PredictionBatchWriteSummary(
@@ -451,6 +455,27 @@ def read_prediction_batch_id(database_url: str, run_id: str) -> str | None:
             (run_id,),
         ).fetchone()
     return str(row[0]) if row else None
+
+
+def write_warning_transitions_to_postgres(
+    database_url: str,
+    batch: PredictionBatch,
+    prediction_batch_id: str,
+) -> list[WarningTransition]:
+    """Persist primary warning transitions for an already-written batch."""
+
+    with connect_database(database_url) as connection:
+        with connection.transaction():
+            ticker_ids = {
+                record.ticker.strip().upper(): _upsert_prediction_ticker(
+                    connection,
+                    _resolve_prediction_record_ticker(connection, record.ticker),
+                )
+                for record in batch.records
+            }
+            transitions = _persist_warning_transitions(connection, batch, prediction_batch_id, ticker_ids)
+        connection.commit()
+    return transitions
 
 
 def connect_database(database_url: str) -> Any:
@@ -732,6 +757,105 @@ def _upsert_provider_health(
                 snapshot.observed_at,
             ),
         )
+
+
+def _persist_warning_transitions(
+    connection: Any,
+    batch: PredictionBatch,
+    batch_id: str,
+    ticker_ids_by_symbol: dict[str, str],
+) -> list[WarningTransition]:
+    """Compare each current record with the newest prior ticker snapshot."""
+
+    observed_at = _to_utc_datetime(batch.generated_at or datetime.now(UTC).isoformat())
+    transitions: list[WarningTransition] = []
+    for record in batch.records:
+        symbol = record.ticker.strip().upper()
+        current = WarningSnapshot(
+            ticker=symbol,
+            warning_level=record.warning_level,
+            calibrated_risk_probability=record.calibrated_risk_probability,
+            trust_score=record.trust_score,
+            alert_threshold=record.alert_threshold,
+            watch_threshold=record.watch_threshold,
+            reason_codes=list(record.reason_codes),
+            run_id=batch.run_id,
+            batch_id=batch_id,
+            observed_at=observed_at,
+        )
+        previous_row = connection.execute(
+            """
+            SELECT pb.id, pb.run_id, pb.generated_at, wr.warning_level,
+                   wr.calibrated_risk_probability, wr.trust_score,
+                   wr.alert_threshold, wr.watch_threshold, wr.reason_codes
+            FROM warning_records wr
+            JOIN prediction_batches pb ON pb.id = wr.batch_id
+            JOIN tickers t ON t.id = wr.ticker_id
+            WHERE upper(t.symbol) = upper(%s) AND pb.id <> %s
+            ORDER BY wr.prediction_date DESC, pb.generated_at DESC, pb.created_at DESC
+            LIMIT 1
+            """,
+            (symbol, batch_id),
+        ).fetchone()
+        previous = _warning_snapshot_from_row(previous_row, symbol)
+        transition = detect_warning_transition(previous, current)
+        if transition is None:
+            continue
+        ticker_id = ticker_ids_by_symbol.get(symbol)
+        if ticker_id is None:
+            raise ValueError(f"missing ticker id for warning transition: {symbol}")
+        connection.execute(
+            """
+            INSERT INTO warning_transitions (
+                ticker_id, previous_batch_id, current_batch_id,
+                previous_warning_level, current_warning_level, transition_type,
+                previous_run_id, current_run_id, detected_at, deduplication_key, metadata
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb)
+            ON CONFLICT (deduplication_key) DO NOTHING
+            """,
+            (
+                ticker_id,
+                transition.previous_batch_id,
+                transition.current_batch_id,
+                transition.previous_warning_level,
+                transition.current_warning_level,
+                transition.transition_type,
+                transition.previous_run_id,
+                transition.current_run_id,
+                transition.detected_at,
+                transition.deduplication_key,
+                json.dumps(
+                    {
+                        "previous": previous.model_dump(mode="json") if previous else None,
+                        "current": current.model_dump(mode="json"),
+                    },
+                    separators=(",", ":"),
+                ),
+            ),
+        )
+        transitions.append(transition)
+    return transitions
+
+
+def _warning_snapshot_from_row(
+    row: tuple[Any, ...] | None,
+    ticker: str,
+) -> WarningSnapshot | None:
+    if row is None:
+        return None
+    return WarningSnapshot(
+        ticker=ticker,
+        warning_level=row[3],
+        calibrated_risk_probability=float(row[4]),
+        trust_score=float(row[5]),
+        alert_threshold=float(row[6]),
+        watch_threshold=float(row[7]),
+        reason_codes=list(row[8] or []),
+        run_id=str(row[1]),
+        batch_id=str(row[0]),
+        observed_at=_to_utc_datetime(row[2]),
+    )
 
 
 def _mark_ingestion_success(

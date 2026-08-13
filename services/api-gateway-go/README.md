@@ -103,6 +103,7 @@ POST /api/v1/watchlists/{name}/tickers
 DELETE /api/v1/watchlists/{name}/tickers/{ticker}
 GET /api/v1/analysis/{ticker}
 GET /api/v1/analysis/{ticker}/history
+GET /api/v1/analysis/{ticker}/transitions
 GET /api/v1/warnings/latest
 GET /api/v1/warnings/latest?level=watch&limit=20
 GET /api/v1/warnings/latest?level=alert&sort=trust_score&order=desc&limit=20
@@ -116,6 +117,11 @@ ticker analysis is delegated to that Python command before the handler returns.
 
 `/api/v1/analysis/{ticker}` returns a typed dashboard analysis schema built from
 the latest warning record. See `docs/api/analysis_api.md`.
+
+`/api/v1/analysis/{ticker}/transitions` returns deterministic warning-change
+events such as `new_alert`, `upgraded`, `resolved`, and `low_trust_warning`.
+Repeated identical snapshots are omitted. See the root
+`docs/warning_transitions.md` for semantics.
 
 `/api/v1/tickers` returns the symbols that currently have PostgreSQL warning
 records. It is not a complete market universe endpoint.

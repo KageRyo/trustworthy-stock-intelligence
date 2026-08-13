@@ -151,6 +151,42 @@ export const warningHistorySchema = z
   })
   .strict();
 
+export const warningTransitionTypeSchema = z.enum([
+  "new_watch",
+  "new_alert",
+  "upgraded",
+  "downgraded",
+  "resolved",
+  "persistent_alert",
+  "low_trust_warning"
+]);
+
+export const warningTransitionSchema = z
+  .object({
+    schema_version: z.literal("warning_transition.v1"),
+    id: z.string(),
+    ticker: z.string(),
+    transition_type: warningTransitionTypeSchema,
+    previous_warning_level: warningLevelSchema.optional(),
+    current_warning_level: warningLevelSchema,
+    previous_run_id: z.string().optional(),
+    current_run_id: z.string(),
+    previous_batch_id: z.string().optional(),
+    current_batch_id: z.string(),
+    detected_at: z.string(),
+    deduplication_key: z.string()
+  })
+  .strict();
+
+export const warningTransitionsSchema = z
+  .object({
+    schema_version: z.literal("warning_transition.v1"),
+    ticker: z.string(),
+    record_count: z.number().int().nonnegative(),
+    transitions: z.array(warningTransitionSchema)
+  })
+  .strict();
+
 export const predictionRecordSchema = z
   .object({
     date: z.string(),
@@ -336,6 +372,8 @@ export type FreshnessAssessment = z.infer<typeof freshnessAssessmentSchema>;
 export type TickerAnalysis = z.infer<typeof tickerAnalysisSchema>;
 export type WarningHistory = z.infer<typeof warningHistorySchema>;
 export type WarningHistoryRecord = z.infer<typeof warningHistoryRecordSchema>;
+export type WarningTransition = z.infer<typeof warningTransitionSchema>;
+export type WarningTransitions = z.infer<typeof warningTransitionsSchema>;
 export type PredictionRecord = z.infer<typeof predictionRecordSchema>;
 export type PredictionBatch = z.infer<typeof predictionBatchSchema>;
 export type TickerSummary = z.infer<typeof tickerSummarySchema>;

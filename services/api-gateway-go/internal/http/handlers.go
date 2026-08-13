@@ -27,6 +27,10 @@ type ProviderHealthStore interface {
 	ListProviderHealth(ctx context.Context) ([]warnings.ProviderHealthRecord, error)
 }
 
+type WarningTransitionStore interface {
+	Transitions(ctx context.Context, ticker string, limit int) ([]warnings.WarningTransitionRecord, error)
+}
+
 type PredictionJobStore interface {
 	Enqueue(ctx context.Context, request jobs.CreateRequest) (jobs.PredictionJob, error)
 	Get(ctx context.Context, id string) (jobs.PredictionJob, bool, error)
@@ -35,6 +39,7 @@ type PredictionJobStore interface {
 type Handlers struct {
 	store            WarningStore
 	providerHealth   ProviderHealthStore
+	transitions      WarningTransitionStore
 	watchlist        WatchlistStore
 	predictionJobs   PredictionJobStore
 	onDemandAnalyzer OnDemandAnalyzer
@@ -108,6 +113,10 @@ func (h *Handlers) SetProviderHealthStore(store ProviderHealthStore) {
 
 func (h *Handlers) SetPredictionJobStore(store PredictionJobStore) {
 	h.predictionJobs = store
+}
+
+func (h *Handlers) SetWarningTransitionStore(store WarningTransitionStore) {
+	h.transitions = store
 }
 
 func (h *Handlers) ProviderHealth(response http.ResponseWriter, request *http.Request) {
