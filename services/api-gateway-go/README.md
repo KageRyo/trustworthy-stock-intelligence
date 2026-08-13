@@ -93,6 +93,7 @@ GET /metrics
 GET /openapi.yaml
 GET /swagger/
 GET /api/v1/status
+GET /api/v1/providers/health
 GET /api/v1/tickers
 GET /api/v1/watchlists/{name}
 POST /api/v1/watchlists/{name}/tickers

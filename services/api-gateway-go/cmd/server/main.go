@@ -27,6 +27,7 @@ func main() {
 	}
 	defer watchlistStore.Close()
 	handlers := apihttp.NewHandlers(store, watchlistStore)
+	handlers.SetProviderHealthStore(store)
 	if cfg.OnDemandAnalysisCommand != "" {
 		analyzer, err := apihttp.NewCommandOnDemandAnalyzer(
 			cfg.OnDemandAnalysisCommand,

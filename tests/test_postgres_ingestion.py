@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+from datetime import UTC, datetime
+
 import pandas as pd
 
 from tsi.data.download import DownloadFrameResult, DownloadTicker
+from tsi.data.provider_health import ProviderHealthSnapshot
 from tsi.data.postgres import (
     ResolvedTickerSchema,
     _resolve_prediction_record_ticker,
@@ -11,6 +14,7 @@ from tsi.data.postgres import (
     build_market_bar_rows,
     build_resolved_tickers,
     infer_market,
+    _upsert_provider_health,
     validate_interval,
 )
 
@@ -178,9 +182,46 @@ def test_build_market_bar_rows_uses_resolved_emerging_market() -> None:
     assert build_resolved_tickers(result)[0].market == "emerging"
 
 
+def test_upsert_provider_health_uses_persistent_provider_key() -> None:
+    connection = RecordingProviderHealthConnection()
+    snapshot = ProviderHealthSnapshot(
+        provider="yfinance",
+        market="us",
+        ticker="NVDA",
+        query_symbol="NVDA",
+        status="healthy",
+        coverage="available",
+        attempt_count=1,
+        success_count=1,
+        failure_count=0,
+        consecutive_failures=0,
+        last_success_at=datetime(2026, 6, 18, 1, 5, tzinfo=UTC),
+        last_latency_ms=12.5,
+        observed_at=datetime(2026, 6, 18, 1, 5, tzinfo=UTC),
+    )
+
+    _upsert_provider_health(connection, [snapshot])
+
+    assert len(connection.calls) == 1
+    query, params = connection.calls[0]
+    assert "INSERT INTO provider_health" in query
+    assert "ON CONFLICT (provider, market, ticker_symbol)" in query
+    assert params[:6] == ("yfinance", "us", "NVDA", "NVDA", "healthy", "available")
+    assert params[6:10] == (1, 1, 0, 0)
+
+
 class EmptyTickerLookupConnection:
     def execute(self, *_args, **_kwargs):
         return StaticTickerLookupCursor(None)
+
+
+class RecordingProviderHealthConnection:
+    def __init__(self):
+        self.calls = []
+
+    def execute(self, query, params=()):
+        self.calls.append((query, params))
+        return RecordingCursor()
 
 
 class StaticTickerLookupConnection:

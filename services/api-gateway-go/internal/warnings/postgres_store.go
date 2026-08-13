@@ -135,6 +135,67 @@ func (s *PostgresStore) History(ticker string, limit int) ([]WarningHistoryRecor
 	return history, nil
 }
 
+// ListProviderHealth returns the latest persisted provider observation for
+// every provider/market/ticker key.  The query is deliberately read-only so
+// the dashboard can inspect degraded coverage without triggering ingestion.
+func (s *PostgresStore) ListProviderHealth(ctx context.Context) ([]ProviderHealthRecord, error) {
+	queryCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	rows, err := s.pool.Query(
+		queryCtx,
+		`
+		SELECT provider, market, ticker_symbol, query_symbol, status,
+		       coverage_status, attempt_count, success_count, failure_count,
+		       consecutive_failures, last_success_at, last_failure_at,
+		       last_latency_ms, last_error_code, last_error_message, observed_at
+		FROM provider_health
+		ORDER BY market, ticker_symbol, provider
+		`,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("load provider health: %w", err)
+	}
+	defer rows.Close()
+
+	records := []ProviderHealthRecord{}
+	for rows.Next() {
+		var record ProviderHealthRecord
+		var lastSuccessAt *time.Time
+		var lastFailureAt *time.Time
+		var observedAt time.Time
+		if err := rows.Scan(
+			&record.Provider,
+			&record.Market,
+			&record.Ticker,
+			&record.QuerySymbol,
+			&record.Status,
+			&record.Coverage,
+			&record.AttemptCount,
+			&record.SuccessCount,
+			&record.FailureCount,
+			&record.ConsecutiveFailures,
+			&lastSuccessAt,
+			&lastFailureAt,
+			&record.LastLatencyMs,
+			&record.LastErrorCode,
+			&record.LastErrorMessage,
+			&observedAt,
+		); err != nil {
+			return nil, fmt.Errorf("scan provider health: %w", err)
+		}
+		record.SchemaVersion = "provider_health.v1"
+		record.LastSuccessAt = formatOptionalTime(lastSuccessAt)
+		record.LastFailureAt = formatOptionalTime(lastFailureAt)
+		record.ObservedAt = formatTime(observedAt)
+		records = append(records, record)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate provider health: %w", err)
+	}
+	return records, nil
+}
+
 func (s *PostgresStore) Refresh() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -334,4 +395,11 @@ func (s *PostgresStore) setLastError(err error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.lastError = err.Error()
+}
+
+func formatOptionalTime(value *time.Time) string {
+	if value == nil {
+		return ""
+	}
+	return formatTime(*value)
 }

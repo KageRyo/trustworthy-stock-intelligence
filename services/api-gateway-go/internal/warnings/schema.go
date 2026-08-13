@@ -53,6 +53,28 @@ type FeatureAttribution struct {
 	Method       string   `json:"method"`
 }
 
+// ProviderHealthRecord is the schema-first serving representation of the
+// latest provider/ticker observation retained by PostgreSQL.
+type ProviderHealthRecord struct {
+	SchemaVersion       string   `json:"schema_version"`
+	Provider            string   `json:"provider"`
+	Market              string   `json:"market"`
+	Ticker              string   `json:"ticker"`
+	QuerySymbol         string   `json:"query_symbol"`
+	Status              string   `json:"status"`
+	Coverage            string   `json:"coverage"`
+	AttemptCount        int      `json:"attempt_count"`
+	SuccessCount        int      `json:"success_count"`
+	FailureCount        int      `json:"failure_count"`
+	ConsecutiveFailures int      `json:"consecutive_failures"`
+	LastSuccessAt       string   `json:"last_success_at,omitempty"`
+	LastFailureAt       string   `json:"last_failure_at,omitempty"`
+	LastLatencyMs       *float64 `json:"last_latency_ms,omitempty"`
+	LastErrorCode       string   `json:"last_error_code,omitempty"`
+	LastErrorMessage    string   `json:"last_error_message,omitempty"`
+	ObservedAt          string   `json:"observed_at"`
+}
+
 // WarningHistoryRecord is the public, schema-first representation of one
 // historical warning observation. It repeats the prediction fields so that a
 // timeline response is self-contained and does not rely on private store

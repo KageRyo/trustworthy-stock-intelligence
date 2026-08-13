@@ -144,6 +144,67 @@ func getJSON(t *testing.T, router http.Handler, path string) *httptest.ResponseR
 	return response
 }
 
+type fakeProviderHealthStore struct {
+	records []warnings.ProviderHealthRecord
+	err     error
+}
+
+func (s fakeProviderHealthStore) ListProviderHealth(context.Context) ([]warnings.ProviderHealthRecord, error) {
+	return s.records, s.err
+}
+
+func TestProviderHealthReturnsTypedRecords(t *testing.T) {
+	handlers := NewHandlers(mustFileStore(t))
+	latency := 12.5
+	handlers.SetProviderHealthStore(fakeProviderHealthStore{
+		records: []warnings.ProviderHealthRecord{{
+			SchemaVersion:       "provider_health.v1",
+			Provider:            "yfinance",
+			Market:              "us",
+			Ticker:              "NVDA",
+			QuerySymbol:         "NVDA",
+			Status:              "healthy",
+			Coverage:            "available",
+			AttemptCount:        1,
+			SuccessCount:        1,
+			FailureCount:        0,
+			ConsecutiveFailures: 0,
+			LastLatencyMs:       &latency,
+			ObservedAt:          "2026-06-18T01:05:00Z",
+		}},
+	})
+	router := NewRouter(handlers)
+
+	response := getJSON(t, router, "/api/v1/providers/health")
+	if response.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200: %s", response.Code, response.Body.String())
+	}
+	var payload ProviderHealthResponse
+	if err := json.Unmarshal(response.Body.Bytes(), &payload); err != nil {
+		t.Fatalf("decode provider health response: %v", err)
+	}
+	if payload.SchemaVersion != "provider_health.v1" || payload.RecordCount != 1 {
+		t.Fatalf("unexpected provider health response: %+v", payload)
+	}
+	if payload.Records[0].Ticker != "NVDA" || payload.Records[0].Status != "healthy" {
+		t.Fatalf("unexpected provider health record: %+v", payload.Records[0])
+	}
+}
+
+func TestProviderHealthRequiresStore(t *testing.T) {
+	response := getJSON(t, testRouter(t), "/api/v1/providers/health")
+	if response.Code != http.StatusServiceUnavailable {
+		t.Fatalf("status = %d, want 503", response.Code)
+	}
+	var payload ErrorResponse
+	if err := json.Unmarshal(response.Body.Bytes(), &payload); err != nil {
+		t.Fatalf("decode provider health error: %v", err)
+	}
+	if payload.Error.Code != "provider_health_store_unavailable" {
+		t.Fatalf("error code = %q", payload.Error.Code)
+	}
+}
+
 func postJSON(t *testing.T, router http.Handler, path string, body string) *httptest.ResponseRecorder {
 	t.Helper()
 	request := httptest.NewRequest(http.MethodPost, path, bytes.NewBufferString(body))

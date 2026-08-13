@@ -82,6 +82,41 @@ Returns warning store status.
 }
 ```
 
+### `GET /api/v1/providers/health`
+
+Returns the latest persisted provider health and per-ticker coverage
+observations. Ingestion records bounded retry attempts, latency, success and
+failure counters, and a typed `healthy`, `degraded`, or `unavailable` state.
+
+```json
+{
+  "schema_version": "provider_health.v1",
+  "generated_at": "2026-06-18T01:05:00Z",
+  "record_count": 1,
+  "records": [
+    {
+      "schema_version": "provider_health.v1",
+      "provider": "yfinance",
+      "market": "us",
+      "ticker": "NVDA",
+      "query_symbol": "NVDA",
+      "status": "healthy",
+      "coverage": "available",
+      "attempt_count": 1,
+      "success_count": 1,
+      "failure_count": 0,
+      "consecutive_failures": 0,
+      "last_latency_ms": 42.5,
+      "observed_at": "2026-06-18T01:05:00Z"
+    }
+  ]
+}
+```
+
+The endpoint is read-only and returns `503` when the PostgreSQL provider-health
+store cannot be read. It reports coverage for the configured provider paths;
+it is not a claim that every stock or interval is available.
+
 ### `GET /api/v1/warnings/latest`
 
 Returns the latest prediction batch. Optional filters:
