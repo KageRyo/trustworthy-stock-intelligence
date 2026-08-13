@@ -169,8 +169,8 @@ func (h *Handlers) loadWatchlistResponse(name string, request *http.Request) (Wa
 				UncertaintyScore:          record.UncertaintyScore,
 				TrustScore:                record.TrustScore,
 				AlertThreshold:            record.AlertThreshold,
-				FreshnessState:            freshnessAssessment.State,
-				FreshnessAction:           freshnessAssessment.Action,
+				FreshnessState:            string(freshnessAssessment.State),
+				FreshnessAction:           string(freshnessAssessment.Action),
 			}
 		}
 		tickers = append(tickers, summary)
