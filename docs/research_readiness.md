@@ -44,9 +44,11 @@ private, untracked location; only the JSON manifest is suitable for a review
 record after its contents and rights have been checked.
 
 ```bash
+export TSI_PRIVATE_DATA_DIR=/path/to/private/tsi-data
+
 PYTHONPATH=src python -m scripts.capture_taiwan_universe \
-  --members-output /secure/tsi/taiwan-current-members.csv \
-  --manifest-output /secure/tsi/taiwan-current-manifest.json
+  --members-output "$TSI_PRIVATE_DATA_DIR/taiwan-current-members.csv" \
+  --manifest-output "$TSI_PRIVATE_DATA_DIR/taiwan-current-manifest.json"
 ```
 
 It uses the official [TWSE OpenAPI](https://openapi.twse.com.tw/) listed-company
@@ -70,8 +72,8 @@ The first multi-market evidence is the 39-fold current-company pilot in
 It covers an explicit three-TWSE / three-TPEx-listed sample, uses only
 calibration-window fitting, and records both the input and shared-row
 fingerprints. It is deliberately partial: the TPEx emerging long-horizon
-fallback did not complete reliably in this environment, so no emerging-market
-coverage claim is made.
+fallback did not complete reliably in the recorded pilot run, so no
+emerging-market coverage claim is made.
 
 ## Issue #29: Point-in-Time S&P Membership
 
@@ -87,8 +89,8 @@ raw rows:
 
 ```bash
 PYTHONPATH=src python -m scripts.validate_universe_membership \
-  --input /secure/tsi/sp100-membership.csv \
-  --output /secure/tsi/sp100-membership-manifest.json \
+  --input "$TSI_PRIVATE_DATA_DIR/sp100-membership.csv" \
+  --output "$TSI_PRIVATE_DATA_DIR/sp100-membership-manifest.json" \
   --name sp100_point_in_time \
   --source "licensed constituent archive" \
   --source-license "research-only; redistribution prohibited"

@@ -1,23 +1,23 @@
-# Environment
+# Development and Runtime Environment
 
 ## Runtime Targets
 
 | Component | Version |
 | --- | --- |
-| Python package | `0.4.0` |
+| Python package | `0.4.1` |
 | Python | `>=3.10`, CI uses `3.11` |
 | Go API | `1.25.x` |
 | Node.js CI runtime | `22.x` |
 | TypeScript | `7.0.x` |
 | PostgreSQL container | `17-alpine` |
 
-## Recommendation
+## Recommended setup
 
 Use a two-layer setup:
 
 ```text
-conda: creates the machine-level Python 3.11 GPU environment
-uv: manages fast Python package installation from pyproject.toml
+conda: creates an isolated Python environment
+uv: manages fast dependency installation from pyproject.toml
 ```
 
 For this project, `pyproject.toml` is the canonical dependency definition. The file already exists at the repository root.
@@ -26,13 +26,13 @@ The practical recommendation is to create a named conda environment, activate
 it, use `uv` or pip for project dependencies, and install PyTorch from the CUDA
 wheel index that matches the machine.
 
-## Local Conda Environment
+## Isolated Python environment
 
 Create and activate it with:
 
 ```bash
-conda create -n stock python=3.11 -y
-conda activate stock
+conda create -n tsi python=3.11 -y
+conda activate tsi
 ```
 
 ## uv
@@ -46,7 +46,7 @@ python -m pip install uv
 Recommended project install with `uv`:
 
 ```bash
-uv pip install -e ".[dev,models,explainability,viz,notebooks,cli,data]"
+uv pip install -e ".[dev,models,explainability,viz,notebooks,data]"
 ```
 
 `uv` is preferred for normal dependency sync because it is fast and resolves
@@ -58,7 +58,7 @@ environment.
 Install the project and research dependencies with pip if not using `uv`:
 
 ```bash
-python -m pip install -e ".[dev,models,explainability,viz,notebooks,cli,data]"
+python -m pip install -e ".[dev,models,explainability,viz,notebooks,data]"
 ```
 
 This includes:
@@ -66,12 +66,13 @@ This includes:
 ```text
 numpy
 pandas
+joblib
 scikit-learn
-scipy
 pydantic
-pyarrow
-duckdb
-polars
+lxml
+pandas-market-calendars
+requests
+ta
 yfinance
 xgboost
 lightgbm
@@ -85,14 +86,21 @@ plotly
 jupyterlab
 ipykernel
 tensorboard
+torch
+torchvision
+torchaudio
+build
 pytest
 ruff
+twine
 uv
 ```
 
-## PyTorch CUDA
+## Optional GPU setup
 
-This machine has two NVIDIA GeForce RTX 4090 GPUs. `nvidia-smi` reports CUDA 12.8, so install PyTorch with the CUDA 12.8 wheel:
+Deep-learning experiments require a CUDA-compatible PyTorch installation. Match
+the wheel index to the CUDA runtime supported by the target machine. For a CUDA
+12.8 host, the installation is:
 
 ```bash
 python -m pip install torch torchvision torchaudio \
@@ -105,7 +113,9 @@ Verify CUDA availability:
 python -c "import torch; print(torch.__version__); print(torch.cuda.is_available()); print(torch.cuda.device_count())"
 ```
 
-Expected device count on this machine:
+The expected device count depends on the target host. Verify that it is
+available before starting a GPU experiment. The reference GPU reports used two
+devices:
 
 ```text
 2
@@ -119,15 +129,17 @@ If using `uv` for the full environment including deep learning dependencies, pas
 
 ```bash
 uv pip install \
-  -e ".[dev,models,explainability,viz,notebooks,cli,data,deep]" \
+  -e ".[dev,models,explainability,viz,notebooks,data,deep]" \
   --extra-index-url https://download.pytorch.org/whl/cu128
 ```
 
 Avoid `uv pip install --system`; activate the intended environment explicitly.
 
-## Verified Local Versions
+## Reference environment for GPU reports
 
-The local `stock` environment has been verified with:
+The published GPU experiment reports record the following reference
+environment. These values document provenance; they are not requirements for
+using the CPU-capable package or dashboard:
 
 ```text
 Python: 3.11.15
@@ -139,26 +151,11 @@ GPU 1: NVIDIA GeForce RTX 4090
 uv: 0.11.11
 ```
 
-Core research packages installed:
+Core package dependencies are defined by `pyproject.toml`; install only the
+extras needed for the task rather than reproducing this entire environment.
+
+For the full research environment, the relevant extras are:
 
 ```text
-numpy
-pandas
-scikit-learn
-scipy
-pydantic
-pydantic-settings
-pyarrow
-yfinance
-xgboost
-lightgbm
-shap
-matplotlib
-seaborn
-plotly
-jupyterlab
-notebook
-ipykernel
-pytest
-ruff
+data, models, explainability, viz, notebooks, deep, dev
 ```

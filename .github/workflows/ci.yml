@@ -23,13 +23,18 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -e ".[dev,deep,dashboard]"
+          python -m pip install -e ".[dev,data,deep,dashboard]"
 
       - name: Run Python tests
         run: python -m pytest
 
       - name: Run ruff
         run: python -m ruff check src tests scripts dashboard
+
+      - name: Build and validate Python distributions
+        run: |
+          python -m build
+          python -m twine check dist/*
 
   go:
     name: Go API tests
@@ -123,7 +128,7 @@ jobs:
       - name: Install Python E2E dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -e ".[dev,db]"
+          python -m pip install -e ".[dev,data,db]"
 
       - name: Set up Go
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0

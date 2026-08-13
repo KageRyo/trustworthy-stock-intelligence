@@ -81,27 +81,30 @@ source .venv/bin/activate
 pip install -e ".[dev,models,explainability]"
 ```
 
-Create and activate a named Python 3.11 environment:
+Create and activate an isolated Python 3.11 environment (the environment name
+is arbitrary; `tsi` is used here):
 
 ```bash
-conda create -n stock python=3.11 -y
-conda activate stock
+conda create -n tsi python=3.11 -y
+conda activate tsi
 ```
 
-`pyproject.toml` is the canonical dependency definition for this repository. The recommended workflow is to use `uv` inside the `stock` environment:
+`pyproject.toml` is the canonical dependency definition for this repository. The
+recommended workflow is to use `uv` inside the isolated environment:
 
 ```bash
 python -m pip install uv
-uv pip install -e ".[dev,models,explainability,viz,notebooks,cli,data]"
+uv pip install -e ".[dev,models,explainability,viz,notebooks,data]"
 ```
 
 Plain pip is also valid:
 
 ```bash
-python -m pip install -e ".[dev,models,explainability,viz,notebooks,cli,data]"
+python -m pip install -e ".[dev,models,explainability,viz,notebooks,data]"
 ```
 
-Install PyTorch with the CUDA wheel that matches the local NVIDIA driver/runtime. On this machine, `nvidia-smi` reports CUDA 12.8, so the pilot environment uses:
+Install PyTorch with the CUDA wheel that matches the target machine's driver and
+runtime. The GPU pilot reports use the CUDA 12.8 wheel index:
 
 ```bash
 python -m pip install torch torchvision torchaudio \

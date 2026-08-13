@@ -1,4 +1,37 @@
-# Release Checklist
+# Maintainer Release Checklist
+
+## 0.4.1 Python Package Scope
+
+`0.4.1` is a focused Python distribution release following the `0.4.0`
+product-readiness baseline. It adds a public `tsi` API, a deterministic local
+CLI, package metadata, and a tag-triggered PyPI Trusted Publishing workflow.
+It does not repackage the Go API, PostgreSQL, or TypeScript dashboard.
+
+Before tagging the release:
+
+```bash
+python -m pip install -e ".[dev,data]"
+python -m pytest
+python -m ruff check src tests scripts dashboard
+python -m build
+python -m twine check dist/*
+python -m tsi --version
+```
+
+Configure PyPI's Trusted Publisher with owner `KageRyo`, repository
+`trustworthy-stock-intelligence`, workflow filename `release.yml`, and GitHub
+environment `pypi`. The workflow is stored in the repository at
+`.github/workflows/release.yml`. It verifies that the tag version matches
+`pyproject.toml`, publishes the wheel and sdist, and creates the GitHub Release
+only after PyPI succeeds. See [`python-package.md`](python-package.md) for the
+initial pending-publisher setup and package boundary.
+
+The package-only release sequence is:
+
+```bash
+git tag -a v0.4.1 -m "release: v0.4.1"
+git push origin v0.4.1
+```
 
 ## 0.4.0 Scope
 

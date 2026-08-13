@@ -2,6 +2,31 @@
 
 ## Unreleased
 
+## 0.4.1 - 2026-08-14
+
+### Added
+
+- Defined a public `tsi` Python API for reusable feature, labeling, model,
+  evaluation, trust, and serving-schema primitives.
+- Added the `tsi` console command and `python -m tsi` entry point for package
+  version checks, local CSV inspection, and deterministic metric evaluation.
+- Added package metadata, PyPI project URLs, wheel/sdist validation, and a
+  tag-triggered GitHub Actions Trusted Publishing workflow.
+
+### Changed
+
+- Split provider-ingestion dependencies into the `data` extra so the base
+  library install remains focused on offline Python/ML core utilities.
+- Added build and Twine validation tools to the development extra.
+
+### Notes
+
+- The PyPI package is the Python/ML core only. The Go API, PostgreSQL workers,
+  and TypeScript dashboard remain separate deployment surfaces.
+- The project remains a trustworthy-ML operational prototype with modest pilot
+  predictive performance; this release makes no investment or production-
+  deployment claim.
+
 ## 0.4.0 - 2026-08-13
 
 ### Added

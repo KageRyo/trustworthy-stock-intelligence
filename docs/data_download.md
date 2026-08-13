@@ -15,17 +15,17 @@ official exchange data
 
 ## Conda Environment
 
-Create and activate a local Python 3.11 environment:
+Create and activate an isolated Python 3.11 environment:
 
 ```bash
-conda create -n stock python=3.11 -y
-conda activate stock
+conda create -n tsi python=3.11 -y
+conda activate tsi
 ```
 
 Install the project into the environment:
 
 ```bash
-python -m pip install -e .
+python -m pip install -e ".[data]"
 ```
 
 ## Download Commands
@@ -81,9 +81,12 @@ market with its explicit resolver and then combine the compatible artifacts
 without losing their input fingerprints:
 
 ```bash
+export TSI_PRIVATE_DATA_DIR=/path/to/private/tsi-data
+
 python -m scripts.combine_download_artifacts \
-  --input-dir /secure/tsi/twse --input-dir /secure/tsi/tpex \
-  --output-dir /secure/tsi/listed-tpex \
+  --input-dir "$TSI_PRIVATE_DATA_DIR/twse" \
+  --input-dir "$TSI_PRIVATE_DATA_DIR/tpex" \
+  --output-dir "$TSI_PRIVATE_DATA_DIR/listed-tpex" \
   --dataset-name taiwan_listed_tpex_stratified_current_pilot
 ```
 
@@ -155,9 +158,9 @@ data/artifacts/
 
 This avoids pushing large vendor-adjusted files to GitHub while preserving the exact commands needed to regenerate the pilot datasets.
 
-## Local Validation
+## Reference snapshot
 
-The first successful local download used:
+One recorded pilot snapshot used the following settings and sizes:
 
 ```text
 start date: 2015-01-01
@@ -165,9 +168,14 @@ S&P 100 rows: 283,289
 S&P 500 rows: 1,388,643
 ```
 
-Local data sizes:
+The corresponding artifact sizes were:
 
 ```text
 data/raw/sp100: 31M
 data/raw/sp500: 151M
 ```
+
+These values are historical reference points, not acceptance criteria. Provider
+revisions, unavailable symbols, date changes, and compression choices can make
+a new download differ. Record the generated metadata and SHA-256 fingerprints
+when comparing a new run.

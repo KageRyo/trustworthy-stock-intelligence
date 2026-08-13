@@ -1,4 +1,4 @@
-# Development Guide
+# Contributor and Maintainer Development Guide
 
 ## Principles
 
@@ -112,4 +112,6 @@ For a version release:
 7. Tag with `vX.Y.Z`.
 8. Push the branch and tag.
 
-See `docs/release.md` for the command checklist.
+For a Python package-only patch release, use the narrower file and validation
+scope in `docs/python-package.md` and `docs/release.md`; do not change the Go or
+frontend contract versions unless that release also changes those surfaces.
