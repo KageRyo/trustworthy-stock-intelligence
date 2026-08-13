@@ -100,7 +100,7 @@ func (r *Registry) Render() string {
 		value := r.durations[key]
 		lines = append(lines,
 			metricKeyString(metricKey{name: key.name + "_seconds_sum", labels: key.labels})+" "+strconv.FormatFloat(value.seconds, 'f', 6, 64),
-			metricKeyString(metricKey{name: key.name + "_count", labels: key.labels})+" "+strconv.FormatUint(value.count, 10),
+			metricKeyString(metricKey{name: key.name + "_seconds_count", labels: key.labels})+" "+strconv.FormatUint(value.count, 10),
 		)
 	}
 	lines = append(lines, "# TYPE tsi_api_gauge gauge")
