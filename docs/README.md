@@ -18,6 +18,7 @@ entry point for finding the right document.
 | --- | --- |
 | `architecture.md` | Python, PostgreSQL, Go, and dashboard boundaries. |
 | `data_store.md` | PostgreSQL schema intent, provider ingestion, freshness target, and Taiwan provider notes. |
+| `provider_coverage.md` | Supported markets, provider fallback paths, intervals, and coverage limits. |
 | `environment.md` | Python, Go, Node, CUDA, and local environment versions. |
 | `development.md` | Development rules, tests, schema-first policy, and commit/release workflow. |
 | `project_roadmap.md` | Current milestone state and next implementation tasks. |
