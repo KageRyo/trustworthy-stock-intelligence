@@ -19,11 +19,11 @@ The system focuses on trustworthy AI behavior: calibration, uncertainty,
 abstention, transparency, auditability, and clear limitations. It is not an
 investment recommendation system or automated trading system.
 
-## Current State: 0.3.1
+## Current State: 0.3.2
 
-Version `0.3.1` is the public open-source release built on the
-research-evidence-hardening foundation. It remains a reproducible pilot, not
-externally validated research or investment advice.
+Version `0.3.2` is a maintenance and security release following the public
+open-source `0.3.1` release. It remains a reproducible pilot, not externally
+validated research or investment advice.
 
 Completed:
 

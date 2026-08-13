@@ -1,10 +1,10 @@
 # Trustworthy Stock Intelligence
 
 [![CI](https://github.com/KageRyo/trustworthy-stock-intelligence/actions/workflows/ci.yml/badge.svg)](https://github.com/KageRyo/trustworthy-stock-intelligence/actions/workflows/ci.yml)
-![Version](https://img.shields.io/badge/version-0.3.1-blue)
+![Version](https://img.shields.io/badge/version-0.3.2-blue)
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
 ![Go](https://img.shields.io/badge/go-1.25-blue)
-![TypeScript](https://img.shields.io/badge/typescript-5.6-blue)
+![TypeScript](https://img.shields.io/badge/typescript-7.0-blue)
 ![License](https://img.shields.io/badge/license-Apache--2.0-green)
 
 **Status: Active Open-Source Project**
@@ -34,8 +34,8 @@ auditable data, model, and API contracts.
 
 ## Current Status
 
-Version `0.3.1` packages the open-source product and research-quality work
-built on the `0.3.0` evidence-hardening foundation:
+Version `0.3.2` is a maintenance and security release following the
+`0.3.1` open-source product and research-quality release:
 
 - Experiment 007 uses purged walk-forward train/calibration/test boundaries and
   per-row `label_end_date` overlap checks.
@@ -321,7 +321,7 @@ Project targets:
 
 | Runtime | Version |
 | --- | --- |
-| Python package | `0.3.1` |
+| Python package | `0.3.2` |
 | Python | `>=3.10`, CI uses `3.11` |
 | Go API | `1.25.x` |
 | Node.js CI runtime | `22.x` |

@@ -1,7 +1,7 @@
 # Trust Dashboard
 
 Streamlit dashboard for local trust experiment artifacts and the Go warning API.
-The TypeScript stock dashboard is the primary ticker analysis UI as of `0.3.1`;
+The TypeScript stock dashboard is the primary ticker analysis UI as of `0.3.2`;
 this app remains useful for research diagnostics and the Live API tab.
 
 ## Run
