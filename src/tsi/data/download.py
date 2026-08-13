@@ -38,6 +38,14 @@ TPEX_DAILY_URL = "https://www.tpex.org.tw/www/zh-tw/afterTrading/tradingStock"
 TPEX_EMERGING_HISTORICAL_URL = "https://www.tpex.org.tw/www/zh-tw/emerging/historical"
 
 
+class DownloadUnavailableError(RuntimeError):
+    """Raised when no rows are available while retaining provider observations."""
+
+    def __init__(self, message: str, *, provider_health: list[ProviderHealthSnapshot]) -> None:
+        super().__init__(message)
+        self.provider_health = provider_health
+
+
 @dataclass(frozen=True)
 class DownloadResult:
     """Paths and counts produced by a universe download."""
@@ -729,7 +737,10 @@ def download_ticker_frame(
                 )
 
     if not all_frames:
-        raise RuntimeError(f"No OHLCV rows downloaded for ticker list {dataset_name}.")
+        raise DownloadUnavailableError(
+            f"No OHLCV rows downloaded for ticker list {dataset_name}.",
+            provider_health=provider_health,
+        )
 
     ohlcv = pd.concat(all_frames, ignore_index=True)
     ohlcv = ohlcv.drop_duplicates(subset=["date", "ticker"]).sort_values(["ticker", "date"])
