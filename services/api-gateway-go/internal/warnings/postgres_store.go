@@ -357,6 +357,7 @@ func (s *PostgresStore) loadLatestBatch(
 			       wr.calibrated_risk_probability, wr.calibration_method,
 			       wr.uncertainty_score, wr.trust_score, wr.alert_threshold,
 			       wr.watch_threshold, wr.warning_level, wr.reason_codes,
+			       wr.feature_attributions,
 			       pb.created_at
 			FROM warning_records wr
 			JOIN prediction_batches pb ON pb.id = wr.batch_id
