@@ -76,6 +76,12 @@ type ProviderHealthRecord struct {
 	ObservedAt          string   `json:"observed_at"`
 }
 
+type IngestionMetrics struct {
+	SuccessCount int
+	FailureCount int
+	RunningCount int
+}
+
 // WarningHistoryRecord is the public, schema-first representation of one
 // historical warning observation. It repeats the prediction fields so that a
 // timeline response is self-contained and does not rely on private store

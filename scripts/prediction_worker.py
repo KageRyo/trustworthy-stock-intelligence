@@ -12,6 +12,7 @@ from tsi.data.prediction_jobs import (
     default_worker_id,
     run_prediction_worker,
 )
+from tsi.observability import log_event
 
 
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
@@ -50,6 +51,16 @@ def main(argv: Sequence[str] | None = None) -> None:
         retry_delay_seconds=args.retry_delay_seconds,
         once=args.once,
         max_jobs=args.max_jobs,
+    )
+    log_event(
+        "prediction_worker_completed",
+        service="prediction_worker",
+        worker_id=worker_id,
+        claimed_count=summary.claimed_count,
+        completed_count=summary.completed_count,
+        failed_count=summary.failed_count,
+        retried_count=summary.retried_count,
+        idle=summary.idle,
     )
     print(json.dumps(summary.model_dump(mode="json"), indent=2))
 

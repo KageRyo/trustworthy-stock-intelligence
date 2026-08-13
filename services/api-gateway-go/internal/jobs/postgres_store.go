@@ -98,6 +98,30 @@ func (s *PostgresStore) Get(ctx context.Context, id string) (PredictionJob, bool
 	return job, true, nil
 }
 
+func (s *PostgresStore) QueueMetrics(ctx context.Context) (QueueMetrics, error) {
+	var metrics QueueMetrics
+	err := s.pool.QueryRow(
+		ctx,
+		`SELECT
+			COUNT(*) FILTER (WHERE status = 'queued'),
+			COUNT(*) FILTER (WHERE status = 'running'),
+			COUNT(*) FILTER (WHERE status = 'completed'),
+			COUNT(*) FILTER (WHERE status = 'failed'),
+			COUNT(*) FILTER (WHERE status = 'cancelled')
+		 FROM prediction_jobs`,
+	).Scan(
+		&metrics.Queued,
+		&metrics.Running,
+		&metrics.Completed,
+		&metrics.Failed,
+		&metrics.Cancelled,
+	)
+	if err != nil {
+		return QueueMetrics{}, fmt.Errorf("load prediction queue metrics: %w", err)
+	}
+	return metrics, nil
+}
+
 func normalizeCreateRequest(request CreateRequest) (CreateRequest, error) {
 	request.Ticker = strings.ToUpper(strings.TrimSpace(request.Ticker))
 	if request.Ticker == "" {
