@@ -1,7 +1,8 @@
 # System Architecture
 
-Trustworthy Stock Intelligence v1 is a local production-like demo with a clear
-Python/Go split.
+Trustworthy Stock Intelligence v1 is a production-like reference deployment
+with a clear Python/Go split. The repository also supports running the stack
+locally for development and evaluation.
 
 ```mermaid
 flowchart TD
@@ -153,7 +154,7 @@ Streamlit has two views:
   optional ticker-level prediction CSVs
 - Live API tab that reads the Go gateway for current warning output
 
-## Local Demo Flow
+## Reference Demo Flow
 
 ```bash
 docker compose up -d postgres

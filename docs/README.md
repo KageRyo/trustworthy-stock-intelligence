@@ -26,6 +26,7 @@ entry point for finding the right document.
 | `e2e.md` | Deterministic PostgreSQL watchlist-to-warning pipeline and CI smoke test. |
 | `provider_coverage.md` | Supported markets, provider fallback paths, intervals, and coverage limits. |
 | `environment.md` | Python, Go, Node, CUDA, and local environment versions. |
+| `python-package.md` | PyPI package API, extras, CLI, build checks, and release setup. |
 | `development.md` | Development rules, tests, schema-first policy, and commit/release workflow. |
 | `project_roadmap.md` | Current milestone state and next implementation tasks. |
 | `backlog.md` | Prioritized task backlog after `0.3.1`. |
@@ -70,5 +71,5 @@ The current primary pilot evidence is
 
 ## Release Notes
 
-Use `../CHANGELOG.md` for release notes and `release.md` for the local release
-checklist.
+Use `../CHANGELOG.md` for release notes and `release.md` for the maintainer
+release checklist.

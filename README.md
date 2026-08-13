@@ -1,7 +1,7 @@
 # Trustworthy Stock Intelligence
 
 [![CI](https://github.com/KageRyo/trustworthy-stock-intelligence/actions/workflows/ci.yml/badge.svg)](https://github.com/KageRyo/trustworthy-stock-intelligence/actions/workflows/ci.yml)
-![Version](https://img.shields.io/badge/version-0.4.0-blue)
+![Version](https://img.shields.io/badge/version-0.4.1-blue)
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
 ![Go](https://img.shields.io/badge/go-1.25-blue)
 ![TypeScript](https://img.shields.io/badge/typescript-7.0-blue)
@@ -31,6 +31,29 @@ ticker
 The project is not investment advice, an automated trading system, or an exact
 price prediction tool. It is designed for human-in-the-loop risk assessment with
 auditable data, model, and API contracts.
+
+## Python Package
+
+Version `0.4.1` adds a PyPI distribution for the reusable Python/ML core. It
+includes the public `tsi` API, leakage-aware feature and label helpers,
+calibration/trust utilities, serving schemas, and a deterministic local CLI:
+
+```bash
+python -m pip install trustworthy-stock-intelligence
+tsi --version
+tsi inspect-csv path/to/ohlcv.csv --json
+```
+
+Provider ingestion is optional and can be installed with the `data` extra:
+
+```bash
+python -m pip install "trustworthy-stock-intelligence[data]"
+```
+
+The Go API, PostgreSQL schema, workers, and TypeScript dashboard remain the
+full-stack operational prototype described below; they are not bundled into the
+PyPI wheel. See [`docs/python-package.md`](docs/python-package.md) for the
+package API, extras, local build checks, and Trusted Publishing setup.
 
 ## Current Status
 
@@ -94,7 +117,7 @@ docker compose up -d postgres
 Install dependencies:
 
 ```bash
-python -m pip install -e ".[dev,db,dashboard,deep]"
+python -m pip install -e ".[dev,data,db,dashboard,deep]"
 cd frontend/stock-dashboard
 npm ci
 cd ../..
@@ -282,6 +305,7 @@ High-traffic documents:
 
 | Need | Document |
 | --- | --- |
+| Use the Python package or CLI | `docs/python-package.md` |
 | Use the dashboard and ticker search | `docs/user_guide.md` |
 | Run the local demo | `docs/demo/local_demo.md` |
 | Understand the system architecture | `docs/architecture.md` |
@@ -332,14 +356,14 @@ Project targets:
 
 | Runtime | Version |
 | --- | --- |
-| Python package | `0.4.0` |
+| Python package | `0.4.1` |
 | Python | `>=3.10`, CI uses `3.11` |
 | Go API | `1.25.x` |
 | Node.js CI runtime | `22.x` |
 | TypeScript | `5.6.x` |
 | PostgreSQL container | `17-alpine` |
 
-The verified local GPU research environment is documented in
+The reference GPU research environment used for reproducibility is documented in
 `docs/environment.md`.
 
 ## Repository Layout

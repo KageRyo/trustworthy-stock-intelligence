@@ -1,4 +1,8 @@
-# Recommended Repository Settings
+# Repository Governance and Security Settings
+
+This document is public maintainer guidance. It records which controls should
+be enabled for the open-source repository and which settings must be verified in
+GitHub's UI/API; it is not required for ordinary package or dashboard users.
 
 These settings cannot be enforced by files in the repository. Apply and
 re-verify them in GitHub after workflow names or repository visibility change.

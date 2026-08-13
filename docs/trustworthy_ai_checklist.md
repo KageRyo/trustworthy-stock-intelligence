@@ -72,14 +72,16 @@ evidence and marks missing evidence as `partial` or `open`; it does not convert
 an unchecked control into a pass.
 
 ```bash
+export TSI_PRIVATE_DATA_DIR=/path/to/private/tsi-data
+
 PYTHONPATH=src python -m scripts.generate_tai_audit \
-  --summary /secure/tsi/run/summary.json \
-  --data-manifest /secure/tsi/data/metadata.json \
-  --warning-eval /secure/tsi/run/warning_eval.json \
+  --summary "$TSI_PRIVATE_DATA_DIR/run/summary.json" \
+  --data-manifest "$TSI_PRIVATE_DATA_DIR/data/metadata.json" \
+  --warning-eval "$TSI_PRIVATE_DATA_DIR/run/warning_eval.json" \
   --feature-interval 1d \
   --known-limitation "Current-universe membership is not point-in-time." \
-  --output /secure/tsi/run/tai_audit.json \
-  --markdown-output /secure/tsi/run/tai_audit.md
+  --output "$TSI_PRIVATE_DATA_DIR/run/tai_audit.json" \
+  --markdown-output "$TSI_PRIVATE_DATA_DIR/run/tai_audit.md"
 ```
 
 The artifact covers Accuracy, Reliability, Safety, Resilience, Transparency,

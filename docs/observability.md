@@ -1,4 +1,4 @@
-# Local observability
+# Observability
 
 The Go gateway exposes two distinct probes:
 
@@ -14,12 +14,12 @@ reload state, ingestion run counts (when PostgreSQL is available), and
 prediction-job queue counts. Labels use route templates (`:ticker`, `:id`, and
 `:name`) so public identifiers do not create unbounded metric cardinality.
 
-The gateway and local Python ingestion/worker scripts emit JSON lines with
+The gateway and Python ingestion/worker processes emit JSON lines with
 `schema_version=tsi_log.v1` to stdout/stderr as appropriate. Events contain
 stable service, stage, status, count, and duration fields; database URLs,
 tokens, and other credential-like fields are filtered from structured logs.
 
-For a local run:
+For a local deployment, inspect the endpoints with:
 
 ```bash
 curl -i http://127.0.0.1:18080/health

@@ -90,8 +90,8 @@ observable, DB-backed analysis flow over thesis-style novelty:
 
 1. Keep CodeQL, Gitleaks, Dependabot, required CI checks, citation,
    contribution, release, and public/private-boundary documents accurate.
-2. Review commit-email privacy and Git history without rewriting history unless
-   the maintainer explicitly requests it.
+2. Preserve contributor-email privacy and avoid history rewrites during normal
+   maintenance.
 3. Keep the reproducible experiments, model limitations, and TAI audit output
    linked from the public documentation.
 
