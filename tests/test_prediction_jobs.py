@@ -118,6 +118,7 @@ def test_claim_uses_skip_locked_and_marks_job_running(monkeypatch) -> None:
     assert job.attempt_count == 1
     assert job.worker_id == "worker-a"
     assert "FOR UPDATE SKIP LOCKED" in connection.queries[0][0]
+    assert "RETURNING\n                    job.id" in connection.queries[0][0]
 
 
 def test_complete_requires_owned_running_job(monkeypatch) -> None:
