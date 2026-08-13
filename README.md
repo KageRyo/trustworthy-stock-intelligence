@@ -277,6 +277,7 @@ High-traffic documents:
 | Run the local demo | `docs/demo/local_demo.md` |
 | Understand the system architecture | `docs/architecture.md` |
 | Understand PostgreSQL and provider data | `docs/data_store.md` |
+| Review supported markets and provider coverage | `docs/provider_coverage.md` |
 | Read API contracts | `docs/api/warning_api.md`, `docs/api/analysis_api.md` |
 | Review trustworthy AI checkpoints | `docs/trustworthy_ai_checklist.md` |
 | Review research evidence and gaps | `experiments/007_research_evidence/README.md` |
