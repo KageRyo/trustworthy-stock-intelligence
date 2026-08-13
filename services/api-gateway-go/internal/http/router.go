@@ -11,6 +11,8 @@ func NewRouter(handlers *Handlers, corsConfigs ...CORSConfig) http.Handler {
 	mux.HandleFunc("GET /swagger/", handlers.Swagger)
 	mux.HandleFunc("GET /api/v1/status", handlers.Status)
 	mux.HandleFunc("GET /api/v1/providers/health", handlers.ProviderHealth)
+	mux.HandleFunc("POST /api/v1/prediction-jobs", handlers.CreatePredictionJob)
+	mux.HandleFunc("GET /api/v1/prediction-jobs/{id}", handlers.GetPredictionJob)
 	mux.HandleFunc("GET /api/v1/tickers", handlers.Tickers)
 	mux.HandleFunc("GET /api/v1/watchlists/{name}", handlers.Watchlist)
 	mux.HandleFunc("POST /api/v1/watchlists/{name}/tickers", handlers.AddWatchlistTicker)

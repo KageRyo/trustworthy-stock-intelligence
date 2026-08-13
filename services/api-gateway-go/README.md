@@ -12,6 +12,7 @@ The service reads PostgreSQL tables populated by prediction and ingestion jobs:
 ```text
 prediction_batches
 warning_records
+prediction_jobs
 watchlists
 watchlist_tickers
 ```
@@ -94,6 +95,8 @@ GET /openapi.yaml
 GET /swagger/
 GET /api/v1/status
 GET /api/v1/providers/health
+POST /api/v1/prediction-jobs
+GET /api/v1/prediction-jobs/{id}
 GET /api/v1/tickers
 GET /api/v1/watchlists/{name}
 POST /api/v1/watchlists/{name}/tickers
@@ -127,6 +130,12 @@ Swagger UI is served from `/swagger/`, with the OpenAPI YAML at
 The latest warning batch is loaded from PostgreSQL `prediction_batches` and
 `warning_records`. Missing `TSI_DATABASE_URL` or an unreachable database is a
 startup error.
+
+Prediction work is queued in PostgreSQL with an idempotency key and returns
+`202 Accepted`; a separate Python worker claims the job and writes the linked
+prediction batch and warning records. Query `GET /api/v1/prediction-jobs/{id}`
+for `queued`, `running`, `completed`, or typed `failed` state. See the root
+`docs/prediction_jobs.md` for worker startup and retry semantics.
 
 The lightweight Docker image contains only the Go API binary. Use the local
 `make api` workflow for on-demand Python analysis, or build a combined

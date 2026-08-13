@@ -8,6 +8,7 @@ import (
 
 	"github.com/KageRyo/trustworthy-stock-intelligence/services/api-gateway-go/internal/config"
 	apihttp "github.com/KageRyo/trustworthy-stock-intelligence/services/api-gateway-go/internal/http"
+	"github.com/KageRyo/trustworthy-stock-intelligence/services/api-gateway-go/internal/jobs"
 	"github.com/KageRyo/trustworthy-stock-intelligence/services/api-gateway-go/internal/warnings"
 	"github.com/KageRyo/trustworthy-stock-intelligence/services/api-gateway-go/internal/watchlist"
 )
@@ -26,8 +27,14 @@ func main() {
 		log.Fatalf("load postgres watchlist store: %v", err)
 	}
 	defer watchlistStore.Close()
+	predictionJobStore, err := jobs.NewPostgresStore(ctx, cfg.DatabaseURL)
+	if err != nil {
+		log.Fatalf("load postgres prediction job store: %v", err)
+	}
+	defer predictionJobStore.Close()
 	handlers := apihttp.NewHandlers(store, watchlistStore)
 	handlers.SetProviderHealthStore(store)
+	handlers.SetPredictionJobStore(predictionJobStore)
 	if cfg.OnDemandAnalysisCommand != "" {
 		analyzer, err := apihttp.NewCommandOnDemandAnalyzer(
 			cfg.OnDemandAnalysisCommand,

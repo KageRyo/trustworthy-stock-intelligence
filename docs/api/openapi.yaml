@@ -17,6 +17,7 @@ tags:
   - name: Watchlists
   - name: Analysis
   - name: Models
+  - name: Prediction Jobs
 paths:
   /openapi.yaml:
     get:
@@ -102,6 +103,57 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProviderHealthResponse"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /api/v1/prediction-jobs:
+    post:
+      tags: [Prediction Jobs]
+      summary: Queue asynchronous prediction work.
+      description: |
+        Creates or returns an idempotent PostgreSQL-backed prediction job. The
+        API acknowledges queued work with 202; a separate Python worker claims
+        and executes it.
+      operationId: createPredictionJob
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PredictionJobCreateRequest"
+      responses:
+        "202":
+          description: Prediction work was queued or an existing idempotent job was returned.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PredictionJobResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /api/v1/prediction-jobs/{id}:
+    get:
+      tags: [Prediction Jobs]
+      summary: Read asynchronous prediction job status.
+      operationId: getPredictionJob
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            minLength: 1
+      responses:
+        "200":
+          description: Current prediction job state and result metadata.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PredictionJobResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
   /api/v1/warnings/latest:
@@ -458,6 +510,141 @@ components:
         observed_at:
           type: string
           format: date-time
+    PredictionJobCreateRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - ticker
+      properties:
+        schema_version:
+          type: string
+          const: prediction_job_request.v1
+        idempotency_key:
+          type: string
+          minLength: 1
+          maxLength: 200
+        ticker:
+          type: string
+          minLength: 1
+          examples: ["NVDA", "2330"]
+        market:
+          type: string
+          enum: [auto, us, twse, tpex, emerging]
+          default: auto
+        feature_interval:
+          type: string
+          enum: [1m, 5m, 1d]
+          default: 1d
+        max_attempts:
+          type: integer
+          minimum: 1
+          maximum: 8
+          default: 3
+        request_payload:
+          type: object
+          additionalProperties: true
+    PredictionJobResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - schema_version
+        - job
+      properties:
+        schema_version:
+          type: string
+          const: prediction_job.v1
+        job:
+          $ref: "#/components/schemas/PredictionJob"
+    PredictionJob:
+      type: object
+      additionalProperties: false
+      required:
+        - schema_version
+        - id
+        - idempotency_key
+        - ticker
+        - market
+        - feature_interval
+        - status
+        - attempt_count
+        - max_attempts
+        - available_at
+        - enqueued_at
+        - created_at
+        - updated_at
+      properties:
+        schema_version:
+          type: string
+          const: prediction_job.v1
+        id:
+          type: string
+        idempotency_key:
+          type: string
+        ticker:
+          type: string
+        market:
+          type: string
+          enum: [auto, us, twse, tpex, emerging]
+        feature_interval:
+          type: string
+          enum: [1m, 5m, 1d]
+        status:
+          $ref: "#/components/schemas/PredictionJobStatus"
+        attempt_count:
+          type: integer
+          minimum: 0
+        max_attempts:
+          type: integer
+          minimum: 1
+        available_at:
+          type: string
+          format: date-time
+        enqueued_at:
+          type: string
+          format: date-time
+        started_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+        worker_id:
+          type: string
+        locked_at:
+          type: string
+          format: date-time
+        prediction_batch_id:
+          type: string
+        result_run_id:
+          type: string
+        failure_code:
+          $ref: "#/components/schemas/PredictionJobFailureCode"
+        failure_message:
+          type: string
+        request_payload:
+          type: object
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    PredictionJobStatus:
+      type: string
+      enum: [queued, running, completed, failed, cancelled]
+    PredictionJobFailureCode:
+      type: string
+      enum:
+        - provider_unavailable
+        - insufficient_history
+        - prediction_failed
+        - stale_data
+        - unsupported_market
+        - unsupported_interval
+        - database_error
+        - worker_error
+        - unknown
     StoreStatus:
       type: object
       additionalProperties: false
