@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/KageRyo/trustworthy-stock-intelligence/services/api-gateway-go/internal/jobs"
 	"github.com/KageRyo/trustworthy-stock-intelligence/services/api-gateway-go/internal/warnings"
 	"github.com/KageRyo/trustworthy-stock-intelligence/services/api-gateway-go/internal/watchlist"
 )
@@ -26,10 +27,16 @@ type ProviderHealthStore interface {
 	ListProviderHealth(ctx context.Context) ([]warnings.ProviderHealthRecord, error)
 }
 
+type PredictionJobStore interface {
+	Enqueue(ctx context.Context, request jobs.CreateRequest) (jobs.PredictionJob, error)
+	Get(ctx context.Context, id string) (jobs.PredictionJob, bool, error)
+}
+
 type Handlers struct {
 	store            WarningStore
 	providerHealth   ProviderHealthStore
 	watchlist        WatchlistStore
+	predictionJobs   PredictionJobStore
 	onDemandAnalyzer OnDemandAnalyzer
 }
 
@@ -97,6 +104,10 @@ func (h *Handlers) SetOnDemandAnalyzer(analyzer OnDemandAnalyzer) {
 
 func (h *Handlers) SetProviderHealthStore(store ProviderHealthStore) {
 	h.providerHealth = store
+}
+
+func (h *Handlers) SetPredictionJobStore(store PredictionJobStore) {
+	h.predictionJobs = store
 }
 
 func (h *Handlers) ProviderHealth(response http.ResponseWriter, request *http.Request) {

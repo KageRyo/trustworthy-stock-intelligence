@@ -3,6 +3,7 @@ import {
   apiErrorSchema,
   currentModelSchema,
   predictionBatchSchema,
+  predictionJobResponseSchema,
   statusSchema,
   tickerListSchema,
   tickerAnalysisSchema,
@@ -11,6 +12,7 @@ import {
   type APIStatus,
   type CurrentModel,
   type PredictionBatch,
+  type PredictionJob,
   type TickerList,
   type TickerAnalysis,
   type WarningHistory,
@@ -143,6 +145,35 @@ export function fetchStatus(): Promise<APIStatus> {
 
 export function fetchCurrentModel(): Promise<CurrentModel> {
   return fetchSchema("/api/v1/models/current", currentModelSchema);
+}
+
+export function createPredictionJob(
+  ticker: string,
+  options: {
+    idempotencyKey?: string;
+    market?: "auto" | "us" | "twse" | "tpex" | "emerging";
+    featureInterval?: "1m" | "5m" | "1d";
+    maxAttempts?: number;
+  } = {}
+): Promise<PredictionJob> {
+  return mutateSchema("/api/v1/prediction-jobs", predictionJobResponseSchema, {
+    method: "POST",
+    body: {
+      schema_version: "prediction_job_request.v1",
+      ticker: ticker.trim().toUpperCase(),
+      ...(options.idempotencyKey === undefined ? {} : { idempotency_key: options.idempotencyKey }),
+      market: options.market ?? "auto",
+      feature_interval: options.featureInterval ?? "1d",
+      ...(options.maxAttempts === undefined ? {} : { max_attempts: options.maxAttempts })
+    }
+  }).then((response) => response.job);
+}
+
+export function fetchPredictionJob(jobId: string): Promise<PredictionJob> {
+  return fetchSchema(
+    `/api/v1/prediction-jobs/${encodeURIComponent(jobId.trim())}`,
+    predictionJobResponseSchema
+  ).then((response) => response.job);
 }
 
 export function fetchTickerAnalysis(ticker: string): Promise<TickerAnalysis> {

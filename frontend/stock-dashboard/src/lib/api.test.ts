@@ -2,6 +2,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   APIClientError,
   addWatchlistTicker,
+  createPredictionJob,
+  fetchPredictionJob,
   fetchStatus,
   fetchTickerAnalysis,
   fetchTickerHistory,
@@ -201,6 +203,35 @@ function watchlistPayload() {
   };
 }
 
+function predictionJobPayload(status: "queued" | "completed" = "queued") {
+  return {
+    schema_version: "prediction_job.v1",
+    job: {
+      schema_version: "prediction_job.v1",
+      id: "job-1",
+      idempotency_key: "request-1",
+      ticker: "NVDA",
+      market: "auto",
+      feature_interval: "1d",
+      status,
+      attempt_count: status === "completed" ? 1 : 0,
+      max_attempts: 3,
+      available_at: "2026-08-13T02:00:00Z",
+      enqueued_at: "2026-08-13T02:00:00Z",
+      ...(status === "completed"
+        ? {
+            completed_at: "2026-08-13T02:01:00Z",
+            prediction_batch_id: "batch-1",
+            result_run_id: "request-1"
+          }
+        : {}),
+      request_payload: {},
+      created_at: "2026-08-13T02:00:00Z",
+      updated_at: "2026-08-13T02:00:00Z"
+    }
+  };
+}
+
 afterEach(() => {
   fetchMock.mockReset();
 });
@@ -213,6 +244,39 @@ describe("typed API client", () => {
 
     expect(status.record_count).toBe(2);
     expect(fetchMock).toHaveBeenCalledWith("/api/v1/status", {
+      headers: {
+        Accept: "application/json"
+      }
+    });
+  });
+
+  it("creates and reads typed prediction jobs", async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse(predictionJobPayload()));
+
+    const queued = await createPredictionJob(" nvda ", { idempotencyKey: "request-1" });
+
+    expect(queued.status).toBe("queued");
+    expect(fetchMock).toHaveBeenCalledWith("/api/v1/prediction-jobs", {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        schema_version: "prediction_job_request.v1",
+        ticker: "NVDA",
+        idempotency_key: "request-1",
+        market: "auto",
+        feature_interval: "1d"
+      })
+    });
+
+    fetchMock.mockResolvedValueOnce(jsonResponse(predictionJobPayload("completed")));
+    const completed = await fetchPredictionJob("job-1");
+
+    expect(completed.status).toBe("completed");
+    expect(completed.prediction_batch_id).toBe("batch-1");
+    expect(fetchMock).toHaveBeenCalledWith("/api/v1/prediction-jobs/job-1", {
       headers: {
         Accept: "application/json"
       }

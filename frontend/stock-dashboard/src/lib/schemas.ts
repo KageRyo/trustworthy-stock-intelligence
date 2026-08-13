@@ -263,6 +263,60 @@ export const currentModelSchema = z
   })
   .strict();
 
+export const predictionJobStatusSchema = z.enum([
+  "queued",
+  "running",
+  "completed",
+  "failed",
+  "cancelled"
+]);
+
+export const predictionJobFailureCodeSchema = z.enum([
+  "provider_unavailable",
+  "insufficient_history",
+  "prediction_failed",
+  "stale_data",
+  "unsupported_market",
+  "unsupported_interval",
+  "database_error",
+  "worker_error",
+  "unknown"
+]);
+
+export const predictionJobSchema = z
+  .object({
+    schema_version: z.literal("prediction_job.v1"),
+    id: z.string(),
+    idempotency_key: z.string(),
+    ticker: z.string(),
+    market: z.enum(["auto", "us", "twse", "tpex", "emerging"]),
+    feature_interval: z.enum(["1m", "5m", "1d"]),
+    status: predictionJobStatusSchema,
+    attempt_count: z.number().int().nonnegative(),
+    max_attempts: z.number().int().positive(),
+    available_at: z.string(),
+    enqueued_at: z.string(),
+    started_at: z.string().optional(),
+    completed_at: z.string().optional(),
+    worker_id: z.string().optional(),
+    locked_at: z.string().optional(),
+    prediction_batch_id: z.string().optional(),
+    result_run_id: z.string().optional(),
+    failure_code: predictionJobFailureCodeSchema.optional(),
+    failure_message: z.string().optional(),
+    request_payload: z.record(z.string(), z.unknown()).optional(),
+    created_at: z.string(),
+    updated_at: z.string()
+  })
+  .strict();
+
+export const predictionJobResponseSchema = z
+  .object({
+    schema_version: z.literal("prediction_job.v1"),
+    job: predictionJobSchema
+  })
+  .strict();
+
 export const apiErrorSchema = z
   .object({
     error: z
@@ -290,4 +344,6 @@ export type Watchlist = z.infer<typeof watchlistSchema>;
 export type WatchlistTicker = z.infer<typeof watchlistTickerSchema>;
 export type APIStatus = z.infer<typeof statusSchema>;
 export type CurrentModel = z.infer<typeof currentModelSchema>;
+export type PredictionJob = z.infer<typeof predictionJobSchema>;
+export type PredictionJobResponse = z.infer<typeof predictionJobResponseSchema>;
 export type APIError = z.infer<typeof apiErrorSchema>;
