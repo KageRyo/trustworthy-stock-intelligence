@@ -75,6 +75,20 @@ import {
   providerStateForTicker,
   recordsForTicker
 } from "./lib/dashboardState";
+import {
+  addGroup,
+  assignTickerToGroup,
+  defaultWatchlistFilters,
+  filterWatchlistTickers,
+  groupForTicker,
+  loadWatchlistGroupingState,
+  removeGroup,
+  saveWatchlistGroupingState,
+  sortWatchlistTickers,
+  type WatchlistFilters,
+  type WatchlistGroupingState,
+  type WatchlistSort
+} from "./lib/watchlistView";
 
 type LoadState = "idle" | "loading" | "ready" | "error";
 type LoadAnalysisOptions = {
@@ -233,6 +247,12 @@ export default function App() {
   const [latestWarnings, setLatestWarnings] = useState<PredictionBatch | null>(null);
   const [tickerList, setTickerList] = useState<TickerList | null>(null);
   const [watchlist, setWatchlist] = useState<Watchlist | null>(null);
+  const [watchlistGrouping, setWatchlistGrouping] = useState<WatchlistGroupingState>(() =>
+    loadWatchlistGroupingState(watchlistName)
+  );
+  const [watchlistFilters, setWatchlistFilters] = useState<WatchlistFilters>(defaultWatchlistFilters);
+  const [watchlistSort, setWatchlistSort] = useState<WatchlistSort>("ticker");
+  const [watchlistGroupInput, setWatchlistGroupInput] = useState("");
   const [providerHealth, setProviderHealth] = useState<ProviderHealthResponse | null>(null);
   const [analysis, setAnalysis] = useState<TickerAnalysis | null>(null);
   const [predictionJob, setPredictionJob] = useState<PredictionJob | null>(null);
@@ -253,6 +273,10 @@ export default function App() {
   const copy = translations[locale];
   const batchSummary = useMemo(() => summarizeBatch(latestWarnings), [latestWarnings]);
   const coverageSummary = useMemo(() => summarizeCoverage(tickerList, copy), [tickerList, copy]);
+
+  useEffect(() => {
+    saveWatchlistGroupingState(watchlistName, watchlistGrouping);
+  }, [watchlistGrouping, watchlistName]);
 
   function changeLocale(nextLocale: Locale) {
     setLocale(nextLocale);
@@ -439,8 +463,19 @@ export default function App() {
     try {
       const nextWatchlist = await removeWatchlistTicker(ticker, watchlistName);
       setWatchlist(nextWatchlist);
+      setWatchlistGrouping((current) => {
+        const nextAssignments = { ...current.assignments };
+        delete nextAssignments[ticker.toUpperCase()];
+        return { ...current, assignments: nextAssignments };
+      });
     } catch (error) {
       setWatchlistError(errorMessage(error, copy));
+    }
+  }
+
+  async function removeTickersFromWatchlist(tickers: string[]) {
+    for (const ticker of tickers) {
+      await removeTickerFromWatchlist(ticker);
     }
   }
 
@@ -598,6 +633,28 @@ export default function App() {
               setSelectedTicker(ticker);
             }}
             onRemoveTicker={removeTickerFromWatchlist}
+            filters={watchlistFilters}
+            sort={watchlistSort}
+            grouping={watchlistGrouping}
+            groupInput={watchlistGroupInput}
+            onChangeFilters={setWatchlistFilters}
+            onChangeSort={setWatchlistSort}
+            onChangeGroupInput={setWatchlistGroupInput}
+            onAddGroup={() => {
+              setWatchlistGrouping((current) => addGroup(current, watchlistGroupInput));
+              setWatchlistGroupInput("");
+            }}
+            onRemoveGroup={(group) => {
+              setWatchlistGrouping((current) => removeGroup(current, group));
+              setWatchlistFilters((current) => ({
+                ...current,
+                group: current.group === group ? "" : current.group
+              }));
+            }}
+            onAssignGroup={(ticker, group) => {
+              setWatchlistGrouping((current) => assignTickerToGroup(current, ticker, group));
+            }}
+            onBulkRemoveTickers={removeTickersFromWatchlist}
           />
           <WarningsTable
             records={latestWarnings?.records ?? []}
@@ -1240,7 +1297,18 @@ function WatchlistPanel({
   locale,
   copy,
   onSelectTicker,
-  onRemoveTicker
+  onRemoveTicker,
+  filters,
+  sort,
+  grouping,
+  groupInput,
+  onChangeFilters,
+  onChangeSort,
+  onChangeGroupInput,
+  onAddGroup,
+  onRemoveGroup,
+  onAssignGroup,
+  onBulkRemoveTickers
 }: {
   watchlist: Watchlist | null;
   watchlistName: string;
@@ -1249,8 +1317,54 @@ function WatchlistPanel({
   copy: DashboardCopy;
   onSelectTicker: (ticker: string) => void;
   onRemoveTicker: (ticker: string) => void;
+  filters: WatchlistFilters;
+  sort: WatchlistSort;
+  grouping: WatchlistGroupingState;
+  groupInput: string;
+  onChangeFilters: (filters: WatchlistFilters) => void;
+  onChangeSort: (sort: WatchlistSort) => void;
+  onChangeGroupInput: (value: string) => void;
+  onAddGroup: () => void;
+  onRemoveGroup: (group: string) => void;
+  onAssignGroup: (ticker: string, group: string) => void;
+  onBulkRemoveTickers: (tickers: string[]) => Promise<void>;
 }) {
-  const tickers = watchlist?.tickers ?? [];
+  const tickers = sortWatchlistTickers(
+    filterWatchlistTickers(watchlist?.tickers ?? [], filters, grouping),
+    sort
+  );
+  const [selectedTickers, setSelectedTickers] = useState<Set<string>>(new Set());
+  const selectedVisibleTickers = tickers.filter((ticker) => selectedTickers.has(ticker.ticker));
+  function toggleTicker(ticker: string) {
+    setSelectedTickers((current) => {
+      const next = new Set(current);
+      if (next.has(ticker)) next.delete(ticker);
+      else next.add(ticker);
+      return next;
+    });
+  }
+  function toggleVisibleTickers() {
+    setSelectedTickers((current) => {
+      const next = new Set(current);
+      const allSelected = tickers.length > 0 && tickers.every((ticker) => next.has(ticker.ticker));
+      for (const ticker of tickers) {
+        if (allSelected) next.delete(ticker.ticker);
+        else next.add(ticker.ticker);
+      }
+      return next;
+    });
+  }
+  async function bulkRemove() {
+    if (selectedVisibleTickers.length === 0) return;
+    const confirmed = typeof window === "undefined" || window.confirm(copy.common.confirmBulkRemove(selectedVisibleTickers.length));
+    if (!confirmed) return;
+    await onBulkRemoveTickers(selectedVisibleTickers.map((ticker) => ticker.ticker));
+    setSelectedTickers((current) => {
+      const next = new Set(current);
+      for (const ticker of selectedVisibleTickers) next.delete(ticker.ticker);
+      return next;
+    });
+  }
 
   return (
     <section className="rounded-lg border border-line bg-white p-5 shadow-panel">
@@ -1264,14 +1378,151 @@ function WatchlistPanel({
         </div>
         <ListChecks className="text-data" size={22} aria-hidden="true" />
       </div>
+      <div className="mb-4 grid gap-3 rounded-md border border-line bg-slate-50 p-3 text-sm lg:grid-cols-[1fr_1fr_1fr]">
+        <label className="grid gap-1">
+          <span className="text-xs font-semibold uppercase tracking-normal text-slate-500">{copy.labels.market}</span>
+          <select
+            className="h-9 rounded border border-line bg-white px-2"
+            value={filters.market}
+            onChange={(event) => onChangeFilters({ ...filters, market: event.target.value as WatchlistFilters["market"] })}
+          >
+            <option value="all">{copy.operational.unknown} / {copy.labels.market}</option>
+            <option value="us">{copy.markets.us}</option>
+            <option value="twse">{copy.markets.twse}</option>
+            <option value="tpex">{copy.markets.tpex}</option>
+            <option value="emerging">{copy.markets.emerging}</option>
+          </select>
+        </label>
+        <label className="grid gap-1">
+          <span className="text-xs font-semibold uppercase tracking-normal text-slate-500">{copy.labels.level}</span>
+          <select
+            className="h-9 rounded border border-line bg-white px-2"
+            value={filters.warning}
+            onChange={(event) => onChangeFilters({ ...filters, warning: event.target.value as WatchlistFilters["warning"] })}
+          >
+            <option value="all">{copy.operational.unknown} / {copy.labels.level}</option>
+            <option value="alert">{copy.warningLevels.alert}</option>
+            <option value="watch">{copy.warningLevels.watch}</option>
+            <option value="abstain">{copy.warningLevels.abstain}</option>
+            <option value="no_alert">{copy.warningLevels.no_alert}</option>
+          </select>
+        </label>
+        <label className="grid gap-1">
+          <span className="text-xs font-semibold uppercase tracking-normal text-slate-500">{copy.labels.action}</span>
+          <select
+            className="h-9 rounded border border-line bg-white px-2"
+            value={sort}
+            onChange={(event) => onChangeSort(event.target.value as WatchlistSort)}
+          >
+            <option value="ticker">{copy.labels.ticker}</option>
+            <option value="market">{copy.labels.market}</option>
+            <option value="warning">{copy.labels.level}</option>
+            <option value="trust">{copy.labels.trustScore}</option>
+            <option value="freshness">{copy.labels.freshness}</option>
+            <option value="added">{copy.labels.date}</option>
+          </select>
+        </label>
+        <label className="grid gap-1">
+          <span className="text-xs font-semibold uppercase tracking-normal text-slate-500">{copy.labels.trustStatus}</span>
+          <select
+            className="h-9 rounded border border-line bg-white px-2"
+            value={filters.trust}
+            onChange={(event) => onChangeFilters({ ...filters, trust: event.target.value as WatchlistFilters["trust"] })}
+          >
+            <option value="all">{copy.operational.unknown}</option>
+            <option value="low">{copy.operational.limited}</option>
+          </select>
+        </label>
+        <label className="grid gap-1">
+          <span className="text-xs font-semibold uppercase tracking-normal text-slate-500">{copy.labels.freshness}</span>
+          <select
+            className="h-9 rounded border border-line bg-white px-2"
+            value={filters.freshness}
+            onChange={(event) => onChangeFilters({ ...filters, freshness: event.target.value as WatchlistFilters["freshness"] })}
+          >
+            <option value="all">{copy.operational.unknown}</option>
+            <option value="fresh">{copy.operational.fresh}</option>
+            <option value="stale">{copy.operational.stale}</option>
+            <option value="unusable">{copy.operational.unusable}</option>
+          </select>
+        </label>
+        <label className="grid gap-1">
+          <span className="text-xs font-semibold uppercase tracking-normal text-slate-500">{copy.panels.sessionWatchlist}</span>
+          <select
+            className="h-9 rounded border border-line bg-white px-2"
+            value={filters.group}
+            onChange={(event) => onChangeFilters({ ...filters, group: event.target.value })}
+          >
+            <option value="">{copy.operational.unknown}</option>
+            <option value="ungrouped">{copy.common.noAnalysis}</option>
+            {grouping.groups.map((group) => <option key={group} value={group}>{group}</option>)}
+          </select>
+        </label>
+        <div className="flex items-end gap-2 lg:col-span-3">
+          <input
+            className="h-9 min-w-0 flex-1 rounded border border-line bg-white px-2"
+            value={groupInput}
+            onChange={(event) => onChangeGroupInput(event.target.value)}
+            placeholder={copy.panels.sessionWatchlist}
+            aria-label={copy.panels.sessionWatchlist}
+            maxLength={40}
+          />
+          <button
+            className="h-9 rounded bg-ink px-3 text-xs font-semibold text-white disabled:opacity-50"
+            type="button"
+            disabled={!groupInput.trim()}
+            onClick={onAddGroup}
+          >
+            +
+          </button>
+          {grouping.groups.map((group) => (
+            <button
+              key={group}
+              className="h-9 rounded border border-line bg-white px-2 text-xs font-semibold text-slate-600 hover:bg-red-50 hover:text-red-700"
+              type="button"
+              onClick={() => onRemoveGroup(group)}
+              title={group}
+            >
+              {group} ×
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="mb-4 flex flex-wrap items-center gap-2 text-xs">
+        <button
+          className="rounded border border-line bg-white px-3 py-2 font-semibold text-slate-700 hover:bg-slate-100"
+          type="button"
+          onClick={toggleVisibleTickers}
+        >
+          {copy.common.selectAll}
+        </button>
+        <button
+          className="rounded border border-line bg-white px-3 py-2 font-semibold text-slate-700 hover:bg-slate-100"
+          type="button"
+          onClick={() => setSelectedTickers(new Set())}
+          disabled={selectedTickers.size === 0}
+        >
+          {copy.common.clearSelected}
+        </button>
+        <button
+          className="rounded border border-red-200 bg-red-50 px-3 py-2 font-semibold text-red-800 hover:bg-red-100 disabled:opacity-50"
+          type="button"
+          onClick={() => void bulkRemove()}
+          disabled={selectedVisibleTickers.length === 0}
+        >
+          {copy.common.bulkRemove} ({selectedVisibleTickers.length})
+        </button>
+      </div>
       {tickers.length === 0 ? <PanelState label={copy.states.noViewedTickers} /> : null}
       {tickers.length > 0 ? (
         <div className="overflow-x-auto">
           <table className="min-w-[620px] w-full border-collapse text-left text-sm">
             <thead>
               <tr className="border-b border-line text-xs uppercase tracking-normal text-slate-500">
+                <th className="py-3 pr-2 font-semibold">#</th>
                 <th className="py-3 pr-3 font-semibold">{copy.labels.ticker}</th>
                 <th className="px-3 py-3 font-semibold">{copy.labels.market}</th>
+                <th className="px-3 py-3 font-semibold">{copy.panels.sessionWatchlist}</th>
                 <th className="px-3 py-3 font-semibold">{copy.labels.latest}</th>
                 <th className="px-3 py-3 font-semibold">{copy.labels.trustScore}</th>
                 <th className="px-3 py-3 font-semibold">{copy.labels.action}</th>
@@ -1286,6 +1537,11 @@ function WatchlistPanel({
                   copy={copy}
                   onSelectTicker={onSelectTicker}
                   onRemoveTicker={onRemoveTicker}
+                  group={groupForTicker(grouping, ticker.ticker)}
+                  groups={grouping.groups}
+                  onAssignGroup={onAssignGroup}
+                  selectedForBulk={selectedTickers.has(ticker.ticker)}
+                  onToggleSelected={toggleTicker}
                 />
               ))}
             </tbody>
@@ -1301,16 +1557,34 @@ function WatchlistRow({
   selected,
   copy,
   onSelectTicker,
-  onRemoveTicker
+  onRemoveTicker,
+  group,
+  groups,
+  onAssignGroup,
+  selectedForBulk,
+  onToggleSelected
 }: {
   ticker: WatchlistTicker;
   selected: boolean;
   copy: DashboardCopy;
   onSelectTicker: (ticker: string) => void;
   onRemoveTicker: (ticker: string) => void;
+  group: string;
+  groups: string[];
+  onAssignGroup: (ticker: string, group: string) => void;
+  selectedForBulk: boolean;
+  onToggleSelected: (ticker: string) => void;
 }) {
   return (
     <tr className={`border-b border-line last:border-0 ${selected ? "bg-sky-50" : "hover:bg-slate-50"}`}>
+      <td className="py-3 pr-2">
+        <input
+          type="checkbox"
+          checked={selectedForBulk}
+          onChange={() => onToggleSelected(ticker.ticker)}
+          aria-label={`${copy.common.selectAll} ${ticker.ticker}`}
+        />
+      </td>
       <td className="py-3 pr-3">
         <button
           className="font-semibold text-data hover:underline focus:outline-none focus:ring-2 focus:ring-data"
@@ -1323,6 +1597,17 @@ function WatchlistRow({
       </td>
       <td className="px-3 py-3 text-slate-600">
         {copy.markets[ticker.market] ?? ticker.market.toUpperCase()}
+      </td>
+      <td className="px-3 py-3">
+        <select
+          className="h-8 max-w-28 rounded border border-line bg-white px-1 text-xs"
+          value={group}
+          onChange={(event) => onAssignGroup(ticker.ticker, event.target.value)}
+          aria-label={`${copy.panels.sessionWatchlist} ${ticker.ticker}`}
+        >
+          <option value="">—</option>
+          {groups.map((entry) => <option key={entry} value={entry}>{entry}</option>)}
+        </select>
       </td>
       <td className="px-3 py-3">
         {ticker.latest_warning ? (
