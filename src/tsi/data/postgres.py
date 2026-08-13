@@ -255,6 +255,21 @@ def write_download_to_postgres(
     )
 
 
+def write_provider_health_to_postgres(
+    database_url: str,
+    snapshots: list[ProviderHealthSnapshot],
+) -> int:
+    """Persist provider observations even when an attempt returned no bars."""
+
+    if not snapshots:
+        return 0
+    with connect_database(database_url) as connection:
+        with connection.transaction():
+            _upsert_provider_health(connection, snapshots)
+        connection.commit()
+    return len(snapshots)
+
+
 def read_watchlist_tickers(database_url: str, watchlist_name: str = "default") -> list[str]:
     """Read active ticker symbols from a PostgreSQL watchlist."""
 
@@ -271,6 +286,42 @@ def read_watchlist_tickers(database_url: str, watchlist_name: str = "default") -
             (watchlist_name,),
         ).fetchall()
     return [str(row[0]) for row in rows]
+
+
+def read_latest_market_bar(
+    database_url: str,
+    ticker: str,
+    *,
+    interval: MarketBarInterval = "5m",
+    provider: str = "yfinance",
+) -> datetime | None:
+    """Read the newest stored bar for a symbol/provider cursor."""
+
+    validate_interval(interval)
+    with connect_database(database_url) as connection:
+        row = connection.execute(
+            """
+            SELECT mb.ts
+            FROM market_bars mb
+            JOIN tickers t ON t.id = mb.ticker_id
+            WHERE upper(t.symbol) = upper(%s)
+              AND mb.interval = %s
+              AND mb.provider = %s
+            ORDER BY mb.ts DESC
+            LIMIT 1
+            """,
+            (ticker, interval, provider),
+        ).fetchone()
+    if row is None:
+        return None
+    value = row[0]
+    if isinstance(value, datetime):
+        timestamp = value
+    else:
+        timestamp = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    if timestamp.tzinfo is None or timestamp.utcoffset() is None:
+        return timestamp.replace(tzinfo=UTC)
+    return timestamp.astimezone(UTC)
 
 
 def write_prediction_batch_to_postgres(

@@ -119,6 +119,39 @@ python -m scripts.ingest_market_data \
   --interval 5m
 ```
 
+### Scheduled watchlist ingestion
+
+The scheduler provides a bounded, DB-backed five-minute loop for a deliberate
+watchlist. It reads active symbols at each tick, normalizes and de-duplicates
+them, and processes each ticker independently so one provider outage does not
+discard neighboring updates:
+
+```bash
+TSI_INGESTION_ENABLED=true \
+python -m scripts.schedule_market_ingestion \
+  --database-url "$TSI_DATABASE_URL" \
+  --watchlist-name session-example
+```
+
+Use `--once` for a job runner or smoke test. The default is disabled and emits
+a typed `scheduled_ingestion.v1` disabled summary without opening PostgreSQL:
+
+```bash
+python -m scripts.schedule_market_ingestion --disabled --once
+```
+
+An enabled schedule requires `TSI_DATABASE_URL` (or `--database-url`). The
+five-minute interval is fixed for this job, polling defaults to 300 seconds,
+and retry/backoff settings are bounded by the same provider-health policy used
+by one-off ingestion. Each ticker uses its newest stored bar as a cursor and is
+skipped when the next five-minute slot is already current, so normal ticks do
+not refetch stored bars. Successful writes still use the existing
+`(ticker, interval, timestamp, provider)` upsert key, making retries and
+overlapping provider windows idempotent. Provider failures persist their health
+snapshots even when no bar is available; the summary reports `success`,
+`partial`, `failed`, or `no_tickers` per tick and identifies `skipped` tickers
+that are already up to date.
+
 ## Prediction Serving Store
 
 The baseline latest prediction script can upsert the generated serving batch
@@ -177,7 +210,7 @@ Taiwan symbols are stored as strings. Leading zeroes and suffix letters such as
 ## Current Limitation
 
 The DB-backed API, watchlist state, local on-demand ticker analysis bridge,
-Taiwan provider fallbacks, and warning-history timeline are available. The
-remaining gap is coverage automation: broad US/Taiwan ticker universe
-ingestion, scheduled 5-minute updates, warning-change detection, actionable
-stale-state handling, and intraday-trained models still need to be implemented.
+Taiwan provider fallbacks, provider health persistence, freshness policy, and
+scheduled five-minute watchlist ingestion are available. Broad US/Taiwan
+universe ingestion, warning-change detection, actionable stale-state serving,
+and intraday-trained models remain follow-up work.
