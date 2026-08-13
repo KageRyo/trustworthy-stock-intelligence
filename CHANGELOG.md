@@ -2,6 +2,26 @@
 
 ## Unreleased
 
+## 0.3.2 - 2026-08-13
+
+### Changed
+
+- Updated the frontend toolchain, including Vite, the React plugin, PostCSS,
+  Lucide, TypeScript, Zod, Vitest, and related type/build dependencies.
+- Made the Ruff 0.16 migration explicit while preserving the existing lint
+  baseline.
+- Grouped routine Dependabot minor and patch updates by ecosystem while
+  keeping major and security updates available for focused review.
+
+### Security
+
+- Migrated the CodeQL workflow to the SHA-pinned CodeQL Action v4 release.
+
+### Fixed
+
+- Restored the official Apache License 2.0 text in the repository license
+  file.
+
 ## 0.3.1 - 2026-08-09
 
 ### Added

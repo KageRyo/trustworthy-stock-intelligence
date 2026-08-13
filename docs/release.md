@@ -1,21 +1,15 @@
 # Release Checklist
 
-## 0.3.1 Scope
+## 0.3.2 Scope
 
-`0.3.1` is the public open-source product and research-quality release:
+`0.3.2` is a maintenance and security release following the public
+open-source and research-quality `0.3.1` release:
 
-- aligned logistic, tree, and GPU deep-model pilot comparison with documented
-  current-universe limits
-- paired bootstrap intervals, calibration-drift detection, and a schema-first
-  TAI audit artifact for each model run
-- reproducible Taiwan and US/Taiwan transfer pilots with explicit coverage,
-  provider, and current-universe limitations
-- typed feature attributions, warning-history timelines, and calibrated drift
-  state in the PostgreSQL-backed Go API and TypeScript dashboard
-- public-source contribution, citation, licensing, and public/private-boundary
-  documentation
-- required CI, Dependabot, `govulncheck`, race tests, Gitleaks, CodeQL, native
-  GitHub Secret Scanning, and Push Protection
+- SHA-pinned CodeQL Action v4 workflow and continued security scanning gates
+- explicit Ruff 0.16 migration with the existing lint baseline preserved
+- grouped routine Dependabot minor and patch updates by ecosystem
+- validated frontend dependency upgrades, including TypeScript 7 and Zod 4
+- restored official Apache License 2.0 text
 - v0.4 product priorities for 5-minute ingestion, provider health/freshness,
   queue-backed prediction jobs, warning-change detection, and richer watchlists
 
@@ -31,10 +25,15 @@ pyproject.toml
 frontend/stock-dashboard/package.json
 frontend/stock-dashboard/package-lock.json
 frontend/stock-dashboard/README.md
+dashboard/README.md
 docs/api/openapi.yaml
 services/api-gateway-go/internal/http/openapi.yaml
 services/api-gateway-go/README.md
 README.md
+CITATION.cff
+docs/environment.md
+docs/project_roadmap.md
+docs/demo/local_demo.md
 CHANGELOG.md
 docs/release.md
 ```

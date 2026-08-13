@@ -4,11 +4,11 @@
 
 | Component | Version |
 | --- | --- |
-| Python package | `0.3.1` |
+| Python package | `0.3.2` |
 | Python | `>=3.10`, CI uses `3.11` |
 | Go API | `1.25.x` |
 | Node.js CI runtime | `22.x` |
-| TypeScript | `5.6.x` |
+| TypeScript | `7.0.x` |
 | PostgreSQL container | `17-alpine` |
 
 ## Recommendation
