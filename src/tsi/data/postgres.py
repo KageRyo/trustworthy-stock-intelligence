@@ -324,6 +324,40 @@ def read_latest_market_bar(
     return timestamp.astimezone(UTC)
 
 
+def read_market_bars_from_postgres(
+    database_url: str,
+    ticker: str,
+    *,
+    interval: MarketBarInterval = "1d",
+    provider: str = "yfinance",
+    limit: int = 5000,
+) -> pd.DataFrame:
+    """Read persisted bars into the normalized OHLCV frame used by inference."""
+
+    validate_interval(interval)
+    if limit < 1:
+        raise ValueError("limit must be positive")
+    with connect_database(database_url) as connection:
+        rows = connection.execute(
+            """
+            SELECT mb.ts, t.symbol, mb.open, mb.high, mb.low, mb.close,
+                   mb.adj_close, mb.volume
+            FROM market_bars mb
+            JOIN tickers t ON t.id = mb.ticker_id
+            WHERE upper(t.symbol) = upper(%s)
+              AND mb.interval = %s
+              AND mb.provider = %s
+            ORDER BY mb.ts DESC
+            LIMIT %s
+            """,
+            (ticker, interval, provider, limit),
+        ).fetchall()
+    columns = ["date", "ticker", "open", "high", "low", "close", "adj_close", "volume"]
+    if not rows:
+        return pd.DataFrame(columns=columns)
+    return pd.DataFrame(list(reversed(rows)), columns=columns)
+
+
 def write_prediction_batch_to_postgres(
     database_url: str,
     batch: PredictionBatch,
@@ -406,6 +440,17 @@ def write_prediction_batch_to_postgres(
         tickers=sorted({record.ticker for record in batch.records}),
         prediction_batch_id=batch_id,
     )
+
+
+def read_prediction_batch_id(database_url: str, run_id: str) -> str | None:
+    """Return the serving batch UUID associated with an idempotent run id."""
+
+    with connect_database(database_url) as connection:
+        row = connection.execute(
+            "SELECT id FROM prediction_batches WHERE run_id = %s",
+            (run_id,),
+        ).fetchone()
+    return str(row[0]) if row else None
 
 
 def connect_database(database_url: str) -> Any:

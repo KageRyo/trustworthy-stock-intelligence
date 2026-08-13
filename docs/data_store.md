@@ -58,8 +58,9 @@ watchlists
 watchlist_tickers
 ingestion_runs
 market_bars
-provider_health
-prediction_batches
+    provider_health
+    prediction_jobs
+    prediction_batches
 warning_records
 ```
 
@@ -68,6 +69,7 @@ Schema files:
 ```text
 infra/postgres/init/001_schema.sql
 infra/postgres/init/004_provider_health.sql
+infra/postgres/init/005_prediction_jobs.sql
 ```
 
 ## Market Data Ingestion
