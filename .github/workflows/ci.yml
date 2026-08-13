@@ -87,3 +87,68 @@ jobs:
 
       - name: Audit frontend dependencies
         run: npm audit --audit-level=moderate
+
+  e2e:
+    name: Watchlist-to-warning E2E
+    runs-on: ubuntu-latest
+    env:
+      TSI_E2E_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/tsi_e2e
+      TSI_E2E_API_BINARY: /tmp/tsi-api-gateway
+      TSI_E2E_ANALYSIS_PATH: /tmp/tsi-analysis.json
+      TSI_E2E_API_PORT: "18081"
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: tsi_e2e
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d tsi_e2e"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install Python E2E dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev,db]"
+
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: "1.25.x"
+          cache-dependency-path: services/api-gateway-go/go.mod
+
+      - name: Build Go API binary
+        working-directory: services/api-gateway-go
+        run: CGO_ENABLED=0 go build -o /tmp/tsi-api-gateway ./cmd/server
+
+      - name: Run deterministic watchlist-to-warning pipeline
+        run: python -m pytest tests/test_e2e_watchlist_warning_pipeline.py -q
+
+      - name: Set up Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22.x"
+          cache: npm
+          cache-dependency-path: frontend/stock-dashboard/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend/stock-dashboard
+        run: npm ci
+
+      - name: Validate Go API payload with frontend runtime schema
+        working-directory: frontend/stock-dashboard
+        run: npm test -- --run src/lib/e2ePayload.test.ts

@@ -252,7 +252,7 @@ def claim_next_prediction_job(
     with connect_database(database_url) as connection:
         with connection.transaction():
             cursor = connection.execute(
-                f"""
+                """
                 WITH candidate AS (
                     SELECT id
                     FROM prediction_jobs
@@ -270,7 +270,14 @@ def claim_next_prediction_job(
                     updated_at = %s
                 FROM candidate
                 WHERE job.id = candidate.id
-                RETURNING {_JOB_COLUMNS}
+                RETURNING
+                    job.id, job.idempotency_key, job.ticker, job.market,
+                    job.feature_interval, job.status, job.attempt_count,
+                    job.max_attempts, job.available_at, job.enqueued_at,
+                    job.started_at, job.completed_at, job.worker_id,
+                    job.locked_at, job.prediction_batch_id, job.result_run_id,
+                    job.failure_code, job.failure_message, job.request_payload,
+                    job.created_at, job.updated_at
                 """,
                 (timestamp, timestamp, normalized_worker, timestamp, timestamp),
             )

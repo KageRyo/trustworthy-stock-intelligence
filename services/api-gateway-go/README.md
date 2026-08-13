@@ -90,6 +90,7 @@ docker run --rm -p 8080:8080 \
 
 ```text
 GET /health
+GET /readyz
 GET /metrics
 GET /openapi.yaml
 GET /swagger/
