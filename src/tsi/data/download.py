@@ -9,7 +9,8 @@ from __future__ import annotations
 import json
 import os
 import re
-from dataclasses import asdict, dataclass
+import time
+from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
 from hashlib import sha256
 from pathlib import Path
@@ -21,6 +22,12 @@ import pandas as pd
 from pydantic import BaseModel, ConfigDict, Field
 import yfinance as yf
 
+from tsi.data.provider_health import (
+    ProviderHealthSnapshot,
+    RetryPolicy,
+    make_provider_health_snapshot,
+    run_with_retry,
+)
 from tsi.data.universe import Universe, UniverseName, load_universe
 
 OHLCV_COLUMNS = ["date", "ticker", "open", "high", "low", "close", "adj_close", "volume"]
@@ -66,6 +73,7 @@ class DownloadFrameResult:
     end: str | None
     interval: str
     failed_batches: list[list[str]]
+    provider_health: list[ProviderHealthSnapshot] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -430,6 +438,9 @@ def download_ticker_list(
         "tickers_sha256": file_sha256(tickers_path),
         "tickers": [asdict(ticker) for ticker in result.tickers],
         "failed_batches": result.failed_batches,
+        "provider_health": [
+            snapshot.model_dump(mode="json") for snapshot in result.provider_health
+        ],
         "research_note": "Yahoo Finance is used for pilot experiments only.",
     }
     metadata_path.write_text(json.dumps(metadata, indent=2), encoding="utf-8")
@@ -589,6 +600,7 @@ def download_ticker_frame(
     interval: str = "1d",
     batch_size: int = 80,
     dataset_name: str = "custom",
+    retry_policy: RetryPolicy | None = None,
 ) -> DownloadFrameResult:
     """Download OHLCV data for explicit tickers and return it in memory."""
 
@@ -607,23 +619,34 @@ def download_ticker_frame(
     resolved_by_ticker = {ticker.ticker: ticker for ticker in resolved}
     failed_batches: list[list[str]] = []
     all_frames: list[pd.DataFrame] = []
+    provider_health: list[ProviderHealthSnapshot] = []
+    policy = retry_policy or RetryPolicy()
 
     for ticker_batch in batched(query_symbols, batch_size):
         downloaded_aliases: set[str] = set()
         if all(resolved_by_query[query_symbol].market == "emerging" for query_symbol in ticker_batch):
             raw = pd.DataFrame()
+            yfinance_outcome = None
+            yfinance_latency_ms = None
         else:
-            raw = yf.download(
-                tickers=ticker_batch,
-                start=start,
-                end=end,
-                interval=interval,
-                group_by="ticker",
-                auto_adjust=False,
-                actions=False,
-                threads=True,
-                progress=False,
+            yfinance_started = time.perf_counter()
+            yfinance_outcome = run_with_retry(
+                lambda: yf.download(
+                    tickers=ticker_batch,
+                    start=start,
+                    end=end,
+                    interval=interval,
+                    group_by="ticker",
+                    auto_adjust=False,
+                    actions=False,
+                    threads=True,
+                    progress=False,
+                ),
+                policy=policy,
+                is_success=lambda frame: isinstance(frame, pd.DataFrame) and not frame.empty,
             )
+            yfinance_latency_ms = (time.perf_counter() - yfinance_started) * 1000
+            raw = yfinance_outcome.value if isinstance(yfinance_outcome.value, pd.DataFrame) else pd.DataFrame()
         normalized = _normalize_download_frame(
             raw,
             ticker_batch,
@@ -636,13 +659,64 @@ def download_ticker_frame(
         for query_symbol in ticker_batch:
             resolved_ticker = resolved_by_query[query_symbol]
             if resolved_ticker.ticker in downloaded_aliases:
+                if yfinance_outcome is not None:
+                    provider_health.append(
+                        make_provider_health_snapshot(
+                            provider="yfinance",
+                            market=resolved_ticker.market,
+                            ticker=resolved_ticker.ticker,
+                            query_symbol=query_symbol,
+                            outcome=yfinance_outcome,
+                            coverage="available",
+                            latency_ms=yfinance_latency_ms,
+                        )
+                    )
                 continue
-            fallback = download_taiwan_daily_fallback(
-                resolved_ticker.ticker,
-                start=start,
-                end=end,
-                market=market,
-                interval=interval,
+            if yfinance_outcome is not None:
+                provider_health.append(
+                    make_provider_health_snapshot(
+                        provider="yfinance",
+                        market=resolved_ticker.market,
+                        ticker=resolved_ticker.ticker,
+                        query_symbol=query_symbol,
+                        outcome=yfinance_outcome,
+                        coverage="unavailable",
+                        latency_ms=yfinance_latency_ms,
+                        error_code="no_coverage",
+                    )
+                )
+            if resolved_ticker.market == "us":
+                failed_batches.append([query_symbol])
+                continue
+            fallback_started = time.perf_counter()
+            fallback_outcome = run_with_retry(
+                lambda: download_taiwan_daily_fallback(
+                    resolved_ticker.ticker,
+                    start=start,
+                    end=end,
+                    market=market,
+                    interval=interval,
+                ),
+                policy=policy,
+                is_success=lambda result: not result.ohlcv.empty,
+            )
+            fallback_latency_ms = (time.perf_counter() - fallback_started) * 1000
+            fallback = fallback_outcome.value
+            if not isinstance(fallback, TaiwanFallbackResult):
+                fallback = empty_taiwan_fallback(resolved_ticker.ticker, market="unknown")
+            fallback_provider = _fallback_provider_name(fallback.market)
+            fallback_market = fallback.market if fallback.market != "unknown" else resolved_ticker.market
+            provider_health.append(
+                make_provider_health_snapshot(
+                    provider=fallback_provider,
+                    market=fallback_market,
+                    ticker=resolved_ticker.ticker,
+                    query_symbol=fallback.query_symbol,
+                    outcome=fallback_outcome,
+                    coverage="available" if not fallback.ohlcv.empty else "unavailable",
+                    latency_ms=fallback_latency_ms,
+                    error_code="no_coverage" if fallback.ohlcv.empty else "",
+                )
             )
             if fallback.ohlcv.empty:
                 failed_batches.append([query_symbol])
@@ -667,7 +741,18 @@ def download_ticker_frame(
         end=end,
         interval=interval,
         failed_batches=failed_batches,
+        provider_health=provider_health,
     )
+
+
+def _fallback_provider_name(market: ResolvedTickerMarket) -> str:
+    """Return the stable provider identifier used by health records."""
+
+    return {
+        "twse": "twse",
+        "tpex": "tpex",
+        "emerging": "tpex_emerging",
+    }.get(market, "taiwan_fallback")
 
 
 def download_taiwan_daily_fallback(

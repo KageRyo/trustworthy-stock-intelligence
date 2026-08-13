@@ -8,6 +8,7 @@ from collections.abc import Sequence
 from datetime import UTC, datetime, timedelta
 
 from tsi.data.download import download_ticker_frame
+from tsi.data.provider_health import RetryPolicy
 from tsi.data.postgres import (
     build_ingestion_summary,
     build_market_bar_rows,
@@ -60,6 +61,24 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         help="Number of provider query symbols per download batch.",
     )
     parser.add_argument(
+        "--retry-max-attempts",
+        type=int,
+        default=3,
+        help="Maximum attempts for one provider request, including the first attempt.",
+    )
+    parser.add_argument(
+        "--retry-initial-backoff-seconds",
+        type=float,
+        default=0.5,
+        help="Initial exponential-backoff delay between provider attempts.",
+    )
+    parser.add_argument(
+        "--retry-max-backoff-seconds",
+        type=float,
+        default=5.0,
+        help="Maximum exponential-backoff delay between provider attempts.",
+    )
+    parser.add_argument(
         "--provider",
         choices=["yfinance"],
         default="yfinance",
@@ -109,6 +128,11 @@ def main() -> None:
         interval=args.interval,
         batch_size=args.batch_size,
         dataset_name=args.universe_name,
+        retry_policy=RetryPolicy(
+            max_attempts=args.retry_max_attempts,
+            initial_backoff_seconds=args.retry_initial_backoff_seconds,
+            max_backoff_seconds=args.retry_max_backoff_seconds,
+        ),
     )
     if args.dry_run:
         rows = build_market_bar_rows(result, provider=args.provider)

@@ -58,14 +58,16 @@ watchlists
 watchlist_tickers
 ingestion_runs
 market_bars
+provider_health
 prediction_batches
 warning_records
 ```
 
-Schema file:
+Schema files:
 
 ```text
 infra/postgres/init/001_schema.sql
+infra/postgres/init/004_provider_health.sql
 ```
 
 ## Market Data Ingestion
@@ -91,9 +93,11 @@ python -m scripts.ingest_market_data \
   --universe-name watchlist
 ```
 
-The CLI downloads provider data, validates it through Pydantic schemas, upserts
-`tickers`, attaches them to `universes`, records an `ingestion_runs` row, and
-upserts `market_bars`. It prints a `market_data_ingestion.v1` summary schema.
+The CLI downloads provider data, validates it through Pydantic schemas, applies
+bounded exponential-backoff retries, upserts `tickers`, attaches them to
+`universes`, records an `ingestion_runs` row, upserts `market_bars`, and persists
+per-provider/ticker observations in `provider_health`. It prints a
+`market_data_ingestion.v1` summary containing the same typed health snapshots.
 
 Use dry-run mode when validating provider coverage without writing to the DB:
 

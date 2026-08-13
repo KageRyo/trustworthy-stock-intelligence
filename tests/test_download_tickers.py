@@ -304,6 +304,12 @@ def test_download_ticker_frame_falls_back_to_twse_daily_for_taiwan_code(monkeypa
     assert result.ohlcv["date"].tolist() == ["2026-06-01"]
     assert result.ohlcv["close"].tolist() == [31.70]
     assert result.ohlcv["volume"].tolist() == [254690698.0]
+    assert any(
+        snapshot.provider == "twse"
+        and snapshot.status == "healthy"
+        and snapshot.coverage == "available"
+        for snapshot in result.provider_health
+    )
 
 
 def test_download_ticker_frame_falls_back_to_tpex_emerging_daily_for_taiwan_code(
@@ -366,3 +372,9 @@ def test_download_ticker_frame_falls_back_to_tpex_emerging_daily_for_taiwan_code
     assert result.ohlcv["low"].tolist() == [24.50]
     assert result.ohlcv["close"].tolist() == [124850 / 5054]
     assert result.ohlcv["volume"].tolist() == [5054.0]
+    assert any(
+        snapshot.provider == "tpex_emerging"
+        and snapshot.status == "healthy"
+        and snapshot.coverage == "available"
+        for snapshot in result.provider_health
+    )

@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/KageRyo/trustworthy-stock-intelligence/services/api-gateway-go/internal/warnings"
 	"github.com/KageRyo/trustworthy-stock-intelligence/services/api-gateway-go/internal/watchlist"
@@ -21,8 +22,13 @@ type WarningStore interface {
 	Status() warnings.StoreStatus
 }
 
+type ProviderHealthStore interface {
+	ListProviderHealth(ctx context.Context) ([]warnings.ProviderHealthRecord, error)
+}
+
 type Handlers struct {
 	store            WarningStore
+	providerHealth   ProviderHealthStore
 	watchlist        WatchlistStore
 	onDemandAnalyzer OnDemandAnalyzer
 }
@@ -70,6 +76,13 @@ type WarningHistoryResponse struct {
 	Records       []warnings.WarningHistoryRecord `json:"records"`
 }
 
+type ProviderHealthResponse struct {
+	SchemaVersion string                          `json:"schema_version"`
+	GeneratedAt   string                          `json:"generated_at"`
+	RecordCount   int                             `json:"record_count"`
+	Records       []warnings.ProviderHealthRecord `json:"records"`
+}
+
 func NewHandlers(store WarningStore, watchlistStores ...WatchlistStore) *Handlers {
 	var storeWatchlist WatchlistStore
 	if len(watchlistStores) > 0 {
@@ -80,6 +93,38 @@ func NewHandlers(store WarningStore, watchlistStores ...WatchlistStore) *Handler
 
 func (h *Handlers) SetOnDemandAnalyzer(analyzer OnDemandAnalyzer) {
 	h.onDemandAnalyzer = analyzer
+}
+
+func (h *Handlers) SetProviderHealthStore(store ProviderHealthStore) {
+	h.providerHealth = store
+}
+
+func (h *Handlers) ProviderHealth(response http.ResponseWriter, request *http.Request) {
+	if h.providerHealth == nil {
+		writeError(
+			response,
+			http.StatusServiceUnavailable,
+			newHTTPError("provider_health_store_unavailable", "provider health store is unavailable"),
+		)
+		return
+	}
+	records, err := h.providerHealth.ListProviderHealth(request.Context())
+	if err != nil {
+		writeError(response, http.StatusServiceUnavailable, newHTTPError(
+			"provider_health_store_unavailable",
+			"provider health store could not be read",
+		))
+		return
+	}
+	if records == nil {
+		records = []warnings.ProviderHealthRecord{}
+	}
+	writeJSON(response, http.StatusOK, ProviderHealthResponse{
+		SchemaVersion: "provider_health.v1",
+		GeneratedAt:   time.Now().UTC().Format(time.RFC3339),
+		RecordCount:   len(records),
+		Records:       records,
+	})
 }
 
 func (h *Handlers) Health(response http.ResponseWriter, _ *http.Request) {

@@ -11,6 +11,7 @@ import pandas as pd
 from pydantic import BaseModel, ConfigDict, Field
 
 from tsi.data.download import DownloadFrameResult, is_taiwan_local_ticker
+from tsi.data.provider_health import ProviderHealthSnapshot
 from tsi.serving.schema import PredictionBatch
 
 MarketBarInterval = Literal["1m", "5m", "1d"]
@@ -72,6 +73,7 @@ class MarketDataIngestionSummary(BaseModel):
     failed_batches: list[list[str]]
     database_write: bool
     ingestion_run_id: str | None = None
+    provider_health: list[ProviderHealthSnapshot] = Field(default_factory=list)
 
 
 class PredictionBatchWriteSummary(BaseModel):
@@ -201,6 +203,7 @@ def build_ingestion_summary(
         failed_batches=result.failed_batches,
         database_write=database_write,
         ingestion_run_id=ingestion_run_id,
+        provider_health=result.provider_health,
     )
 
 
@@ -232,6 +235,7 @@ def write_download_to_postgres(
                 ticker_ids = _upsert_tickers(connection, resolved_tickers)
                 _attach_universe_tickers(connection, universe_id, ticker_ids)
                 _upsert_market_bars(connection, rows, ticker_ids, ingestion_run_id)
+                _upsert_provider_health(connection, result.provider_health)
             _mark_ingestion_success(connection, ingestion_run_id, downloaded_symbols)
             connection.commit()
         except Exception as exc:
@@ -567,6 +571,69 @@ def _upsert_market_bars(
                 row.adj_close,
                 row.volume,
                 ingestion_run_id,
+            ),
+        )
+
+
+def _upsert_provider_health(
+    connection: Any,
+    snapshots: list[ProviderHealthSnapshot],
+) -> None:
+    """Persist provider observations while retaining counters across runs."""
+
+    for snapshot in snapshots:
+        connection.execute(
+            """
+            INSERT INTO provider_health (
+                provider, market, ticker_symbol, query_symbol, status,
+                coverage_status, attempt_count, success_count, failure_count,
+                consecutive_failures, last_success_at, last_failure_at,
+                last_latency_ms, last_error_code, last_error_message, observed_at
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            ON CONFLICT (provider, market, ticker_symbol)
+            DO UPDATE SET
+                query_symbol = EXCLUDED.query_symbol,
+                status = CASE
+                    WHEN provider_health.success_count + EXCLUDED.success_count = 0
+                        THEN 'unavailable'
+                    WHEN EXCLUDED.success_count > 0 THEN 'healthy'
+                    WHEN provider_health.consecutive_failures + EXCLUDED.consecutive_failures >= 3
+                        THEN 'unavailable'
+                    ELSE 'degraded'
+                END,
+                coverage_status = EXCLUDED.coverage_status,
+                attempt_count = provider_health.attempt_count + EXCLUDED.attempt_count,
+                success_count = provider_health.success_count + EXCLUDED.success_count,
+                failure_count = provider_health.failure_count + EXCLUDED.failure_count,
+                consecutive_failures = CASE
+                    WHEN EXCLUDED.success_count > 0 THEN 0
+                    ELSE provider_health.consecutive_failures + EXCLUDED.consecutive_failures
+                END,
+                last_success_at = COALESCE(EXCLUDED.last_success_at, provider_health.last_success_at),
+                last_failure_at = COALESCE(EXCLUDED.last_failure_at, provider_health.last_failure_at),
+                last_latency_ms = EXCLUDED.last_latency_ms,
+                last_error_code = EXCLUDED.last_error_code,
+                last_error_message = EXCLUDED.last_error_message,
+                observed_at = EXCLUDED.observed_at
+            """,
+            (
+                snapshot.provider,
+                snapshot.market,
+                snapshot.ticker,
+                snapshot.query_symbol,
+                snapshot.status,
+                snapshot.coverage,
+                snapshot.attempt_count,
+                snapshot.success_count,
+                snapshot.failure_count,
+                snapshot.consecutive_failures,
+                snapshot.last_success_at,
+                snapshot.last_failure_at,
+                snapshot.last_latency_ms,
+                snapshot.last_error_code,
+                snapshot.last_error_message,
+                snapshot.observed_at,
             ),
         )
 

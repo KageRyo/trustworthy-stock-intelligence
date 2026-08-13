@@ -12,6 +12,7 @@ servers:
     description: Local development API
 tags:
   - name: Health
+  - name: Providers
   - name: Warnings
   - name: Watchlists
   - name: Analysis
@@ -89,6 +90,20 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/StoreStatus"
+  /api/v1/providers/health:
+    get:
+      tags: [Providers]
+      summary: Read persisted provider health and ticker coverage.
+      operationId: getProviderHealth
+      responses:
+        "200":
+          description: Latest provider health observations.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProviderHealthResponse"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
   /api/v1/warnings/latest:
     get:
       tags: [Warnings]
@@ -358,6 +373,91 @@ components:
           minimum: 0
         last_error:
           type: string
+    ProviderHealthResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - schema_version
+        - generated_at
+        - record_count
+        - records
+      properties:
+        schema_version:
+          type: string
+          const: provider_health.v1
+        generated_at:
+          type: string
+          format: date-time
+        record_count:
+          type: integer
+          minimum: 0
+        records:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProviderHealthRecord"
+    ProviderHealthRecord:
+      type: object
+      additionalProperties: false
+      required:
+        - schema_version
+        - provider
+        - market
+        - ticker
+        - query_symbol
+        - status
+        - coverage
+        - attempt_count
+        - success_count
+        - failure_count
+        - consecutive_failures
+        - observed_at
+      properties:
+        schema_version:
+          type: string
+          const: provider_health.v1
+        provider:
+          type: string
+        market:
+          type: string
+          enum: [us, twse, tpex, emerging, taiwan, unknown]
+        ticker:
+          type: string
+        query_symbol:
+          type: string
+        status:
+          type: string
+          enum: [healthy, degraded, unavailable]
+        coverage:
+          type: string
+          enum: [available, partial, unavailable, unknown]
+        attempt_count:
+          type: integer
+          minimum: 0
+        success_count:
+          type: integer
+          minimum: 0
+        failure_count:
+          type: integer
+          minimum: 0
+        consecutive_failures:
+          type: integer
+          minimum: 0
+        last_success_at:
+          type: string
+          format: date-time
+        last_failure_at:
+          type: string
+          format: date-time
+        last_latency_ms:
+          type: number
+          minimum: 0
+        last_error_code:
+          type: string
+        last_error_message:
+          type: string
+        observed_at:
+          type: string
+          format: date-time
     StoreStatus:
       type: object
       additionalProperties: false
