@@ -19,11 +19,11 @@ The system focuses on trustworthy AI behavior: calibration, uncertainty,
 abstention, transparency, auditability, and clear limitations. It is not an
 investment recommendation system or automated trading system.
 
-## Current State: 0.3.2
+## Current State: 0.4.0
 
-Version `0.3.2` is a maintenance and security release following the public
-open-source `0.3.1` release. It remains a reproducible pilot, not externally
-validated research or investment advice.
+Version `0.4.0` is the product-readiness release following the `0.3.2`
+maintenance and security release. It remains a reproducible pilot, not
+externally validated research or investment advice.
 
 Completed:
 
@@ -48,6 +48,11 @@ Completed:
 - per-run TAI audit artifacts that record evidence, limitations, and open risks
 - required Python, Go, frontend, dependency, race-test, and full-history
   Gitleaks CI checks
+- scheduled five-minute watchlist ingestion with provider health and coverage
+- freshness safety policy, PostgreSQL prediction jobs, typed job lifecycle API,
+  and deterministic warning transitions
+- dashboard operational states and richer session-scoped watchlist grouping
+- readiness/metrics/structured observability plus a PostgreSQL E2E pipeline
 - public-source documentation for licensing, security boundaries, citation, and
   contribution workflow
 
@@ -66,35 +71,20 @@ Provider APIs
 The optional JSON export remains useful for notifications, snapshots, and debug
 artifacts, but PostgreSQL is the serving source of truth.
 
-## v0.4.0: Product and Open-Source Readiness
+## v0.4.1+: Product and Open-Source Readiness
 
-The dashboard is the main product surface. The next release prioritizes a
-usable, observable, DB-backed analysis flow over thesis-style novelty:
+The dashboard is the main product surface. Future work prioritizes a usable,
+observable, DB-backed analysis flow over thesis-style novelty:
 
-1. Schedule 5-minute ingestion for session watchlists, with explicit provider
-   health, retry, and coverage state.
-2. Make data freshness actionable in the API and dashboard: show the feature
-   interval, flag stale predictions, and downgrade or block non-actionable
-   outputs.
-3. Move request-time on-demand analysis to queue-backed prediction jobs with
-   progress and failure state, while retaining a usable local lookup bridge.
-4. Build on the completed warning history/timeline with explicit warning-change
-   detection:
-
-```text
-new alert
-new watch
-upgraded
-downgraded
-resolved
-persistent alert
-low-trust warning
-```
-
-5. Add richer session-scoped watchlist grouping, filtering, and cleanup while
-   preserving the current no-auth privacy boundary.
-6. Publish per-market coverage metadata for US, TWSE, TPEx listed, and TPEx
-   emerging symbols.
+1. Obtain a legally usable point-in-time constituent archive and complete the
+   paired survivorship-bias benchmark in Issue #29.
+2. Validate 5-minute data quality and interval-specific model behavior before
+   presenting intraday predictions as more than ingestion coverage.
+3. Harden the local prediction worker into a production job/worker deployment
+   with progress tracking, scheduled recovery, and operational runbooks.
+4. Expand ticker-universe ingestion and coverage reporting without claiming
+   all-market coverage until historical membership and provider completeness
+   are evidenced.
 
 ## Maintenance and Release Hygiene
 
