@@ -99,6 +99,22 @@ type WarningHistoryRecord struct {
 	ReasonCodes               []string `json:"reason_codes"`
 }
 
+// WarningTransitionRecord exposes one persisted primary warning-change event.
+type WarningTransitionRecord struct {
+	SchemaVersion         string `json:"schema_version"`
+	ID                    string `json:"id"`
+	Ticker                string `json:"ticker"`
+	TransitionType        string `json:"transition_type"`
+	PreviousWarningLevel  string `json:"previous_warning_level,omitempty"`
+	CurrentWarningLevel   string `json:"current_warning_level"`
+	PreviousRunID         string `json:"previous_run_id,omitempty"`
+	CurrentRunID          string `json:"current_run_id"`
+	PreviousBatchID       string `json:"previous_batch_id,omitempty"`
+	CurrentBatchID        string `json:"current_batch_id"`
+	DetectedAt            string `json:"detected_at"`
+	DeduplicationKey      string `json:"deduplication_key"`
+}
+
 func HistoryRecordFromPrediction(record PredictionRecord) WarningHistoryRecord {
 	return WarningHistoryRecord{
 		RunID:                     record.RunID,

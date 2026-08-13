@@ -61,7 +61,8 @@ market_bars
     provider_health
     prediction_jobs
     prediction_batches
-warning_records
+    warning_records
+    warning_transitions
 ```
 
 Schema files:
@@ -70,6 +71,7 @@ Schema files:
 infra/postgres/init/001_schema.sql
 infra/postgres/init/004_provider_health.sql
 infra/postgres/init/005_prediction_jobs.sql
+infra/postgres/init/006_warning_transitions.sql
 ```
 
 ## Market Data Ingestion

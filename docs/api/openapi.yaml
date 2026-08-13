@@ -339,6 +339,33 @@ paths:
           $ref: "#/components/responses/NotFound"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
+  /api/v1/analysis/{ticker}/transitions:
+    get:
+      tags: [Analysis]
+      summary: Read warning state transitions for a ticker.
+      description: Repeated identical warning snapshots do not create duplicate transition events.
+      operationId: getTickerWarningTransitions
+      parameters:
+        - $ref: "#/components/parameters/TickerPath"
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 3650
+            default: 90
+      responses:
+        "200":
+          description: Persisted warning transitions, newest first.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WarningTransitionsResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
   /api/v1/models/current:
     get:
       tags: [Models]
@@ -645,6 +672,68 @@ components:
         - database_error
         - worker_error
         - unknown
+    WarningTransitionsResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - schema_version
+        - ticker
+        - record_count
+        - transitions
+      properties:
+        schema_version:
+          type: string
+          const: warning_transition.v1
+        ticker:
+          type: string
+        record_count:
+          type: integer
+          minimum: 0
+        transitions:
+          type: array
+          items:
+            $ref: "#/components/schemas/WarningTransition"
+    WarningTransition:
+      type: object
+      additionalProperties: false
+      required:
+        - schema_version
+        - id
+        - ticker
+        - transition_type
+        - current_warning_level
+        - current_run_id
+        - current_batch_id
+        - detected_at
+        - deduplication_key
+      properties:
+        schema_version:
+          type: string
+          const: warning_transition.v1
+        id:
+          type: string
+        ticker:
+          type: string
+        transition_type:
+          type: string
+          enum: [new_watch, new_alert, upgraded, downgraded, resolved, persistent_alert, low_trust_warning]
+        previous_warning_level:
+          $ref: "#/components/schemas/WarningLevel"
+        current_warning_level:
+          $ref: "#/components/schemas/WarningLevel"
+        previous_run_id:
+          type: string
+        current_run_id:
+          type: string
+        previous_batch_id:
+          type: string
+        current_batch_id:
+          type: string
+        detected_at:
+          type: string
+          format: date-time
+        deduplication_key:
+          type: string
     StoreStatus:
       type: object
       additionalProperties: false

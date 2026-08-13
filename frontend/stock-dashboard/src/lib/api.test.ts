@@ -7,6 +7,7 @@ import {
   fetchStatus,
   fetchTickerAnalysis,
   fetchTickerHistory,
+  fetchTickerTransitions,
   fetchTickers,
   fetchWatchlist,
   removeWatchlistTicker
@@ -232,6 +233,27 @@ function predictionJobPayload(status: "queued" | "completed" = "queued") {
   };
 }
 
+function warningTransitionsPayload() {
+  return {
+    schema_version: "warning_transition.v1",
+    ticker: "NVDA",
+    record_count: 1,
+    transitions: [
+      {
+        schema_version: "warning_transition.v1",
+        id: "transition-1",
+        ticker: "NVDA",
+        transition_type: "new_alert",
+        current_warning_level: "alert",
+        current_run_id: "run-2",
+        current_batch_id: "batch-2",
+        detected_at: "2026-08-13T02:00:00Z",
+        deduplication_key: "NVDA:run-2:new_alert"
+      }
+    ]
+  };
+}
+
 afterEach(() => {
   fetchMock.mockReset();
 });
@@ -306,6 +328,19 @@ describe("typed API client", () => {
     expect(history.ticker).toBe("2330");
     expect(history.records[0].warning_level).toBe("watch");
     expect(fetchMock).toHaveBeenCalledWith("/api/v1/analysis/2330/history?limit=30", {
+      headers: {
+        Accept: "application/json"
+      }
+    });
+  });
+
+  it("parses warning transition timelines with a bounded limit", async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse(warningTransitionsPayload()));
+
+    const transitions = await fetchTickerTransitions("NVDA", 30);
+
+    expect(transitions.transitions[0].transition_type).toBe("new_alert");
+    expect(fetchMock).toHaveBeenCalledWith("/api/v1/analysis/NVDA/transitions?limit=30", {
       headers: {
         Accept: "application/json"
       }

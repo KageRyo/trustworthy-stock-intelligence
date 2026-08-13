@@ -18,6 +18,7 @@ func NewRouter(handlers *Handlers, corsConfigs ...CORSConfig) http.Handler {
 	mux.HandleFunc("POST /api/v1/watchlists/{name}/tickers", handlers.AddWatchlistTicker)
 	mux.HandleFunc("DELETE /api/v1/watchlists/{name}/tickers/{ticker}", handlers.RemoveWatchlistTicker)
 	mux.HandleFunc("GET /api/v1/analysis/{ticker}/history", handlers.TickerWarningHistory)
+	mux.HandleFunc("GET /api/v1/analysis/{ticker}/transitions", handlers.TickerWarningTransitions)
 	mux.HandleFunc("GET /api/v1/analysis/{ticker}", handlers.TickerAnalysis)
 	mux.HandleFunc("GET /api/v1/warnings/latest", handlers.LatestWarnings)
 	mux.HandleFunc("GET /api/v1/warnings/{ticker}", handlers.TickerWarning)

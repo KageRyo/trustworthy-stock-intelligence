@@ -135,6 +135,68 @@ func (s *PostgresStore) History(ticker string, limit int) ([]WarningHistoryRecor
 	return history, nil
 }
 
+// Transitions returns persisted primary warning-change events, newest first.
+func (s *PostgresStore) Transitions(ctx context.Context, ticker string, limit int) ([]WarningTransitionRecord, error) {
+	if limit < 1 {
+		return []WarningTransitionRecord{}, nil
+	}
+	queryCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+	rows, err := s.pool.Query(
+		queryCtx,
+		`
+		SELECT wt.id, t.symbol, wt.transition_type,
+		       wt.previous_warning_level, wt.current_warning_level,
+		       wt.previous_run_id, wt.current_run_id,
+		       wt.previous_batch_id, wt.current_batch_id,
+		       wt.detected_at, wt.deduplication_key
+		FROM warning_transitions wt
+		JOIN tickers t ON t.id = wt.ticker_id
+		WHERE upper(t.symbol) = upper($1)
+		ORDER BY wt.detected_at DESC, wt.created_at DESC
+		LIMIT $2
+		`,
+		ticker,
+		limit,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("load warning transitions for %q: %w", ticker, err)
+	}
+	defer rows.Close()
+
+	transitions := []WarningTransitionRecord{}
+	for rows.Next() {
+		var transition WarningTransitionRecord
+		var previousWarningLevel, previousRunID, previousBatchID *string
+		var detectedAt time.Time
+		if err := rows.Scan(
+			&transition.ID,
+			&transition.Ticker,
+			&transition.TransitionType,
+			&previousWarningLevel,
+			&transition.CurrentWarningLevel,
+			&previousRunID,
+			&transition.CurrentRunID,
+			&previousBatchID,
+			&transition.CurrentBatchID,
+			&detectedAt,
+			&transition.DeduplicationKey,
+		); err != nil {
+			return nil, fmt.Errorf("scan warning transition for %q: %w", ticker, err)
+		}
+		transition.SchemaVersion = "warning_transition.v1"
+		transition.PreviousWarningLevel = valueOrEmpty(previousWarningLevel)
+		transition.PreviousRunID = valueOrEmpty(previousRunID)
+		transition.PreviousBatchID = valueOrEmpty(previousBatchID)
+		transition.DetectedAt = detectedAt.UTC().Format(time.RFC3339)
+		transitions = append(transitions, transition)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate warning transitions for %q: %w", ticker, err)
+	}
+	return transitions, nil
+}
+
 // ListProviderHealth returns the latest persisted provider observation for
 // every provider/market/ticker key.  The query is deliberately read-only so
 // the dashboard can inspect degraded coverage without triggering ingestion.
@@ -405,4 +467,11 @@ func formatOptionalTime(value *time.Time) string {
 		return ""
 	}
 	return formatTime(*value)
+}
+
+func valueOrEmpty(value *string) string {
+	if value == nil {
+		return ""
+	}
+	return *value
 }

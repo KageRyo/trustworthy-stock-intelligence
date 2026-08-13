@@ -34,6 +34,7 @@ func main() {
 	defer predictionJobStore.Close()
 	handlers := apihttp.NewHandlers(store, watchlistStore)
 	handlers.SetProviderHealthStore(store)
+	handlers.SetWarningTransitionStore(store)
 	handlers.SetPredictionJobStore(predictionJobStore)
 	if cfg.OnDemandAnalysisCommand != "" {
 		analyzer, err := apihttp.NewCommandOnDemandAnalyzer(
