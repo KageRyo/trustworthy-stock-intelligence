@@ -9,7 +9,15 @@ updates:
     open-pull-requests-limit: 5
     labels:
       - "dependencies"
-      - "python"
+    # Keep major and security updates in standalone PRs for focused review.
+    groups:
+      python-minor-and-patch:
+        applies-to: "version-updates"
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
 
   - package-ecosystem: "gomod"
     directory: "/services/api-gateway-go"
@@ -19,7 +27,14 @@ updates:
     open-pull-requests-limit: 5
     labels:
       - "dependencies"
-      - "go"
+    groups:
+      go-minor-and-patch:
+        applies-to: "version-updates"
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
 
   - package-ecosystem: "npm"
     directory: "/frontend/stock-dashboard"
@@ -29,7 +44,14 @@ updates:
     open-pull-requests-limit: 5
     labels:
       - "dependencies"
-      - "frontend"
+    groups:
+      frontend-minor-and-patch:
+        applies-to: "version-updates"
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
 
   - package-ecosystem: "github-actions"
     directory: "/"
@@ -39,4 +61,11 @@ updates:
     open-pull-requests-limit: 5
     labels:
       - "dependencies"
-      - "github-actions"
+    groups:
+      github-actions-minor-and-patch:
+        applies-to: "version-updates"
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
