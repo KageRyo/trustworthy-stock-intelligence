@@ -29,8 +29,11 @@ import {
 import {
   APIClientError,
   addWatchlistTicker,
+  createPredictionJob,
   fetchCurrentModel,
   fetchLatestWarnings,
+  fetchPredictionJob,
+  fetchProviderHealth,
   fetchStatus,
   fetchTickerAnalysis,
   fetchTickerHistory,
@@ -53,7 +56,9 @@ import type {
   FeatureAttribution,
   FreshnessAssessment,
   PredictionBatch,
+  PredictionJob,
   PredictionRecord,
+  ProviderHealthResponse,
   ReasonExplanation,
   TickerList,
   TickerAnalysis,
@@ -62,8 +67,20 @@ import type {
   WatchlistTicker,
   WarningLevel
 } from "./lib/schemas";
+import {
+  analysisDataState,
+  analysisTrustState,
+  coverageStateForTicker,
+  isPendingPredictionJob,
+  providerStateForTicker,
+  recordsForTicker
+} from "./lib/dashboardState";
 
 type LoadState = "idle" | "loading" | "ready" | "error";
+type LoadAnalysisOptions = {
+  allowAsyncFallback?: boolean;
+  clearJob?: boolean;
+};
 
 const levelStyles: Record<WarningLevel, string> = {
   alert: "border-red-200 bg-red-50 text-red-800",
@@ -216,7 +233,9 @@ export default function App() {
   const [latestWarnings, setLatestWarnings] = useState<PredictionBatch | null>(null);
   const [tickerList, setTickerList] = useState<TickerList | null>(null);
   const [watchlist, setWatchlist] = useState<Watchlist | null>(null);
+  const [providerHealth, setProviderHealth] = useState<ProviderHealthResponse | null>(null);
   const [analysis, setAnalysis] = useState<TickerAnalysis | null>(null);
+  const [predictionJob, setPredictionJob] = useState<PredictionJob | null>(null);
   const [history, setHistory] = useState<WarningHistory | null>(null);
   const [tickerInput, setTickerInput] = useState("");
   const [selectedTicker, setSelectedTicker] = useState("");
@@ -228,6 +247,8 @@ export default function App() {
   const [historyState, setHistoryState] = useState<LoadState>("idle");
   const [historyError, setHistoryError] = useState("");
   const [watchlistError, setWatchlistError] = useState("");
+  const [providerHealthError, setProviderHealthError] = useState("");
+  const [predictionJobError, setPredictionJobError] = useState("");
 
   const copy = translations[locale];
   const batchSummary = useMemo(() => summarizeBatch(latestWarnings), [latestWarnings]);
@@ -255,6 +276,13 @@ export default function App() {
       setTickerList(nextTickers);
       setWatchlist(nextWatchlist);
       setWatchlistError("");
+      try {
+        setProviderHealth(await fetchProviderHealth());
+        setProviderHealthError("");
+      } catch (providerError) {
+        setProviderHealth(null);
+        setProviderHealthError(errorMessage(providerError, copy));
+      }
       setBatchState("ready");
     } catch (error) {
       setBatchError(errorMessage(error, copy));
@@ -277,10 +305,16 @@ export default function App() {
     [copy, watchlistName]
   );
 
-  const loadAnalysis = useCallback(async (ticker: string) => {
+  const loadAnalysis = useCallback(async (ticker: string, options: LoadAnalysisOptions = {}) => {
     const normalized = normalizeTicker(ticker);
     if (!normalized) {
       return;
+    }
+    const allowAsyncFallback = options.allowAsyncFallback ?? true;
+    const clearJob = options.clearJob ?? true;
+    if (clearJob) {
+      setPredictionJob(null);
+      setPredictionJobError("");
     }
     setAnalysisState("loading");
     setAnalysisError("");
@@ -314,8 +348,29 @@ export default function App() {
       setAnalysis(null);
       setHistory(null);
       setHistoryState("idle");
-      if (error instanceof APIClientError && error.code === "ticker_not_found") {
-        setAnalysisError(copy.errors.noMarketData(normalized));
+      const canQueueAsync =
+        error instanceof APIClientError &&
+        (error.code === "ticker_not_found" || error.code === "on_demand_analysis_failed");
+      if (canQueueAsync) {
+        if (allowAsyncFallback) {
+          try {
+            const queuedJob = await createPredictionJob(normalized, {
+              idempotencyKey: `dashboard-${normalized}-${Date.now()}`
+            });
+            setPredictionJob(queuedJob);
+            setAnalysisNotice(copy.notices.predictionQueued(normalized));
+            setAnalysisError("");
+            setAnalysisState("loading");
+            return;
+          } catch (jobError) {
+            setPredictionJobError(errorMessage(jobError, copy));
+          }
+        }
+        setAnalysisError(
+          error instanceof APIClientError && error.code === "ticker_not_found"
+            ? copy.errors.noMarketData(normalized)
+            : errorMessage(error, copy)
+        );
         setAnalysisState("error");
         return;
       }
@@ -333,6 +388,36 @@ export default function App() {
       void loadAnalysis(selectedTicker);
     }
   }, [loadAnalysis, selectedTicker]);
+
+  useEffect(() => {
+    if (!predictionJob || predictionJob.ticker !== selectedTicker || !isPendingPredictionJob(predictionJob)) {
+      return undefined;
+    }
+    let cancelled = false;
+    const poll = async () => {
+      try {
+        const nextJob = await fetchPredictionJob(predictionJob.id);
+        if (cancelled) {
+          return;
+        }
+        setPredictionJob(nextJob);
+        setPredictionJobError("");
+        if (nextJob.status === "completed") {
+          await loadAnalysis(nextJob.ticker, { allowAsyncFallback: false, clearJob: false });
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setPredictionJobError(errorMessage(error, copy));
+        }
+      }
+    };
+    void poll();
+    const timer = window.setInterval(() => void poll(), 2000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, [copy, loadAnalysis, predictionJob?.id, predictionJob?.status, predictionJob?.ticker, selectedTicker]);
 
   function submitTicker(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -421,7 +506,9 @@ export default function App() {
 
         {batchError ? <ErrorBanner message={batchError} /> : null}
         {watchlistError ? <ErrorBanner message={watchlistError} /> : null}
+        {providerHealthError ? <NoticeBanner message={copy.errors.providerHealthUnavailable} /> : null}
         {status?.last_error ? <ErrorBanner message={status.last_error} /> : null}
+        {predictionJobError ? <ErrorBanner message={copy.errors.predictionJobUnavailable} /> : null}
 
         <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
           <MetricCard
@@ -468,6 +555,17 @@ export default function App() {
             tone="data"
           />
         </section>
+
+        <OperationalStatusPanel
+          analysis={analysis}
+          analysisState={analysisState}
+          providerHealth={providerHealth}
+          providerHealthError={providerHealthError}
+          predictionJob={predictionJob}
+          predictionJobError={predictionJobError}
+          selectedTicker={selectedTicker}
+          copy={copy}
+        />
 
         <section className="grid gap-5 xl:grid-cols-[minmax(0,1.1fr)_minmax(420px,0.9fr)]">
           <AnalysisPanel
@@ -552,6 +650,135 @@ function MetricCard({
         <span className="truncate text-2xl font-semibold tracking-normal">{value}</span>
         {detail ? <span className="pb-1 text-sm font-medium text-slate-500">{detail}</span> : null}
       </div>
+    </div>
+  );
+}
+
+function operationalTone(value: string): string {
+  if (["fresh", "trusted", "healthy", "available", "completed"].includes(value)) {
+    return "border-emerald-200 bg-emerald-50 text-emerald-900";
+  }
+  if (["stale", "limited", "degraded", "partial", "queued", "running"].includes(value)) {
+    return "border-amber-200 bg-amber-50 text-amber-900";
+  }
+  if (["unusable", "abstain", "unavailable", "failed", "cancelled"].includes(value)) {
+    return "border-red-200 bg-red-50 text-red-900";
+  }
+  return "border-slate-200 bg-slate-50 text-slate-700";
+}
+
+function OperationalStatusPanel({
+  analysis,
+  analysisState,
+  providerHealth,
+  providerHealthError,
+  predictionJob,
+  predictionJobError,
+  selectedTicker,
+  copy
+}: {
+  analysis: TickerAnalysis | null;
+  analysisState: LoadState;
+  providerHealth: ProviderHealthResponse | null;
+  providerHealthError: string;
+  predictionJob: PredictionJob | null;
+  predictionJobError: string;
+  selectedTicker: string;
+  copy: DashboardCopy;
+}) {
+  const ticker = selectedTicker || analysis?.ticker;
+  const providerRecords = recordsForTicker(providerHealth?.records ?? [], ticker);
+  const freshnessState = analysisDataState(analysis);
+  const trustState = analysisTrustState(analysis);
+  const providerState = providerStateForTicker(providerHealth?.records ?? [], ticker);
+  const coverageState = coverageStateForTicker(providerHealth?.records ?? [], ticker);
+  const jobState = predictionJob?.status ?? (analysisState === "loading" ? "running" : analysisState === "error" ? "failed" : "unknown");
+  const providerDetail = providerHealthError
+    ? copy.states.providerHealthUnavailable
+    : providerRecords.length === 0
+      ? copy.states.noProviderHealth
+      : providerRecords
+          .map((record) => `${record.provider}: ${record.last_error_code || copy.operational[record.status]}`)
+          .join(" · ");
+  const jobDetail = predictionJob?.failure_message || predictionJobError || (ticker ? ticker : copy.common.na);
+
+  return (
+    <section className="rounded-lg border border-line bg-white p-5 shadow-panel" aria-live="polite">
+      <div className="mb-4 flex flex-col gap-2 border-b border-line pb-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 className="text-lg font-semibold tracking-normal">{copy.panels.operationalStatus}</h2>
+          <p className="mt-1 text-sm text-slate-500">
+            {ticker ? `${copy.labels.ticker}: ${ticker}` : copy.panels.noTickerSelected}
+          </p>
+        </div>
+        <Activity className="text-data" size={22} aria-hidden="true" />
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <OperationalCard
+          label={copy.labels.analysisStatus}
+          value={
+            analysisState === "loading"
+              ? copy.states.loadingAnalysis
+              : analysisState === "error"
+                ? copy.states.unavailable
+                : analysis
+                  ? copy.operational.completed
+                  : copy.common.noAnalysis
+          }
+          detail={analysis?.generated_at || copy.common.na}
+          tone={analysisState === "error" ? "unavailable" : analysisState === "loading" ? "running" : analysis ? "completed" : "unknown"}
+        />
+        <OperationalCard
+          label={copy.labels.freshness}
+          value={copy.operational[freshnessState]}
+          detail={analysis?.data_freshness.freshness.message || copy.common.na}
+          tone={freshnessState}
+        />
+        <OperationalCard
+          label={copy.labels.trustStatus}
+          value={copy.operational[trustState]}
+          detail={analysis?.trust.summary || copy.common.na}
+          tone={trustState}
+        />
+        <OperationalCard
+          label={copy.labels.providerStatus}
+          value={copy.operational[providerState]}
+          detail={providerDetail}
+          tone={providerState}
+        />
+        <OperationalCard
+          label={copy.labels.coverageStatus}
+          value={copy.operational[coverageState]}
+          detail={providerRecords.map((record) => record.query_symbol).join(" · ") || copy.common.na}
+          tone={coverageState}
+        />
+        <OperationalCard
+          label={copy.labels.jobStatus}
+          value={predictionJob ? copy.operational[jobState] : analysisState === "loading" ? copy.states.loadingPrediction : copy.operational.unknown}
+          detail={jobDetail}
+          tone={jobState}
+        />
+      </div>
+    </section>
+  );
+}
+
+function OperationalCard({
+  label,
+  value,
+  detail,
+  tone
+}: {
+  label: string;
+  value: string;
+  detail: string;
+  tone: string;
+}) {
+  return (
+    <div className={`min-h-[108px] rounded-md border p-3 ${operationalTone(tone)}`}>
+      <p className="text-xs font-semibold uppercase tracking-normal opacity-75">{label}</p>
+      <p className="mt-2 text-base font-semibold">{value}</p>
+      <p className="mt-1 line-clamp-2 text-xs leading-5 opacity-80">{detail}</p>
     </div>
   );
 }

@@ -299,6 +299,40 @@ export const currentModelSchema = z
   })
   .strict();
 
+export const providerHealthStatusSchema = z.enum(["healthy", "degraded", "unavailable"]);
+export const providerCoverageStatusSchema = z.enum(["available", "partial", "unavailable", "unknown"]);
+
+export const providerHealthRecordSchema = z
+  .object({
+    schema_version: z.literal("provider_health.v1"),
+    provider: z.string(),
+    market: z.string(),
+    ticker: z.string(),
+    query_symbol: z.string(),
+    status: providerHealthStatusSchema,
+    coverage: providerCoverageStatusSchema,
+    attempt_count: z.number().int().nonnegative(),
+    success_count: z.number().int().nonnegative(),
+    failure_count: z.number().int().nonnegative(),
+    consecutive_failures: z.number().int().nonnegative(),
+    last_success_at: z.string().optional(),
+    last_failure_at: z.string().optional(),
+    last_latency_ms: z.number().nonnegative().optional(),
+    last_error_code: z.string().optional(),
+    last_error_message: z.string().optional(),
+    observed_at: z.string()
+  })
+  .strict();
+
+export const providerHealthResponseSchema = z
+  .object({
+    schema_version: z.literal("provider_health.v1"),
+    generated_at: z.string(),
+    record_count: z.number().int().nonnegative(),
+    records: z.array(providerHealthRecordSchema)
+  })
+  .strict();
+
 export const predictionJobStatusSchema = z.enum([
   "queued",
   "running",
@@ -382,6 +416,8 @@ export type Watchlist = z.infer<typeof watchlistSchema>;
 export type WatchlistTicker = z.infer<typeof watchlistTickerSchema>;
 export type APIStatus = z.infer<typeof statusSchema>;
 export type CurrentModel = z.infer<typeof currentModelSchema>;
+export type ProviderHealthRecord = z.infer<typeof providerHealthRecordSchema>;
+export type ProviderHealthResponse = z.infer<typeof providerHealthResponseSchema>;
 export type PredictionJob = z.infer<typeof predictionJobSchema>;
 export type PredictionJobResponse = z.infer<typeof predictionJobResponseSchema>;
 export type APIError = z.infer<typeof apiErrorSchema>;
