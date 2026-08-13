@@ -93,8 +93,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       TSI_E2E_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/tsi_e2e
-      TSI_E2E_API_BINARY: ${{ runner.temp }}/tsi-api-gateway
-      TSI_E2E_ANALYSIS_PATH: ${{ runner.temp }}/tsi-analysis.json
+      TSI_E2E_API_BINARY: /tmp/tsi-api-gateway
+      TSI_E2E_ANALYSIS_PATH: /tmp/tsi-analysis.json
       TSI_E2E_API_PORT: "18081"
     services:
       postgres:
@@ -133,7 +133,7 @@ jobs:
 
       - name: Build Go API binary
         working-directory: services/api-gateway-go
-        run: CGO_ENABLED=0 go build -o "$RUNNER_TEMP/tsi-api-gateway" ./cmd/server
+        run: CGO_ENABLED=0 go build -o /tmp/tsi-api-gateway ./cmd/server
 
       - name: Run deterministic watchlist-to-warning pipeline
         run: python -m pytest tests/test_e2e_watchlist_warning_pipeline.py -q
