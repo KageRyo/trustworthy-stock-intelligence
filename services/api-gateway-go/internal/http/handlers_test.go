@@ -305,8 +305,25 @@ func TestHealthHandler(t *testing.T) {
 	}
 }
 
+func TestReadinessHandlerReportsFileStoreReadiness(t *testing.T) {
+	response := getJSON(t, testRouter(t), "/readyz")
+
+	if response.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200", response.Code)
+	}
+	var payload ReadinessResponse
+	if err := json.NewDecoder(response.Body).Decode(&payload); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if payload.SchemaVersion != "readiness.v1" || payload.Status != "ready" || !payload.ProcessUp || !payload.DatabaseReady {
+		t.Fatalf("unexpected readiness payload: %+v", payload)
+	}
+}
+
 func TestMetricsHandler(t *testing.T) {
-	response := getJSON(t, testRouter(t), "/metrics")
+	router := testRouter(t)
+	_ = getJSON(t, router, "/health")
+	response := getJSON(t, router, "/metrics")
 
 	if response.Code != http.StatusOK {
 		t.Fatalf("status = %d, want 200", response.Code)
@@ -317,6 +334,12 @@ func TestMetricsHandler(t *testing.T) {
 	}
 	if !strings.Contains(body, `tsi_api_batch_info{schema_version="v1",run_id="fixture_run",data_as_of="2026-06-08"} 1`) {
 		t.Fatalf("metrics missing batch info: %s", body)
+	}
+	if !strings.Contains(body, "tsi_api_stale_predictions 1") {
+		t.Fatalf("metrics missing stale prediction gauge: %s", body)
+	}
+	if !strings.Contains(body, `tsi_api_requests_total{method="GET",path="/health",status="OK"}`) {
+		t.Fatalf("metrics missing request counter: %s", body)
 	}
 }
 

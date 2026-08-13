@@ -67,6 +67,24 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthResponse"
+  /readyz:
+    get:
+      tags: [Health]
+      summary: Read dependency readiness.
+      operationId: getReadiness
+      responses:
+        "200":
+          description: PostgreSQL and warning store are ready.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadinessResponse"
+        "503":
+          description: Process is running but a required dependency is not ready.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadinessResponse"
   /metrics:
     get:
       tags: [Health]
@@ -452,6 +470,32 @@ components:
           minimum: 0
         last_error:
           type: string
+    ReadinessResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - schema_version
+        - status
+        - process_up
+        - database_ready
+        - warnings_loaded
+        - checked_at
+      properties:
+        schema_version:
+          type: string
+          const: readiness.v1
+        status:
+          type: string
+          enum: [ready, not_ready]
+        process_up:
+          type: boolean
+        database_ready:
+          type: boolean
+        warnings_loaded:
+          type: boolean
+        checked_at:
+          type: string
+          format: date-time
     ProviderHealthResponse:
       type: object
       additionalProperties: false

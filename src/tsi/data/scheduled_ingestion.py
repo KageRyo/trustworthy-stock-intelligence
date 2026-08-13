@@ -23,6 +23,7 @@ from tsi.data.postgres import (
     write_provider_health_to_postgres,
 )
 from tsi.data.provider_health import ProviderHealthSnapshot, RetryPolicy
+from tsi.observability import log_event
 
 ScheduledStatus = Literal["success", "partial", "failed", "disabled", "no_tickers"]
 TickerIngestionStatus = Literal["success", "failed", "skipped"]
@@ -128,6 +129,14 @@ def run_scheduled_ingestion_once(
     """
 
     started = _timestamp(started_at)
+    log_event(
+        "ingestion_started",
+        service="scheduled_ingestion",
+        watchlist_name=config.watchlist_name,
+        provider=config.provider,
+        interval=config.interval,
+        enabled=config.enabled,
+    )
     if not config.enabled:
         return ScheduledIngestionSummary(
             status="disabled",
@@ -268,7 +277,7 @@ def run_scheduled_ingestion_once(
         status = "success"
     else:
         status = "failed"
-    return ScheduledIngestionSummary(
+    summary = ScheduledIngestionSummary(
         status=status,
         enabled=True,
         watchlist_name=config.watchlist_name,
@@ -285,6 +294,20 @@ def run_scheduled_ingestion_once(
         provider_health_count=provider_health_count,
         outcomes=outcomes,
     )
+    log_event(
+        "ingestion_completed",
+        service="scheduled_ingestion",
+        watchlist_name=config.watchlist_name,
+        provider=config.provider,
+        interval=config.interval,
+        status=summary.status,
+        requested_count=len(summary.requested_tickers),
+        succeeded_count=len(summary.succeeded_tickers),
+        failed_count=len(summary.failed_tickers),
+        skipped_count=len(summary.skipped_tickers),
+        row_count=summary.row_count,
+    )
+    return summary
 
 
 def run_scheduler(

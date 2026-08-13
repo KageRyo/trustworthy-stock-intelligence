@@ -66,3 +66,11 @@ type Store interface {
 	Enqueue(ctx context.Context, request CreateRequest) (PredictionJob, error)
 	Get(ctx context.Context, id string) (PredictionJob, bool, error)
 }
+
+type QueueMetrics struct {
+	Queued    int
+	Running   int
+	Completed int
+	Failed    int
+	Cancelled int
+}

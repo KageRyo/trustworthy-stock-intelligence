@@ -22,6 +22,7 @@ entry point for finding the right document.
 | `warning_transitions.md` | Deterministic warning-change semantics, deduplication, and serving endpoint. |
 | `dashboard_operations.md` | Freshness, trust, provider coverage, and prediction-job states shown by the dashboard. |
 | `watchlist_grouping.md` | Session-scoped watchlist groups, filters, sorting, and confirmed bulk cleanup. |
+| `observability.md` | Health/readiness probes, metrics, structured logs, and local inspection commands. |
 | `provider_coverage.md` | Supported markets, provider fallback paths, intervals, and coverage limits. |
 | `environment.md` | Python, Go, Node, CUDA, and local environment versions. |
 | `development.md` | Development rules, tests, schema-first policy, and commit/release workflow. |

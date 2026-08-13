@@ -51,6 +51,26 @@ func (s *PostgresStore) Close() {
 	s.pool.Close()
 }
 
+func (s *PostgresStore) Ready(ctx context.Context) error {
+	return s.pool.Ping(ctx)
+}
+
+func (s *PostgresStore) IngestionMetrics(ctx context.Context) (IngestionMetrics, error) {
+	var metrics IngestionMetrics
+	err := s.pool.QueryRow(
+		ctx,
+		`SELECT
+			COUNT(*) FILTER (WHERE status = 'success'),
+			COUNT(*) FILTER (WHERE status = 'failed'),
+			COUNT(*) FILTER (WHERE status = 'running')
+		 FROM ingestion_runs`,
+	).Scan(&metrics.SuccessCount, &metrics.FailureCount, &metrics.RunningCount)
+	if err != nil {
+		return IngestionMetrics{}, fmt.Errorf("load ingestion metrics: %w", err)
+	}
+	return metrics, nil
+}
+
 func (s *PostgresStore) Batch() PredictionBatch {
 	s.mu.RLock()
 	defer s.mu.RUnlock()

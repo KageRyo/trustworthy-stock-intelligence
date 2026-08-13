@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"log/slog"
 	"net/http"
 	"sort"
 	"strconv"
@@ -11,6 +13,7 @@ import (
 	"time"
 
 	"github.com/KageRyo/trustworthy-stock-intelligence/services/api-gateway-go/internal/jobs"
+	"github.com/KageRyo/trustworthy-stock-intelligence/services/api-gateway-go/internal/observability"
 	"github.com/KageRyo/trustworthy-stock-intelligence/services/api-gateway-go/internal/warnings"
 	"github.com/KageRyo/trustworthy-stock-intelligence/services/api-gateway-go/internal/watchlist"
 )
@@ -36,6 +39,18 @@ type PredictionJobStore interface {
 	Get(ctx context.Context, id string) (jobs.PredictionJob, bool, error)
 }
 
+type ReadinessStore interface {
+	Ready(ctx context.Context) error
+}
+
+type IngestionMetricsStore interface {
+	IngestionMetrics(ctx context.Context) (warnings.IngestionMetrics, error)
+}
+
+type PredictionJobMetricsStore interface {
+	QueueMetrics(ctx context.Context) (jobs.QueueMetrics, error)
+}
+
 type Handlers struct {
 	store            WarningStore
 	providerHealth   ProviderHealthStore
@@ -43,6 +58,8 @@ type Handlers struct {
 	watchlist        WatchlistStore
 	predictionJobs   PredictionJobStore
 	onDemandAnalyzer OnDemandAnalyzer
+	metrics          *observability.Registry
+	logger           *slog.Logger
 }
 
 type WatchlistStore interface {
@@ -100,7 +117,27 @@ func NewHandlers(store WarningStore, watchlistStores ...WatchlistStore) *Handler
 	if len(watchlistStores) > 0 {
 		storeWatchlist = watchlistStores[0]
 	}
-	return &Handlers{store: store, watchlist: storeWatchlist}
+	return &Handlers{
+		store: store,
+		watchlist: storeWatchlist,
+		metrics: observability.NewRegistry(),
+		logger: slog.New(slog.NewJSONHandler(io.Discard, nil)),
+	}
+}
+
+func (h *Handlers) MetricsRegistry() *observability.Registry {
+	if h.metrics == nil {
+		h.metrics = observability.NewRegistry()
+	}
+	return h.metrics
+}
+
+func (h *Handlers) SetLogger(logger *slog.Logger) {
+	if logger == nil {
+		h.logger = slog.New(slog.NewJSONHandler(io.Discard, nil))
+		return
+	}
+	h.logger = logger
 }
 
 func (h *Handlers) SetOnDemandAnalyzer(analyzer OnDemandAnalyzer) {
@@ -165,16 +202,31 @@ func (h *Handlers) Health(response http.ResponseWriter, _ *http.Request) {
 func (h *Handlers) Metrics(response http.ResponseWriter, _ *http.Request) {
 	h.refreshStore()
 	status := h.store.Status()
-	warningsLoaded := 0
-	if status.WarningsLoaded {
-		warningsLoaded = 1
+	metrics := h.MetricsRegistry()
+	metrics.SetGauge("tsi_api_warnings_loaded", nil, boolGauge(status.WarningsLoaded))
+	metrics.SetGauge("tsi_api_warning_records", nil, float64(status.RecordCount))
+	metrics.SetGauge("tsi_api_last_reload_error", nil, boolGauge(status.LastError != ""))
+	metrics.SetGauge("tsi_api_stale_predictions", nil, stalePredictionGauge(status.DataAsOf))
+	if ingestionStore, ok := h.store.(IngestionMetricsStore); ok {
+		if ingestion, err := ingestionStore.IngestionMetrics(context.Background()); err == nil {
+			metrics.SetGauge("tsi_ingestion_runs", observability.Labels{"status": "success"}, float64(ingestion.SuccessCount))
+			metrics.SetGauge("tsi_ingestion_runs", observability.Labels{"status": "failed"}, float64(ingestion.FailureCount))
+			metrics.SetGauge("tsi_ingestion_runs", observability.Labels{"status": "running"}, float64(ingestion.RunningCount))
+		}
 	}
-	lastReloadError := 0
-	if status.LastError != "" {
-		lastReloadError = 1
+	if jobStore, ok := h.predictionJobs.(PredictionJobMetricsStore); ok {
+		if queue, err := jobStore.QueueMetrics(context.Background()); err == nil {
+			for label, value := range map[string]int{
+				"queued": queue.Queued, "running": queue.Running, "completed": queue.Completed,
+				"failed": queue.Failed, "cancelled": queue.Cancelled,
+			} {
+				metrics.SetGauge("tsi_prediction_jobs", observability.Labels{"status": label}, float64(value))
+			}
+		}
 	}
 	response.Header().Set("Content-Type", "text/plain; version=0.0.4")
 	response.WriteHeader(http.StatusOK)
+	_, _ = fmt.Fprint(response, metrics.Render())
 	_, _ = fmt.Fprintf(
 		response,
 		"# HELP tsi_api_warnings_loaded Whether a warning batch is loaded.\n"+
@@ -189,13 +241,74 @@ func (h *Handlers) Metrics(response http.ResponseWriter, _ *http.Request) {
 			"# HELP tsi_api_batch_info Metadata for the loaded warning batch.\n"+
 			"# TYPE tsi_api_batch_info gauge\n"+
 			"tsi_api_batch_info{schema_version=%q,run_id=%q,data_as_of=%q} 1\n",
-		warningsLoaded,
+		int(boolGauge(status.WarningsLoaded)),
 		status.RecordCount,
-		lastReloadError,
+		int(boolGauge(status.LastError != "")),
 		status.SchemaVersion,
 		status.RunID,
 		status.DataAsOf,
 	)
+}
+
+func boolGauge(value bool) float64 {
+	if value {
+		return 1
+	}
+	return 0
+}
+
+func stalePredictionGauge(dataAsOf string) float64 {
+	if strings.TrimSpace(dataAsOf) == "" {
+		return 1
+	}
+	parsed, err := time.Parse(time.RFC3339, dataAsOf)
+	if err != nil {
+		parsed, err = time.Parse("2006-01-02", dataAsOf)
+	}
+	if err != nil || time.Since(parsed) > 48*time.Hour {
+		return 1
+	}
+	return 0
+}
+
+type ReadinessResponse struct {
+	SchemaVersion  string `json:"schema_version"`
+	Status         string `json:"status"`
+	ProcessUp      bool   `json:"process_up"`
+	DatabaseReady  bool   `json:"database_ready"`
+	WarningsLoaded bool   `json:"warnings_loaded"`
+	CheckedAt      string `json:"checked_at"`
+}
+
+func (h *Handlers) Readiness(response http.ResponseWriter, request *http.Request) {
+	status := h.store.Status()
+	ready := status.WarningsLoaded && status.LastError == ""
+	databaseReady := false
+	if store, ok := h.store.(ReadinessStore); ok {
+		ctx, cancel := context.WithTimeout(request.Context(), 2*time.Second)
+		err := store.Ready(ctx)
+		cancel()
+		databaseReady = err == nil
+		ready = ready && databaseReady
+	} else {
+		// File stores remain useful for local handler tests. Production PostgreSQL
+		// stores implement ReadinessStore and therefore check the dependency.
+		databaseReady = status.WarningsLoaded
+	}
+	payload := ReadinessResponse{
+		SchemaVersion:  "readiness.v1",
+		Status:         "not_ready",
+		ProcessUp:      true,
+		DatabaseReady:  databaseReady,
+		WarningsLoaded: status.WarningsLoaded,
+		CheckedAt:      time.Now().UTC().Format(time.RFC3339),
+	}
+	if ready {
+		payload.Status = "ready"
+		writeJSON(response, http.StatusOK, payload)
+		return
+	}
+	writeJSON(response, http.StatusServiceUnavailable, payload)
 }
 
 func (h *Handlers) LatestWarnings(response http.ResponseWriter, request *http.Request) {

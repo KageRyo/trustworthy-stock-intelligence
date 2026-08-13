@@ -2,8 +2,9 @@ package main
 
 import (
 	"context"
-	"log"
+	"log/slog"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/KageRyo/trustworthy-stock-intelligence/services/api-gateway-go/internal/config"
@@ -14,25 +15,30 @@ import (
 )
 
 func main() {
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	cfg := config.Load()
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	store, err := warnings.NewPostgresStore(ctx, cfg.DatabaseURL)
 	if err != nil {
-		log.Fatalf("load postgres warnings store: %v", err)
+		logger.Error("service_start_failed", "schema_version", "tsi_log.v1", "service", "api_gateway", "stage", "warnings_store", "error", err)
+		os.Exit(1)
 	}
 	defer store.Close()
 	watchlistStore, err := watchlist.NewPostgresStore(ctx, cfg.DatabaseURL)
 	if err != nil {
-		log.Fatalf("load postgres watchlist store: %v", err)
+		logger.Error("service_start_failed", "schema_version", "tsi_log.v1", "service", "api_gateway", "stage", "watchlist_store", "error", err)
+		os.Exit(1)
 	}
 	defer watchlistStore.Close()
 	predictionJobStore, err := jobs.NewPostgresStore(ctx, cfg.DatabaseURL)
 	if err != nil {
-		log.Fatalf("load postgres prediction job store: %v", err)
+		logger.Error("service_start_failed", "schema_version", "tsi_log.v1", "service", "api_gateway", "stage", "prediction_job_store", "error", err)
+		os.Exit(1)
 	}
 	defer predictionJobStore.Close()
 	handlers := apihttp.NewHandlers(store, watchlistStore)
+	handlers.SetLogger(logger)
 	handlers.SetProviderHealthStore(store)
 	handlers.SetWarningTransitionStore(store)
 	handlers.SetPredictionJobStore(predictionJobStore)
@@ -44,17 +50,19 @@ func main() {
 			cfg.OnDemandAnalysisTimeoutDuration,
 		)
 		if err != nil {
-			log.Fatalf("configure on-demand analysis: %v", err)
+			logger.Error("service_start_failed", "schema_version", "tsi_log.v1", "service", "api_gateway", "stage", "on_demand_analyzer", "error", err)
+			os.Exit(1)
 		}
 		handlers.SetOnDemandAnalyzer(analyzer)
-		log.Printf("on-demand ticker analysis enabled with command %q", cfg.OnDemandAnalysisCommand)
+		logger.Info("on_demand_analysis_enabled", "schema_version", "tsi_log.v1", "service", "api_gateway")
 	}
 	router := apihttp.NewRouter(
 		handlers,
 		apihttp.CORSConfig{AllowedOrigins: cfg.CORSAllowedOrigins},
 	)
-	log.Printf("starting TSI API gateway on %s using PostgreSQL", cfg.Address)
+	logger.Info("service_started", "schema_version", "tsi_log.v1", "service", "api_gateway", "address", cfg.Address, "dependency", "postgresql")
 	if err := http.ListenAndServe(cfg.Address, router); err != nil {
-		log.Fatalf("server stopped: %v", err)
+		logger.Error("service_stopped", "schema_version", "tsi_log.v1", "service", "api_gateway", "error", err)
+		os.Exit(1)
 	}
 }

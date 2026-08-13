@@ -5,6 +5,7 @@ import "net/http"
 func NewRouter(handlers *Handlers, corsConfigs ...CORSConfig) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /health", handlers.Health)
+	mux.HandleFunc("GET /readyz", handlers.Readiness)
 	mux.HandleFunc("GET /metrics", handlers.Metrics)
 	mux.HandleFunc("GET /openapi.yaml", handlers.OpenAPI)
 	mux.HandleFunc("GET /swagger", handlers.Swagger)
@@ -27,5 +28,5 @@ func NewRouter(handlers *Handlers, corsConfigs ...CORSConfig) http.Handler {
 	if len(corsConfigs) > 0 {
 		corsConfig = corsConfigs[0]
 	}
-	return withCORS(mux, corsConfig)
+	return withCORS(withObservability(mux, handlers.MetricsRegistry(), handlers.logger), corsConfig)
 }

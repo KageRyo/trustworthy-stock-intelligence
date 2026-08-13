@@ -8,6 +8,7 @@ import os
 from collections.abc import Sequence
 
 from tsi.data.prediction_jobs import PredictionJobRequest, enqueue_prediction_job
+from tsi.observability import log_event
 
 
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
@@ -40,6 +41,14 @@ def main(argv: Sequence[str] | None = None) -> None:
         request_values["idempotency_key"] = args.idempotency_key
     request = PredictionJobRequest(**request_values)
     job = enqueue_prediction_job(database_url, request)
+    log_event(
+        "prediction_job_enqueued",
+        service="prediction_queue",
+        ticker=job.ticker,
+        market=job.market,
+        feature_interval=job.feature_interval,
+        status=job.status,
+    )
     print(json.dumps(job.model_dump(mode="json"), indent=2))
 
 
