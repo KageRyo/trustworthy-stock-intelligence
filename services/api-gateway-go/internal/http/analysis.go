@@ -3,6 +3,7 @@ package apihttp
 import (
 	"strings"
 
+	"github.com/KageRyo/trustworthy-stock-intelligence/services/api-gateway-go/internal/freshness"
 	"github.com/KageRyo/trustworthy-stock-intelligence/services/api-gateway-go/internal/warnings"
 )
 
@@ -49,11 +50,12 @@ type ModelAnalysis struct {
 }
 
 type DataFreshness struct {
-	DataAsOf       string `json:"data_as_of"`
-	GeneratedAt    string `json:"generated_at"`
-	LastLoadedAt   string `json:"last_loaded_at"`
-	FileModifiedAt string `json:"file_modified_at"`
-	RecordCount    int    `json:"record_count"`
+	DataAsOf       string               `json:"data_as_of"`
+	GeneratedAt    string               `json:"generated_at"`
+	LastLoadedAt   string               `json:"last_loaded_at"`
+	FileModifiedAt string               `json:"file_modified_at"`
+	RecordCount    int                  `json:"record_count"`
+	Freshness      freshness.Assessment `json:"freshness"`
 }
 
 type ReasonExplanation struct {
@@ -67,10 +69,21 @@ func buildTickerAnalysis(
 	record warnings.PredictionRecord,
 	status warnings.StoreStatus,
 	calibrationDrift warnings.CalibrationDriftMetadata,
+	featureIntervals ...string,
 ) TickerAnalysisResponse {
 	runID := valueOrDefault(record.RunID, status.RunID)
 	dataAsOf := valueOrDefault(record.DataAsOf, status.DataAsOf)
 	generatedAt := valueOrDefault(record.GeneratedAt, status.GeneratedAt)
+	featureInterval := "1d"
+	if len(featureIntervals) > 0 && strings.TrimSpace(featureIntervals[0]) != "" {
+		featureInterval = featureIntervals[0]
+	}
+	freshnessAssessment := freshness.Assess(
+		dataAsOf,
+		"",
+		inferTickerMarket(record.Ticker),
+		featureInterval,
+	)
 	return TickerAnalysisResponse{
 		SchemaVersion: analysisSchemaVersion,
 		Ticker:        record.Ticker,
@@ -104,6 +117,7 @@ func buildTickerAnalysis(
 			LastLoadedAt:   status.LastLoadedAt,
 			FileModifiedAt: status.FileModifiedAt,
 			RecordCount:    status.RecordCount,
+			Freshness:      freshnessAssessment,
 		},
 		CalibrationDrift:    calibrationDrift,
 		Reasons:             explainReasonCodes(record.ReasonCodes),

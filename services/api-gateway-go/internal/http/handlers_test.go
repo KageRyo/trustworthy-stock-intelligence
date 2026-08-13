@@ -591,6 +591,10 @@ func TestTickerAnalysisHandler(t *testing.T) {
 	if payload.DataFreshness.RecordCount != 2 || payload.DataFreshness.LastLoadedAt == "" {
 		t.Fatalf("unexpected data freshness: %+v", payload.DataFreshness)
 	}
+	if payload.DataFreshness.Freshness.SchemaVersion != "freshness.v1" ||
+		payload.DataFreshness.Freshness.ReasonCode != "freshness_unusable" {
+		t.Fatalf("unexpected freshness assessment: %+v", payload.DataFreshness.Freshness)
+	}
 	if len(payload.Reasons) != 4 {
 		t.Fatalf("reasons length = %d, want 4", len(payload.Reasons))
 	}

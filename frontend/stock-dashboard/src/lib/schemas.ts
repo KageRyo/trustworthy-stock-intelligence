@@ -67,13 +67,38 @@ export const modelAnalysisSchema = z
   })
   .strict();
 
+export const freshnessAssessmentSchema = z
+  .object({
+    schema_version: z.literal("freshness.v1"),
+    market: z.string(),
+    interval: z.enum(["1m", "5m", "1d"]),
+    data_as_of: z.string(),
+    evaluated_at: z.string(),
+    age_seconds: z.number().nonnegative().optional(),
+    fresh_within_seconds: z.number().int().nonnegative(),
+    stale_within_seconds: z.number().int().nonnegative(),
+    state: z.enum(["fresh", "stale", "unusable"]),
+    action: z.enum(["allow", "downgrade", "block"]),
+    reason_code: z.enum([
+      "freshness_fresh",
+      "freshness_stale",
+      "freshness_unusable",
+      "freshness_missing_data_as_of",
+      "freshness_future_data_as_of"
+    ]),
+    warning_level_override: z.literal("abstain").optional(),
+    message: z.string()
+  })
+  .strict();
+
 export const dataFreshnessSchema = z
   .object({
     data_as_of: z.string(),
     generated_at: z.string(),
     last_loaded_at: z.string(),
     file_modified_at: z.string(),
-    record_count: z.number().int().nonnegative()
+    record_count: z.number().int().nonnegative(),
+    freshness: freshnessAssessmentSchema
   })
   .strict();
 
@@ -151,6 +176,7 @@ export const predictionBatchSchema = z
     run_id: z.string(),
     data_as_of: z.string(),
     generated_at: z.string(),
+    feature_interval: z.enum(["1m", "5m", "1d"]).optional(),
     record_count: z.number().int().nonnegative(),
     calibration_drift: calibrationDriftSchema,
     records: z.array(predictionRecordSchema)
@@ -252,6 +278,7 @@ export type WarningLevel = z.infer<typeof warningLevelSchema>;
 export type CalibrationDriftMetadata = z.infer<typeof calibrationDriftSchema>;
 export type ReasonExplanation = z.infer<typeof reasonExplanationSchema>;
 export type FeatureAttribution = z.infer<typeof featureAttributionSchema>;
+export type FreshnessAssessment = z.infer<typeof freshnessAssessmentSchema>;
 export type TickerAnalysis = z.infer<typeof tickerAnalysisSchema>;
 export type WarningHistory = z.infer<typeof warningHistorySchema>;
 export type WarningHistoryRecord = z.infer<typeof warningHistoryRecordSchema>;

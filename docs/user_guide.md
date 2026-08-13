@@ -104,3 +104,8 @@ metadata and should treat low-history results cautiously.
   remains a daily warning model until intraday training is implemented.
 - `abstain` is a valid result when the system has data but cannot make a
   trustworthy calibrated decision.
+- The analysis response reports a typed freshness assessment. Fresh data is
+  allowed, stale data remains visible only with a confidence downgrade, and
+  unusable or missing-cutoff data is blocked from actionable interpretation
+  with an `abstain` override. Thresholds are selected by feature interval
+  (`1m`, `5m`, or `1d`) and market.

@@ -285,7 +285,13 @@ def write_insufficient_history_prediction(
     predictions["ticker"] = ticker
     predictions_path.parent.mkdir(parents=True, exist_ok=True)
     predictions.drop(columns=["reason_codes"]).to_csv(predictions_path, index=False)
-    batch = build_prediction_batch(predictions, run_id=run_id, data_as_of=data_as_of)
+    batch = build_prediction_batch(
+        predictions,
+        run_id=run_id,
+        data_as_of=data_as_of,
+        feature_interval=feature_interval,  # type: ignore[arg-type]
+        market="unknown",
+    )
     write_prediction_batch_json(batch, warnings_path)
     write_prediction_batch_to_postgres(
         database_url,

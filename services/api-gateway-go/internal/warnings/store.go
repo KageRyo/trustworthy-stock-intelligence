@@ -146,6 +146,9 @@ func loadFile(path string) (PredictionBatch, map[string]PredictionRecord, time.T
 	if batch.SchemaVersion == "" {
 		batch.SchemaVersion = "v1"
 	}
+	if batch.FeatureInterval == "" {
+		batch.FeatureInterval = "1d"
+	}
 	if batch.RunID == "" {
 		batch.RunID = "unknown"
 	}
