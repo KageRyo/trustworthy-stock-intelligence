@@ -77,6 +77,8 @@ export type DashboardCopy = {
     brierDelta: string;
     calibrationRows: string;
     recentRows: string;
+    freshness: string;
+    freshnessReason: string;
   };
   states: {
     loadingAnalysis: string;
@@ -98,6 +100,8 @@ export type DashboardCopy = {
   trustStatuses: Record<string, string>;
   uncertaintyStatuses: Record<string, string>;
   driftStatuses: Record<string, string>;
+  freshnessStatuses: Record<string, string>;
+  freshnessActions: Record<string, string>;
   trustSummaries: {
     insufficientHistory: string;
     highUncertainty: string;
@@ -192,7 +196,9 @@ export const translations = {
       eceDelta: "ECE Δ",
       brierDelta: "Brier Δ",
       calibrationRows: "Calibration Rows",
-      recentRows: "Recent Rows"
+      recentRows: "Recent Rows",
+      freshness: "Data Freshness",
+      freshnessReason: "Freshness reason"
     },
     states: {
       loadingAnalysis: "Loading analysis",
@@ -237,6 +243,16 @@ export const translations = {
       not_evaluated: "Not evaluated",
       stable: "Stable",
       degraded: "Degraded"
+    },
+    freshnessStatuses: {
+      fresh: "Fresh",
+      stale: "Stale",
+      unusable: "Unusable"
+    },
+    freshnessActions: {
+      allow: "Allowed",
+      downgrade: "Downgrade confidence",
+      block: "Blocked / abstain"
     },
     trustSummaries: {
       insufficientHistory:
@@ -391,7 +407,9 @@ export const translations = {
       eceDelta: "ECE 變化 Δ",
       brierDelta: "Brier 變化 Δ",
       calibrationRows: "校準資料列數",
-      recentRows: "近期資料列數"
+      recentRows: "近期資料列數",
+      freshness: "資料新鮮度",
+      freshnessReason: "新鮮度原因"
     },
     states: {
       loadingAnalysis: "正在載入分析",
@@ -436,6 +454,16 @@ export const translations = {
       not_evaluated: "尚未評估",
       stable: "穩定",
       degraded: "劣化"
+    },
+    freshnessStatuses: {
+      fresh: "新鮮",
+      stale: "過期",
+      unusable: "不可用"
+    },
+    freshnessActions: {
+      allow: "可使用",
+      downgrade: "降低信心",
+      block: "阻擋／暫不判斷"
     },
     trustSummaries: {
       insufficientHistory: "此股票有市場資料，但標註歷史不足，無法產生校準後風險預測。",

@@ -243,7 +243,11 @@ func (h *Handlers) TickerAnalysis(response http.ResponseWriter, request *http.Re
 		}
 	}
 	batch := h.store.Batch()
-	writeJSON(response, http.StatusOK, buildTickerAnalysis(record, h.store.Status(), batch.CalibrationDrift))
+	writeJSON(
+		response,
+		http.StatusOK,
+		buildTickerAnalysis(record, h.store.Status(), batch.CalibrationDrift, batch.FeatureInterval),
+	)
 }
 
 func (h *Handlers) TickerWarningHistory(response http.ResponseWriter, request *http.Request) {

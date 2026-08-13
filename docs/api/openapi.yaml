@@ -541,6 +541,9 @@ components:
           type: string
         generated_at:
           type: string
+        feature_interval:
+          type: string
+          enum: [1m, 5m, 1d]
         record_count:
           type: integer
           minimum: 0
@@ -1052,6 +1055,7 @@ components:
         - last_loaded_at
         - file_modified_at
         - record_count
+        - freshness
       properties:
         data_as_of:
           type: string
@@ -1064,6 +1068,65 @@ components:
         record_count:
           type: integer
           minimum: 0
+        freshness:
+          $ref: "#/components/schemas/FreshnessAssessment"
+    FreshnessAssessment:
+      type: object
+      additionalProperties: false
+      required:
+        - schema_version
+        - market
+        - interval
+        - data_as_of
+        - evaluated_at
+        - fresh_within_seconds
+        - stale_within_seconds
+        - state
+        - action
+        - reason_code
+        - message
+      properties:
+        schema_version:
+          type: string
+          const: freshness.v1
+        market:
+          type: string
+        interval:
+          type: string
+          enum: [1m, 5m, 1d]
+        data_as_of:
+          type: string
+        evaluated_at:
+          type: string
+          format: date-time
+        age_seconds:
+          type: number
+          minimum: 0
+        fresh_within_seconds:
+          type: integer
+          minimum: 0
+        stale_within_seconds:
+          type: integer
+          minimum: 0
+        state:
+          type: string
+          enum: [fresh, stale, unusable]
+        action:
+          type: string
+          enum: [allow, downgrade, block]
+        reason_code:
+          type: string
+          enum:
+            - freshness_fresh
+            - freshness_stale
+            - freshness_unusable
+            - freshness_missing_data_as_of
+            - freshness_future_data_as_of
+        warning_level_override:
+          type: string
+          const: abstain
+        message:
+          type: string
     ReasonExplanation:
       type: object
       additionalProperties: false

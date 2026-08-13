@@ -328,6 +328,7 @@ def run_prediction(args: argparse.Namespace) -> pd.DataFrame:
         serving_frame,
         run_id=args.run_id,
         calibration_drift=calibration_drift,
+        feature_interval=args.feature_interval,
     )
     write_prediction_batch_json(batch, args.json_output)
     if args.write_db:

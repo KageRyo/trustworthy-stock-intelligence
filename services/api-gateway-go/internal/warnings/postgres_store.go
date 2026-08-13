@@ -238,16 +238,17 @@ func (s *PostgresStore) loadLatestBatch(
 	var runID string
 	var dataAsOf time.Time
 	var generatedAt time.Time
+	var featureInterval string
 	var metadataJSON []byte
 	err := s.pool.QueryRow(
 		ctx,
 		`
-		SELECT schema_version, run_id, data_as_of, generated_at, metadata
+		SELECT schema_version, run_id, data_as_of, generated_at, feature_interval, metadata
 		FROM prediction_batches
 		ORDER BY generated_at DESC, created_at DESC
 		LIMIT 1
 		`,
-	).Scan(&schemaVersion, &runID, &dataAsOf, &generatedAt, &metadataJSON)
+	).Scan(&schemaVersion, &runID, &dataAsOf, &generatedAt, &featureInterval, &metadataJSON)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return emptyBatch(), map[string]PredictionRecord{}, nil
 	}
@@ -336,6 +337,7 @@ func (s *PostgresStore) loadLatestBatch(
 		RunID:            runID,
 		DataAsOf:         formatDataTime(dataAsOf),
 		GeneratedAt:      generatedAt.UTC().Format(time.RFC3339),
+		FeatureInterval:  featureInterval,
 		RecordCount:      len(records),
 		CalibrationDrift: calibrationDrift,
 		Records:          records,
@@ -377,6 +379,7 @@ func emptyBatch() PredictionBatch {
 		RunID:            "none",
 		DataAsOf:         "",
 		GeneratedAt:      "",
+		FeatureInterval:  "1d",
 		RecordCount:      0,
 		CalibrationDrift: normalizeCalibrationDrift(CalibrationDriftMetadata{}),
 		Records:          []PredictionRecord{},

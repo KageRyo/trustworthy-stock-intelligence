@@ -113,6 +113,30 @@ prediction as equally trustworthy.
 | `last_loaded_at` | string | API load timestamp for the DB warning batch. |
 | `file_modified_at` | string | Empty for DB-backed serving; retained for schema compatibility. |
 | `record_count` | integer | Number of records in the loaded batch. |
+| `freshness` | `FreshnessAssessment` | Typed fresh/stale/unusable state, age thresholds, action, and stale reason code. |
+
+### `FreshnessAssessment`
+
+Freshness is evaluated at API read time against the prediction's feature
+interval and ticker market. `fresh` permits normal display, `stale` retains the
+result for context while requiring a confidence downgrade, and `unusable`
+blocks an actionable interpretation and supplies an `abstain` override.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `schema_version` | string | Current value: `freshness.v1`. |
+| `market` | string | Market used for the threshold lookup. |
+| `interval` | string | Feature interval: `1m`, `5m`, or `1d`. |
+| `data_as_of` | string | Provider/data cutoff retained by the prediction. |
+| `evaluated_at` | string | API evaluation timestamp. |
+| `age_seconds` | number or omitted | Non-negative cutoff age; omitted when cutoff is missing. |
+| `fresh_within_seconds` | integer | Maximum age for `fresh`. |
+| `stale_within_seconds` | integer | Maximum age for contextual `stale` display. |
+| `state` | string | `fresh`, `stale`, or `unusable`. |
+| `action` | string | `allow`, `downgrade`, or `block`. |
+| `reason_code` | string | Typed code such as `freshness_stale`, `freshness_unusable`, or `freshness_missing_data_as_of`. |
+| `warning_level_override` | string or omitted | `abstain` when freshness does not support an actionable warning. |
+| `message` | string | Human-readable safety explanation. |
 
 ### `ReasonExplanation`
 

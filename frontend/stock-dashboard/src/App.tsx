@@ -51,6 +51,7 @@ import type {
   CalibrationDriftMetadata,
   CurrentModel,
   FeatureAttribution,
+  FreshnessAssessment,
   PredictionBatch,
   PredictionRecord,
   ReasonExplanation,
@@ -708,6 +709,7 @@ function TrustPanel({
           label={copy.labels.generatedAt}
           value={status?.generated_at || analysis?.generated_at || copy.common.na}
         />
+        {analysis ? <FreshnessPanel freshness={analysis.data_freshness.freshness} copy={copy} /> : null}
         <ValueRow
           label={copy.labels.modelBundle}
           value={model?.model_bundle || analysis?.model.model_bundle || copy.common.na}
@@ -721,6 +723,38 @@ function TrustPanel({
       {analysis ? <FeatureAttributionList attributions={analysis.feature_attributions ?? []} copy={copy} /> : null}
       {analysis ? <CalibrationDriftPanel drift={analysis.calibration_drift} copy={copy} /> : null}
     </section>
+  );
+}
+
+function FreshnessPanel({
+  freshness,
+  copy
+}: {
+  freshness: FreshnessAssessment;
+  copy: DashboardCopy;
+}) {
+  const stateClass =
+    freshness.state === "fresh"
+      ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+      : freshness.state === "stale"
+        ? "border-amber-200 bg-amber-50 text-amber-900"
+        : "border-red-200 bg-red-50 text-red-900";
+  return (
+    <div className={`rounded-md border p-3 ${stateClass}`}>
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-xs font-semibold uppercase tracking-normal">{copy.labels.freshness}</span>
+        <span className="text-xs font-semibold uppercase tracking-normal">
+          {copy.freshnessStatuses[freshness.state] ?? freshness.state}
+        </span>
+      </div>
+      <p className="mt-1 text-sm font-semibold">
+        {copy.freshnessActions[freshness.action] ?? freshness.action}
+      </p>
+      <p className="mt-1 text-xs leading-5">{freshness.message}</p>
+      <p className="mt-2 break-all font-mono text-[11px] opacity-75">
+        {copy.labels.freshnessReason}: {freshness.reason_code} · {freshness.interval}
+      </p>
+    </div>
   );
 }
 

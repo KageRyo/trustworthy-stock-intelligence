@@ -12,6 +12,8 @@ from uuid import uuid4
 import pandas as pd
 from pydantic import BaseModel, ConfigDict, Field
 
+from tsi.data.freshness import FreshnessAssessment, FreshnessInterval, assess_freshness
+
 
 WarningLevel = Literal["alert", "watch", "abstain", "no_alert"]
 AttributionDirection = Literal["positive", "negative", "neutral"]
@@ -80,6 +82,8 @@ class PredictionBatch(BaseModel):
     run_id: str = "unknown"
     data_as_of: str = ""
     generated_at: str = Field(default_factory=lambda: datetime.now(UTC).isoformat())
+    feature_interval: FreshnessInterval = "1d"
+    freshness: FreshnessAssessment | None = None
     record_count: int | None = None
     calibration_drift: CalibrationDriftMetadata = Field(default_factory=CalibrationDriftMetadata)
     records: list[PredictionRecord]
@@ -103,6 +107,8 @@ def build_prediction_batch(
     run_id: str | None = None,
     data_as_of: str | None = None,
     calibration_drift: CalibrationDriftMetadata | dict[str, object] | None = None,
+    feature_interval: FreshnessInterval | None = None,
+    market: str = "unknown",
 ) -> PredictionBatch:
     """Build a serving JSON batch from prediction rows."""
 
@@ -144,10 +150,23 @@ def build_prediction_batch(
         )
         for _, row in frame.iterrows()
     ]
+    resolved_data_as_of = data_as_of or _infer_data_as_of(frame)
+    resolved_generated_at = generated_at or datetime.now(UTC).isoformat()
+    freshness = None
+    if feature_interval is not None:
+        evaluated_at = datetime.fromisoformat(resolved_generated_at.replace("Z", "+00:00"))
+        freshness = assess_freshness(
+            resolved_data_as_of,
+            market=market,
+            interval=feature_interval,
+            evaluated_at=evaluated_at,
+        )
     return PredictionBatch(
         run_id=run_id or _infer_run_id(frame),
-        data_as_of=data_as_of or _infer_data_as_of(frame),
-        generated_at=generated_at or datetime.now(UTC).isoformat(),
+        data_as_of=resolved_data_as_of,
+        generated_at=resolved_generated_at,
+        feature_interval=feature_interval or "1d",
+        freshness=freshness,
         calibration_drift=calibration_drift or CalibrationDriftMetadata(),
         records=records,
     )

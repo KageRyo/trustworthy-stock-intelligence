@@ -707,7 +707,11 @@ def _upsert_prediction_batch(
             Jsonb(
                 {
                     "source_schema": batch.schema_version,
+                    "feature_interval": feature_interval,
                     "calibration_drift": batch.calibration_drift.model_dump(mode="json"),
+                    "freshness": (
+                        batch.freshness.model_dump(mode="json") if batch.freshness is not None else None
+                    ),
                 }
             ),
         ),

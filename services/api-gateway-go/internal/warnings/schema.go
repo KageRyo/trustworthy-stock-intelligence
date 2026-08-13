@@ -5,6 +5,7 @@ type PredictionBatch struct {
 	RunID            string                   `json:"run_id"`
 	DataAsOf         string                   `json:"data_as_of"`
 	GeneratedAt      string                   `json:"generated_at"`
+	FeatureInterval  string                   `json:"feature_interval,omitempty"`
 	RecordCount      int                      `json:"record_count"`
 	CalibrationDrift CalibrationDriftMetadata `json:"calibration_drift"`
 	Records          []PredictionRecord       `json:"records"`

@@ -69,7 +69,21 @@ function analysisPayload(ticker = "2330") {
       generated_at: "2026-06-19T00:00:00Z",
       last_loaded_at: "2026-06-19T00:01:00Z",
       file_modified_at: "2026-06-19T00:00:30Z",
-      record_count: 2
+      record_count: 2,
+      freshness: {
+        schema_version: "freshness.v1",
+        market: "taiwan",
+        interval: "1d",
+        data_as_of: "2026-06-19",
+        evaluated_at: "2026-06-19T00:01:00Z",
+        age_seconds: 60,
+        fresh_within_seconds: 129600,
+        stale_within_seconds: 432000,
+        state: "fresh",
+        action: "allow",
+        reason_code: "freshness_fresh",
+        message: "The prediction cutoff is within the configured freshness window."
+      }
     },
     calibration_drift: {
       status: "stable",

@@ -55,6 +55,39 @@ def test_prediction_batch_builds_records_from_frame() -> None:
     assert batch.records[0].feature_attributions[0].direction == "positive"
 
 
+def test_prediction_batch_can_carry_typed_freshness_metadata() -> None:
+    frame = pd.DataFrame(
+        {
+            "date": [pd.Timestamp("2026-06-19 00:55:00")],
+            "ticker": ["AAPL"],
+            "model": ["baseline"],
+            "model_bundle": ["bundle"],
+            "risk_probability": [0.1],
+            "calibrated_risk_probability": [0.1],
+            "calibration_method": ["platt"],
+            "uncertainty_score": [0.1],
+            "trust_score": [0.8],
+            "alert_threshold": [0.3],
+            "watch_threshold": [0.2],
+            "warning_level": ["no_alert"],
+            "reason_codes": [[]],
+        }
+    )
+
+    batch = build_prediction_batch(
+        frame,
+        generated_at="2026-06-19T01:00:00+00:00",
+        data_as_of="2026-06-19T00:55:00+00:00",
+        feature_interval="5m",
+        market="us",
+    )
+
+    assert batch.feature_interval == "5m"
+    assert batch.freshness is not None
+    assert batch.freshness.state == "fresh"
+    assert batch.freshness.reason_code == "freshness_fresh"
+
+
 def test_prediction_batch_json_round_trips(tmp_path: Path) -> None:
     batch = PredictionBatch(
         generated_at="2026-06-10T00:00:00+00:00",
