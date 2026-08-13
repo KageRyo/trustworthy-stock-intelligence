@@ -57,6 +57,8 @@ CI runs:
 - Go API tests, race tests, `go vet`, and pinned `govulncheck`
 - frontend Vitest tests, production build with TypeScript typechecking, and
   moderate dependency audit
+- deterministic PostgreSQL watchlist-to-warning E2E with Go API and frontend
+  runtime-schema validation
 - a separate SHA-pinned Gitleaks scan over repository history
 - a SHA-pinned CodeQL workflow for Python, Go, and JavaScript/TypeScript
 

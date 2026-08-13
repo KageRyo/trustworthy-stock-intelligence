@@ -1,6 +1,6 @@
 # TSI Stock Dashboard
 
-Version: `0.3.2`
+Version: `0.4.0`
 
 TypeScript dashboard for the PostgreSQL-backed Go warning API.
 

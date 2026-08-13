@@ -1,7 +1,7 @@
 # Trustworthy Stock Intelligence
 
 [![CI](https://github.com/KageRyo/trustworthy-stock-intelligence/actions/workflows/ci.yml/badge.svg)](https://github.com/KageRyo/trustworthy-stock-intelligence/actions/workflows/ci.yml)
-![Version](https://img.shields.io/badge/version-0.3.2-blue)
+![Version](https://img.shields.io/badge/version-0.4.0-blue)
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
 ![Go](https://img.shields.io/badge/go-1.25-blue)
 ![TypeScript](https://img.shields.io/badge/typescript-7.0-blue)
@@ -34,8 +34,8 @@ auditable data, model, and API contracts.
 
 ## Current Status
 
-Version `0.3.2` is a maintenance and security release following the
-`0.3.1` open-source product and research-quality release:
+Version `0.4.0` is the product-readiness release following the `0.3.2`
+maintenance and security release:
 
 - Experiment 007 uses purged walk-forward train/calibration/test boundaries and
   per-row `label_end_date` overlap checks.
@@ -64,6 +64,15 @@ Version `0.3.2` is a maintenance and security release following the
 - Ticker-level feature attributions, warning-history timelines, calibration
   drift state, and per-run TAI audit artifacts are available through typed
   contracts and reproducible artifacts.
+- Scheduled 5-minute watchlist ingestion records provider health, retry, and
+  coverage state in PostgreSQL.
+- Freshness policies, queue-backed prediction jobs, typed job failures, and
+  deterministic warning transitions make stale or degraded outputs explicit.
+- The dashboard exposes freshness, trust, provider coverage, job lifecycle,
+  session grouping, filtering, and confirmed cleanup states.
+- Readiness probes, structured request/worker logs, Prometheus-style metrics,
+  and a deterministic PostgreSQL watchlist-to-warning CI smoke test cover the
+  serving path end to end.
 - The dashboard supports English and 正體中文.
 
 ## Quick Start
@@ -305,8 +314,9 @@ npm run build
 npm audit --audit-level=moderate
 ```
 
-CI runs Python tests/lint, Go API tests, and frontend tests/build on push and
-pull request events. Dependabot covers Python, Go, npm, and GitHub Actions.
+CI runs Python tests/lint, Go API tests, frontend tests/build, and a separate
+PostgreSQL watchlist-to-warning E2E pipeline on pull requests. Dependabot
+covers Python, Go, npm, and GitHub Actions.
 Basic static analysis covers Python with Ruff, Go with `go vet`, pinned
 `govulncheck`, and race tests, and TypeScript through the production build's
 typecheck. A least-privilege, SHA-pinned Gitleaks workflow scans repository
@@ -322,7 +332,7 @@ Project targets:
 
 | Runtime | Version |
 | --- | --- |
-| Python package | `0.3.2` |
+| Python package | `0.4.0` |
 | Python | `>=3.10`, CI uses `3.11` |
 | Go API | `1.25.x` |
 | Node.js CI runtime | `22.x` |

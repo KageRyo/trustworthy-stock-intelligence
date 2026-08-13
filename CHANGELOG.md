@@ -2,6 +2,33 @@
 
 ## Unreleased
 
+## 0.4.0 - 2026-08-13
+
+### Added
+
+- Scheduled five-minute watchlist ingestion with provider health, bounded
+  retries, market coverage metadata, and PostgreSQL persistence.
+- PostgreSQL-backed prediction jobs with idempotency, worker leases, typed
+  completion/failure states, and an API job-status contract.
+- Deterministic warning transitions for new, upgraded, downgraded, resolved,
+  persistent, and low-trust warning states.
+- Dashboard freshness, trust, provider coverage, prediction-job lifecycle, and
+  session-scoped watchlist grouping/filtering/cleanup states.
+- Readiness probes, structured JSON request/worker logs, runtime metrics, and a
+  deterministic PostgreSQL watchlist-to-warning end-to-end CI job.
+
+### Fixed
+
+- Qualified PostgreSQL prediction-job claim columns for `UPDATE ... FROM`
+  compatibility and included persisted feature attributions in the latest
+  warning query.
+
+### Documentation
+
+- Documented provider coverage, freshness safety behavior, prediction jobs,
+  warning transitions, dashboard operations, observability, E2E checks, and
+  the remaining licensed point-in-time universe blocker in Issue #29.
+
 ## 0.3.2 - 2026-08-13
 
 ### Changed

@@ -1,20 +1,22 @@
 # Release Checklist
 
-## 0.3.2 Scope
+## 0.4.0 Scope
 
-`0.3.2` is a maintenance and security release following the public
-open-source and research-quality `0.3.1` release:
+`0.4.0` is the product-readiness release following the `0.3.2` maintenance
+and security release:
 
-- SHA-pinned CodeQL Action v4 workflow and continued security scanning gates
-- explicit Ruff 0.16 migration with the existing lint baseline preserved
-- grouped routine Dependabot minor and patch updates by ecosystem
-- validated frontend dependency upgrades, including TypeScript 7 and Zod 4
-- restored official Apache License 2.0 text
-- v0.4 product priorities for 5-minute ingestion, provider health/freshness,
-  queue-backed prediction jobs, warning-change detection, and richer watchlists
+- scheduled five-minute watchlist ingestion with provider health and coverage
+- actionable freshness/stale policy and queue-backed prediction jobs
+- deterministic warning transitions and typed job status/failure responses
+- dashboard operational states and richer session-scoped watchlists
+- readiness, structured observability, metrics, and deterministic PostgreSQL
+  watchlist-to-warning E2E coverage
 
 The release does not claim a high-precision warning policy, a trading edge,
-all-market coverage, or externally validated cross-market suitability.
+all-market coverage, point-in-time historical membership, or externally
+validated cross-market suitability. Issue #29 remains open because the actual
+licensed historical constituent archive and comparable benchmark rerun are not
+present in the repository.
 
 ## Version Files
 
@@ -55,12 +57,17 @@ npm run build
 npm audit --audit-level=moderate
 ```
 
+The CI `Watchlist-to-warning E2E` job additionally starts PostgreSQL 17,
+applies all migrations, runs the deterministic fake-provider pipeline, starts
+the Go API, and validates the captured response with the frontend Zod schema.
+It must be green before the release merge.
+
 ## Release Procedure
 
 1. Prepare the version and changelog changes on a release branch.
 2. Merge the release PR only after all required checks pass.
 3. Confirm the merge commit is the current `main` head and rerun all checks.
-4. Create an annotated `vX.Y.Z` tag on that verified commit.
+4. Create an annotated `v0.4.0` tag on that verified commit.
 5. Push the tag and create a GitHub Release with `--verify-tag`.
 6. Confirm the remote tag, release target, release notes, and downloadable
    source archives.
