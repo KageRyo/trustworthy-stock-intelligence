@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/KageRyo/trustworthy-stock-intelligence/services/api-gateway-go/internal/freshness"
 	"github.com/KageRyo/trustworthy-stock-intelligence/services/api-gateway-go/internal/watchlist"
 )
 
@@ -33,9 +34,14 @@ type WatchlistTickerSummary struct {
 
 type WatchlistLatestWarning struct {
 	Date                      string  `json:"date"`
+	DataAsOf                  string  `json:"data_as_of"`
 	WarningLevel              string  `json:"warning_level"`
 	CalibratedRiskProbability float64 `json:"calibrated_risk_probability"`
+	UncertaintyScore          float64 `json:"uncertainty_score"`
 	TrustScore                float64 `json:"trust_score"`
+	AlertThreshold            float64 `json:"alert_threshold"`
+	FreshnessState            string  `json:"freshness_state"`
+	FreshnessAction           string  `json:"freshness_action"`
 }
 
 type WatchlistAddTickerRequest struct {
@@ -148,12 +154,23 @@ func (h *Handlers) loadWatchlistResponse(name string, request *http.Request) (Wa
 			Notes:       ticker.Notes,
 		}
 		if record, ok := h.store.FindTicker(ticker.Ticker); ok {
+			freshnessAssessment := freshness.Assess(
+				record.DataAsOf,
+				"",
+				inferTickerMarket(record.Ticker),
+				"1d",
+			)
 			summary.HasLatestWarning = true
 			summary.LatestWarning = &WatchlistLatestWarning{
 				Date:                      record.Date,
+				DataAsOf:                  record.DataAsOf,
 				WarningLevel:              record.WarningLevel,
 				CalibratedRiskProbability: record.CalibratedRiskProbability,
+				UncertaintyScore:          record.UncertaintyScore,
 				TrustScore:                record.TrustScore,
+				AlertThreshold:            record.AlertThreshold,
+				FreshnessState:            freshnessAssessment.State,
+				FreshnessAction:           freshnessAssessment.Action,
 			}
 		}
 		tickers = append(tickers, summary)

@@ -244,9 +244,14 @@ export const tickerListSchema = z
 export const watchlistLatestWarningSchema = z
   .object({
     date: z.string(),
+    data_as_of: z.string().optional(),
     warning_level: warningLevelSchema,
     calibrated_risk_probability: z.number().min(0).max(1),
-    trust_score: z.number().min(0).max(1)
+    uncertainty_score: z.number().min(0).max(1).optional(),
+    trust_score: z.number().min(0).max(1),
+    alert_threshold: z.number().min(0).max(1).optional(),
+    freshness_state: z.enum(["fresh", "stale", "unusable"]).optional(),
+    freshness_action: z.enum(["allow", "downgrade", "block"]).optional()
   })
   .strict();
 

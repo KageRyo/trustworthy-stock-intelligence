@@ -24,6 +24,10 @@ export type DashboardCopy = {
     reasons: string;
     viewed: string;
     noAnalysis: string;
+    selectAll: string;
+    clearSelected: string;
+    bulkRemove: string;
+    confirmBulkRemove: (count: number) => string;
   };
   language: {
     label: string;
@@ -180,7 +184,11 @@ export const translations = {
       rows: "rows",
       reasons: "reasons",
       viewed: "viewed",
-      noAnalysis: "No Analysis"
+      noAnalysis: "No Analysis",
+      selectAll: "Select all",
+      clearSelected: "Clear selection",
+      bulkRemove: "Remove selected",
+      confirmBulkRemove: (count: number) => `Remove ${count} selected ticker(s) from this session watchlist?`
     },
     language: {
       label: "Language",
@@ -429,7 +437,11 @@ export const translations = {
       rows: "筆資料",
       reasons: "個理由",
       viewed: "已看過",
-      noAnalysis: "尚無分析"
+      noAnalysis: "尚無分析",
+      selectAll: "全選",
+      clearSelected: "清除選取",
+      bulkRemove: "移除選取項目",
+      confirmBulkRemove: (count: number) => `確定要從本次觀察清單移除 ${count} 個股票代號嗎？`
     },
     language: {
       label: "語言",
