@@ -24,7 +24,8 @@ Risk = 0 otherwise
 
 ## Leakage Rule
 
-Features may only use information up to day `t`. Labels may only use information from day `t+1` through day `t+H`.
+Features may only use information up to day `t`. Labels may only use information from day `t+1`
+through day `t+H`.
 
 ## Split
 
@@ -32,7 +33,8 @@ The main protocol uses walk-forward validation. Random train-test splits are not
 
 ## Preliminary Findings
 
-Not yet available. This directory will record class balance, label stability, and edge cases after the labeling implementation is added.
+Not yet available. This directory will record class balance, label stability, and edge cases after
+the labeling implementation is added.
 
 ## Next Steps
 

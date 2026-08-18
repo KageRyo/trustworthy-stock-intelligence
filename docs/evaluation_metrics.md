@@ -2,7 +2,8 @@
 
 ## Why Accuracy Is Not Enough
 
-Stock risk early-warning is class-imbalanced, noisy, and asymmetric. A model can have high accuracy by predicting no risk most of the time while still missing important risk events.
+Stock risk early-warning is class-imbalanced, noisy, and asymmetric. A model can have high accuracy
+by predicting no risk most of the time while still missing important risk events.
 
 The first milestone therefore evaluates both classification quality and warning reliability.
 
@@ -45,13 +46,12 @@ Miss Rate = missed risk events / all risk events
 Lead Time = number of trading days between the first warning and the realized risk event
 ```
 
-Historical artifacts retain the key `false_alarm_rate` for compatibility, but
-it is calculated as the false-positive rate. New reports must also include
-`false_discovery_rate` so "how many negatives were alerted" is not confused
-with "how many alerts were wrong."
+Historical artifacts retain the key `false_alarm_rate` for compatibility, but it is calculated as
+the false-positive rate. New reports must also include `false_discovery_rate` so "how many negatives
+were alerted" is not confused with "how many alerts were wrong."
 
-False-positive, false-discovery, and miss rates should be reported together. A
-model that never alerts has low false positives but unacceptable misses.
+False-positive, false-discovery, and miss rates should be reported together. A model that never
+alerts has low false positives but unacceptable misses.
 
 ## Calibration Metrics
 
@@ -105,7 +105,8 @@ Abstain
 No Alert
 ```
 
-Binary classification metrics should be computed on risk predictions. Selective metrics should be computed after applying the alert/watch/abstain decision rule.
+Binary classification metrics should be computed on risk predictions. Selective metrics should be
+computed after applying the alert/watch/abstain decision rule.
 
 ## Reporting Requirements
 
@@ -122,8 +123,7 @@ Each experiment should report:
 
 ## Transaction Costs
 
-Transaction cost is not part of probability calibration or warning-quality
-evaluation because the current system does not define or execute a trading
-strategy. Any future return, portfolio, or strategy backtest must specify
-turnover, commissions, bid-ask spread, slippage, market impact assumptions, and
-the timestamp at which a warning could actually be acted upon.
+Transaction cost is not part of probability calibration or warning-quality evaluation because the
+current system does not define or execute a trading strategy. Any future return, portfolio, or
+strategy backtest must specify turnover, commissions, bid-ask spread, slippage, market impact
+assumptions, and the timestamp at which a warning could actually be acted upon.

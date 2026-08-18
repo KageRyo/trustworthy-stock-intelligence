@@ -18,9 +18,8 @@ The main ticker analysis endpoint is:
 GET /api/v1/analysis/{ticker}
 ```
 
-The dashboard also manages a DB-backed browser-session watchlist. The session
-name is generated in `sessionStorage`, and searched/viewed tickers are added to
-that list:
+The dashboard also manages a DB-backed browser-session watchlist. The session name is generated in
+`sessionStorage`, and searched/viewed tickers are added to that list:
 
 ```text
 GET /api/v1/watchlists/{session-name}
@@ -34,9 +33,8 @@ See:
 docs/api/analysis_api.md
 ```
 
-The UI supports English and 正體中文 through a client-side language switcher.
-Ticker symbols are handled as strings so Taiwan codes keep leading zeroes and
-suffix letters.
+The UI supports English and 正體中文 through a client-side language switcher. Ticker symbols are handled
+as strings so Taiwan codes keep leading zeroes and suffix letters.
 
 ## Run
 
@@ -67,8 +65,8 @@ For LAN testing, use:
 http://<dashboard-host>:5175
 ```
 
-The Vite dev server proxies `/api` and `/health` to `http://127.0.0.1:18080`
-by default. Override the proxy target with:
+The Vite dev server proxies `/api` and `/health` to `http://127.0.0.1:18080` by default. Override
+the proxy target with:
 
 ```bash
 TSI_DASHBOARD_API_BASE_URL=http://127.0.0.1:18080 npm run dev

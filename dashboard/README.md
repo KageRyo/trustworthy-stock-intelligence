@@ -1,8 +1,8 @@
 # Trust Dashboard
 
-Streamlit dashboard for local trust experiment artifacts and the Go warning API.
-The TypeScript stock dashboard is the primary ticker analysis UI as of `0.4.0`;
-this app remains useful for research diagnostics and the Live API tab.
+Streamlit dashboard for local trust experiment artifacts and the Go warning API. The TypeScript
+stock dashboard is the primary ticker analysis UI as of `0.4.0`; this app remains useful for
+research diagnostics and the Live API tab.
 
 ## Run
 
@@ -31,9 +31,9 @@ The default run directory is:
 experiments/005_temporal_transformer_trust/runs/platt_entropy_multiplicative_wr08
 ```
 
-The dashboard reads committed summary, warning evaluation, diagnostics,
-threshold sweep, and report artifacts. Ticker-level timelines are enabled only
-when the local ignored `predictions.csv` exists in the run folder.
+The dashboard reads committed summary, warning evaluation, diagnostics, threshold sweep, and report
+artifacts. Ticker-level timelines are enabled only when the local ignored `predictions.csv` exists
+in the run folder.
 
 The Live API tab reads:
 
@@ -45,5 +45,5 @@ GET /api/v1/warnings/latest?level=alert&sort=trust_score&order=desc
 GET /api/v1/warnings/latest?level=watch&sort=calibrated_risk_probability&order=desc
 ```
 
-Set the API base URL in the sidebar. Use `http://localhost:18080` when running
-the repository `make api` target, or set `TSI_DASHBOARD_API_BASE_URL`.
+Set the API base URL in the sidebar. Use `http://localhost:18080` when running the repository
+`make api` target, or set `TSI_DASHBOARD_API_BASE_URL`.

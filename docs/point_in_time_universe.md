@@ -1,9 +1,8 @@
 # Point-in-Time Universe Membership
 
-Historical experiments must not use the current constituent list as if every
-symbol belonged to the universe for every past date. The repository now accepts
-an external membership CSV and filters OHLCV rows using the membership interval
-for each row's evaluation date.
+Historical experiments must not use the current constituent list as if every symbol belonged to the
+universe for every past date. The repository now accepts an external membership CSV and filters
+OHLCV rows using the membership interval for each row's evaluation date.
 
 Intervals use half-open semantics:
 
@@ -11,9 +10,9 @@ Intervals use half-open semantics:
 [valid_from, valid_to)
 ```
 
-`valid_to` is exclusive; an empty value means the membership remains active.
-Overlapping intervals for one ticker are rejected. Ticker symbols remain
-strings, so leading zeroes and local suffixes are preserved.
+`valid_to` is exclusive; an empty value means the membership remains active. Overlapping intervals
+for one ticker are rejected. Ticker symbols remain strings, so leading zeroes and local suffixes are
+preserved.
 
 ## Input contract
 
@@ -25,9 +24,8 @@ AAA,2018-01-01,2020-02-01
 BBB,2019-06-01,
 ```
 
-The source identifier and usage/license constraint are required CLI arguments,
-not inferred from the data file. Raw provider-derived membership files should
-remain outside version control.
+The source identifier and usage/license constraint are required CLI arguments, not inferred from the
+data file. Raw provider-derived membership files should remain outside version control.
 
 Validate and fingerprint a snapshot:
 
@@ -40,8 +38,8 @@ python -m scripts.validate_universe_membership \
   --source-license "research-only; redistribution prohibited"
 ```
 
-The manifest records the interval semantics, date range, counts, source
-constraints, and a canonical SHA-256 fingerprint of the membership rows.
+The manifest records the interval semantics, date range, counts, source constraints, and a canonical
+SHA-256 fingerprint of the membership rows.
 
 ## Using the benchmark filter
 
@@ -61,14 +59,13 @@ python -m scripts.train \
   --output /tmp/sp100_point_in_time_summary.json
 ```
 
-The summary carries the membership manifest, making it possible to compare a
-point-in-time run with the current-universe pilot without committing the raw
-membership file. A legally usable historical source and a re-run of the
-benchmark are still required before making a quantitative survivorship-bias
-claim.
+The summary carries the membership manifest, making it possible to compare a point-in-time run with
+the current-universe pilot without committing the raw membership file. A legally usable historical
+source and a re-run of the benchmark are still required before making a quantitative
+survivorship-bias claim.
 
-Use the same membership input and metadata for the deep trainer. This is
-required before comparing deep and baseline metrics:
+Use the same membership input and metadata for the deep trainer. This is required before comparing
+deep and baseline metrics:
 
 ```bash
 PYTHONPATH=src python -m scripts.train_deep \

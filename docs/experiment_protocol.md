@@ -2,7 +2,8 @@
 
 ## Goal
 
-The experiment protocol defines how to evaluate stock risk early-warning models without leakage and without relying on random splits that violate temporal order.
+The experiment protocol defines how to evaluate stock risk early-warning models without leakage and
+without relying on random splits that violate temporal order.
 
 The first milestone is:
 
@@ -56,7 +57,8 @@ write experiment report
 
 ## Splitting Protocol
 
-The main protocol must use walk-forward validation. Random train-test splits are not allowed because they can leak future market regimes into training.
+The main protocol must use walk-forward validation. Random train-test splits are not allowed because
+they can leak future market regimes into training.
 
 Each walk-forward fold should define:
 
@@ -68,12 +70,11 @@ purge gap of at least the label horizon
 test window
 ```
 
-The calibration window must occur after the training window and before the test window.
-For the five-day future drawdown label, exclude at least five trading dates at
-both boundaries. This prevents a label in the earlier window from reading
-prices that belong to the next model-selection or evaluation window. Also
-record each row's actual label end date and remove any row whose outcome window
-reaches the next split; this second check handles mixed-market calendars.
+The calibration window must occur after the training window and before the test window. For the
+five-day future drawdown label, exclude at least five trading dates at both boundaries. This
+prevents a label in the earlier window from reading prices that belong to the next model-selection
+or evaluation window. Also record each row's actual label end date and remove any row whose outcome
+window reaches the next split; this second check handles mixed-market calendars.
 
 ## Model Families
 
@@ -85,11 +86,13 @@ Random Forest
 XGBoost
 ```
 
-Deep sequence models, image models, LLMs, and multimodal fusion are deferred until the baseline and trust layer are stable.
+Deep sequence models, image models, LLMs, and multimodal fusion are deferred until the baseline and
+trust layer are stable.
 
 ## Trust Layer
 
-The trust layer should evaluate whether the model's risk probability is reliable enough to issue a warning.
+The trust layer should evaluate whether the model's risk probability is reliable enough to issue a
+warning.
 
 First version:
 
@@ -120,7 +123,8 @@ baseline model + calibration + selective warning
 baseline model + calibration + uncertainty-aware warning
 ```
 
-The goal is not only to improve predictive metrics. The key question is whether warnings become more reliable under calibration and selective decision rules.
+The goal is not only to improve predictive metrics. The key question is whether warnings become more
+reliable under calibration and selective decision rules.
 
 ## Reporting Template
 

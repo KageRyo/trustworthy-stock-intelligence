@@ -2,13 +2,17 @@
 
 ## Positioning
 
-Trustworthy Stock Intelligence is a research-oriented framework for stock risk early-warning. It is not a stock recommendation system, an automated trading bot, or an exact price prediction system.
+Trustworthy Stock Intelligence is a research-oriented framework for stock risk early-warning. It is
+not a stock recommendation system, an automated trading bot, or an exact price prediction system.
 
-The project studies how to produce reliable warnings for future risk events under high market noise, non-stationarity, imperfect model confidence, and class imbalance.
+The project studies how to produce reliable warnings for future risk events under high market noise,
+non-stationarity, imperfect model confidence, and class imbalance.
 
 ## Core Problem
 
-Traditional stock prediction tasks often force a model to predict next-day price direction or future price level. This framing is difficult to trust because small price movements are noisy, unstable, and often not actionable as risk signals.
+Traditional stock prediction tasks often force a model to predict next-day price direction or future
+price level. This framing is difficult to trust because small price movements are noisy, unstable,
+and often not actionable as risk signals.
 
 This project reformulates stock analysis as a future risk-event detection problem:
 
@@ -37,11 +41,13 @@ Risk = 0 otherwise
 
 ## Research Questions
 
-RQ1: Can stock analysis be framed more reliably as future drawdown risk warning instead of next-day movement prediction?
+RQ1: Can stock analysis be framed more reliably as future drawdown risk warning instead of next-day
+movement prediction?
 
 RQ2: Can probability calibration improve the reliability of model confidence for stock risk warning?
 
-RQ3: Can uncertainty-aware selective prediction reduce false alerts while maintaining useful risk-event coverage?
+RQ3: Can uncertainty-aware selective prediction reduce false alerts while maintaining useful
+risk-event coverage?
 
 ## Trustworthy Warning Objective
 
@@ -75,4 +81,5 @@ This study does not aim to:
 - predict exact future stock prices
 - make real-time production alerts
 
-The system implementation exists to support reproducible experiments, not to serve as a trading product.
+The system implementation exists to support reproducible experiments, not to serve as a trading
+product.

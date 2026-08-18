@@ -1,8 +1,7 @@
 # Prediction Jobs
 
-Prediction work is persisted in PostgreSQL before a worker runs it. This keeps
-expensive model execution out of synchronous API requests and gives operators a
-typed lifecycle to inspect:
+Prediction work is persisted in PostgreSQL before a worker runs it. This keeps expensive model
+execution out of synchronous API requests and gives operators a typed lifecycle to inspect:
 
 ```text
 queued -> running -> completed
@@ -12,19 +11,17 @@ queued -> running -> completed
 
 ## Schema and idempotency
 
-Migration `infra/postgres/init/005_prediction_jobs.sql` creates
-`prediction_jobs`. Every request has an `idempotency_key`; enqueueing the same
-key returns the existing row rather than creating duplicate work. A completed
-job records the `prediction_batch_id` and `result_run_id`. The existing unique
-`prediction_batches.run_id` constraint makes a worker crash between writing the
-prediction and acknowledging the job safe to retry.
+Migration `infra/postgres/init/005_prediction_jobs.sql` creates `prediction_jobs`. Every request has
+an `idempotency_key`; enqueueing the same key returns the existing row rather than creating
+duplicate work. A completed job records the `prediction_batch_id` and `result_run_id`. The existing
+unique `prediction_batches.run_id` constraint makes a worker crash between writing the prediction
+and acknowledging the job safe to retry.
 
 ## Claiming and failure states
 
-Workers claim the oldest available row with PostgreSQL
-`FOR UPDATE SKIP LOCKED`. Consequently, two workers can poll concurrently
-without processing the same row. Every claim increments `attempt_count` and
-records `worker_id`/`locked_at`. A worker must complete or fail only the row it
+Workers claim the oldest available row with PostgreSQL `FOR UPDATE SKIP LOCKED`. Consequently, two
+workers can poll concurrently without processing the same row. Every claim increments
+`attempt_count` and records `worker_id`/`locked_at`. A worker must complete or fail only the row it
 owns.
 
 Failure codes are stable schema values rather than free-form HTTP errors:
@@ -41,9 +38,9 @@ worker_error
 unknown
 ```
 
-Retryable failures return to `queued` until `max_attempts`; terminal failures
-become `failed` with the code and a bounded message. Startup recovery requeues
-expired worker leases, or marks exhausted leases failed.
+Retryable failures return to `queued` until `max_attempts`; terminal failures become `failed` with
+the code and a bounded message. Startup recovery requeues expired worker leases, or marks exhausted
+leases failed.
 
 ## Local worker
 
@@ -79,14 +76,12 @@ python -m scripts.prediction_worker \
   --worker-id "local-worker-1"
 ```
 
-The current built-in processor consumes persisted `1d` `market_bars` and uses
-the existing leakage-aware baseline writer. `1m` and `5m` jobs remain
-queueable, but fail explicitly with `unsupported_interval` until an
-interval-trained model is available. Provider ingestion and model execution
-are therefore separate processes, while predictions and warning records stay
+The current built-in processor consumes persisted `1d` `market_bars` and uses the existing
+leakage-aware baseline writer. `1m` and `5m` jobs remain queueable, but fail explicitly with
+`unsupported_interval` until an interval-trained model is available. Provider ingestion and model
+execution are therefore separate processes, while predictions and warning records stay
 PostgreSQL-backed.
 
-Use `Ctrl-C` or the process supervisor's stop signal for graceful shutdown.
-Claimed rows have a lease; if a worker exits unexpectedly, a later worker
-requeues stale rows after `--lease-seconds` (default 900) and honors the
-remaining attempt budget.
+Use `Ctrl-C` or the process supervisor's stop signal for graceful shutdown. Claimed rows have a
+lease; if a worker exits unexpectedly, a later worker requeues stale rows after `--lease-seconds`
+(default 900) and honors the remaining attempt budget.

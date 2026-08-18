@@ -6,7 +6,8 @@ This experiment track evaluates explanation factors for risk warnings.
 
 ## Initial Scope
 
-The first milestone focuses on tabular technical and market features. Explanations should identify which features contributed to a warning decision.
+The first milestone focuses on tabular technical and market features. Explanations should identify
+which features contributed to a warning decision.
 
 ## Candidate Methods
 

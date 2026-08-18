@@ -24,8 +24,8 @@ npm ci
 cd ../..
 ```
 
-Go `1.25.13` and Node `22.23.2` match CI. On WSL2, use Docker Desktop with WSL
-integration or one native Docker Engine, not both at the same time.
+Go `1.25.13` and Node `22.23.2` match CI. On WSL2, use Docker Desktop with WSL integration or one
+native Docker Engine, not both at the same time.
 
 Create local environment configuration:
 
@@ -33,8 +33,7 @@ Create local environment configuration:
 cp .env.example .env
 ```
 
-Fill `.env` with local PostgreSQL credentials and CORS origins. Do not commit
-`.env`.
+Fill `.env` with local PostgreSQL credentials and CORS origins. Do not commit `.env`.
 
 ## 1. Start PostgreSQL
 
@@ -48,8 +47,8 @@ The database initializes schemas from:
 infra/postgres/init/
 ```
 
-For an existing local database, apply any new migration files under that
-directory before testing a new release.
+For an existing local database, apply any new migration files under that directory before testing a
+new release.
 
 ## 2. Start Go API
 
@@ -75,8 +74,7 @@ http://localhost:18080/api/v1/status
 http://localhost:18080/api/v1/models/current
 ```
 
-If `TSI_DATABASE_URL` is missing or PostgreSQL is unreachable, the API should
-fail at startup.
+If `TSI_DATABASE_URL` is missing or PostgreSQL is unreachable, the API should fail at startup.
 
 ## 3. Start TypeScript Dashboard
 
@@ -91,8 +89,8 @@ http://localhost:5175
 http://<dashboard-host>:5175
 ```
 
-The Vite dev server binds to `0.0.0.0`. It proxies API calls to
-`http://127.0.0.1:18080` by default through `TSI_DASHBOARD_API_BASE_URL`.
+The Vite dev server binds to `0.0.0.0`. It proxies API calls to `http://127.0.0.1:18080` by default
+through `TSI_DASHBOARD_API_BASE_URL`.
 
 ## 4. Try Ticker Analysis
 
@@ -109,8 +107,8 @@ Expected behavior:
 
 - stored warning records return immediately
 - missing tickers trigger the configured Python on-demand command
-- provider-backed but insufficient-history symbols return typed `abstain`
-  analysis instead of an unstructured failure
+- provider-backed but insufficient-history symbols return typed `abstain` analysis instead of an
+  unstructured failure
 - Taiwan alphanumeric symbols remain Taiwan symbols, not US tickers
 - TPEx emerging fallback can resolve supported emerging-stock codes
 
@@ -149,8 +147,7 @@ npm audit --audit-level=moderate
 
 ## Optional Streamlit Dashboard
 
-The Streamlit dashboard remains useful for research artifacts and a live API
-tab:
+The Streamlit dashboard remains useful for research artifacts and a live API tab:
 
 ```bash
 uv run --locked --no-sync streamlit run dashboard/app.py
@@ -164,6 +161,5 @@ http://localhost:8501
 
 ## Optional JSON Export
 
-`latest_warnings.json` can still be generated for debug snapshots,
-notifications, or report exports. It is not the primary serving source for the
-Go API in the `0.4.0` dashboard path.
+`latest_warnings.json` can still be generated for debug snapshots, notifications, or report exports.
+It is not the primary serving source for the Go API in the `0.4.0` dashboard path.
