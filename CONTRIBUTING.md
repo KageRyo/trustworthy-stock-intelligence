@@ -19,6 +19,7 @@ Run the checks relevant to your change. Before a cross-stack change, run the ful
 
 ```bash
 uv sync --locked --extra dev --extra data --extra db --extra dashboard --extra deep
+make docs-check
 uv run --locked --no-sync python -m pytest
 uv run --locked --no-sync python -m ruff check src tests scripts dashboard
 

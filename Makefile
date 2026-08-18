@@ -3,6 +3,8 @@ PYTHON ?= $(UV) run --locked --no-sync python
 GO ?= go
 STREAMLIT ?= $(UV) run --locked --no-sync streamlit
 NPM ?= npm
+MDFORMAT ?= uvx --with mdformat-gfm==1.0.0 mdformat==1.0.0
+MARKDOWN_FILES := $(shell git ls-files '*.md' '*.mdx')
 
 ifneq (,$(wildcard .env))
 include .env
@@ -34,13 +36,19 @@ MARKET_END_ARG := $(if $(MARKET_END),--end $(MARKET_END),)
 PREDICT_DB_ARGS ?= --write-db --database-url $(DATABASE_URL)
 PYTHON_SYNC_EXTRAS := --extra dev --extra data --extra db --extra dashboard --extra models --extra explainability --extra viz --extra notebooks
 
-.PHONY: python-sync python-sync-gpu download-tickers ingest-market-data ingest-watchlist-data predict-latest predict-latest-baseline api dashboard stock-dashboard frontend-install frontend-build test-python test-go lint test-all
+.PHONY: python-sync python-sync-gpu docs-format docs-check download-tickers ingest-market-data ingest-watchlist-data predict-latest predict-latest-baseline api dashboard stock-dashboard frontend-install frontend-build test-python test-go lint test-all
 
 python-sync:
 	$(UV) sync --locked $(PYTHON_SYNC_EXTRAS) --extra deep
 
 python-sync-gpu:
 	$(UV) sync --locked $(PYTHON_SYNC_EXTRAS) --extra deep-cu126
+
+docs-format:
+	$(MDFORMAT) --wrap 100 $(MARKDOWN_FILES)
+
+docs-check:
+	$(MDFORMAT) --check --wrap 100 $(MARKDOWN_FILES)
 
 download-tickers:
 	$(PYTHON) -m scripts.download_tickers \
