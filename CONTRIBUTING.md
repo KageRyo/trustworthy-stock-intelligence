@@ -21,8 +21,9 @@ Run the checks relevant to your change. Before a cross-stack change, run the
 full set:
 
 ```bash
-python -m pytest
-python -m ruff check src tests scripts dashboard
+uv sync --locked --extra dev --extra data --extra db --extra dashboard --extra deep
+uv run --locked --no-sync python -m pytest
+uv run --locked --no-sync python -m ruff check src tests scripts dashboard
 
 cd services/api-gateway-go
 GOCACHE=/tmp/tsi-go-build-cache CGO_ENABLED=0 go vet ./...

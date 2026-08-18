@@ -1,6 +1,7 @@
-PYTHON ?= python
+UV ?= uv
+PYTHON ?= $(UV) run --locked --no-sync python
 GO ?= go
-STREAMLIT ?= streamlit
+STREAMLIT ?= $(UV) run --locked --no-sync streamlit
 NPM ?= npm
 
 ifneq (,$(wildcard .env))
@@ -31,8 +32,15 @@ UNIVERSE_NAME ?= watchlist
 MARKET_START_ARG := $(if $(MARKET_START),--start $(MARKET_START),)
 MARKET_END_ARG := $(if $(MARKET_END),--end $(MARKET_END),)
 PREDICT_DB_ARGS ?= --write-db --database-url $(DATABASE_URL)
+PYTHON_SYNC_EXTRAS := --extra dev --extra data --extra db --extra dashboard --extra models --extra explainability --extra viz --extra notebooks
 
-.PHONY: download-tickers ingest-market-data ingest-watchlist-data predict-latest predict-latest-baseline api dashboard stock-dashboard frontend-install frontend-build test-python test-go lint test-all
+.PHONY: python-sync python-sync-gpu download-tickers ingest-market-data ingest-watchlist-data predict-latest predict-latest-baseline api dashboard stock-dashboard frontend-install frontend-build test-python test-go lint test-all
+
+python-sync:
+	$(UV) sync --locked $(PYTHON_SYNC_EXTRAS) --extra deep
+
+python-sync-gpu:
+	$(UV) sync --locked $(PYTHON_SYNC_EXTRAS) --extra deep-cu126
 
 download-tickers:
 	$(PYTHON) -m scripts.download_tickers \

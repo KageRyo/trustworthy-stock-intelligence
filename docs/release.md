@@ -1,21 +1,21 @@
 # Maintainer Release Checklist
 
-## 0.4.1 Python Package Scope
+## 0.4.2 Python Package Scope
 
-`0.4.1` is a focused Python distribution release following the `0.4.0`
-product-readiness baseline. It adds a public `tsi` API, a deterministic local
-CLI, package metadata, and a tag-triggered PyPI Trusted Publishing workflow.
-It does not repackage the Go API, PostgreSQL, or TypeScript dashboard.
+`0.4.2` is a backward-compatible maintenance release following the `0.4.1`
+Python package launch. It adds a committed uv lock, explicit CPU and CUDA 12.6
+PyTorch profiles, Python 3.11/runtime pins, and corrected public environment
+guidance. It does not change the Go API, PostgreSQL, or TypeScript contracts.
 
 Before tagging the release:
 
 ```bash
-python -m pip install -e ".[dev,data]"
-python -m pytest
-python -m ruff check src tests scripts dashboard
-python -m build
-python -m twine check dist/*
-python -m tsi --version
+uv sync --locked --extra dev --extra data --extra deep
+uv run --locked --no-sync python -m pytest
+uv run --locked --no-sync python -m ruff check src tests scripts dashboard
+uv run --locked --no-sync python -m build
+uv run --locked --no-sync python -m twine check dist/*
+uv run --locked --no-sync python -m tsi --version
 ```
 
 Configure PyPI's Trusted Publisher with owner `KageRyo`, repository
@@ -29,8 +29,8 @@ initial pending-publisher setup and package boundary.
 The package-only release sequence is:
 
 ```bash
-git tag -a v0.4.1 -m "release: v0.4.1"
-git push origin v0.4.1
+git tag -a v0.4.2 -m "release: v0.4.2"
+git push origin v0.4.2
 ```
 
 ## 0.4.0 Scope
@@ -76,8 +76,8 @@ docs/release.md
 ## Required Checks
 
 ```bash
-python -m pytest
-python -m ruff check src tests scripts dashboard
+uv run --locked --no-sync python -m pytest
+uv run --locked --no-sync python -m ruff check src tests scripts dashboard
 cd services/api-gateway-go
 go vet ./...
 govulncheck ./...

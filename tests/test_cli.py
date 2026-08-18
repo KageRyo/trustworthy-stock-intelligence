@@ -15,7 +15,7 @@ from tsi.cli import main
 
 
 def test_public_package_api_exposes_version_and_reusable_primitives() -> None:
-    assert __version__ == "0.4.1"
+    assert __version__ == "0.4.2"
     assert DEFAULT_FEATURE_COLUMNS
     assert LogisticRiskModel
     assert callable(build_technical_features)
@@ -27,7 +27,7 @@ def test_cli_version_is_available(capsys: pytest.CaptureFixture[str]) -> None:
         main(["--version"])
 
     assert raised.value.code == 0
-    assert capsys.readouterr().out.strip() == "tsi 0.4.1"
+    assert capsys.readouterr().out.strip() == "tsi 0.4.2"
 
 
 def test_cli_inspect_csv_preserves_numeric_ticker_symbols(tmp_path, capsys) -> None:

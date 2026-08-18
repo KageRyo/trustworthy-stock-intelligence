@@ -37,8 +37,10 @@ python -m pip install "trustworthy-stock-intelligence[models]"  # tree/boosting 
 python -m pip install "trustworthy-stock-intelligence[deep]"    # PyTorch model bundles/training
 ```
 
-The `deep` extra records the Python requirement, but GPU users should install
-the CUDA-matched PyTorch wheels as described in [`environment.md`](environment.md).
+The published `deep` extra records compatible PyTorch package families. In a uv
+checkout, `deep` selects CPU wheels for CI and `deep-cu126` selects CUDA 12.6
+wheels; they cannot be enabled together. GPU users should follow the explicit
+profile and driver guidance in [`environment.md`](environment.md).
 
 ## Python API
 
@@ -95,12 +97,12 @@ and the production-oriented ingestion/worker flow; see the main README and
 From a clean checkout:
 
 ```bash
-python -m pip install -e ".[dev,data]"
-python -m pytest tests/test_cli.py
-python -m ruff check src tests scripts dashboard
-python -m build
-python -m twine check dist/*
-python -m tsi --version
+uv sync --locked --extra dev --extra data
+uv run --locked --no-sync python -m pytest tests/test_cli.py
+uv run --locked --no-sync python -m ruff check src tests scripts dashboard
+uv run --locked --no-sync python -m build
+uv run --locked --no-sync python -m twine check dist/*
+uv run --locked --no-sync python -m tsi --version
 ```
 
 The release workflow repeats the build and metadata checks on a `vX.Y.Z` tag,
@@ -134,8 +136,8 @@ project publisher configuration before pushing the release tag.
 The release command is intentionally separate from ordinary CI:
 
 ```bash
-git tag -a v0.4.1 -m "release: v0.4.1"
-git push origin v0.4.1
+git tag -a v0.4.2 -m "release: v0.4.2"
+git push origin v0.4.2
 ```
 
 Only tag a verified commit after the pull request/branch checks are green. A
