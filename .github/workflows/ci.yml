@@ -25,6 +25,9 @@ jobs:
           version: "0.12.5"
           enable-cache: true
 
+      - name: Check Markdown formatting
+        run: make docs-check
+
       - name: Install Python dependencies
         run: >-
           uv sync --locked

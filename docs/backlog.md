@@ -1,8 +1,7 @@
 # Backlog
 
-This backlog tracks the work after `0.3.1`. The roadmap groups the work by
-release evidence and product maturity; issue numbers below are the canonical
-discussion threads.
+This backlog tracks the work after `0.3.1`. The roadmap groups the work by release evidence and
+product maturity; issue numbers below are the canonical discussion threads.
 
 ## Completed: 0.3.x Public Release Hardening
 

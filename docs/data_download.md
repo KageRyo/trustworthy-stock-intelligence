@@ -2,7 +2,8 @@
 
 ## Purpose
 
-This project uses `yfinance` only for pilot OHLCV experiments. The downloaded data is intended to validate the research pipeline before using higher-quality formal research data.
+This project uses `yfinance` only for pilot OHLCV experiments. The downloaded data is intended to
+validate the research pipeline before using higher-quality formal research data.
 
 Formal research should prefer:
 
@@ -63,15 +64,13 @@ python -m scripts.download_tickers \
 ```
 
 The reproducible Taiwan baseline pilot uses the explicit six-ticker list in
-[`configs/dataset/taiwan_pilot.yaml`](../configs/dataset/taiwan_pilot.yaml) and
-is documented in
-[`experiments/009_taiwan_pilot/README.md`](../experiments/009_taiwan_pilot/README.md).
-It commits only snapshot fingerprints and aggregate metrics; raw provider data
-and prediction rows remain gitignored.
+[`configs/dataset/taiwan_pilot.yaml`](../configs/dataset/taiwan_pilot.yaml) and is documented in
+[`experiments/009_taiwan_pilot/README.md`](../experiments/009_taiwan_pilot/README.md). It commits
+only snapshot fingerprints and aggregate metrics; raw provider data and prediction rows remain
+gitignored.
 
-For a current-company TWSE plus TPEx-listed research sample, download each
-market with its explicit resolver and then combine the compatible artifacts
-without losing their input fingerprints:
+For a current-company TWSE plus TPEx-listed research sample, download each market with its explicit
+resolver and then combine the compatible artifacts without losing their input fingerprints:
 
 ```bash
 export TSI_PRIVATE_DATA_DIR=/path/to/private/tsi-data
@@ -87,9 +86,9 @@ The exact sample and its coverage boundary are recorded in
 [`configs/dataset/taiwan_listed_tpex_stratified_pilot.yaml`](../configs/dataset/taiwan_listed_tpex_stratified_pilot.yaml)
 and [`experiments/014_taiwan_listed_tpex_pilot`](../experiments/014_taiwan_listed_tpex_pilot/).
 
-For intraday freshness checks, request 5-minute bars. Numeric Taiwan tickers are
-resolved to yfinance provider symbols such as `2330.TW`, while the output keeps
-the user-facing ticker as `2330`.
+For intraday freshness checks, request 5-minute bars. Numeric Taiwan tickers are resolved to
+yfinance provider symbols such as `2330.TW`, while the output keeps the user-facing ticker as
+`2330`.
 
 ```bash
 python -m scripts.download_tickers \
@@ -109,10 +108,10 @@ data/raw/<universe>/tickers.csv
 data/raw/<universe>/metadata.json
 ```
 
-`metadata.json` records the provider, download timestamp, requested interval,
-failed batches, and SHA-256 fingerprints for `ohlcv.csv` and `tickers.csv`.
-The hashes identify an exact snapshot so later provider corrections can be
-detected; they do not by themselves explain why a provider revised data.
+`metadata.json` records the provider, download timestamp, requested interval, failed batches, and
+SHA-256 fingerprints for `ohlcv.csv` and `tickers.csv`. The hashes identify an exact snapshot so
+later provider corrections can be detected; they do not by themselves explain why a provider revised
+data.
 
 The OHLCV schema is:
 
@@ -149,7 +148,8 @@ data/processed/
 data/artifacts/
 ```
 
-This avoids pushing large vendor-adjusted files to GitHub while preserving the exact commands needed to regenerate the pilot datasets.
+This avoids pushing large vendor-adjusted files to GitHub while preserving the exact commands needed
+to regenerate the pilot datasets.
 
 ## Reference snapshot
 
@@ -168,7 +168,6 @@ data/raw/sp100: 31M
 data/raw/sp500: 151M
 ```
 
-These values are historical reference points, not acceptance criteria. Provider
-revisions, unavailable symbols, date changes, and compression choices can make
-a new download differ. Record the generated metadata and SHA-256 fingerprints
-when comparing a new run.
+These values are historical reference points, not acceptance criteria. Provider revisions,
+unavailable symbols, date changes, and compression choices can make a new download differ. Record
+the generated metadata and SHA-256 fingerprints when comparing a new run.

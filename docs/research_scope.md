@@ -8,7 +8,9 @@ Trustworthy Stock Risk Early-Warning via Calibrated Uncertainty and Selective Pr
 
 ## Key Idea
 
-Stock models should not be forced to issue confident predictions every day. When a model is poorly calibrated, uncertain, or operating under unstable market conditions, the safer research objective is to allow the system to watch or abstain.
+Stock models should not be forced to issue confident predictions every day. When a model is poorly
+calibrated, uncertain, or operating under unstable market conditions, the safer research objective
+is to allow the system to watch or abstain.
 
 The first version focuses on:
 
@@ -59,8 +61,8 @@ Evaluation: walk-forward validation, false alarm rate, miss rate, lead time, ECE
 
 ## Formal Research Deferred Work
 
-The following topics are deferred for the formal research milestone until the
-core risk warning protocol is stable:
+The following topics are deferred for the formal research milestone until the core risk warning
+protocol is stable:
 
 - candlestick image modeling
 - news and social-media NLP
@@ -70,7 +72,6 @@ core risk warning protocol is stable:
 - real-time streaming
 - automated trading
 
-The side-project product track now includes a Go API and TypeScript dashboard.
-Those product surfaces do not change the formal research requirement: model
-claims still need leakage-aware temporal validation and trustworthy AI
-reporting before being treated as research results.
+The side-project product track now includes a Go API and TypeScript dashboard. Those product
+surfaces do not change the formal research requirement: model claims still need leakage-aware
+temporal validation and trustworthy AI reporting before being treated as research results.

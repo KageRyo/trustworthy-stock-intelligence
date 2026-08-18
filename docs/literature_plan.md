@@ -6,7 +6,9 @@
 Trustworthy Stock Risk Alerting
 ```
 
-The first research milestone focuses on trustworthy risk early-warning rather than full multimodal stock prediction. Multimodal modeling, candlestick images, and LLM-based event reasoning are treated as later extensions.
+The first research milestone focuses on trustworthy risk early-warning rather than full multimodal
+stock prediction. Multimodal modeling, candlestick images, and LLM-based event reasoning are treated
+as later extensions.
 
 ## Reading Spine
 

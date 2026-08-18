@@ -1,8 +1,7 @@
 # Experiment 008: Purged Model-Family Comparison
 
-This report compares baseline model families under the same leakage-aware
-protocol. It is reproducible pilot evidence, not investment advice or a
-trading-performance claim.
+This report compares baseline model families under the same leakage-aware protocol. It is
+reproducible pilot evidence, not investment advice or a trading-performance claim.
 
 ## Protocol
 
@@ -10,7 +9,8 @@ trading-performance claim.
 - Purge size: `5` dates
 - Train/calibration/test: `252` / `63` / `63` dates
 - Fold count: `39`
-- Feature columns: `return_1d, return_5d, sma_5_gap, sma_10_gap, volatility_5d, volatility_10d, volume_ratio_5d`
+- Feature columns:
+  `return_1d, return_5d, sma_5_gap, sma_10_gap, volatility_5d, volatility_10d, volume_ratio_5d`
 
 ## Sample-Key Audit
 
@@ -18,15 +18,17 @@ trading-performance claim.
 - Identical across models: **True**
 - Shared row count: `244268`
 
-| Model | Calibrated AUC | Calibrated PR-AUC | Calibrated Brier | Calibrated ECE | Tuned F1 | Tuned FDR |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| logistic | 0.6086 | 0.1540 | 0.0917 | 0.0546 | 0.2077 | 0.8531 |
-| random_forest | 0.5683 | 0.1347 | 0.0938 | 0.0587 | 0.1879 | 0.8749 |
-| hist_gradient_boosting | 0.5942 | 0.1457 | 0.0929 | 0.0574 | 0.1982 | 0.8622 |
+| Model                  | Calibrated AUC | Calibrated PR-AUC | Calibrated Brier | Calibrated ECE | Tuned F1 | Tuned FDR |
+| ---------------------- | -------------: | ----------------: | ---------------: | -------------: | -------: | --------: |
+| logistic               |         0.6086 |            0.1540 |           0.0917 |         0.0546 |   0.2077 |    0.8531 |
+| random_forest          |         0.5683 |            0.1347 |           0.0938 |         0.0587 |   0.1879 |    0.8749 |
+| hist_gradient_boosting |         0.5942 |            0.1457 |           0.0929 |         0.0574 |   0.1982 |    0.8622 |
 
 ## Deep Model Boundary
 
-The current temporal model uses sequence lookback windows and therefore does not emit the exact row-level sample keys used by this baseline audit. It must be aligned separately before a deep-vs-baseline claim.
+The current temporal model uses sequence lookback windows and therefore does not emit the exact
+row-level sample keys used by this baseline audit. It must be aligned separately before a
+deep-vs-baseline claim.
 
 ## Limitations
 
@@ -54,9 +56,8 @@ python -m scripts.compare_model_families \
   --report experiments/008_model_family_comparison/README.md
 ```
 
-The paired model comparisons use the same fold-level percentile bootstrap
-method as Experiment 007. They are stored in
-`statistics/logistic_vs_random_forest_calibrated.json` and
+The paired model comparisons use the same fold-level percentile bootstrap method as Experiment 007.
+They are stored in `statistics/logistic_vs_random_forest_calibrated.json` and
 `statistics/logistic_vs_hist_gradient_boosting_calibrated.json`.
 
 ```text
@@ -70,6 +71,6 @@ logistic_vs_hist_gradient_boosting_calibrated.json SHA-256:
 1e825fbb975c585b2d994ff3582a8e3bc7737fe778282cfbd13c89a3e47c45ab
 ```
 
-The current temporal/deep model is deliberately not presented as an identical
-sample-key comparison: sequence lookback removes or shifts row-level samples.
-Aligning its output to this protocol is a separate research task.
+The current temporal/deep model is deliberately not presented as an identical sample-key comparison:
+sequence lookback removes or shifts row-level samples. Aligning its output to this protocol is a
+separate research task.

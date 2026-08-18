@@ -2,8 +2,8 @@
 
 Version: `0.4.0`
 
-REST API for serving trustworthy stock warning outputs and user-managed
-watchlists generated/stored by the Python ML core and PostgreSQL.
+REST API for serving trustworthy stock warning outputs and user-managed watchlists generated/stored
+by the Python ML core and PostgreSQL.
 
 ## Data Source
 
@@ -23,12 +23,11 @@ Configure PostgreSQL with:
 export TSI_DATABASE_URL="postgresql://<database-user>:<local-password>@localhost:55432/<database-name>"
 ```
 
-`TSI_DATABASE_URL` is required. The default address is `:8080`. Override it
-with `TSI_API_ADDR`, or `PORT` when `TSI_API_ADDR` is not set.
+`TSI_DATABASE_URL` is required. The default address is `:8080`. Override it with `TSI_API_ADDR`, or
+`PORT` when `TSI_API_ADDR` is not set.
 
-Browser clients are controlled by `TSI_CORS_ALLOWED_ORIGINS`, a comma-separated
-list of exact origins. The local default is `*`; shared deployments should use
-explicit dashboard origins.
+Browser clients are controlled by `TSI_CORS_ALLOWED_ORIGINS`, a comma-separated list of exact
+origins. The local default is `*`; shared deployments should use explicit dashboard origins.
 
 Example for a shared local dashboard:
 
@@ -44,13 +43,12 @@ export TSI_ON_DEMAND_ANALYSIS_WORKDIR="/absolute/path/to/trustworthy-stock-intel
 export TSI_ON_DEMAND_ANALYSIS_TIMEOUT_SECONDS=120
 ```
 
-When enabled, `/api/v1/analysis/{ticker}` can delegate a missing ticker to the
-Python ML core, write the generated warning record to PostgreSQL, refresh the
-store, and return a typed analysis response.
+When enabled, `/api/v1/analysis/{ticker}` can delegate a missing ticker to the Python ML core, write
+the generated warning record to PostgreSQL, refresh the store, and return a typed analysis response.
 
-Supported ticker normalization includes US symbols, Taiwan numeric codes,
-Taiwan alphanumeric local codes, explicit `.TW`, `.TWO`, and `.EMERGING`
-suffixes, and DB-preserved market metadata from previous provider ingestion.
+Supported ticker normalization includes US symbols, Taiwan numeric codes, Taiwan alphanumeric local
+codes, explicit `.TW`, `.TWO`, and `.EMERGING` suffixes, and DB-preserved market metadata from
+previous provider ingestion.
 
 ## Run
 
@@ -62,8 +60,8 @@ TSI_DATABASE_URL="postgresql://<database-user>:<local-password>@localhost:55432/
   CGO_ENABLED=0 go run ./cmd/server
 ```
 
-Install the version pinned in the repository with mise, or provide an
-equivalent Go `1.25.13` installation:
+Install the version pinned in the repository with mise, or provide an equivalent Go `1.25.13`
+installation:
 
 ```bash
 mise install
@@ -113,42 +111,36 @@ GET /api/v1/warnings/{ticker}
 GET /api/v1/models/current
 ```
 
-The service requires PostgreSQL through `TSI_DATABASE_URL`. It does not call
-Python by default. If `TSI_ON_DEMAND_ANALYSIS_COMMAND` is configured, missing
-ticker analysis is delegated to that Python command before the handler returns.
+The service requires PostgreSQL through `TSI_DATABASE_URL`. It does not call Python by default. If
+`TSI_ON_DEMAND_ANALYSIS_COMMAND` is configured, missing ticker analysis is delegated to that Python
+command before the handler returns.
 
-`/api/v1/analysis/{ticker}` returns a typed dashboard analysis schema built from
-the latest warning record. See `docs/api/analysis_api.md`.
+`/api/v1/analysis/{ticker}` returns a typed dashboard analysis schema built from the latest warning
+record. See `docs/api/analysis_api.md`.
 
-`/api/v1/analysis/{ticker}/transitions` returns deterministic warning-change
-events such as `new_alert`, `upgraded`, `resolved`, and `low_trust_warning`.
-Repeated identical snapshots are omitted. See the root
-`docs/warning_transitions.md` for semantics.
+`/api/v1/analysis/{ticker}/transitions` returns deterministic warning-change events such as
+`new_alert`, `upgraded`, `resolved`, and `low_trust_warning`. Repeated identical snapshots are
+omitted. See the root `docs/warning_transitions.md` for semantics.
 
-`/api/v1/tickers` returns the symbols that currently have PostgreSQL warning
-records. It is not a complete market universe endpoint.
+`/api/v1/tickers` returns the symbols that currently have PostgreSQL warning records. It is not a
+complete market universe endpoint.
 
-`/api/v1/watchlists/{name}` and child ticker endpoints manage DB-backed
-watchlists. A ticker may be present in a watchlist before a latest warning exists
-for it.
+`/api/v1/watchlists/{name}` and child ticker endpoints manage DB-backed watchlists. A ticker may be
+present in a watchlist before a latest warning exists for it.
 
-Swagger UI is served from `/swagger/`, with the OpenAPI YAML at
-`/openapi.yaml`.
+Swagger UI is served from `/swagger/`, with the OpenAPI YAML at `/openapi.yaml`.
 
-The latest warning batch is loaded from PostgreSQL `prediction_batches` and
-`warning_records`. Missing `TSI_DATABASE_URL` or an unreachable database is a
-startup error.
+The latest warning batch is loaded from PostgreSQL `prediction_batches` and `warning_records`.
+Missing `TSI_DATABASE_URL` or an unreachable database is a startup error.
 
-Prediction work is queued in PostgreSQL with an idempotency key and returns
-`202 Accepted`; a separate Python worker claims the job and writes the linked
-prediction batch and warning records. Query `GET /api/v1/prediction-jobs/{id}`
-for `queued`, `running`, `completed`, or typed `failed` state. See the root
-`docs/prediction_jobs.md` for worker startup and retry semantics.
+Prediction work is queued in PostgreSQL with an idempotency key and returns `202 Accepted`; a
+separate Python worker claims the job and writes the linked prediction batch and warning records.
+Query `GET /api/v1/prediction-jobs/{id}` for `queued`, `running`, `completed`, or typed `failed`
+state. See the root `docs/prediction_jobs.md` for worker startup and retry semantics.
 
-The lightweight Docker image contains only the Go API binary. Use the local
-`make api` workflow for on-demand Python analysis, or build a combined
-runtime/worker image before enabling `TSI_ON_DEMAND_ANALYSIS_COMMAND` in a
-container.
+The lightweight Docker image contains only the Go API binary. Use the local `make api` workflow for
+on-demand Python analysis, or build a combined runtime/worker image before enabling
+`TSI_ON_DEMAND_ANALYSIS_COMMAND` in a container.
 
 ## Test
 

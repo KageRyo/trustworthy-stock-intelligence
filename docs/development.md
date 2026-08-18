@@ -2,20 +2,18 @@
 
 ## Principles
 
-- Keep API and CLI payloads schema-first. JSON examples in docs must correspond
-  to Go structs, Pydantic models, Zod schemas, or OpenAPI schemas.
-- PostgreSQL is required for API startup. Do not add a hidden file fallback for
-  the Go API serving path.
-- Preserve ticker symbols as strings. This is required for Taiwan leading zeroes
-  and suffix letters such as `00981A` and `02001L`.
-- Keep Python responsible for data science, feature engineering, training,
-  calibration, uncertainty, trust scoring, and prediction writes.
-- Keep Go responsible for PostgreSQL-backed API serving, watchlists, CORS,
-  OpenAPI, and typed dashboard responses.
-- Keep TypeScript responsible for UI state, runtime schema validation, i18n, and
-  presentation.
-- Do not commit `.env`, downloaded data, model bundles, generated caches, or
-  local artifact outputs.
+- Keep API and CLI payloads schema-first. JSON examples in docs must correspond to Go structs,
+  Pydantic models, Zod schemas, or OpenAPI schemas.
+- PostgreSQL is required for API startup. Do not add a hidden file fallback for the Go API serving
+  path.
+- Preserve ticker symbols as strings. This is required for Taiwan leading zeroes and suffix letters
+  such as `00981A` and `02001L`.
+- Keep Python responsible for data science, feature engineering, training, calibration, uncertainty,
+  trust scoring, and prediction writes.
+- Keep Go responsible for PostgreSQL-backed API serving, watchlists, CORS, OpenAPI, and typed
+  dashboard responses.
+- Keep TypeScript responsible for UI state, runtime schema validation, i18n, and presentation.
+- Do not commit `.env`, downloaded data, model bundles, generated caches, or local artifact outputs.
 
 ## Tests
 
@@ -56,17 +54,16 @@ CI runs:
 
 - Python tests and Ruff
 - Go API tests, race tests, `go vet`, and pinned `govulncheck`
-- frontend Vitest tests, production build with TypeScript typechecking, and
-  moderate dependency audit
-- deterministic PostgreSQL watchlist-to-warning E2E with Go API and frontend
-  runtime-schema validation
+- frontend Vitest tests, production build with TypeScript typechecking, and moderate dependency
+  audit
+- deterministic PostgreSQL watchlist-to-warning E2E with Go API and frontend runtime-schema
+  validation
 - a separate SHA-pinned Gitleaks scan over repository history
 - a SHA-pinned CodeQL workflow for Python, Go, and JavaScript/TypeScript
 
-The development dependency range keeps Ruff on the compatible `0.15.x` through
-`0.16.x` baseline. CodeQL is run by `.github/workflows/codeql.yml`; native GitHub Secret
-Scanning and Push Protection remain repository settings documented in
-`.github/REPOSITORY_SETTINGS.md`.
+The development dependency range keeps Ruff on the compatible `0.15.x` through `0.16.x` baseline.
+CodeQL is run by `.github/workflows/codeql.yml`; native GitHub Secret Scanning and Push Protection
+remain repository settings documented in `.github/REPOSITORY_SETTINGS.md`.
 
 The CI badge in `README.md` points to the latest workflow result on GitHub.
 
@@ -97,22 +94,22 @@ refactor
 chore
 ```
 
-Commit in tested slices. Do not batch unrelated work into the same commit just
-because files are locally modified.
+Commit in tested slices. Do not batch unrelated work into the same commit just because files are
+locally modified.
 
 ## Release Checklist
 
 For a version release:
 
 1. Update `pyproject.toml`.
-2. Update `frontend/stock-dashboard/package.json` and lockfile.
-3. Update OpenAPI `info.version` in both API specs.
-4. Update README badges and `CHANGELOG.md`.
-5. Run Python, Go, and frontend checks.
-6. Commit with a `chore(release): bump version to X.Y.Z` message.
-7. Tag with `vX.Y.Z`.
-8. Push the branch and tag.
+1. Update `frontend/stock-dashboard/package.json` and lockfile.
+1. Update OpenAPI `info.version` in both API specs.
+1. Update README badges and `CHANGELOG.md`.
+1. Run Python, Go, and frontend checks.
+1. Commit with a `chore(release): bump version to X.Y.Z` message.
+1. Tag with `vX.Y.Z`.
+1. Push the branch and tag.
 
-For a Python package-only patch release, use the narrower file and validation
-scope in `docs/python-package.md` and `docs/release.md`; do not change the Go or
-frontend contract versions unless that release also changes those surfaces.
+For a Python package-only patch release, use the narrower file and validation scope in
+`docs/python-package.md` and `docs/release.md`; do not change the Go or frontend contract versions
+unless that release also changes those surfaces.

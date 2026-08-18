@@ -9,14 +9,13 @@
 
 **Status: Active Open-Source Project**
 
-Software maturity: operational prototype. This is a public portfolio project
-for trustworthy ML and backend systems, with reproducible pilot evidence rather
-than externally validated research.
+Software maturity: operational prototype. This is a public portfolio project for trustworthy ML and
+backend systems, with reproducible pilot evidence rather than externally validated research.
 
 ## What Problem Does This Solve?
 
-Trustworthy Stock Intelligence is a local stock drawdown-risk analysis system.
-It accepts a stock ticker as input and returns a schema-validated risk analysis:
+Trustworthy Stock Intelligence is a local stock drawdown-risk analysis system. It accepts a stock
+ticker as input and returns a schema-validated risk analysis:
 
 ```text
 ticker
@@ -28,16 +27,15 @@ ticker
 -> dashboard/API response
 ```
 
-The project is not investment advice, an automated trading system, or an exact
-price prediction tool. It is designed for human-in-the-loop risk assessment with
-auditable data, model, and API contracts.
+The project is not investment advice, an automated trading system, or an exact price prediction
+tool. It is designed for human-in-the-loop risk assessment with auditable data, model, and API
+contracts.
 
 ## Python Package
 
-Version `0.4.2` adds reproducible uv CPU/CUDA dependency profiles and maintains
-the reusable Python/ML core introduced in `0.4.1`. It includes the public `tsi`
-API, leakage-aware feature and label helpers, calibration/trust utilities,
-serving schemas, and a deterministic local CLI:
+Version `0.4.2` adds reproducible uv CPU/CUDA dependency profiles and maintains the reusable
+Python/ML core introduced in `0.4.1`. It includes the public `tsi` API, leakage-aware feature and
+label helpers, calibration/trust utilities, serving schemas, and a deterministic local CLI:
 
 ```bash
 python -m pip install trustworthy-stock-intelligence
@@ -51,52 +49,46 @@ Provider ingestion is optional and can be installed with the `data` extra:
 python -m pip install "trustworthy-stock-intelligence[data]"
 ```
 
-The Go API, PostgreSQL schema, workers, and TypeScript dashboard remain the
-full-stack operational prototype described below; they are not bundled into the
-PyPI wheel. See [`docs/python-package.md`](docs/python-package.md) for the
-package API, extras, local build checks, and Trusted Publishing setup.
+The Go API, PostgreSQL schema, workers, and TypeScript dashboard remain the full-stack operational
+prototype described below; they are not bundled into the PyPI wheel. See
+[`docs/python-package.md`](docs/python-package.md) for the package API, extras, local build checks,
+and Trusted Publishing setup.
 
 ## Current Status
 
-Version `0.4.0` is the product-readiness release following the `0.3.2`
-maintenance and security release:
+Version `0.4.0` is the product-readiness release following the `0.3.2` maintenance and security
+release:
 
-- Experiment 007 uses purged walk-forward train/calibration/test boundaries and
-  per-row `label_end_date` overlap checks.
-- Calibration results report ECE, Brier score, simple no-feature baselines, and
-  breakdowns by fold, ticker, and year without presenting limited predictive
-  skill as a trading edge.
-- A dedicated AUC invariance audit records per-fold sample identity, recovered
-  Platt parameters, ranking behavior, and mean-fold, weighted, and pooled AUC.
-- Model-family comparisons, paired bootstrap intervals, and calibration-drift
-  audits make uncertainty and failure cases inspectable rather than implied.
-- Reproducible Taiwan and US/Taiwan transfer pilots are recorded with explicit
-  current-universe, coverage, and provider-data limitations.
-- Repository controls include required CI, Dependabot, vulnerability analysis,
-  race tests, full-history Gitleaks scanning, and SHA-pinned CodeQL analysis.
-- PostgreSQL is the source of truth for tickers, watchlists, market bars,
-  prediction batches, and warning records.
-- The Go API requires PostgreSQL at startup and serves schema-owned API
-  responses.
-- The TypeScript dashboard is the primary UI for ticker search and risk
-  analysis.
-- On-demand analysis can generate a missing ticker record through the Python ML
-  core, then write the result back to PostgreSQL.
-- US stocks, Taiwan listed stocks, TPEx listed stocks, Taiwan alphanumeric ETF
-  codes, and TPEx emerging-stock daily fallback data are supported where the
-  providers have coverage.
-- Ticker-level feature attributions, warning-history timelines, calibration
-  drift state, and per-run TAI audit artifacts are available through typed
-  contracts and reproducible artifacts.
-- Scheduled 5-minute watchlist ingestion records provider health, retry, and
-  coverage state in PostgreSQL.
-- Freshness policies, queue-backed prediction jobs, typed job failures, and
-  deterministic warning transitions make stale or degraded outputs explicit.
-- The dashboard exposes freshness, trust, provider coverage, job lifecycle,
-  session grouping, filtering, and confirmed cleanup states.
-- Readiness probes, structured request/worker logs, Prometheus-style metrics,
-  and a deterministic PostgreSQL watchlist-to-warning CI smoke test cover the
-  serving path end to end.
+- Experiment 007 uses purged walk-forward train/calibration/test boundaries and per-row
+  `label_end_date` overlap checks.
+- Calibration results report ECE, Brier score, simple no-feature baselines, and breakdowns by fold,
+  ticker, and year without presenting limited predictive skill as a trading edge.
+- A dedicated AUC invariance audit records per-fold sample identity, recovered Platt parameters,
+  ranking behavior, and mean-fold, weighted, and pooled AUC.
+- Model-family comparisons, paired bootstrap intervals, and calibration-drift audits make
+  uncertainty and failure cases inspectable rather than implied.
+- Reproducible Taiwan and US/Taiwan transfer pilots are recorded with explicit current-universe,
+  coverage, and provider-data limitations.
+- Repository controls include required CI, Dependabot, vulnerability analysis, race tests,
+  full-history Gitleaks scanning, and SHA-pinned CodeQL analysis.
+- PostgreSQL is the source of truth for tickers, watchlists, market bars, prediction batches, and
+  warning records.
+- The Go API requires PostgreSQL at startup and serves schema-owned API responses.
+- The TypeScript dashboard is the primary UI for ticker search and risk analysis.
+- On-demand analysis can generate a missing ticker record through the Python ML core, then write the
+  result back to PostgreSQL.
+- US stocks, Taiwan listed stocks, TPEx listed stocks, Taiwan alphanumeric ETF codes, and TPEx
+  emerging-stock daily fallback data are supported where the providers have coverage.
+- Ticker-level feature attributions, warning-history timelines, calibration drift state, and per-run
+  TAI audit artifacts are available through typed contracts and reproducible artifacts.
+- Scheduled 5-minute watchlist ingestion records provider health, retry, and coverage state in
+  PostgreSQL.
+- Freshness policies, queue-backed prediction jobs, typed job failures, and deterministic warning
+  transitions make stale or degraded outputs explicit.
+- The dashboard exposes freshness, trust, provider coverage, job lifecycle, session grouping,
+  filtering, and confirmed cleanup states.
+- Readiness probes, structured request/worker logs, Prometheus-style metrics, and a deterministic
+  PostgreSQL watchlist-to-warning CI smoke test cover the serving path end to end.
 - The dashboard supports English and 正體中文.
 
 ## Quick Start
@@ -130,8 +122,8 @@ npm ci
 cd ../..
 ```
 
-Use `--extra deep-cu126` instead of `--extra deep` on a compatible CUDA 12.6
-workstation. The CPU and CUDA extras are intentionally mutually exclusive.
+Use `--extra deep-cu126` instead of `--extra deep` on a compatible CUDA 12.6 workstation. The CPU
+and CUDA extras are intentionally mutually exclusive.
 
 Start the API on all interfaces:
 
@@ -172,23 +164,23 @@ GET /api/v1/analysis/5240
 
 Ticker handling:
 
-| Input | Intended market behavior |
-| --- | --- |
-| `NVDA` | US stock through yfinance |
-| `2330` | Taiwan local code, TWSE first |
-| `6488.TWO` | TPEx listed symbol |
-| `00981A` | Taiwan alphanumeric ETF code, not a US ticker |
-| `02001L` | Taiwan leveraged/inverse-style local code |
-| `5240` | Can resolve to TPEx emerging fallback when listed providers miss |
+| Input      | Intended market behavior                                         |
+| ---------- | ---------------------------------------------------------------- |
+| `NVDA`     | US stock through yfinance                                        |
+| `2330`     | Taiwan local code, TWSE first                                    |
+| `6488.TWO` | TPEx listed symbol                                               |
+| `00981A`   | Taiwan alphanumeric ETF code, not a US ticker                    |
+| `02001L`   | Taiwan leveraged/inverse-style local code                        |
+| `5240`     | Can resolve to TPEx emerging fallback when listed providers miss |
 
-If the provider has data but the local model cannot produce a calibrated
-prediction with enough history, the API returns a typed `abstain` analysis with
-an `insufficient_history` reason code instead of `ticker_not_found`.
+If the provider has data but the local model cannot produce a calibrated prediction with enough
+history, the API returns a typed `abstain` analysis with an `insufficient_history` reason code
+instead of `ticker_not_found`.
 
 ## Example Output
 
-The typed analysis response contains warning, trust, model, freshness,
-explanations, and limitations:
+The typed analysis response contains warning, trust, model, freshness, explanations, and
+limitations:
 
 ```json
 {
@@ -247,13 +239,13 @@ Provider APIs: yfinance / TWSE / TPEx
 -> TypeScript dashboard
 ```
 
-The optional `latest_warnings.json` export is only a debug, notification, or
-snapshot artifact. It is not the primary serving store.
+The optional `latest_warnings.json` export is only a debug, notification, or snapshot artifact. It
+is not the primary serving store.
 
 ## Evaluation Evidence
 
-The current reproducible pilot uses an S&P 100 snapshot, a 5-day/-5% drawdown
-label, and 39 sliding walk-forward folds:
+The current reproducible pilot uses an S&P 100 snapshot, a 5-day/-5% drawdown label, and 39 sliding
+walk-forward folds:
 
 ```text
 252 train dates
@@ -265,43 +257,39 @@ label, and 39 sliding walk-forward folds:
 
 Mean fold results:
 
-| Variant | AUC | Brier | ECE | Precision | Recall | F1 |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| Training-window event-rate prior | 0.5000 | 0.0935 | 0.0655 | 0.0000 | 0.0000 | 0.0000 |
-| Raw logistic | 0.6153 | 0.2318 | 0.3736 | 0.1432 | 0.4502 | 0.2101 |
-| Logistic + Platt at 0.5 | 0.6086 | 0.0917 | 0.0546 | 0.0622 | 0.0015 | 0.0030 |
-| Logistic + Platt, threshold tuned on calibration only | 0.6086 | 0.0917 | 0.0546 | 0.1469 | 0.4344 | 0.2077 |
+| Variant                                               |    AUC |  Brier |    ECE | Precision | Recall |     F1 |
+| ----------------------------------------------------- | -----: | -----: | -----: | --------: | -----: | -----: |
+| Training-window event-rate prior                      | 0.5000 | 0.0935 | 0.0655 |    0.0000 | 0.0000 | 0.0000 |
+| Raw logistic                                          | 0.6153 | 0.2318 | 0.3736 |    0.1432 | 0.4502 | 0.2101 |
+| Logistic + Platt at 0.5                               | 0.6086 | 0.0917 | 0.0546 |    0.0622 | 0.0015 | 0.0030 |
+| Logistic + Platt, threshold tuned on calibration only | 0.6086 | 0.0917 | 0.0546 |    0.1469 | 0.4344 | 0.2077 |
 
-Calibration improved Brier and ECE over the raw logistic output in 38 of 39
-folds. The exception covers the COVID-19 regime shift and is retained as a
-failure case. Improvements over the no-feature prior are modest, and the fixed
-0.5 warning threshold is unusable after calibration. See
-`experiments/007_research_evidence/README.md` for dates, hashes, standard
-deviations, subgroup checks, commands, and limitations.
+Calibration improved Brier and ECE over the raw logistic output in 38 of 39 folds. The exception
+covers the COVID-19 regime shift and is retained as a failure case. Improvements over the no-feature
+prior are modest, and the fixed 0.5 warning threshold is unusable after calibration. See
+`experiments/007_research_evidence/README.md` for dates, hashes, standard deviations, subgroup
+checks, commands, and limitations.
 
-The evidence record now also includes a paired model-family comparison with
-bootstrap intervals, Taiwan current-universe pilots, and a US/Taiwan
-cross-market transfer pilot. These artifacts demonstrate reproducible
-engineering and expose failure modes; they do not claim a production-ready
+The evidence record now also includes a paired model-family comparison with bootstrap intervals,
+Taiwan current-universe pilots, and a US/Taiwan cross-market transfer pilot. These artifacts
+demonstrate reproducible engineering and expose failure modes; they do not claim a production-ready
 warning policy or comprehensive market coverage.
 
 ## Limitations
 
-- This is an S&P 100 daily-data pilot with survivorship and provider-revision
-  risk, not evidence of all-market or intraday performance.
-- Taiwan and cross-market pilots are available, but their current-universe,
-  selected-symbol, provider, sector, liquidity, and market-cap coverage limits
-  mean they are not all-market validation.
-- Paired bootstrap intervals are reported for the documented comparisons. ECE
-  remains bin-dependent, and pilot intervals do not remove data-selection or
-  external-validation limitations.
-- Transaction cost is outside the current risk-probability claim because the
-  project does not execute a trading strategy. It becomes mandatory for any
-  future strategy backtest.
-- Provider snapshots are now fingerprinted, but repeat-download revision audits
-  and licensed formal-research data are still open work.
-- Trust scores and abstention policies are engineered and tested, but have not
-  yet been externally validated as guarantees of safety or reliability.
+- This is an S&P 100 daily-data pilot with survivorship and provider-revision risk, not evidence of
+  all-market or intraday performance.
+- Taiwan and cross-market pilots are available, but their current-universe, selected-symbol,
+  provider, sector, liquidity, and market-cap coverage limits mean they are not all-market
+  validation.
+- Paired bootstrap intervals are reported for the documented comparisons. ECE remains bin-dependent,
+  and pilot intervals do not remove data-selection or external-validation limitations.
+- Transaction cost is outside the current risk-probability claim because the project does not
+  execute a trading strategy. It becomes mandatory for any future strategy backtest.
+- Provider snapshots are now fingerprinted, but repeat-download revision audits and licensed
+  formal-research data are still open work.
+- Trust scores and abstention policies are engineered and tested, but have not yet been externally
+  validated as guarantees of safety or reliability.
 
 ## Documentation
 
@@ -313,22 +301,22 @@ docs/README.md
 
 High-traffic documents:
 
-| Need | Document |
-| --- | --- |
-| Use the Python package or CLI | `docs/python-package.md` |
-| Use the dashboard and ticker search | `docs/user_guide.md` |
-| Run the local demo | `docs/demo/local_demo.md` |
-| Understand the system architecture | `docs/architecture.md` |
-| Understand PostgreSQL and provider data | `docs/data_store.md` |
-| Review supported markets and provider coverage | `docs/provider_coverage.md` |
-| Read API contracts | `docs/api/warning_api.md`, `docs/api/analysis_api.md` |
-| Review trustworthy AI checkpoints | `docs/trustworthy_ai_checklist.md` |
-| Review research evidence and gaps | `experiments/007_research_evidence/README.md` |
-| Review data/model licensing | `docs/data_and_model_licenses.md` |
-| Review public/private boundaries | `docs/public_private_boundary.md` |
-| Develop and test changes | `docs/development.md` |
-| Cite or contribute | `CITATION.cff`, `CONTRIBUTING.md` |
-| Review release notes | `CHANGELOG.md` |
+| Need                                           | Document                                              |
+| ---------------------------------------------- | ----------------------------------------------------- |
+| Use the Python package or CLI                  | `docs/python-package.md`                              |
+| Use the dashboard and ticker search            | `docs/user_guide.md`                                  |
+| Run the local demo                             | `docs/demo/local_demo.md`                             |
+| Understand the system architecture             | `docs/architecture.md`                                |
+| Understand PostgreSQL and provider data        | `docs/data_store.md`                                  |
+| Review supported markets and provider coverage | `docs/provider_coverage.md`                           |
+| Read API contracts                             | `docs/api/warning_api.md`, `docs/api/analysis_api.md` |
+| Review trustworthy AI checkpoints              | `docs/trustworthy_ai_checklist.md`                    |
+| Review research evidence and gaps              | `experiments/007_research_evidence/README.md`         |
+| Review data/model licensing                    | `docs/data_and_model_licenses.md`                     |
+| Review public/private boundaries               | `docs/public_private_boundary.md`                     |
+| Develop and test changes                       | `docs/development.md`                                 |
+| Cite or contribute                             | `CITATION.cff`, `CONTRIBUTING.md`                     |
+| Review release notes                           | `CHANGELOG.md`                                        |
 
 ## Development Checks
 
@@ -348,33 +336,30 @@ npm run build
 npm audit --audit-level=moderate
 ```
 
-CI runs Python tests/lint, Go API tests, frontend tests/build, and a separate
-PostgreSQL watchlist-to-warning E2E pipeline on pull requests. Dependabot
-covers Python, Go, npm, and GitHub Actions.
-Basic static analysis covers Python with Ruff, Go with `go vet`, pinned
-`govulncheck`, and race tests, and TypeScript through the production build's
-typecheck. A least-privilege, SHA-pinned Gitleaks workflow scans repository
-history, while the SHA-pinned CodeQL workflow analyzes Python, Go, and
-JavaScript/TypeScript. Native GitHub Secret Scanning and Push Protection are
-enabled; their status is recorded in `.github/REPOSITORY_SETTINGS.md`.
-Applied remote controls and remaining plan-dependent settings are recorded in
-`.github/REPOSITORY_SETTINGS.md`.
+CI runs Python tests/lint, Go API tests, frontend tests/build, and a separate PostgreSQL
+watchlist-to-warning E2E pipeline on pull requests. Dependabot covers Python, Go, npm, and GitHub
+Actions. Basic static analysis covers Python with Ruff, Go with `go vet`, pinned `govulncheck`, and
+race tests, and TypeScript through the production build's typecheck. A least-privilege, SHA-pinned
+Gitleaks workflow scans repository history, while the SHA-pinned CodeQL workflow analyzes Python,
+Go, and JavaScript/TypeScript. Native GitHub Secret Scanning and Push Protection are enabled; their
+status is recorded in `.github/REPOSITORY_SETTINGS.md`. Applied remote controls and remaining
+plan-dependent settings are recorded in `.github/REPOSITORY_SETTINGS.md`.
 
 ## Environment Versions
 
 Project targets:
 
-| Runtime | Version |
-| --- | --- |
-| Python package | `0.4.2` |
-| Python | `>=3.10`, maintainer and CI use `3.11` |
-| Go API | `1.25.13` |
-| Node.js CI runtime | `22.23.2` |
-| TypeScript | `7.0.x` |
-| PostgreSQL container | `17-alpine` |
+| Runtime              | Version                                |
+| -------------------- | -------------------------------------- |
+| Python package       | `0.4.2`                                |
+| Python               | `>=3.10`, maintainer and CI use `3.11` |
+| Go API               | `1.25.13`                              |
+| Node.js CI runtime   | `22.23.2`                              |
+| TypeScript           | `7.0.x`                                |
+| PostgreSQL container | `17-alpine`                            |
 
-Portable requirements, the current maintainer workstation, and historical GPU
-experiment provenance are separated in `docs/environment.md`.
+Portable requirements, the current maintainer workstation, and historical GPU experiment provenance
+are separated in `docs/environment.md`.
 
 ## Repository Layout
 
@@ -392,21 +377,18 @@ experiments/              Experiment notes and reports
 
 ## Data And Model License
 
-Repository source code and documentation are Apache License 2.0. That license
-does not grant rights to downloaded Yahoo Finance, TWSE, or TPEx data. Raw data
-and local model artifacts are gitignored; users must comply with each provider's
-terms and separately review redistribution or commercial use. See
-`docs/data_and_model_licenses.md`.
+Repository source code and documentation are Apache License 2.0. That license does not grant rights
+to downloaded Yahoo Finance, TWSE, or TPEx data. Raw data and local model artifacts are gitignored;
+users must comply with each provider's terms and separately review redistribution or commercial use.
+See `docs/data_and_model_licenses.md`.
 
 ## Roadmap
 
-The v0.4.0 scope is product and open-source readiness: scheduled 5-minute
-watchlist ingestion, provider health and freshness/stale-state handling,
-queue-backed prediction jobs, warning-change detection, and richer
-session-scoped watchlists. Point-in-time universe membership and licensed
-historical data remain valuable research-quality enhancements, but are not
-blockers for using or contributing to the project. Detailed work lives in
-`docs/project_roadmap.md` and `docs/backlog.md`.
+The v0.4.0 scope is product and open-source readiness: scheduled 5-minute watchlist ingestion,
+provider health and freshness/stale-state handling, queue-backed prediction jobs, warning-change
+detection, and richer session-scoped watchlists. Point-in-time universe membership and licensed
+historical data remain valuable research-quality enhancements, but are not blockers for using or
+contributing to the project. Detailed work lives in `docs/project_roadmap.md` and `docs/backlog.md`.
 
 ## License
 
