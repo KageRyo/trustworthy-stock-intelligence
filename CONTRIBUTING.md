@@ -48,6 +48,12 @@ Open an issue before a large change when the scope or research question is not
 already tracked. A pull request should describe the goal, key changes, tests,
 data/artifact assumptions, and any known limitations. Link the relevant issue.
 
+Follow GitHub Flow and branch from the current default branch. Name branches
+with a change-type prefix and a short kebab-case description, such as
+`feat/ticker-history`, `fix/twse-fallback`, `docs/development-environment`,
+`build/python-lockfile`, or `release/0.4.2`. Supported prefixes are `feat/`,
+`fix/`, `docs/`, `test/`, `refactor/`, `chore/`, `build/`, `ci/`, and `release/`.
+
 Use small commits with this format:
 
 ```text
