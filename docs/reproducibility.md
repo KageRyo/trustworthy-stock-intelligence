@@ -71,47 +71,26 @@ No transform should be fit on the full dataset before temporal splitting.
 
 ## Environment
 
-The project uses `pyproject.toml` as the canonical dependency entry point.
-
-Suggested environment setup:
-
-```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -e ".[dev,models,explainability]"
-```
-
-Create and activate an isolated Python 3.11 environment (the environment name
-is arbitrary; `tsi` is used here):
+`pyproject.toml` defines dependency ranges, `.python-version` selects the
+maintainer/CI Python, and `uv.lock` records the exact resolution. Reproduce the
+CPU environment with:
 
 ```bash
-conda create -n tsi python=3.11 -y
-conda activate tsi
+uv sync --locked \
+  --extra dev \
+  --extra models \
+  --extra explainability \
+  --extra viz \
+  --extra notebooks \
+  --extra data \
+  --extra deep
 ```
 
-`pyproject.toml` is the canonical dependency definition for this repository. The
-recommended workflow is to use `uv` inside the isolated environment:
-
-```bash
-python -m pip install uv
-uv pip install -e ".[dev,models,explainability,viz,notebooks,data]"
-```
-
-Plain pip is also valid:
-
-```bash
-python -m pip install -e ".[dev,models,explainability,viz,notebooks,data]"
-```
-
-Install PyTorch with the CUDA wheel that matches the target machine's driver and
-runtime. The GPU pilot reports use the CUDA 12.8 wheel index:
-
-```bash
-python -m pip install torch torchvision torchaudio \
-  --index-url https://download.pytorch.org/whl/cu128
-```
-
-The `deep` extra records the Python package requirement, but explicit PyTorch CUDA installation is preferred for reproducibility on GPU machines.
+For a CUDA 12.6 experiment, replace `--extra deep` with
+`--extra deep-cu126`. Never enable both profiles. Record `torch.__version__`,
+`torch.version.cuda`, device names and device count in every GPU run. Historical
+CUDA 12.8 results retain their original environment metadata rather than being
+silently reclassified as CUDA 12.6 runs.
 
 ## Reporting Standard
 

@@ -22,9 +22,9 @@ To run the Python portion locally, point `TSI_E2E_DATABASE_URL` at a disposable
 PostgreSQL database with the `db` extra installed:
 
 ```bash
-python -m pip install -e ".[dev,db]"
+uv sync --locked --extra dev --extra db
 TSI_E2E_DATABASE_URL="postgresql://postgres:postgres@127.0.0.1:5432/tsi_e2e" \
-  python -m pytest tests/test_e2e_watchlist_warning_pipeline.py -q
+  uv run --locked --no-sync python -m pytest tests/test_e2e_watchlist_warning_pipeline.py -q
 ```
 
 Set `TSI_E2E_API_BINARY` to a built `services/api-gateway-go/cmd/server`
