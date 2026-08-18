@@ -1,6 +1,6 @@
 [project]
 name = "trustworthy-stock-intelligence"
-version = "0.4.1"
+version = "0.4.2"
 description = "Leakage-aware and trust-aware tools for stock drawdown-risk analysis."
 readme = "README.pypi.md"
 requires-python = ">=3.10"

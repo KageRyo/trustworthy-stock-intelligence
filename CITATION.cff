@@ -7,14 +7,14 @@ authors:
 repository-code: "https://github.com/KageRyo/trustworthy-stock-intelligence"
 url: "https://github.com/KageRyo/trustworthy-stock-intelligence"
 license: "Apache-2.0"
-version: "0.4.1"
-date-released: "2026-08-14"
+version: "0.4.2"
+date-released: "2026-08-19"
 abstract: >-
   Research software for schema-first, human-in-the-loop stock drawdown-risk
   analysis with temporal validation, calibration, uncertainty, trust scores,
-  warning explanations. Version 0.4.1 is the PyPI package-readiness release
-  following the DB-backed product-readiness baseline; it is not externally
-  validated research or investment advice.
+  warning explanations. Version 0.4.2 adds reproducible CPU/CUDA dependency
+  profiles and updates the maintained development toolchain; it is not
+  externally validated research or investment advice.
 keywords:
   - stock risk
   - trustworthy AI
