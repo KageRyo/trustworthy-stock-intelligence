@@ -22,8 +22,9 @@
 Run focused tests while developing and the full relevant suite before commit:
 
 ```bash
-python -m pytest
-python -m ruff check src tests scripts dashboard
+uv sync --locked --extra dev --extra data --extra db --extra dashboard --extra deep
+uv run --locked --no-sync python -m pytest
+uv run --locked --no-sync python -m ruff check src tests scripts dashboard
 cd services/api-gateway-go
 GOCACHE=/tmp/tsi-go-build-cache CGO_ENABLED=0 go vet ./...
 GOCACHE=/tmp/tsi-go-build-cache CGO_ENABLED=0 go run golang.org/x/vuln/cmd/govulncheck@v1.6.0 ./...
@@ -62,8 +63,8 @@ CI runs:
 - a separate SHA-pinned Gitleaks scan over repository history
 - a SHA-pinned CodeQL workflow for Python, Go, and JavaScript/TypeScript
 
-The development dependency range keeps Ruff on the compatible `0.15.x`
-baseline. CodeQL is run by `.github/workflows/codeql.yml`; native GitHub Secret
+The development dependency range keeps Ruff on the compatible `0.15.x` through
+`0.16.x` baseline. CodeQL is run by `.github/workflows/codeql.yml`; native GitHub Secret
 Scanning and Push Protection remain repository settings documented in
 `.github/REPOSITORY_SETTINGS.md`.
 

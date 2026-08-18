@@ -62,10 +62,11 @@ TSI_DATABASE_URL="postgresql://<database-user>:<local-password>@localhost:55432/
   CGO_ENABLED=0 go run ./cmd/server
 ```
 
-If Go is installed through conda, activate the environment first:
+Install the version pinned in the repository with mise, or provide an
+equivalent Go `1.25.13` installation:
 
 ```bash
-conda activate stock
+mise install
 which go
 go version
 ```

@@ -9,13 +9,13 @@ this app remains useful for research diagnostics and the Live API tab.
 Install the optional dashboard dependency:
 
 ```bash
-pip install -e ".[dashboard]"
+uv sync --locked --extra dashboard
 ```
 
 Start the app:
 
 ```bash
-streamlit run dashboard/app.py
+uv run --locked --no-sync streamlit run dashboard/app.py
 ```
 
 For the Live API tab, run the Go gateway separately:

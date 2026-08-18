@@ -17,14 +17,15 @@ The demo is not investment advice and does not run live trading.
 Install Python, Go, frontend, and DB dependencies:
 
 ```bash
-python -m pip install -e ".[dev,db,dashboard,deep]"
+uv sync --locked --extra dev --extra db --extra dashboard --extra deep
+mise install  # optional; installs the versions pinned in mise.toml
 cd frontend/stock-dashboard
 npm ci
 cd ../..
 ```
 
-Go `1.25.x` or newer is required for the API gateway. Node `22.x` is used in
-CI for the dashboard.
+Go `1.25.13` and Node `22.23.2` match CI. On WSL2, use Docker Desktop with WSL
+integration or one native Docker Engine, not both at the same time.
 
 Create local environment configuration:
 
@@ -136,8 +137,8 @@ The request body is a schema-owned `watchlist_add.v1` payload.
 ## 6. Run Checks
 
 ```bash
-python -m pytest
-python -m ruff check src tests scripts dashboard
+uv run --locked --no-sync python -m pytest
+uv run --locked --no-sync python -m ruff check src tests scripts dashboard
 cd services/api-gateway-go
 GOCACHE=/tmp/tsi-go-build-cache CGO_ENABLED=0 go test ./...
 cd ../../frontend/stock-dashboard
@@ -152,7 +153,7 @@ The Streamlit dashboard remains useful for research artifacts and a live API
 tab:
 
 ```bash
-streamlit run dashboard/app.py
+uv run --locked --no-sync streamlit run dashboard/app.py
 ```
 
 Open:

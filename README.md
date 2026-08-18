@@ -1,7 +1,7 @@
 # Trustworthy Stock Intelligence
 
 [![CI](https://github.com/KageRyo/trustworthy-stock-intelligence/actions/workflows/ci.yml/badge.svg)](https://github.com/KageRyo/trustworthy-stock-intelligence/actions/workflows/ci.yml)
-![Version](https://img.shields.io/badge/version-0.4.1-blue)
+![Version](https://img.shields.io/badge/version-0.4.2-blue)
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
 ![Go](https://img.shields.io/badge/go-1.25-blue)
 ![TypeScript](https://img.shields.io/badge/typescript-7.0-blue)
@@ -34,9 +34,10 @@ auditable data, model, and API contracts.
 
 ## Python Package
 
-Version `0.4.1` adds a PyPI distribution for the reusable Python/ML core. It
-includes the public `tsi` API, leakage-aware feature and label helpers,
-calibration/trust utilities, serving schemas, and a deterministic local CLI:
+Version `0.4.2` adds reproducible uv CPU/CUDA dependency profiles and maintains
+the reusable Python/ML core introduced in `0.4.1`. It includes the public `tsi`
+API, leakage-aware feature and label helpers, calibration/trust utilities,
+serving schemas, and a deterministic local CLI:
 
 ```bash
 python -m pip install trustworthy-stock-intelligence
@@ -117,11 +118,20 @@ docker compose up -d postgres
 Install dependencies:
 
 ```bash
-python -m pip install -e ".[dev,data,db,dashboard,deep]"
+uv sync --locked \
+  --extra dev \
+  --extra data \
+  --extra db \
+  --extra dashboard \
+  --extra deep
+mise install  # optional version manager for the pinned Node.js and Go runtimes
 cd frontend/stock-dashboard
 npm ci
 cd ../..
 ```
+
+Use `--extra deep-cu126` instead of `--extra deep` on a compatible CUDA 12.6
+workstation. The CPU and CUDA extras are intentionally mutually exclusive.
 
 Start the API on all interfaces:
 
@@ -325,8 +335,8 @@ High-traffic documents:
 Run the same checks before commit:
 
 ```bash
-python -m pytest
-python -m ruff check src tests scripts dashboard
+uv run --locked --no-sync python -m pytest
+uv run --locked --no-sync python -m ruff check src tests scripts dashboard
 cd services/api-gateway-go
 GOCACHE=/tmp/tsi-go-build-cache CGO_ENABLED=0 go vet ./...
 GOCACHE=/tmp/tsi-go-build-cache CGO_ENABLED=0 go run golang.org/x/vuln/cmd/govulncheck@v1.6.0 ./...
@@ -356,15 +366,15 @@ Project targets:
 
 | Runtime | Version |
 | --- | --- |
-| Python package | `0.4.1` |
-| Python | `>=3.10`, CI uses `3.11` |
-| Go API | `1.25.x` |
-| Node.js CI runtime | `22.x` |
-| TypeScript | `5.6.x` |
+| Python package | `0.4.2` |
+| Python | `>=3.10`, maintainer and CI use `3.11` |
+| Go API | `1.25.13` |
+| Node.js CI runtime | `22.23.2` |
+| TypeScript | `7.0.x` |
 | PostgreSQL container | `17-alpine` |
 
-The reference GPU research environment used for reproducibility is documented in
-`docs/environment.md`.
+Portable requirements, the current maintainer workstation, and historical GPU
+experiment provenance are separated in `docs/environment.md`.
 
 ## Repository Layout
 

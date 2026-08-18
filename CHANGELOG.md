@@ -2,6 +2,27 @@
 
 ## Unreleased
 
+## 0.4.2 - 2026-08-19
+
+### Added
+
+- Added a committed uv lock, Python version pin, and optional mise runtime pin
+  for reproducible contributor and maintainer environments.
+- Added mutually exclusive uv CPU and CUDA 12.6 PyTorch profiles while keeping
+  the published `deep` extra backward compatible.
+
+### Changed
+
+- Constrained the deep-learning stack to the verified PyTorch 2.11 family and
+  aligned local, CI, and container runtimes on Go 1.25.13 and Node.js 22.23.2.
+- Replaced the Conda-first contributor path with uv and separated portable
+  requirements, current maintainer hardware, and historical GPU provenance.
+
+### Security
+
+- Updated the Go runtime from vulnerable 1.25.12 runners to 1.25.13, resolving
+  the standard-library findings reported by `govulncheck`.
+
 ## 0.4.1 - 2026-08-14
 
 ### Added

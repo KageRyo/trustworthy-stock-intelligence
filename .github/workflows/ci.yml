@@ -17,24 +17,32 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
-          python-version: "3.11"
-          cache: pip
+          python-version-file: ".python-version"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: "0.12.5"
+          enable-cache: true
 
       - name: Install Python dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install -e ".[dev,data,deep,dashboard]"
+        run: >-
+          uv sync --locked
+          --extra dev
+          --extra data
+          --extra deep
+          --extra dashboard
 
       - name: Run Python tests
-        run: python -m pytest
+        run: uv run --locked --no-sync python -m pytest
 
       - name: Run ruff
-        run: python -m ruff check src tests scripts dashboard
+        run: uv run --locked --no-sync python -m ruff check src tests scripts dashboard
 
       - name: Build and validate Python distributions
         run: |
-          python -m build
-          python -m twine check dist/*
+          uv run --locked --no-sync python -m build
+          uv run --locked --no-sync python -m twine check dist/*
 
   go:
     name: Go API tests
@@ -49,7 +57,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: "1.25.x"
+          go-version: "1.25.13"
           cache-dependency-path: services/api-gateway-go/go.mod
 
       - name: Run Go vet
@@ -77,7 +85,7 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: "22.x"
+          node-version: "22.23.2"
           cache: npm
           cache-dependency-path: frontend/stock-dashboard/package-lock.json
 
@@ -122,18 +130,21 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
-          python-version: "3.11"
-          cache: pip
+          python-version-file: ".python-version"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: "0.12.5"
+          enable-cache: true
 
       - name: Install Python E2E dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install -e ".[dev,data,db]"
+        run: uv sync --locked --extra dev --extra data --extra db
 
       - name: Set up Go
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: "1.25.x"
+          go-version: "1.25.13"
           cache-dependency-path: services/api-gateway-go/go.mod
 
       - name: Build Go API binary
@@ -141,12 +152,12 @@ jobs:
         run: CGO_ENABLED=0 go build -o /tmp/tsi-api-gateway ./cmd/server
 
       - name: Run deterministic watchlist-to-warning pipeline
-        run: python -m pytest tests/test_e2e_watchlist_warning_pipeline.py -q
+        run: uv run --locked --no-sync python -m pytest tests/test_e2e_watchlist_warning_pipeline.py -q
 
       - name: Set up Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: "22.x"
+          node-version: "22.23.2"
           cache: npm
           cache-dependency-path: frontend/stock-dashboard/package-lock.json
 

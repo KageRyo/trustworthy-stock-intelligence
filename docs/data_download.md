@@ -13,19 +13,12 @@ Tiingo
 official exchange data
 ```
 
-## Conda Environment
+## Python environment
 
-Create and activate an isolated Python 3.11 environment:
-
-```bash
-conda create -n tsi python=3.11 -y
-conda activate tsi
-```
-
-Install the project into the environment:
+Create the locked Python 3.11 data environment with uv:
 
 ```bash
-python -m pip install -e ".[data]"
+uv sync --locked --extra data
 ```
 
 ## Download Commands
