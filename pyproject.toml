@@ -72,13 +72,13 @@ db = [
   "psycopg[binary]>=3.2",
 ]
 deep = [
-  "torch>=2.11,<2.12",
+  "torch>=2.11,<2.14",
   "torchvision>=0.26,<0.27",
   "torchaudio>=2.11,<2.12",
   "tensorboard>=2.16",
 ]
 deep-cu126 = [
-  "torch>=2.11,<2.12",
+  "torch>=2.11,<2.14",
   "torchvision>=0.26,<0.27",
   "torchaudio>=2.11,<2.12",
   "tensorboard>=2.16",
