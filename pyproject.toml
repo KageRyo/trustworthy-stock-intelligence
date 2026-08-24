@@ -73,13 +73,13 @@ db = [
 ]
 deep = [
   "torch>=2.11,<2.12",
-  "torchvision>=0.26,<0.27",
+  "torchvision>=0.26,<0.29",
   "torchaudio>=2.11,<2.12",
   "tensorboard>=2.16",
 ]
 deep-cu126 = [
   "torch>=2.11,<2.12",
-  "torchvision>=0.26,<0.27",
+  "torchvision>=0.26,<0.29",
   "torchaudio>=2.11,<2.12",
   "tensorboard>=2.16",
 ]
