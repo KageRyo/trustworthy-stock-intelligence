@@ -27,13 +27,26 @@ product maturity; issue numbers below are the canonical discussion threads.
 [Dashboard] Add richer session-scoped watchlist grouping, filters, and cleanup.
 ```
 
-## Research-Quality Enhancements
+## Ordered Research-Engineering Sequence
 
 ```text
-[Research #29] Build a point-in-time universe and quantify survivorship bias.
+[Research #91] Add stable security identities, versioned symbol mappings, and
+              point-in-time filtering with v1 compatibility.
+[Data #92] Import vendor-neutral membership archives through typed mappings,
+           provenance fingerprints, issue reports, and coverage audits.
+[Research #93] Compare current-universe and point-in-time runs only when fold,
+                date, feature, label, calibration, threshold, and model contracts match.
+[Research #29] Parent survivorship-bias question remains open until licensed
+               historical constituents, inactive/delisted OHLCV, and the paired
+               benchmark are available.
 [Research] Extend the current Taiwan and cross-market pilots only with explicit
            dated-membership, coverage, and provider-data boundaries.
-[Data] Validate intraday 5-minute data quality before model training.
+[Data] Validate five-minute data quality, calendar alignment, missing bars,
+      provider revisions, and stale-data behavior before interval-model claims.
+[Model] Keep the current baseline described as daily; five-minute support is
+       currently ingestion/freshness coverage and explicit worker abstention.
+[Operations] Verify prediction-worker lease recovery, retry budgets, and stale
+             output abstention with PostgreSQL-backed smoke tests and runbooks.
 [Data] Review provider revisions and licensed formal-research datasets.
 [Research] Keep experiment reports reproducible and under experiments/.
 ```

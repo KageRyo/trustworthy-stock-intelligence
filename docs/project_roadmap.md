@@ -18,10 +18,12 @@ The system focuses on trustworthy AI behavior: calibration, uncertainty, abstent
 auditability, and clear limitations. It is not an investment recommendation system or automated
 trading system.
 
-## Current State: 0.4.0
+## Current State: 0.4.2 operational prototype
 
-Version `0.4.0` is the product-readiness release following the `0.3.2` maintenance and security
-release. It remains a reproducible pilot, not externally validated research or investment advice.
+Version `0.4.2` is an operational prototype following the `0.3.2` maintenance and security release.
+It remains a reproducible pilot, not externally validated research or investment advice. The current
+priority is validation of data quality and serving safety, especially for five-minute ingestion,
+stale data behavior, and worker recovery.
 
 Completed:
 
@@ -47,6 +49,8 @@ Completed:
 - scheduled five-minute watchlist ingestion with provider health and coverage
 - freshness safety policy, PostgreSQL prediction jobs, typed job lifecycle API, and deterministic
   warning transitions
+- versioned point-in-time universe identity schema with explicit v1 compatibility/migration,
+  external-column mapping, coverage audits, and fail-closed paired benchmark reporting
 - dashboard operational states and richer session-scoped watchlist grouping
 - readiness/metrics/structured observability plus a PostgreSQL E2E pipeline
 - public-source documentation for licensing, security boundaries, citation, and contribution
@@ -72,12 +76,17 @@ PostgreSQL is the serving source of truth.
 The dashboard is the main product surface. Future work prioritizes a usable, observable, DB-backed
 analysis flow over thesis-style novelty:
 
-1. Obtain a legally usable point-in-time constituent archive and complete the paired
-   survivorship-bias benchmark in Issue #29.
-1. Validate 5-minute data quality and interval-specific model behavior before presenting intraday
-   predictions as more than ingestion coverage.
+1. Complete the engineering sequence Issue #91 (stable identities), #92 (vendor-neutral import and
+   coverage audit), then #93 (paired benchmark/report). These issues make the comparison machinery
+   trustworthy; they do not by themselves prove survivorship-bias absence.
+1. Obtain a legally usable point-in-time constituent archive, inactive/delisted OHLCV coverage, and
+   complete the paired survivorship-bias benchmark in parent Issue #29.
+1. Validate five-minute bar quality, provider revisions, session/calendar alignment, missing bars,
+   and interval-specific model behavior before presenting intraday predictions as more than
+   ingestion/freshness coverage. The current baseline remains a daily model.
 1. Harden the local prediction worker into a production job/worker deployment with progress
-   tracking, scheduled recovery, and operational runbooks.
+   tracking, scheduled recovery, and operational runbooks; keep lease recovery and stale-output
+   abstention fail-closed.
 1. Expand ticker-universe ingestion and coverage reporting without claiming all-market coverage
    until historical membership and provider completeness are evidenced.
 
@@ -89,10 +98,12 @@ analysis flow over thesis-style novelty:
 1. Keep the reproducible experiments, model limitations, and TAI audit output linked from the public
    documentation.
 
-## Research-Quality Enhancements (Not v0.4.0 Blockers)
+## Research-Quality Enhancements (Not operational-prototype blockers)
 
-- Build a legally usable point-in-time universe and quantify survivorship bias (#29); preserve its
-  current status as the sole open issue.
+- Keep the parent survivorship-bias issue (#29) open until licensed historical constituents,
+  inactive/delisted OHLCV, and a completed paired benchmark are available.
+- Treat #91, #92, and #93 as an ordered engineering chain supporting—but not replacing—the licensed
+  research-data requirement.
 - Expand the Taiwan pilots to dated membership, broader stratification, and reliable TPEx emerging
   history before making broad coverage claims.
 - Re-run provider-revision, distribution-shift, and external-data studies with licensed, versioned
