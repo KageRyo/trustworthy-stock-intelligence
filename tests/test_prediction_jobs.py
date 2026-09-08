@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
+import pytest
+
 from tsi.data import prediction_jobs as jobs
 from tsi.data.postgres import read_market_bars_from_postgres
 
@@ -15,13 +17,14 @@ def _row(
     attempt_count: int = 0,
     worker_id: str | None = None,
     failure_code: str = "",
+    feature_interval: str = "1d",
 ) -> tuple[object, ...]:
     return (
         "job-1",
         "request-1",
         "NVDA",
         "auto",
-        "1d",
+        feature_interval,
         status,
         attempt_count,
         3,
@@ -233,6 +236,33 @@ def test_worker_persists_typed_failure_and_retry_count(monkeypatch) -> None:
     assert summary.failed_count == 1
     assert summary.retried_count == 1
     assert failed_calls == [("provider_unavailable", True)]
+
+
+def test_recover_stale_prediction_jobs_requeues_and_fails_exhausted_rows(monkeypatch) -> None:
+    connection = FakeConnection([FakeCursor(rows=[("job-1",), ("job-2",)])])
+    monkeypatch.setattr(jobs, "connect_database", lambda _url: connection)
+
+    recovered = jobs.recover_stale_prediction_jobs(
+        "postgresql://test",
+        lease_seconds=900,
+        now=NOW,
+    )
+
+    assert recovered == 2
+    assert connection.commits == 1
+    query, params = connection.queries[0]
+    assert "locked_at < %s" in query
+    assert "worker_error" in query
+    assert params[3] == NOW.replace(hour=1, minute=45, second=0)
+
+
+def test_market_bar_processor_rejects_intraday_jobs_until_interval_model_exists() -> None:
+    processor = jobs.build_market_bar_prediction_processor("postgresql://test")
+    job = jobs._job_from_row(_row(feature_interval="5m"))
+    assert job is not None
+
+    with pytest.raises(jobs.PredictionJobFailure, match="1d market bars only"):
+        processor(job)
 
 
 def test_market_bar_reader_returns_ascending_normalized_frame(monkeypatch) -> None:

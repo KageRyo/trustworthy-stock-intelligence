@@ -7,7 +7,7 @@ from collections.abc import Sequence
 import json
 from pathlib import Path
 
-from tsi.data.universe import load_point_in_time_universe
+from tsi.data.universe import load_point_in_time_universe_versioned
 
 
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
@@ -15,6 +15,12 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--input", type=Path, required=True, help="Membership CSV path.")
     parser.add_argument("--output", type=Path, required=True, help="Manifest JSON path.")
     parser.add_argument("--name", required=True, help="Research universe name.")
+    parser.add_argument(
+        "--schema-version",
+        choices=["v1", "v2"],
+        default="v1",
+        help="Explicit membership schema version (v1 remains the compatibility default).",
+    )
     parser.add_argument("--source", required=True, help="Source URL or archive identifier.")
     parser.add_argument(
         "--source-license",
@@ -25,8 +31,9 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
 
 
 def run(args: argparse.Namespace) -> dict[str, object]:
-    universe = load_point_in_time_universe(
+    universe = load_point_in_time_universe_versioned(
         args.input,
+        schema_version=args.schema_version,
         name=args.name,
         source=args.source,
         source_license=args.source_license,

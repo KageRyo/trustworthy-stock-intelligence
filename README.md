@@ -56,8 +56,8 @@ and Trusted Publishing setup.
 
 ## Current Status
 
-Version `0.4.0` is the product-readiness release following the `0.3.2` maintenance and security
-release:
+Version `0.4.2` is the current operational prototype following the `0.3.2` maintenance and security
+release. It remains a reproducible pilot, not externally validated research or investment advice:
 
 - Experiment 007 uses purged walk-forward train/calibration/test boundaries and per-row
   `label_end_date` overlap checks.
@@ -85,6 +85,10 @@ release:
   PostgreSQL.
 - Freshness policies, queue-backed prediction jobs, typed job failures, and deterministic warning
   transitions make stale or degraded outputs explicit.
+- Versioned point-in-time identity mappings, vendor-neutral archive import, coverage audits, and
+  fail-closed paired benchmark reports make the current-vs-historical-universe comparison explicit.
+- Five-minute bars remain an ingestion/freshness capability; the current trusted risk baseline is
+  daily and rejects intraday jobs until an interval-trained model and evaluation protocol exist.
 - The dashboard exposes freshness, trust, provider coverage, job lifecycle, session grouping,
   filtering, and confirmed cleanup states.
 - Readiness probes, structured request/worker logs, Prometheus-style metrics, and a deterministic
@@ -384,11 +388,12 @@ See `docs/data_and_model_licenses.md`.
 
 ## Roadmap
 
-The v0.4.0 scope is product and open-source readiness: scheduled 5-minute watchlist ingestion,
-provider health and freshness/stale-state handling, queue-backed prediction jobs, warning-change
-detection, and richer session-scoped watchlists. Point-in-time universe membership and licensed
-historical data remain valuable research-quality enhancements, but are not blockers for using or
-contributing to the project. Detailed work lives in `docs/project_roadmap.md` and `docs/backlog.md`.
+The v0.4.2 scope is an operational prototype: scheduled 5-minute watchlist ingestion, provider
+health and freshness/stale-state handling, queue-backed prediction jobs, warning-change detection,
+and richer session-scoped watchlists. Point-in-time identity/import/benchmark engineering supports
+research readiness, but licensed historical constituents and inactive/delisted OHLCV are still
+required before Issue #29 can be closed. Detailed work lives in `docs/project_roadmap.md` and
+`docs/backlog.md`.
 
 ## License
 
