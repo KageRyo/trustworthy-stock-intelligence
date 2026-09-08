@@ -75,8 +75,8 @@ No transform should be fit on the full dataset before temporal splitting.
 
 ## Environment
 
-`pyproject.toml` defines dependency ranges, `.python-version` selects the maintainer/CI Python, and
-`uv.lock` records the exact resolution. Reproduce the CPU environment with:
+`pyproject.toml` defines dependency constraints, `.python-version` selects the maintainer/CI Python,
+and `uv.lock` records the exact resolution. Reproduce the CPU environment with:
 
 ```bash
 uv sync --locked \
