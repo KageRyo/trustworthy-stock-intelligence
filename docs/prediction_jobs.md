@@ -42,6 +42,12 @@ Retryable failures return to `queued` until `max_attempts`; terminal failures be
 the code and a bounded message. Startup recovery requeues expired worker leases, or marks exhausted
 leases failed.
 
+Recovery is fail-closed: a running row whose `locked_at` is older than the configured lease is
+requeued only while its attempt budget remains; exhausted rows become terminal `worker_error`. The
+worker runs this recovery pass before claiming new work. This behavior is covered by typed queue
+tests, but deployment still needs a PostgreSQL smoke test that kills/restarts a worker and verifies
+no duplicate prediction batch is served.
+
 ## Local worker
 
 Install the PostgreSQL extra and start the database first:

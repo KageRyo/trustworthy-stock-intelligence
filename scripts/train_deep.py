@@ -15,7 +15,11 @@ from scripts.train import prepare_training_frame
 from tsi.artifacts.model_bundle import ModelBundleMetadata, save_model_bundle
 from tsi.data.csv import file_sha256, read_ohlcv_csv
 from tsi.data.split import build_walk_forward_splits
-from tsi.data.universe import PointInTimeUniverse, load_point_in_time_universe
+from tsi.data.universe import (
+    PointInTimeUniverse,
+    PointInTimeUniverseV2,
+    load_point_in_time_universe_versioned,
+)
 from tsi.evaluation.metrics import classification_metrics
 from tsi.features.technical import DEFAULT_FEATURE_COLUMNS
 from tsi.labeling.warning_level import select_alert_threshold
@@ -47,6 +51,12 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         type=Path,
         default=None,
         help="Optional point-in-time membership CSV used to filter rows by evaluation date.",
+    )
+    parser.add_argument(
+        "--universe-schema-version",
+        choices=["v1", "v2"],
+        default="v1",
+        help="Explicit membership schema version for the point-in-time CSV.",
     )
     parser.add_argument("--universe-name", default="point_in_time")
     parser.add_argument("--membership-source", default="")
@@ -242,10 +252,11 @@ def run_training(args: argparse.Namespace) -> dict[str, object]:
     device = resolve_training_device(args.device, allow_cpu=args.allow_cpu)
 
     ohlcv = read_ohlcv_csv(args.input)
-    universe_membership: PointInTimeUniverse | None = None
+    universe_membership: PointInTimeUniverse | PointInTimeUniverseV2 | None = None
     if args.universe_membership is not None:
-        universe_membership = load_point_in_time_universe(
+        universe_membership = load_point_in_time_universe_versioned(
             args.universe_membership,
+            schema_version=args.universe_schema_version,
             name=args.universe_name,
             source=args.membership_source,
             source_license=args.membership_source_license,

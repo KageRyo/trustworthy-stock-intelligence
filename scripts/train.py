@@ -14,8 +14,9 @@ from tsi.data.csv import file_sha256, read_ohlcv_csv
 from tsi.data.split import build_walk_forward_splits
 from tsi.data.universe import (
     PointInTimeUniverse,
+    PointInTimeUniverseV2,
     filter_frame_by_point_in_time_universe,
-    load_point_in_time_universe,
+    load_point_in_time_universe_versioned,
 )
 from tsi.evaluation.metrics import classification_metrics
 from tsi.features.technical import DEFAULT_FEATURE_COLUMNS, build_technical_features
@@ -36,6 +37,12 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         type=Path,
         default=None,
         help="Optional point-in-time membership CSV used to filter rows by evaluation date.",
+    )
+    parser.add_argument(
+        "--universe-schema-version",
+        choices=["v1", "v2"],
+        default="v1",
+        help="Explicit membership schema version for the point-in-time CSV.",
     )
     parser.add_argument("--universe-name", default="point_in_time")
     parser.add_argument("--membership-source", default="")
@@ -129,7 +136,7 @@ def prepare_training_frame(
     *,
     horizon: int,
     drawdown_threshold: float,
-    universe_membership: PointInTimeUniverse | None = None,
+    universe_membership: PointInTimeUniverse | PointInTimeUniverseV2 | None = None,
 ) -> pd.DataFrame:
     """Build features and labels, then drop rows that cannot be trained or evaluated."""
 
@@ -164,8 +171,9 @@ def run_training(args: argparse.Namespace) -> dict[str, object]:
     ohlcv = read_ohlcv_csv(args.input)
     universe_membership = None
     if args.universe_membership is not None:
-        universe_membership = load_point_in_time_universe(
+        universe_membership = load_point_in_time_universe_versioned(
             args.universe_membership,
+            schema_version=args.universe_schema_version,
             name=args.universe_name,
             source=args.membership_source,
             source_license=args.membership_source_license,
@@ -378,6 +386,12 @@ def run_training(args: argparse.Namespace) -> dict[str, object]:
         "input": str(args.input),
         "input_sha256": file_sha256(args.input),
         "model_type": args.model_type,
+        "model_config": {
+            "tree_n_estimators": args.tree_n_estimators,
+            "tree_max_depth": args.tree_max_depth,
+            "tree_learning_rate": args.tree_learning_rate,
+            "tree_max_iter": args.tree_max_iter,
+        },
         "feature_columns": DEFAULT_FEATURE_COLUMNS,
         "horizon": args.horizon,
         "purge_size": purge_size,

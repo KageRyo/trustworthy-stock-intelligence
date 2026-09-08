@@ -62,9 +62,9 @@ uv sync --locked \
   --extra deep-cu126
 ```
 
-The two deep-learning extras conflict intentionally and cannot be enabled together. PyTorch,
-torchvision, and torchaudio are kept on the tested `2.11.x`, `0.26.x`, and `2.11.x` families
-respectively.
+The two deep-learning extras conflict intentionally and cannot be enabled together. Both profiles
+pin the tested compatible matrix `torch==2.11.0`, `torchvision==0.26.0`, and `torchaudio==2.11.0`;
+uv selects CPU or CUDA 12.6 wheels from the corresponding explicit index.
 
 Miniforge or Conda is not required. Reconsider it only when a future dependency needs a native
 library unavailable from PyPI/PyTorch wheels.

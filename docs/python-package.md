@@ -36,10 +36,10 @@ python -m pip install "trustworthy-stock-intelligence[models]"  # tree/boosting 
 python -m pip install "trustworthy-stock-intelligence[deep]"    # PyTorch model bundles/training
 ```
 
-The published `deep` extra records compatible PyTorch package families. In a uv checkout, `deep`
-selects CPU wheels for CI and `deep-cu126` selects CUDA 12.6 wheels; they cannot be enabled
-together. GPU users should follow the explicit profile and driver guidance in
-[`environment.md`](environment.md).
+The published `deep` extra records the pinned compatible matrix `torch==2.11.0`,
+`torchvision==0.26.0`, and `torchaudio==2.11.0`. In a uv checkout, `deep` selects CPU wheels for CI
+and `deep-cu126` selects CUDA 12.6 wheels; they cannot be enabled together. GPU users should follow
+the explicit profile and driver guidance in [`environment.md`](environment.md).
 
 ## Python API
 

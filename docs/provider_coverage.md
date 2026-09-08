@@ -41,6 +41,17 @@ five-minute freshness, but the current drawdown-risk model is trained and descri
 model. Until an intraday training/evaluation protocol exists, five-minute bars are an
 ingestion/freshness capability only and must not be presented as five-minute prediction validation.
 
+The typed freshness policy currently classifies a five-minute cutoff as `fresh` through 600 seconds,
+`stale` through 3,600 seconds with warning downgrade/abstention, and `unusable` after that with a
+serving block. These are safety thresholds, not evidence that a provider supplies complete or
+correct five-minute history. The next validation step is a provider-specific quality audit covering
+bar gaps, duplicates, timestamp/calendar alignment, OHLCV invariants, revisions, and per-ticker
+coverage before enabling any interval-trained model.
+
+The local prediction worker intentionally rejects `1m` and `5m` jobs with typed
+`unsupported_interval` until such a model and evaluation protocol exist. This keeps a five-minute
+ingestion result from being mislabeled as a five-minute risk prediction.
+
 The official TWSE, TPEx listed, and TPEx emerging fallback adapters currently provide daily data.
 Intraday availability in this repository therefore depends on the upstream Yahoo Finance query for
 the resolved symbol and its retention rules.
@@ -64,5 +75,4 @@ the resolved symbol and its retention rules.
 - [User guide](user_guide.md) for ticker input and Taiwan fallback behavior.
 - [Data store](data_store.md) for PostgreSQL market-bar persistence.
 - [Local demo](demo/local_demo.md) for running the DB-backed serving path.
-- [Roadmap](project_roadmap.md) for the planned provider health, freshness, and scheduled-ingestion
-  work in `v0.4.0`.
+- [Roadmap](project_roadmap.md) for the current `v0.4.2` operational-prototype priorities.
