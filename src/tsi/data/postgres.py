@@ -12,6 +12,11 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from tsi.data.download import DownloadFrameResult, is_taiwan_local_ticker
 from tsi.data.provider_health import ProviderHealthSnapshot
+from tsi.data.quality import (
+    MarketBarQualityAudit,
+    audit_market_bars,
+    enforce_market_bar_quality,
+)
 from tsi.serving.schema import PredictionBatch
 from tsi.trust.transitions import WarningSnapshot, WarningTransition, detect_warning_transition
 
@@ -75,6 +80,7 @@ class MarketDataIngestionSummary(BaseModel):
     database_write: bool
     ingestion_run_id: str | None = None
     provider_health: list[ProviderHealthSnapshot] = Field(default_factory=list)
+    quality_audit: MarketBarQualityAudit | None = None
 
 
 class PredictionBatchWriteSummary(BaseModel):
@@ -99,6 +105,26 @@ def validate_interval(interval: str) -> MarketBarInterval:
     if interval not in SUPPORTED_INTERVALS:
         raise ValueError("interval must be one of 1m, 5m, 1d")
     return cast(MarketBarInterval, interval)
+
+
+def _quality_audit_for_result(
+    result: DownloadFrameResult,
+    *,
+    interval: MarketBarInterval,
+) -> MarketBarQualityAudit | None:
+    """Return or lazily build the five-minute audit for one download result."""
+
+    if interval != "5m":
+        return result.quality_audit
+    if result.quality_audit is not None:
+        return result.quality_audit
+    return audit_market_bars(
+        result.ohlcv,
+        interval="5m",
+        provider="market-download",
+        expected_tickers=[ticker.ticker for ticker in result.tickers],
+        market_by_ticker={ticker.ticker: ticker.market for ticker in result.tickers},
+    )
 
 
 def infer_market(symbol: str, query_symbol: str) -> TickerMarketName:
@@ -144,6 +170,7 @@ def build_market_bar_rows(
     """Convert a normalized OHLCV frame into validated PostgreSQL bar rows."""
 
     interval = validate_interval(result.interval)
+    enforce_market_bar_quality(_quality_audit_for_result(result, interval=interval))
     required_columns = {"date", "ticker", "open", "high", "low", "close", "adj_close", "volume"}
     missing = sorted(required_columns.difference(result.ohlcv.columns))
     if missing:
@@ -187,11 +214,14 @@ def build_ingestion_summary(
 ) -> MarketDataIngestionSummary:
     """Build a schema-validated ingestion summary."""
 
+    interval = validate_interval(result.interval)
+    quality_audit = _quality_audit_for_result(result, interval=interval)
+    enforce_market_bar_quality(quality_audit)
     timestamps = sorted(row.ts for row in rows)
     return MarketDataIngestionSummary(
         status=status,
         provider=provider,
-        interval=validate_interval(result.interval),
+        interval=interval,
         universe_name=universe_name,
         start=result.start,
         end=result.end,
@@ -205,6 +235,7 @@ def build_ingestion_summary(
         database_write=database_write,
         ingestion_run_id=ingestion_run_id,
         provider_health=result.provider_health,
+        quality_audit=quality_audit,
     )
 
 
@@ -217,6 +248,8 @@ def write_download_to_postgres(
 ) -> MarketDataIngestionSummary:
     """Upsert a downloaded OHLCV frame into PostgreSQL."""
 
+    quality_audit = _quality_audit_for_result(result, interval=validate_interval(result.interval))
+    enforce_market_bar_quality(quality_audit)
     rows = build_market_bar_rows(result, provider=provider)
     resolved_tickers = build_resolved_tickers(result)
     downloaded_symbols = sorted({row.symbol for row in rows})

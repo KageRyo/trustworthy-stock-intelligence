@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 
 import pandas as pd
+import pytest
 
 from tsi.data.download import DownloadFrameResult, DownloadTicker
 from tsi.data.provider_health import ProviderHealthSnapshot
@@ -17,6 +18,7 @@ from tsi.data.postgres import (
     _upsert_provider_health,
     validate_interval,
 )
+from tsi.data.quality import MarketBarQualityError
 
 
 def test_infer_market_maps_provider_suffixes() -> None:
@@ -107,6 +109,32 @@ def test_build_market_bar_rows_validates_taiwan_5m_rows() -> None:
     assert rows[0].interval == "5m"
     assert rows[0].provider == "yfinance"
     assert rows[0].ts.isoformat() == "2026-06-18T01:00:00+00:00"
+
+
+def test_build_market_bar_rows_fails_closed_on_duplicate_five_minute_bars() -> None:
+    result = DownloadFrameResult(
+        dataset_name="watchlist",
+        tickers=[DownloadTicker(ticker="2330", query_symbol="2330.TW")],
+        ohlcv=pd.DataFrame(
+            {
+                "date": ["2026-06-18T01:00:00Z", "2026-06-18T01:00:00Z"],
+                "ticker": ["2330", "2330"],
+                "open": [100.0, 100.0],
+                "high": [103.0, 103.0],
+                "low": [99.0, 99.0],
+                "close": [102.0, 102.0],
+                "adj_close": [102.0, 102.0],
+                "volume": [1000.0, 1000.0],
+            }
+        ),
+        start="2026-06-18",
+        end=None,
+        interval="5m",
+        failed_batches=[],
+    )
+
+    with pytest.raises(MarketBarQualityError, match="quality audit failed"):
+        build_market_bar_rows(result)
 
 
 def test_build_ingestion_summary_is_schema_first() -> None:

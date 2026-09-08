@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import json
 import os
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 import subprocess
 import time
@@ -30,8 +30,11 @@ from tsi.data.prediction_jobs import (
     PredictionJobFailure,
     PredictionJobRequest,
     PredictionJobResult,
+    claim_next_prediction_job,
     enqueue_prediction_job,
+    fail_prediction_job,
     get_prediction_job,
+    recover_stale_prediction_jobs,
     run_prediction_worker,
 )
 from tsi.data.provider_health import ProviderHealthSnapshot
@@ -271,6 +274,46 @@ def test_watchlist_to_warning_pipeline(tmp_path: Path) -> None:
     assert failed is not None
     assert failed.status == "failed"
     assert failed.failure_code == "insufficient_history"
+
+    recovery_job = enqueue_prediction_job(
+        DATABASE_URL,
+        PredictionJobRequest(
+            idempotency_key=f"e2e-recovery-{time.time_ns()}",
+            ticker="NVDA",
+            market="us",
+            feature_interval="5m",
+            max_attempts=3,
+        ),
+    )
+    claimed_before_crash = claim_next_prediction_job(DATABASE_URL, "e2e-crashed-worker")
+    assert claimed_before_crash is not None
+    assert claimed_before_crash.id == recovery_job.id
+    assert claimed_before_crash.locked_at is not None
+    recovery_now = claimed_before_crash.locked_at + timedelta(seconds=901)
+    assert recover_stale_prediction_jobs(
+        DATABASE_URL,
+        lease_seconds=900,
+        now=recovery_now,
+    ) == 1
+    reclaimed = claim_next_prediction_job(
+        DATABASE_URL,
+        "e2e-restarted-worker",
+        now=recovery_now,
+    )
+    assert reclaimed is not None
+    assert reclaimed.id == recovery_job.id
+    assert reclaimed.attempt_count == 2
+    exhausted = fail_prediction_job(
+        DATABASE_URL,
+        reclaimed.id,
+        "e2e-restarted-worker",
+        "unsupported_interval",
+        "five-minute model is not enabled in this baseline",
+        retryable=False,
+        now=recovery_now,
+    )
+    assert exhausted.status == "failed"
+    assert exhausted.prediction_batch_id is None
 
     api_binary = os.getenv("TSI_E2E_API_BINARY", "").strip()
     command = [api_binary] if api_binary else ["go", "run", "./cmd/server"]

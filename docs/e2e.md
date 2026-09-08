@@ -13,9 +13,10 @@ fake OHLCV provider
 ```
 
 The Python test also enqueues a missing-ticker job and verifies the typed `insufficient_history`
-terminal failure path. No market-data provider or model artifact is downloaded in this check. The
-database is created by the CI PostgreSQL service and migrations under `infra/postgres/init/` are
-applied to it before each run.
+terminal failure path, then simulates a crashed worker lease and verifies that a restarted worker
+reclaims it without creating a duplicate prediction batch. No market-data provider or model artifact
+is downloaded in this check. The database is created by the CI PostgreSQL service and migrations
+under `infra/postgres/init/` are applied to it before each run.
 
 To run the Python portion locally, point `TSI_E2E_DATABASE_URL` at a disposable PostgreSQL database
 with the `db` extra installed:
