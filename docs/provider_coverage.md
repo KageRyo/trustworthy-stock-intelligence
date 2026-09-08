@@ -48,6 +48,28 @@ correct five-minute history. The next validation step is a provider-specific qua
 bar gaps, duplicates, timestamp/calendar alignment, OHLCV invariants, revisions, and per-ticker
 coverage before enabling any interval-trained model.
 
+The repository now provides a redacted, schema-first audit for that validation boundary:
+
+```bash
+python -m scripts.audit_market_bar_quality \
+  --input /path/to/ohlcv-5m.csv \
+  --output /tmp/ohlcv-5m-quality.json \
+  --interval 5m \
+  --provider yfinance \
+  --market us \
+  --expected-tickers NVDA AAPL
+```
+
+The report fingerprints the input and records aggregate per-ticker counts for duplicates, missing
+bars, session/grid misalignment, OHLCV invariant failures, provider revisions, and coverage gaps; it
+does not copy raw rows. Invalid timestamps, malformed values, duplicate keys, and known-market
+session violations fail closed. Gaps and revisions remain warnings because a provider session or
+corporate-action boundary may explain them and requires an operator review.
+
+The downloader attaches this audit to five-minute results, and PostgreSQL ingestion refuses a
+fail-closed result. A real provider run is still required before claiming that a particular market
+has complete five-minute coverage.
+
 The local prediction worker intentionally rejects `1m` and `5m` jobs with typed
 `unsupported_interval` until such a model and evaluation protocol exist. This keeps a five-minute
 ingestion result from being mislabeled as a five-minute risk prediction.

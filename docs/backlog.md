@@ -20,6 +20,7 @@ product maturity; issue numbers below are the canonical discussion threads.
 ```text
 [Data] Schedule 5-minute ingestion for active watchlists.
 [Data] Add provider health, retry, freshness, and coverage state per ticker.
+[Data] Add a schema-first 5-minute OHLCV quality audit and fail-closed persistence boundary.
 [Model] Add queue-backed prediction jobs consuming PostgreSQL market_bars.
 [Model] Keep daily and intraday model metadata and stale-state rules separate.
 [API] Add warning-change detection on top of the completed warning-history API.
@@ -41,8 +42,9 @@ product maturity; issue numbers below are the canonical discussion threads.
                benchmark are available.
 [Research] Extend the current Taiwan and cross-market pilots only with explicit
            dated-membership, coverage, and provider-data boundaries.
-[Data] Validate five-minute data quality, calendar alignment, missing bars,
-      provider revisions, and stale-data behavior before interval-model claims.
+[Data] Run the five-minute quality audit repeatedly across real US/Taiwan provider
+      snapshots, review calendar exceptions and revisions, and keep interval-model
+      claims blocked until coverage evidence is sufficient.
 [Model] Keep the current baseline described as daily; five-minute support is
        currently ingestion/freshness coverage and explicit worker abstention.
 [Operations] Verify prediction-worker lease recovery, retry budgets, and stale

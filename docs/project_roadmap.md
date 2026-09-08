@@ -47,6 +47,8 @@ Completed:
 - per-run TAI audit artifacts that record evidence, limitations, and open risks
 - required Python, Go, frontend, dependency, race-test, and full-history Gitleaks CI checks
 - scheduled five-minute watchlist ingestion with provider health and coverage
+- schema-first five-minute market-bar quality audit with aggregate fingerprints, session/grid
+  checks, provider-revision comparison, and fail-closed PostgreSQL ingestion
 - freshness safety policy, PostgreSQL prediction jobs, typed job lifecycle API, and deterministic
   warning transitions
 - versioned point-in-time universe identity schema with explicit v1 compatibility/migration,
@@ -81,9 +83,10 @@ analysis flow over thesis-style novelty:
    trustworthy; they do not by themselves prove survivorship-bias absence.
 1. Obtain a legally usable point-in-time constituent archive, inactive/delisted OHLCV coverage, and
    complete the paired survivorship-bias benchmark in parent Issue #29.
-1. Validate five-minute bar quality, provider revisions, session/calendar alignment, missing bars,
-   and interval-specific model behavior before presenting intraday predictions as more than
-   ingestion/freshness coverage. The current baseline remains a daily model.
+1. Run the quality audit repeatedly across the supported US/Taiwan providers and watchlists, review
+   provider revisions and session/calendar exceptions, and validate interval-specific model behavior
+   before presenting intraday predictions as more than ingestion/freshness coverage. The current
+   baseline remains a daily model.
 1. Harden the local prediction worker into a production job/worker deployment with progress
    tracking, scheduled recovery, and operational runbooks; keep lease recovery and stale-output
    abstention fail-closed.

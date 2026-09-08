@@ -28,6 +28,7 @@ from tsi.data.provider_health import (
     make_provider_health_snapshot,
     run_with_retry,
 )
+from tsi.data.quality import MarketBarQualityAudit, audit_market_bars
 from tsi.data.universe import Universe, UniverseName, load_universe
 
 OHLCV_COLUMNS = ["date", "ticker", "open", "high", "low", "close", "adj_close", "volume"]
@@ -82,6 +83,7 @@ class DownloadFrameResult:
     interval: str
     failed_batches: list[list[str]]
     provider_health: list[ProviderHealthSnapshot] = field(default_factory=list)
+    quality_audit: MarketBarQualityAudit | None = None
 
 
 @dataclass(frozen=True)
@@ -449,6 +451,11 @@ def download_ticker_list(
         "provider_health": [
             snapshot.model_dump(mode="json") for snapshot in result.provider_health
         ],
+        "quality_audit": (
+            result.quality_audit.model_dump(mode="json")
+            if result.quality_audit is not None
+            else None
+        ),
         "research_note": "Yahoo Finance is used for pilot experiments only.",
     }
     metadata_path.write_text(json.dumps(metadata, indent=2), encoding="utf-8")
@@ -743,7 +750,18 @@ def download_ticker_frame(
         )
 
     ohlcv = pd.concat(all_frames, ignore_index=True)
-    ohlcv = ohlcv.drop_duplicates(subset=["date", "ticker"]).sort_values(["ticker", "date"])
+    ohlcv = ohlcv.sort_values(["ticker", "date"]).reset_index(drop=True)
+    quality_audit = None
+    if interval == "5m":
+        quality_audit = audit_market_bars(
+            ohlcv,
+            interval="5m",
+            provider="market-download",
+            expected_tickers=[ticker.ticker for ticker in resolved],
+            market_by_ticker={
+                ticker.ticker: resolved_by_ticker[ticker.ticker].market for ticker in resolved
+            },
+        )
     return DownloadFrameResult(
         dataset_name=dataset_name,
         tickers=[resolved_by_ticker[ticker.ticker] for ticker in resolved],
@@ -753,6 +771,7 @@ def download_ticker_frame(
         interval=interval,
         failed_batches=failed_batches,
         provider_health=provider_health,
+        quality_audit=quality_audit,
     )
 
 

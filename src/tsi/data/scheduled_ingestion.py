@@ -23,6 +23,7 @@ from tsi.data.postgres import (
     write_provider_health_to_postgres,
 )
 from tsi.data.provider_health import ProviderHealthSnapshot, RetryPolicy
+from tsi.data.quality import MarketBarQualityError
 from tsi.observability import log_event
 
 ScheduledStatus = Literal["success", "partial", "failed", "disabled", "no_tickers"]
@@ -58,6 +59,7 @@ class TickerIngestionOutcome(BaseModel):
     status: TickerIngestionStatus
     row_count: int = Field(default=0, ge=0)
     provider_health_count: int = Field(default=0, ge=0)
+    quality_status: Literal["pass", "warn", "fail", "not_audited"] = "not_audited"
     ingestion_run_id: str | None = None
     error_code: str | None = None
     error_message: str | None = None
@@ -235,6 +237,11 @@ def run_scheduled_ingestion_once(
                     status="success",
                     row_count=rows,
                     provider_health_count=health_count,
+                    quality_status=(
+                        summary.quality_audit.status
+                        if getattr(summary, "quality_audit", None) is not None
+                        else "not_audited"
+                    ),
                     ingestion_run_id=summary.ingestion_run_id,
                 )
             )
@@ -258,6 +265,16 @@ def run_scheduled_ingestion_once(
                 )
             )
             provider_health_count += health_count
+        except MarketBarQualityError as exc:
+            outcomes.append(
+                TickerIngestionOutcome(
+                    ticker=ticker,
+                    status="failed",
+                    quality_status="fail",
+                    error_code="quality_failed",
+                    error_message=str(exc)[:2000],
+                )
+            )
         except Exception as exc:  # one ticker/provider must not stop the schedule
             outcomes.append(
                 TickerIngestionOutcome(

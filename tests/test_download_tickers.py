@@ -107,6 +107,37 @@ def test_download_ticker_frame_rejects_unsupported_interval() -> None:
         download_ticker_frame(["NVDA"], start="2026-01-01", interval="15m")
 
 
+def test_download_ticker_frame_retains_duplicate_five_minute_rows_for_quality_audit(monkeypatch) -> None:
+    index = pd.DatetimeIndex(
+        ["2026-06-18 13:30:00+00:00", "2026-06-18 13:30:00+00:00"],
+        name="Datetime",
+    )
+    raw = pd.DataFrame(
+        {
+            ("NVDA", "Open"): [100.0, 100.0],
+            ("NVDA", "High"): [103.0, 103.0],
+            ("NVDA", "Low"): [99.0, 99.0],
+            ("NVDA", "Close"): [102.0, 102.0],
+            ("NVDA", "Adj Close"): [102.0, 102.0],
+            ("NVDA", "Volume"): [1000.0, 1000.0],
+        },
+        index=index,
+    )
+    monkeypatch.setattr(download_module.yf, "download", lambda **_kwargs: raw)
+
+    result = download_ticker_frame(
+        ["NVDA"],
+        start="2026-06-18",
+        end="2026-06-19",
+        interval="5m",
+    )
+
+    assert len(result.ohlcv) == 2
+    assert result.quality_audit is not None
+    assert result.quality_audit.status == "fail"
+    assert result.quality_audit.issue_counts["duplicate_bar"] == 2
+
+
 def test_configure_yfinance_cache_uses_writable_env_path(monkeypatch, tmp_path) -> None:
     cache_dir = tmp_path / "yf-cache"
     calls: list[str] = []

@@ -7,12 +7,24 @@ from tsi.data.freshness import (
     FreshnessThreshold,
     assess_freshness,
 )
+from tsi.data.quality import (
+    MarketBarQualityAudit,
+    MarketBarQualityError,
+    MarketBarQualityIssue,
+    TickerQualitySummary,
+    audit_market_bars,
+)
 
 __all__ = [
     "FreshnessAssessment",
     "FreshnessPolicy",
     "FreshnessThreshold",
     "assess_freshness",
+    "MarketBarQualityAudit",
+    "MarketBarQualityError",
+    "MarketBarQualityIssue",
+    "TickerQualitySummary",
+    "audit_market_bars",
     "file_sha256",
     "read_ohlcv_csv",
 ]
