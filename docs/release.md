@@ -1,11 +1,12 @@
 # Maintainer Release Checklist
 
-## 0.4.2 Python Package Scope
+## 0.4.3 Python Package Scope
 
-`0.4.2` is a backward-compatible maintenance release following the `0.4.1` Python package launch. It
-adds a committed uv lock, explicit CPU and CUDA 12.6 PyTorch profiles, Python 3.11/runtime pins, and
-corrected public environment guidance. It does not change the Go API, PostgreSQL, or TypeScript
-contracts.
+`0.4.3` is a backward-compatible operational release following the `0.4.2` Python package release.
+It adds point-in-time universe and market-bar quality tooling, patches the setuptools, PyTorch, and
+Vitest security baselines, and keeps the Python package, Go API, PostgreSQL, and TypeScript
+boundaries explicit. Issue #29 remains open because licensed historical constituents,
+inactive/delisted OHLCV, and a real paired benchmark are still required for a research claim.
 
 Before tagging the release:
 
@@ -28,8 +29,8 @@ pending-publisher setup and package boundary.
 The package-only release sequence is:
 
 ```bash
-git tag -a v0.4.2 -m "release: v0.4.2"
-git push origin v0.4.2
+git tag -a v0.4.3 -m "release: v0.4.3"
+git push origin v0.4.3
 ```
 
 ## 0.4.0 Scope
@@ -96,6 +97,6 @@ response with the frontend Zod schema. It must be green before the release merge
 1. Prepare the version and changelog changes on a release branch.
 1. Merge the release PR only after all required checks pass.
 1. Confirm the merge commit is the current `main` head and rerun all checks.
-1. Create an annotated `v0.4.0` tag on that verified commit.
+1. Create an annotated `v0.4.3` tag on that verified commit.
 1. Push the tag and create a GitHub Release with `--verify-tag`.
 1. Confirm the remote tag, release target, release notes, and downloadable source archives.

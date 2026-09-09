@@ -1,7 +1,7 @@
 # Trustworthy Stock Intelligence
 
 [![CI](https://github.com/KageRyo/trustworthy-stock-intelligence/actions/workflows/ci.yml/badge.svg)](https://github.com/KageRyo/trustworthy-stock-intelligence/actions/workflows/ci.yml)
-![Version](https://img.shields.io/badge/version-0.4.2-blue)
+![Version](https://img.shields.io/badge/version-0.4.3-blue)
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
 ![Go](https://img.shields.io/badge/go-1.25-blue)
 ![TypeScript](https://img.shields.io/badge/typescript-7.0-blue)
@@ -33,9 +33,10 @@ contracts.
 
 ## Python Package
 
-Version `0.4.2` adds reproducible uv CPU/CUDA dependency profiles and maintains the reusable
-Python/ML core introduced in `0.4.1`. It includes the public `tsi` API, leakage-aware feature and
-label helpers, calibration/trust utilities, serving schemas, and a deterministic local CLI:
+Version `0.4.3` adds point-in-time universe and five-minute quality tooling while maintaining the
+reusable Python/ML core introduced in `0.4.1`. It includes the public `tsi` API, leakage-aware
+feature and label helpers, calibration/trust utilities, serving schemas, and a deterministic local
+CLI:
 
 ```bash
 python -m pip install trustworthy-stock-intelligence
@@ -56,7 +57,7 @@ and Trusted Publishing setup.
 
 ## Current Status
 
-Version `0.4.2` is the current operational prototype following the `0.3.2` maintenance and security
+Version `0.4.3` is the current operational prototype following the `0.4.2` maintenance and security
 release. It remains a reproducible pilot, not externally validated research or investment advice:
 
 - Experiment 007 uses purged walk-forward train/calibration/test boundaries and per-row
@@ -355,7 +356,7 @@ Project targets:
 
 | Runtime              | Version                                |
 | -------------------- | -------------------------------------- |
-| Python package       | `0.4.2`                                |
+| Python package       | `0.4.3`                                |
 | Python               | `>=3.10`, maintainer and CI use `3.11` |
 | Go API               | `1.25.13`                              |
 | Node.js CI runtime   | `22.23.2`                              |
@@ -388,7 +389,7 @@ See `docs/data_and_model_licenses.md`.
 
 ## Roadmap
 
-The v0.4.2 scope is an operational prototype: scheduled 5-minute watchlist ingestion, provider
+The v0.4.3 scope is an operational prototype: scheduled 5-minute watchlist ingestion, provider
 health and freshness/stale-state handling, queue-backed prediction jobs, warning-change detection,
 and richer session-scoped watchlists. Point-in-time identity/import/benchmark engineering supports
 research readiness, but licensed historical constituents and inactive/delisted OHLCV are still

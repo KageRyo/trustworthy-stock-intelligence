@@ -121,7 +121,7 @@ uv run --locked --no-sync python -c \
 
 ## Current maintainer workstation snapshot
 
-Snapshot recorded on `2026-08-19`; these values describe one development machine and are not project
+Snapshot recorded on `2026-09-09`; these values describe one development machine and are not project
 requirements:
 
 ```text
@@ -133,7 +133,7 @@ GPU: NVIDIA GeForce RTX 3090, 24 GiB, one device
 Windows/WSL NVIDIA driver: 560.94
 WSL CUDA capability: 12.6
 Python: 3.11.16
-PyTorch: 2.11.0+cu126
+PyTorch: 2.13.0+cu126
 uv: 0.12.5
 Node.js: 22.23.2
 npm: 10.9.8
