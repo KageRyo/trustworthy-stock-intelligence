@@ -63,8 +63,9 @@ uv sync --locked \
 ```
 
 The two deep-learning extras conflict intentionally and cannot be enabled together. Both profiles
-pin the tested compatible matrix `torch==2.11.0`, `torchvision==0.26.0`, and `torchaudio==2.11.0`;
-uv selects CPU or CUDA 12.6 wheels from the corresponding explicit index.
+pin the tested compatible matrix `torch==2.13.0`, `torchvision==0.28.0`, and `torchaudio==2.11.0`;
+TorchAudio 2.11 uses the stable PyTorch ABI and supports PyTorch 2.11 and later. uv selects CPU or
+CUDA 12.6 wheels from the corresponding explicit index.
 
 Miniforge or Conda is not required. Reconsider it only when a future dependency needs a native
 library unavailable from PyPI/PyTorch wheels.
