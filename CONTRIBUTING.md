@@ -48,7 +48,7 @@ limitations. Link the relevant issue.
 
 Follow GitHub Flow and branch from the current default branch. Name branches with a change-type
 prefix and a short kebab-case description, such as `feat/ticker-history`, `fix/twse-fallback`,
-`docs/development-environment`, `build/python-lockfile`, or `release/0.4.2`. Supported prefixes are
+`docs/development-environment`, `build/python-lockfile`, or `release/0.4.3`. Supported prefixes are
 `feat/`, `fix/`, `docs/`, `test/`, `refactor/`, `chore/`, `build/`, `ci/`, and `release/`.
 
 Use small commits with this format:

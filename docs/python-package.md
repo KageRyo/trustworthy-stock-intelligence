@@ -132,8 +132,8 @@ the initial release, then verify the project publisher configuration before push
 The release command is intentionally separate from ordinary CI:
 
 ```bash
-git tag -a v0.4.2 -m "release: v0.4.2"
-git push origin v0.4.2
+git tag -a v0.4.3 -m "release: v0.4.3"
+git push origin v0.4.3
 ```
 
 Only tag a verified commit after the pull request/branch checks are green. A failed PyPI publish

@@ -2,6 +2,36 @@
 
 ## Unreleased
 
+## 0.4.3 - 2026-09-09
+
+### Added
+
+- Added versioned point-in-time identity/import and coverage-audit tooling plus paired
+  current-versus- historical-universe benchmark reporting without closing Issue #29 prematurely.
+- Added a schema-first five-minute market-bar quality audit with session/grid, duplicate, OHLCV,
+  revision, and expected-ticker coverage checks; fail-closed quality results are not persisted.
+
+### Changed
+
+- Updated the operational prototype documentation and release metadata to describe the current
+  data-quality, freshness, worker-recovery, and daily-model boundaries.
+- Kept TorchAudio at `2.11.0` while upgrading the stable-ABI-compatible Torch/TorchVision profile to
+  `2.13.0`/`0.28.0` for the patched PyTorch security baseline.
+
+### Security
+
+- Raised the setuptools build and lock floor to `83.0.0` (locked at `84.0.0`) for the Unicode
+  normalization sdist exclusion advisory.
+- Upgraded Vitest to `4.1.11` and refreshed the frontend lockfile for the `@vitest/mocker` advisory.
+- Upgraded PyTorch to `2.13.0`, the first patched release for the `torch.jit.script`
+  memory-corruption advisory; CPU and CUDA 12.6 profiles remain locked and tested.
+
+### Notes
+
+- This remains an operational prototype and reproducible pilot, not externally validated research or
+  investment advice. Issue #29 remains open pending legally usable historical constituents,
+  inactive/delisted OHLCV, and a completed real paired benchmark.
+
 ## 0.4.2 - 2026-08-19
 
 ### Added
