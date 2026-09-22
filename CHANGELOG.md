@@ -2,6 +2,21 @@
 
 ## Unreleased
 
+## 0.4.4 - 2026-09-22
+
+### Changed
+
+- Refreshed the Go `pgx` dependency and the frontend dependency groups, including the Vitest 5.0.1
+  test-toolchain update, with synchronized lockfiles.
+- Refreshed GitHub Actions and CodeQL pins while preserving SHA-pinned CI and security scanning.
+
+### Notes
+
+- This is a backward-compatible dependency-maintenance release. The project remains an operational
+  prototype and reproducible pilot, not externally validated research or investment advice.
+- Issue #29 remains open pending a legally usable historical constituent archive, matching
+  inactive/delisted OHLCV, rights review, and a completed paired benchmark.
+
 ## 0.4.3 - 2026-09-09
 
 ### Added
