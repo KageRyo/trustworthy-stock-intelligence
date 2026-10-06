@@ -869,6 +869,10 @@ components:
           minimum: 0
         calibration_drift:
           $ref: "#/components/schemas/CalibrationDriftMetadata"
+        alert_policy:
+          oneOf:
+            - $ref: "#/components/schemas/AlertPolicyMetadata"
+            - type: "null"
         records:
           type: array
           items:
@@ -1149,6 +1153,11 @@ components:
           $ref: "#/components/schemas/DataFreshness"
         calibration_drift:
           $ref: "#/components/schemas/CalibrationDriftMetadata"
+        alert_policy:
+          description: How the batch's alert and watch thresholds were chosen; null for batches written before alert policies.
+          oneOf:
+            - $ref: "#/components/schemas/AlertPolicyMetadata"
+            - type: "null"
         reasons:
           type: array
           items:
@@ -1333,6 +1342,45 @@ components:
         uncertainty_status:
           type: string
         summary:
+          type: string
+    AlertPolicyMetadata:
+      type: object
+      additionalProperties: false
+      required:
+        - alert_policy
+        - watch_policy
+        - alert_target_met
+        - watch_target_met
+        - calibration_alert_rate
+        - calibration_watch_rate
+        - calibration_alert_precision
+        - note
+      properties:
+        alert_policy:
+          type: string
+          description: Calibration-window policy for the alert threshold, for example alert_rate:0.05, target_precision:0.25, f1, or objective:f1.
+          examples: ["alert_rate:0.05"]
+        watch_policy:
+          type: string
+          description: Calibration-window policy for the watch threshold, or ratio:<r> for a fixed fraction of the alert threshold.
+          examples: ["alert_rate:0.2"]
+        alert_target_met:
+          type: boolean
+        watch_target_met:
+          type: boolean
+        calibration_alert_rate:
+          type: [number, "null"]
+          minimum: 0
+          maximum: 1
+        calibration_watch_rate:
+          type: [number, "null"]
+          minimum: 0
+          maximum: 1
+        calibration_alert_precision:
+          type: [number, "null"]
+          minimum: 0
+          maximum: 1
+        note:
           type: string
     CalibrationDriftMetadata:
       type: object

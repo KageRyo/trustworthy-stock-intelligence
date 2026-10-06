@@ -76,8 +76,8 @@ func TestFileStoreLoadsPredictionBatch(t *testing.T) {
 	}
 }
 
-func TestDecodeCalibrationDriftReadsBatchMetadata(t *testing.T) {
-	metadata, err := decodeCalibrationDrift([]byte(`{
+func TestDecodeBatchMetadataReadsCalibrationDrift(t *testing.T) {
+	metadata, _, err := decodeBatchMetadata([]byte(`{
     "source_schema": "v1",
     "calibration_drift": {
       "status": "degraded",
@@ -92,7 +92,7 @@ func TestDecodeCalibrationDriftReadsBatchMetadata(t *testing.T) {
     }
   }`))
 	if err != nil {
-		t.Fatalf("decodeCalibrationDrift returned error: %v", err)
+		t.Fatalf("decodeBatchMetadata returned error: %v", err)
 	}
 	if metadata.Status != "degraded" || metadata.TrustMultiplier != 0.5 {
 		t.Fatalf("unexpected drift metadata: %+v", metadata)
@@ -246,5 +246,39 @@ func TestFileStoreStatusReportsLoadedBatch(t *testing.T) {
 	}
 	if status.GeneratedAt == "" || status.LastLoadedAt == "" || status.FileModifiedAt == "" {
 		t.Fatalf("expected generated_at, last_loaded_at, and file_modified_at in status: %+v", status)
+	}
+}
+
+func TestDecodeBatchMetadataReadsAlertPolicy(t *testing.T) {
+	drift, policy, err := decodeBatchMetadata([]byte(`{
+    "alert_policy": {
+      "alert_policy": "alert_rate:0.05",
+      "watch_policy": "alert_rate:0.2",
+      "alert_target_met": true,
+      "watch_target_met": false,
+      "calibration_alert_rate": 0.05,
+      "calibration_watch_rate": 0.2,
+      "calibration_alert_precision": 0.27,
+      "note": ""
+    }
+  }`))
+	if err != nil {
+		t.Fatalf("decodeBatchMetadata returned error: %v", err)
+	}
+	if drift.Status != "not_evaluated" {
+		t.Fatalf("drift status = %q, want not_evaluated", drift.Status)
+	}
+	if policy == nil || policy.WatchPolicy != "alert_rate:0.2" || policy.WatchTargetMet {
+		t.Fatalf("unexpected alert policy: %+v", policy)
+	}
+}
+
+func TestDecodeBatchMetadataAllowsMissingAlertPolicy(t *testing.T) {
+	_, policy, err := decodeBatchMetadata([]byte(`{"calibration_drift": {"status": "stable"}}`))
+	if err != nil {
+		t.Fatalf("decodeBatchMetadata returned error: %v", err)
+	}
+	if policy != nil {
+		t.Fatalf("alert policy = %+v, want nil for legacy batches", policy)
 	}
 }

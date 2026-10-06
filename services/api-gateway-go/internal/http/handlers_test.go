@@ -40,6 +40,16 @@ func writeRouterFixture(t *testing.T) string {
     "recent_rows": 21,
     "note": "fixture"
   },
+  "alert_policy": {
+    "alert_policy": "alert_rate:0.05",
+    "watch_policy": "alert_rate:0.2",
+    "alert_target_met": true,
+    "watch_target_met": true,
+    "calibration_alert_rate": 0.05,
+    "calibration_watch_rate": 0.2,
+    "calibration_alert_precision": 0.27,
+    "note": ""
+  },
   "records": [
     {
       "date": "2026-06-08",
@@ -598,6 +608,9 @@ func TestTickerAnalysisHandler(t *testing.T) {
 	}
 	if payload.CalibrationDrift.Status != "degraded" || !payload.CalibrationDrift.Abstain {
 		t.Fatalf("unexpected calibration drift metadata: %+v", payload.CalibrationDrift)
+	}
+	if payload.AlertPolicy == nil || payload.AlertPolicy.AlertPolicy != "alert_rate:0.05" {
+		t.Fatalf("unexpected alert policy metadata: %+v", payload.AlertPolicy)
 	}
 	if payload.Trust.TrustStatus != "limited_trust" {
 		t.Fatalf("trust status = %q, want limited_trust", payload.Trust.TrustStatus)

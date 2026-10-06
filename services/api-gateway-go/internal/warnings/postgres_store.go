@@ -337,9 +337,9 @@ func (s *PostgresStore) loadLatestBatch(
 	if err != nil {
 		return PredictionBatch{}, nil, fmt.Errorf("load latest prediction batch metadata: %w", err)
 	}
-	calibrationDrift, err := decodeCalibrationDrift(metadataJSON)
+	calibrationDrift, alertPolicy, err := decodeBatchMetadata(metadataJSON)
 	if err != nil {
-		return PredictionBatch{}, nil, fmt.Errorf("decode calibration drift metadata: %w", err)
+		return PredictionBatch{}, nil, fmt.Errorf("decode prediction batch metadata: %w", err)
 	}
 
 	rows, err := s.pool.Query(
@@ -423,6 +423,7 @@ func (s *PostgresStore) loadLatestBatch(
 		FeatureInterval:  featureInterval,
 		RecordCount:      len(records),
 		CalibrationDrift: calibrationDrift,
+		AlertPolicy:      alertPolicy,
 		Records:          records,
 	}
 	return batch, byKey, nil
@@ -442,18 +443,21 @@ func decodeFeatureAttributions(payload []byte) ([]FeatureAttribution, error) {
 	return attributions, nil
 }
 
-func decodeCalibrationDrift(payload []byte) (CalibrationDriftMetadata, error) {
+func decodeBatchMetadata(payload []byte) (CalibrationDriftMetadata, *AlertPolicyMetadata, error) {
 	metadata := CalibrationDriftMetadata{}
+	var alertPolicy *AlertPolicyMetadata
 	if len(payload) > 0 {
 		var batchMetadata struct {
 			CalibrationDrift CalibrationDriftMetadata `json:"calibration_drift"`
+			AlertPolicy      *AlertPolicyMetadata     `json:"alert_policy"`
 		}
 		if err := json.Unmarshal(payload, &batchMetadata); err != nil {
-			return CalibrationDriftMetadata{}, err
+			return CalibrationDriftMetadata{}, nil, err
 		}
 		metadata = batchMetadata.CalibrationDrift
+		alertPolicy = batchMetadata.AlertPolicy
 	}
-	return normalizeCalibrationDrift(metadata), nil
+	return normalizeCalibrationDrift(metadata), alertPolicy, nil
 }
 
 func emptyBatch() PredictionBatch {

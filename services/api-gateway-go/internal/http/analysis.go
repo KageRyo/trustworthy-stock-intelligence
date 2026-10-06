@@ -23,6 +23,7 @@ type TickerAnalysisResponse struct {
 	Reasons             []ReasonExplanation               `json:"reasons"`
 	FeatureAttributions []warnings.FeatureAttribution     `json:"feature_attributions"`
 	CalibrationDrift    warnings.CalibrationDriftMetadata `json:"calibration_drift"`
+	AlertPolicy         *warnings.AlertPolicyMetadata     `json:"alert_policy"`
 	Limitations         []string                          `json:"limitations"`
 }
 
