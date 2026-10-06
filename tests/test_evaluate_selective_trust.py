@@ -8,7 +8,14 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from scripts.evaluate_selective_trust import CONFIDENCE_SIGNALS, parse_args, run
+import pytest
+
+from scripts.evaluate_selective_trust import (
+    CONFIDENCE_SIGNALS,
+    parse_args,
+    resolve_output_dir,
+    run,
+)
 
 
 def _write_ohlcv(path: Path) -> None:
@@ -43,7 +50,9 @@ def test_run_writes_summary_and_curves(tmp_path: Path) -> None:
             "--input",
             str(input_path),
             "--output-dir",
-            str(output_dir),
+            "run",
+            "--output-root",
+            str(tmp_path),
             "--train-size",
             "120",
             "--calibration-size",
@@ -67,3 +76,15 @@ def test_run_writes_summary_and_curves(tmp_path: Path) -> None:
     assert len(saved["uncertainty_abstain"]) == 2
     assert saved["legacy_alert_gate"]["gated_alert_rate"] <= saved["legacy_alert_gate"]["ungated_alert_rate"]
     assert abs(saved["correlation_with_risk_probability"]["legacy_trust"]) > 0.5
+
+
+def test_resolve_output_dir_keeps_paths_inside_root(tmp_path: Path) -> None:
+    resolved = resolve_output_dir(Path("experiments/run"), root=tmp_path)
+
+    assert resolved == (tmp_path / "experiments" / "run").resolve()
+
+
+@pytest.mark.parametrize("candidate", ["../outside", "/etc/tsi", "runs/../../outside"])
+def test_resolve_output_dir_rejects_paths_outside_root(tmp_path: Path, candidate: str) -> None:
+    with pytest.raises(ValueError, match="must stay inside"):
+        resolve_output_dir(Path(candidate), root=tmp_path / "root")

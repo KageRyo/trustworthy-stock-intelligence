@@ -48,7 +48,18 @@ ABSTAIN_UNCERTAINTY_THRESHOLDS = (0.8, 0.9)
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--input", type=Path, required=True, help="OHLCV CSV input.")
-    parser.add_argument("--output-dir", type=Path, required=True)
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        required=True,
+        help="Output directory; must resolve inside --output-root.",
+    )
+    parser.add_argument(
+        "--output-root",
+        type=Path,
+        default=Path.cwd(),
+        help="Directory that --output-dir must stay inside. Defaults to the working directory.",
+    )
     parser.add_argument("--horizon", type=int, default=5)
     parser.add_argument("--drawdown-threshold", type=float, default=-0.05)
     parser.add_argument("--train-size", type=int, default=252)
@@ -307,7 +318,18 @@ def summarize(scored: pd.DataFrame) -> dict[str, object]:
     }
 
 
+def resolve_output_dir(output_dir: Path, *, root: Path) -> Path:
+    """Resolve ``output_dir`` against ``root`` and reject paths that escape it."""
+
+    base = root.resolve()
+    resolved = (base / output_dir).resolve()
+    if not resolved.is_relative_to(base):
+        raise ValueError(f"--output-dir must stay inside {base}")
+    return resolved
+
+
 def run(args: argparse.Namespace) -> dict[str, object]:
+    output_dir = resolve_output_dir(args.output_dir, root=args.output_root)
     ohlcv = read_ohlcv_csv(args.input)
     frame = prepare_training_frame(
         ohlcv, horizon=args.horizon, drawdown_threshold=args.drawdown_threshold
@@ -359,7 +381,7 @@ def run(args: argparse.Namespace) -> dict[str, object]:
         raise ValueError("No walk-forward fold had both classes in train and calibration windows")
     scored_all = pd.concat(scored_folds, ignore_index=True)
 
-    args.output_dir.mkdir(parents=True, exist_ok=True)
+    output_dir.mkdir(parents=True, exist_ok=True)
     curves = pd.concat(
         [
             risk_coverage_curve(
@@ -371,7 +393,7 @@ def run(args: argparse.Namespace) -> dict[str, object]:
         ],
         ignore_index=True,
     )
-    curves.to_csv(args.output_dir / "risk_coverage.csv", index=False)
+    curves.to_csv(output_dir / "risk_coverage.csv", index=False)
     summary = {
         "input": str(args.input),
         "input_sha256": file_sha256(args.input),
@@ -392,7 +414,7 @@ def run(args: argparse.Namespace) -> dict[str, object]:
         },
         **summarize(scored_all),
     }
-    (args.output_dir / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
+    (output_dir / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
     return summary
 
 
