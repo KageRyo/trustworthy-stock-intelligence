@@ -1,5 +1,23 @@
 # Maintainer Release Checklist
 
+## 0.5.0 Scope
+
+`0.5.0` changes the meaning of the served `trust_score` and `uncertainty_score`:
+
+- `uncertainty_score` comes from bootstrap-ensemble disagreement and feature novelty, ranked against
+  the calibration window.
+- `trust_score` comes from per-ticker data quality and calibration drift, not from the risk
+  probability.
+- Experiment 015 showed that epistemic uncertainty must not gate alerts, so it only moves
+  below-watch rows to abstain.
+- Alert volume increases at unchanged precision because the previous trust gate was a hidden second
+  probability threshold.
+- `--trust-method legacy` reproduces the previous serving behavior.
+
+The release also migrates the dashboard to Tailwind CSS v4 to clear npm audit advisories, refreshes
+torch 2.14 and security-patched Python dependencies, and confines the selective-trust experiment
+output path. Issue #29 remains open.
+
 ## 0.4.4 Python Package Scope
 
 `0.4.4` is a backward-compatible dependency-maintenance release following the `0.4.3` Python package
@@ -30,8 +48,8 @@ pending-publisher setup and package boundary.
 The package-only release sequence is:
 
 ```bash
-git tag -a v0.4.4 -m "release: v0.4.4"
-git push origin v0.4.4
+git tag -a v0.5.0 -m "release: v0.5.0"
+git push origin v0.5.0
 ```
 
 ## 0.4.0 Scope
@@ -98,6 +116,6 @@ response with the frontend Zod schema. It must be green before the release merge
 1. Prepare the version and changelog changes on a release branch.
 1. Merge the release PR only after all required checks pass.
 1. Confirm the merge commit is the current `main` head and rerun all checks.
-1. Create an annotated `v0.4.4` tag on that verified commit.
+1. Create an annotated `v0.5.0` tag on that verified commit.
 1. Push the tag and create a GitHub Release with `--verify-tag`.
 1. Confirm the remote tag, release target, release notes, and downloadable source archives.

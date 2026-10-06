@@ -2,6 +2,46 @@
 
 ## Unreleased
 
+## 0.5.0 - 2026-10-06
+
+### Changed
+
+- Serving now defaults to `--trust-method reliability`.
+  - `uncertainty_score` comes from date-block bootstrap-ensemble disagreement and Ledoit-Wolf
+    feature novelty, ranked against the calibration window.
+  - `trust_score` is per-ticker data quality (labeled-history depth, staleness) multiplied by the
+    calibration-drift multiplier.
+  - Neither score is a function of the risk probability.
+  - `--trust-method legacy` keeps the previous entropy-based behavior.
+- Epistemic uncertainty no longer blocks alerts; it only moves below-watch rows to `abstain`.
+- The default alert trust threshold is 0.4 for reliability trust.
+- Expect more alerts at unchanged precision: in the S&P 100 pilot, alert volume rose from about 17%
+  to about 32% of rows and recall from 0.26 to 0.52.
+- Migrated the dashboard from Tailwind CSS 3 to 4.3.3 to clear new `braces`, `micromatch`, and
+  `source-map-js` advisories in `npm audit`.
+- Refreshed torch 2.14.0 / torchvision 0.29.0 (CPU and cu126), security-patched Python dependencies
+  (werkzeug, urllib3, mako, tornado, notebook, jupyterlab), frontend minor/patch dependencies, and
+  SHA-pinned GitHub Actions.
+
+### Added
+
+- Class-conditional conformal sets, `ReliabilityAssessor`, and a date-block bootstrap ensemble.
+- Risk-coverage selective-prediction metrics with base-rate-adjusted Brier skill.
+- Row-level reliability reason codes with Go API explanations and English and 正體中文 dashboard copy.
+- Experiment 015 (`scripts/evaluate_selective_trust.py`), recording that epistemic signals do not
+  identify more reliable predictions on the S&P 100 pilot.
+
+### Fixed
+
+- The selective-trust experiment rejects output directories that escape `--output-root` (SonarCloud
+  S8707).
+
+### Notes
+
+- Trust scores and the alert policy are not externally validated. A precision- or volume-targeted
+  alert policy is the next planned step.
+- Issue #29 remains open.
+
 ## 0.4.4 - 2026-09-22
 
 ### Changed

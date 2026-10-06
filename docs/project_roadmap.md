@@ -18,9 +18,9 @@ The system focuses on trustworthy AI behavior: calibration, uncertainty, abstent
 auditability, and clear limitations. It is not an investment recommendation system or automated
 trading system.
 
-## Current State: 0.4.4 operational prototype
+## Current State: 0.5.0 operational prototype
 
-Version `0.4.4` is an operational prototype following the `0.4.3` dependency-maintenance release. It
+Version `0.5.0` is an operational prototype following the `0.4.4` dependency-maintenance release. It
 remains a reproducible pilot, not externally validated research or investment advice. The current
 priority is validation of data quality and serving safety, especially for five-minute ingestion,
 stale data behavior, and worker recovery.
