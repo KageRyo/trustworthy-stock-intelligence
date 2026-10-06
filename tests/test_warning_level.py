@@ -121,3 +121,15 @@ def test_alert_policy_validates_targets() -> None:
         AlertPolicy(kind="alert_rate", target=1.5)
     with pytest.raises(ValueError, match="min_alerts"):
         AlertPolicy(kind="target_precision", target=0.3, min_alerts=0)
+
+
+def test_parse_alert_policy_reads_kind_and_target() -> None:
+    import pytest
+
+    from tsi.labeling.warning_level import parse_alert_policy
+
+    assert parse_alert_policy("f1").label == "f1"
+    policy = parse_alert_policy(" alert_rate:0.05 ", min_alerts=5)
+    assert (policy.kind, policy.target, policy.min_alerts) == ("alert_rate", 0.05, 5)
+    with pytest.raises(ValueError, match="Unsupported alert policy"):
+        parse_alert_policy("top_k:3")

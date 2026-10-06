@@ -242,3 +242,14 @@ def _threshold_sweep(
         alert_counts > 0, cumulative_true_positives[np.maximum(alert_counts - 1, 0)], 0
     )
     return thresholds, alert_counts, true_positive_counts
+
+
+def parse_alert_policy(text: str, *, min_alerts: int = 20) -> AlertPolicy:
+    """Parse ``kind`` or ``kind:target`` into an :class:`AlertPolicy`."""
+
+    kind, _, target = text.strip().partition(":")
+    return AlertPolicy(
+        kind=kind,  # type: ignore[arg-type]
+        target=float(target) if target else None,
+        min_alerts=min_alerts,
+    )
