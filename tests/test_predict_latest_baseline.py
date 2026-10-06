@@ -247,3 +247,13 @@ def test_run_prediction_reliability_trust_reflects_short_history(tmp_path: Path)
     assert (predictions["trust_score"] < 0.5).all()
     assert (predictions["warning_level"] != "alert").all()
     assert all("limited_data_quality" in record["reason_codes"] for record in payload["records"])
+
+
+def test_resolve_trust_threshold_depends_on_trust_method() -> None:
+    from scripts.predict_latest_baseline import resolve_trust_threshold
+
+    base = ["--input", "x.csv", "--output", "y.csv", "--json-output", "z.json"]
+
+    assert resolve_trust_threshold(parse_args(base)) == 0.4
+    assert resolve_trust_threshold(parse_args([*base, "--trust-method", "legacy"])) == 0.1
+    assert resolve_trust_threshold(parse_args([*base, "--trust-threshold", "0.7"])) == 0.7

@@ -80,7 +80,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         "--trust-threshold",
         type=float,
         default=None,
-        help="Minimum trust for alerts. Defaults to 0.5 (reliability) or 0.1 (legacy).",
+        help="Minimum trust for alerts. Defaults to 0.4 (reliability) or 0.1 (legacy).",
     )
     parser.add_argument("--uncertainty-threshold", type=float, default=0.8)
     parser.add_argument("--reliability-members", type=int, default=10)
@@ -383,7 +383,8 @@ def run_prediction(args: argparse.Namespace) -> pd.DataFrame:
 def resolve_trust_threshold(args: argparse.Namespace) -> float:
     if args.trust_threshold is not None:
         return float(args.trust_threshold)
-    return 0.5 if args.trust_method == "reliability" else 0.1
+    # 0.4 lets full-quality data pass under the 0.5 drift multiplier only when quality >= 0.8.
+    return 0.4 if args.trust_method == "reliability" else 0.1
 
 
 def ticker_data_quality(
