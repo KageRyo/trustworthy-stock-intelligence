@@ -493,7 +493,7 @@ export default function App() {
           </div>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <div
-              className="inline-flex h-11 rounded-md border border-line bg-white p-1 shadow-sm"
+              className="inline-flex h-11 rounded-md border border-line bg-white p-1 shadow-xs"
               aria-label={copy.language.label}
             >
               {(["zh-Hant", "en"] as const).map((option) => (
@@ -510,18 +510,18 @@ export default function App() {
               ))}
             </div>
             <form
-              className="flex min-w-0 rounded-md border border-line bg-white shadow-sm"
+              className="flex min-w-0 rounded-md border border-line bg-white shadow-xs"
               onSubmit={submitTicker}
             >
               <input
-                className="h-11 min-w-0 flex-1 rounded-l-md px-3 text-sm font-medium outline-none ring-0 placeholder:text-slate-400 sm:w-48"
+                className="h-11 min-w-0 flex-1 rounded-l-md px-3 text-sm font-medium outline-hidden ring-0 placeholder:text-slate-400 sm:w-48"
                 value={tickerInput}
                 onChange={(event) => setTickerInput(event.target.value)}
                 placeholder={copy.searchPlaceholder}
                 aria-label={copy.searchAria}
               />
               <button
-                className="inline-flex h-11 items-center gap-2 rounded-r-md bg-ink px-4 text-sm font-semibold text-white hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-data"
+                className="inline-flex h-11 items-center gap-2 rounded-r-md bg-ink px-4 text-sm font-semibold text-white hover:bg-slate-700 focus:outline-hidden focus:ring-2 focus:ring-data"
                 type="submit"
               >
                 <Search size={17} aria-hidden="true" />
@@ -529,7 +529,7 @@ export default function App() {
               </button>
             </form>
             <button
-              className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-line bg-white px-4 text-sm font-semibold text-ink shadow-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-data"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-line bg-white px-4 text-sm font-semibold text-ink shadow-xs hover:bg-slate-50 focus:outline-hidden focus:ring-2 focus:ring-data"
               type="button"
               onClick={refreshAll}
             >
@@ -1167,7 +1167,7 @@ function FeatureAttributionList({
             return (
               <div
                 key={`${attribution.feature}-${attribution.method}`}
-                className="flex items-center justify-between gap-3 rounded border border-line bg-white px-3 py-2"
+                className="flex items-center justify-between gap-3 rounded-sm border border-line bg-white px-3 py-2"
               >
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium text-ink">{attribution.feature}</p>
@@ -1382,7 +1382,7 @@ function WatchlistPanel({
         <label className="grid gap-1">
           <span className="text-xs font-semibold uppercase tracking-normal text-slate-500">{copy.labels.market}</span>
           <select
-            className="h-9 rounded border border-line bg-white px-2"
+            className="h-9 rounded-sm border border-line bg-white px-2"
             value={filters.market}
             onChange={(event) => onChangeFilters({ ...filters, market: event.target.value as WatchlistFilters["market"] })}
           >
@@ -1396,7 +1396,7 @@ function WatchlistPanel({
         <label className="grid gap-1">
           <span className="text-xs font-semibold uppercase tracking-normal text-slate-500">{copy.labels.level}</span>
           <select
-            className="h-9 rounded border border-line bg-white px-2"
+            className="h-9 rounded-sm border border-line bg-white px-2"
             value={filters.warning}
             onChange={(event) => onChangeFilters({ ...filters, warning: event.target.value as WatchlistFilters["warning"] })}
           >
@@ -1410,7 +1410,7 @@ function WatchlistPanel({
         <label className="grid gap-1">
           <span className="text-xs font-semibold uppercase tracking-normal text-slate-500">{copy.labels.action}</span>
           <select
-            className="h-9 rounded border border-line bg-white px-2"
+            className="h-9 rounded-sm border border-line bg-white px-2"
             value={sort}
             onChange={(event) => onChangeSort(event.target.value as WatchlistSort)}
           >
@@ -1425,7 +1425,7 @@ function WatchlistPanel({
         <label className="grid gap-1">
           <span className="text-xs font-semibold uppercase tracking-normal text-slate-500">{copy.labels.trustStatus}</span>
           <select
-            className="h-9 rounded border border-line bg-white px-2"
+            className="h-9 rounded-sm border border-line bg-white px-2"
             value={filters.trust}
             onChange={(event) => onChangeFilters({ ...filters, trust: event.target.value as WatchlistFilters["trust"] })}
           >
@@ -1436,7 +1436,7 @@ function WatchlistPanel({
         <label className="grid gap-1">
           <span className="text-xs font-semibold uppercase tracking-normal text-slate-500">{copy.labels.freshness}</span>
           <select
-            className="h-9 rounded border border-line bg-white px-2"
+            className="h-9 rounded-sm border border-line bg-white px-2"
             value={filters.freshness}
             onChange={(event) => onChangeFilters({ ...filters, freshness: event.target.value as WatchlistFilters["freshness"] })}
           >
@@ -1449,7 +1449,7 @@ function WatchlistPanel({
         <label className="grid gap-1">
           <span className="text-xs font-semibold uppercase tracking-normal text-slate-500">{copy.panels.sessionWatchlist}</span>
           <select
-            className="h-9 rounded border border-line bg-white px-2"
+            className="h-9 rounded-sm border border-line bg-white px-2"
             value={filters.group}
             onChange={(event) => onChangeFilters({ ...filters, group: event.target.value })}
           >
@@ -1460,7 +1460,7 @@ function WatchlistPanel({
         </label>
         <div className="flex items-end gap-2 lg:col-span-3">
           <input
-            className="h-9 min-w-0 flex-1 rounded border border-line bg-white px-2"
+            className="h-9 min-w-0 flex-1 rounded-sm border border-line bg-white px-2"
             value={groupInput}
             onChange={(event) => onChangeGroupInput(event.target.value)}
             placeholder={copy.panels.sessionWatchlist}
@@ -1468,7 +1468,7 @@ function WatchlistPanel({
             maxLength={40}
           />
           <button
-            className="h-9 rounded bg-ink px-3 text-xs font-semibold text-white disabled:opacity-50"
+            className="h-9 rounded-sm bg-ink px-3 text-xs font-semibold text-white disabled:opacity-50"
             type="button"
             disabled={!groupInput.trim()}
             onClick={onAddGroup}
@@ -1478,7 +1478,7 @@ function WatchlistPanel({
           {grouping.groups.map((group) => (
             <button
               key={group}
-              className="h-9 rounded border border-line bg-white px-2 text-xs font-semibold text-slate-600 hover:bg-red-50 hover:text-red-700"
+              className="h-9 rounded-sm border border-line bg-white px-2 text-xs font-semibold text-slate-600 hover:bg-red-50 hover:text-red-700"
               type="button"
               onClick={() => onRemoveGroup(group)}
               title={group}
@@ -1490,14 +1490,14 @@ function WatchlistPanel({
       </div>
       <div className="mb-4 flex flex-wrap items-center gap-2 text-xs">
         <button
-          className="rounded border border-line bg-white px-3 py-2 font-semibold text-slate-700 hover:bg-slate-100"
+          className="rounded-sm border border-line bg-white px-3 py-2 font-semibold text-slate-700 hover:bg-slate-100"
           type="button"
           onClick={toggleVisibleTickers}
         >
           {copy.common.selectAll}
         </button>
         <button
-          className="rounded border border-line bg-white px-3 py-2 font-semibold text-slate-700 hover:bg-slate-100"
+          className="rounded-sm border border-line bg-white px-3 py-2 font-semibold text-slate-700 hover:bg-slate-100"
           type="button"
           onClick={() => setSelectedTickers(new Set())}
           disabled={selectedTickers.size === 0}
@@ -1505,7 +1505,7 @@ function WatchlistPanel({
           {copy.common.clearSelected}
         </button>
         <button
-          className="rounded border border-red-200 bg-red-50 px-3 py-2 font-semibold text-red-800 hover:bg-red-100 disabled:opacity-50"
+          className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 font-semibold text-red-800 hover:bg-red-100 disabled:opacity-50"
           type="button"
           onClick={() => void bulkRemove()}
           disabled={selectedVisibleTickers.length === 0}
@@ -1587,7 +1587,7 @@ function WatchlistRow({
       </td>
       <td className="py-3 pr-3">
         <button
-          className="font-semibold text-data hover:underline focus:outline-none focus:ring-2 focus:ring-data"
+          className="font-semibold text-data hover:underline focus:outline-hidden focus:ring-2 focus:ring-data"
           type="button"
           onClick={() => onSelectTicker(ticker.ticker)}
         >
@@ -1600,7 +1600,7 @@ function WatchlistRow({
       </td>
       <td className="px-3 py-3">
         <select
-          className="h-8 max-w-28 rounded border border-line bg-white px-1 text-xs"
+          className="h-8 max-w-28 rounded-sm border border-line bg-white px-1 text-xs"
           value={group}
           onChange={(event) => onAssignGroup(ticker.ticker, event.target.value)}
           aria-label={`${copy.panels.sessionWatchlist} ${ticker.ticker}`}
@@ -1623,7 +1623,7 @@ function WatchlistRow({
       </td>
       <td className="px-3 py-3">
         <button
-          className="grid h-9 w-9 place-items-center rounded-md border border-line bg-white text-slate-600 hover:bg-red-50 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-data"
+          className="grid h-9 w-9 place-items-center rounded-md border border-line bg-white text-slate-600 hover:bg-red-50 hover:text-red-700 focus:outline-hidden focus:ring-2 focus:ring-data"
           type="button"
           aria-label={`${copy.common.remove} ${ticker.ticker}`}
           onClick={() => onRemoveTicker(ticker.ticker)}
@@ -1683,7 +1683,7 @@ function WarningsTable({
               >
                 <td className="py-3 pr-3">
                   <button
-                    className="font-semibold text-data hover:underline focus:outline-none focus:ring-2 focus:ring-data"
+                    className="font-semibold text-data hover:underline focus:outline-hidden focus:ring-2 focus:ring-data"
                     type="button"
                     onClick={() => onSelectTicker(record.ticker)}
                   >
