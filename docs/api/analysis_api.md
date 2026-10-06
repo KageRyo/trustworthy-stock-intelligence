@@ -61,12 +61,15 @@ Taiwan local tickers are string symbols. Numeric and alphanumeric inputs such as
 
 | Field                | Type   | Description                                                                             |
 | -------------------- | ------ | --------------------------------------------------------------------------------------- |
-| `trust_score`        | number | Trust score in `[0, 1]`.                                                                |
-| `uncertainty_score`  | number | Uncertainty score in `[0, 1]`.                                                          |
+| `trust_score`        | number | Usability in `[0, 1]` from data quality and calibration drift; independent of risk.     |
+| `uncertainty_score`  | number | Ensemble disagreement and feature novelty, ranked against the calibration window.       |
 | `calibration_method` | string | Calibration method used by the model bundle.                                            |
 | `trust_status`       | string | Derived trust status, for example `trusted_for_alert` or `limited_trust`.               |
 | `uncertainty_status` | string | Derived uncertainty status, for example `acceptable_uncertainty` or `high_uncertainty`. |
 | `summary`            | string | Human-readable trust assessment.                                                        |
+
+Batches produced with `--trust-method legacy` derive both scores from the risk probability. See
+[Experiment 015](../../experiments/015_reliability_trust/README.md) for why the default changed.
 
 ### `CalibrationDriftMetadata`
 
