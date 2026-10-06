@@ -1249,3 +1249,46 @@ func (a *fakeOnDemandAnalyzer) Analyze(_ context.Context, ticker string) error {
 	}
 	return nil
 }
+
+func TestExplainReasonCodeSupportsReliabilityCodes(t *testing.T) {
+	codes := []string{
+		"ensemble_disagreement_high",
+		"input_out_of_distribution",
+		"limited_data_quality",
+		"stale_ticker_data",
+		"reliability_unavailable",
+		"conformal_set_ambiguous",
+		"conformal_set_drawdown_only",
+		"conformal_set_no_drawdown_only",
+		"conformal_set_empty",
+		"conformal_set_unavailable",
+	}
+	for _, code := range codes {
+		reason := explainReasonCode(code)
+		if reason.Detail == "The model emitted this reason code in the latest warning batch." {
+			t.Fatalf("reason code %q fell back to generic explanation", code)
+		}
+	}
+	if severity := explainReasonCode("stale_ticker_data").Severity; severity != "watch" {
+		t.Fatalf("stale_ticker_data severity = %q, want watch", severity)
+	}
+}
+
+func TestTrustStatusIsLimitedForDataQualityReasons(t *testing.T) {
+	for _, code := range []string{"limited_data_quality", "stale_ticker_data", "reliability_unavailable"} {
+		status := trustStatus([]string{"trust_above_alert_threshold", code})
+		if status != "limited_trust" {
+			t.Fatalf("trust status with %q = %q, want limited_trust", code, status)
+		}
+	}
+}
+
+func TestTrustSummaryExplainsLimitedDataQuality(t *testing.T) {
+	summary := trustSummary(warnings.PredictionRecord{
+		ReasonCodes: []string{"trust_above_alert_threshold", "limited_data_quality"},
+	})
+
+	if !strings.Contains(strings.ToLower(summary), "data quality") {
+		t.Fatalf("unexpected trust summary: %q", summary)
+	}
+}

@@ -913,10 +913,12 @@ components:
           type: string
         uncertainty_score:
           type: number
+          description: Epistemic uncertainty from bootstrap-ensemble disagreement and feature novelty, ranked against the calibration window. Legacy batches use probability entropy.
           minimum: 0
           maximum: 1
         trust_score:
           type: number
+          description: Usability of the prediction from per-ticker data quality and calibration drift, independent of the risk level. Legacy batches derive it from the risk probability.
           minimum: 0
           maximum: 1
         alert_threshold:
@@ -992,6 +994,7 @@ components:
           maximum: 1
         trust_score:
           type: number
+          description: Usability of the prediction from per-ticker data quality and calibration drift, independent of the risk level. Legacy batches derive it from the risk probability.
           minimum: 0
           maximum: 1
     WatchlistAddTickerRequest:
@@ -1085,10 +1088,12 @@ components:
           maximum: 1
         uncertainty_score:
           type: number
+          description: Epistemic uncertainty from bootstrap-ensemble disagreement and feature novelty, ranked against the calibration window. Legacy batches use probability entropy.
           minimum: 0
           maximum: 1
         trust_score:
           type: number
+          description: Usability of the prediction from per-ticker data quality and calibration drift, independent of the risk level. Legacy batches derive it from the risk probability.
           minimum: 0
           maximum: 1
         alert_threshold:
@@ -1225,10 +1230,12 @@ components:
           type: string
         uncertainty_score:
           type: number
+          description: Epistemic uncertainty from bootstrap-ensemble disagreement and feature novelty, ranked against the calibration window. Legacy batches use probability entropy.
           minimum: 0
           maximum: 1
         trust_score:
           type: number
+          description: Usability of the prediction from per-ticker data quality and calibration drift, independent of the risk level. Legacy batches derive it from the risk probability.
           minimum: 0
           maximum: 1
         alert_threshold:
@@ -1311,10 +1318,12 @@ components:
       properties:
         trust_score:
           type: number
+          description: Usability of the prediction from per-ticker data quality and calibration drift, independent of the risk level. Legacy batches derive it from the risk probability.
           minimum: 0
           maximum: 1
         uncertainty_score:
           type: number
+          description: Epistemic uncertainty from bootstrap-ensemble disagreement and feature novelty, ranked against the calibration window. Legacy batches use probability entropy.
           minimum: 0
           maximum: 1
         calibration_method:
