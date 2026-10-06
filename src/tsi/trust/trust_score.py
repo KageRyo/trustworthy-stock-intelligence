@@ -88,15 +88,18 @@ def compute_reliability_trust(
     *,
     epistemic_uncertainty: np.ndarray,
     data_quality: np.ndarray,
+    epistemic_weight: float = 1.0,
 ) -> np.ndarray:
     """Compute how usable a prediction is, independent of how risky it says the ticker is.
 
-    ``trust = data_quality * (1 - epistemic_uncertainty)``. Unlike
+    ``trust = data_quality * (1 - epistemic_weight * epistemic_uncertainty)``. Unlike
     :func:`compute_trust_score`, a high risk probability does not raise trust.
     """
 
+    if not 0.0 <= epistemic_weight <= 1.0:
+        raise ValueError("epistemic_weight must be in [0, 1]")
     uncertainty = _unit_interval("epistemic_uncertainty", epistemic_uncertainty)
     quality = _unit_interval("data_quality", data_quality)
     if uncertainty.shape != quality.shape:
         raise ValueError("epistemic_uncertainty and data_quality must have the same shape")
-    return np.clip(quality * (1.0 - uncertainty), 0.0, 1.0)
+    return np.clip(quality * (1.0 - epistemic_weight * uncertainty), 0.0, 1.0)

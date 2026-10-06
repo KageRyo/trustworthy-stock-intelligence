@@ -116,3 +116,15 @@ def test_data_quality_penalizes_short_history_and_stale_rows() -> None:
     )
 
     np.testing.assert_allclose(scores, np.array([1.0, 0.5, 1.0, 0.5]))
+
+
+def test_reliability_trust_can_ignore_epistemic_uncertainty() -> None:
+    from tsi.trust.trust_score import compute_reliability_trust
+
+    scores = compute_reliability_trust(
+        epistemic_uncertainty=np.array([0.0, 0.9]),
+        data_quality=np.array([0.8, 0.8]),
+        epistemic_weight=0.0,
+    )
+
+    np.testing.assert_allclose(scores, np.array([0.8, 0.8]))

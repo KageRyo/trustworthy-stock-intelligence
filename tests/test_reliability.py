@@ -10,7 +10,9 @@ from tsi.trust.calibration import fit_probability_calibrator
 from tsi.trust.reliability import ReliabilityAssessor, ReliabilityConfig
 
 
-def _fitted_assessor() -> tuple[ReliabilityAssessor, np.ndarray]:
+def _fitted_assessor(
+    config: ReliabilityConfig | None = None,
+) -> tuple[ReliabilityAssessor, np.ndarray]:
     rng = np.random.default_rng(11)
     features = rng.normal(size=(3000, 3))
     labels = (features[:, 0] + rng.normal(0, 1, 3000) > 1.2).astype(int)
@@ -20,7 +22,7 @@ def _fitted_assessor() -> tuple[ReliabilityAssessor, np.ndarray]:
     raw_calibration = model.predict_proba(features[calibration])
     calibrator = fit_probability_calibrator(raw_calibration, labels[calibration], method="platt")
     calibrated_calibration = calibrator.predict(raw_calibration)
-    assessor = ReliabilityAssessor(ReliabilityConfig(n_members=6, random_state=0)).fit(
+    assessor = ReliabilityAssessor(config or ReliabilityConfig(n_members=6, random_state=0)).fit(
         train_features=features[train],
         train_labels=labels[train],
         train_groups=dates[train],
@@ -45,10 +47,10 @@ def test_assessor_scores_are_bounded_and_aligned() -> None:
     for values in (scores.disagreement, scores.novelty_percentile, scores.uncertainty, scores.trust):
         assert values.shape == (2,)
         assert np.all((values >= 0.0) & (values <= 1.0))
-    assert scores.trust[1] <= 0.5
+    np.testing.assert_allclose(scores.trust, np.array([1.0, 0.5]))
 
 
-def test_out_of_distribution_rows_get_lower_trust() -> None:
+def test_out_of_distribution_rows_get_higher_uncertainty_not_lower_default_trust() -> None:
     assessor, _ = _fitted_assessor()
     query = np.array([[0.0, 0.0, 0.0], [12.0, -12.0, 12.0]])
 
@@ -59,7 +61,8 @@ def test_out_of_distribution_rows_get_lower_trust() -> None:
     )
 
     assert scores.novelty_percentile[1] == pytest.approx(1.0)
-    assert scores.trust[1] < scores.trust[0]
+    assert scores.uncertainty[1] > scores.uncertainty[0]
+    np.testing.assert_allclose(scores.trust, np.array([1.0, 1.0]))
     assert "input_out_of_distribution" in scores.reason_codes[1]
     assert "input_out_of_distribution" not in scores.reason_codes[0]
 
@@ -87,6 +90,7 @@ def test_reason_codes_include_conformal_set_and_data_quality() -> None:
     )
 
     codes = scores.reason_codes[0]
+    assert scores.conformal_sets is not None and scores.conformal_sets.shape == (1, 2)
     assert any(code.startswith("conformal_set_") for code in codes)
     assert "limited_data_quality" in codes
 
@@ -106,3 +110,17 @@ def test_score_requires_fit() -> None:
             calibrated_probabilities=np.array([0.1]),
             data_quality=np.array([1.0]),
         )
+
+
+def test_epistemic_trust_weight_lowers_trust_for_novel_rows() -> None:
+    assessor, _ = _fitted_assessor(
+        ReliabilityConfig(n_members=6, random_state=0, epistemic_trust_weight=1.0)
+    )
+
+    scores = assessor.score(
+        np.array([[0.0, 0.0, 0.0], [12.0, -12.0, 12.0]]),
+        calibrated_probabilities=np.array([0.2, 0.2]),
+        data_quality=np.array([1.0, 1.0]),
+    )
+
+    assert scores.trust[1] < scores.trust[0]

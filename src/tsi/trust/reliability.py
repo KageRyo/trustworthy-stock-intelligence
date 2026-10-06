@@ -9,6 +9,13 @@ not depend on the risk level itself:
 
 Disagreement and novelty are ranked against the calibration window, so an
 uncertainty of 0.5 means "as uncertain as a typical recent labeled row".
+
+By default the trust score uses data quality only (``epistemic_trust_weight=0``).
+Experiment 015 on S&P 100 walk-forward folds found that high-uncertainty rows have
+roughly twice the drawdown rate and that alerts blocked by epistemic trust were
+more precise than alerts that passed, so epistemic uncertainty must not suppress
+alerts. It is still served as ``uncertainty_score``, where it moves low-risk rows to
+abstain instead of an overconfident no-alert.
 Class-conditional conformal sets are reported as reason codes only. They are a
 function of the calibrated probability, so they stay out of the trust score.
 """
@@ -39,6 +46,7 @@ class ReliabilityConfig:
     n_members: int = 10
     random_state: int = 42
     conformal_alpha: float = 0.1
+    epistemic_trust_weight: float = 0.0
     high_disagreement_percentile: float = 0.9
     out_of_distribution_percentile: float = 0.95
     limited_data_quality: float = 0.75
@@ -54,6 +62,7 @@ class ReliabilityScores:
     uncertainty: np.ndarray
     trust: np.ndarray
     reason_codes: list[list[str]]
+    conformal_sets: np.ndarray | None = None
 
 
 class ReliabilityAssessor:
@@ -128,7 +137,11 @@ class ReliabilityAssessor:
             novelty_percentile=novelty_percentile,
         )
         quality = np.asarray(data_quality, dtype=float)
-        trust = compute_reliability_trust(epistemic_uncertainty=uncertainty, data_quality=quality)
+        trust = compute_reliability_trust(
+            epistemic_uncertainty=uncertainty,
+            data_quality=quality,
+            epistemic_weight=self.config.epistemic_trust_weight,
+        )
         conformal_sets = (
             self._conformal.prediction_sets(np.asarray(calibrated_probabilities, dtype=float))
             if self._conformal_ready
@@ -150,6 +163,7 @@ class ReliabilityAssessor:
             uncertainty=uncertainty,
             trust=trust,
             reason_codes=reason_codes,
+            conformal_sets=conformal_sets,
         )
 
     @staticmethod
