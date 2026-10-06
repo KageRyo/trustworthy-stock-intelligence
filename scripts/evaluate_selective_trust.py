@@ -184,6 +184,24 @@ def epistemic_alert_gate(scored: pd.DataFrame) -> list[dict[str, float]]:
     return rows
 
 
+def legacy_alert_gate(scored: pd.DataFrame, *, trust_threshold: float = 0.1) -> dict[str, float]:
+    """Measure the previous serving rule: alert only when legacy trust passes 0.1."""
+
+    alerts = scored["calibrated_risk_probability"] >= scored["alert_threshold"]
+    gated = alerts & (scored["legacy_trust"] >= trust_threshold)
+    positives = int((scored["risk_label"] == 1).sum())
+    result: dict[str, float] = {"trust_threshold": trust_threshold}
+    for name, mask in {"ungated": alerts, "gated": gated}.items():
+        result[f"{name}_alert_rate"] = float(mask.mean())
+        result[f"{name}_fdr"] = _fdr(scored.loc[mask, "risk_label"])
+        result[f"{name}_recall"] = (
+            float((mask & (scored["risk_label"] == 1)).sum() / positives)
+            if positives
+            else float("nan")
+        )
+    return result
+
+
 def uncertainty_abstain(scored: pd.DataFrame, *, watch_ratio: float = 0.8) -> list[dict[str, float]]:
     """Compare observed event rates for below-watch rows that would abstain."""
 
@@ -282,6 +300,7 @@ def summarize(scored: pd.DataFrame) -> dict[str, object]:
             str(q): float(scored["epistemic_trust"].quantile(q)) for q in (0.1, 0.25, 0.5, 0.75, 0.9)
         },
         "served_trust_mean": float(scored["served_trust"].mean()),
+        "legacy_alert_gate": legacy_alert_gate(scored),
         "epistemic_alert_gate": epistemic_alert_gate(scored),
         "uncertainty_abstain": uncertainty_abstain(scored),
         "conformal": conformal_coverage(scored),

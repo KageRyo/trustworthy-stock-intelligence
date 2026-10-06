@@ -65,4 +65,5 @@ def test_run_writes_summary_and_curves(tmp_path: Path) -> None:
     assert saved["protocol"]["purge_size"] == 5
     assert len(saved["epistemic_alert_gate"]) == 4
     assert len(saved["uncertainty_abstain"]) == 2
+    assert saved["legacy_alert_gate"]["gated_alert_rate"] <= saved["legacy_alert_gate"]["ungated_alert_rate"]
     assert abs(saved["correlation_with_risk_probability"]["legacy_trust"]) > 0.5
