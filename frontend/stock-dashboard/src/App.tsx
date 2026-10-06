@@ -26,6 +26,7 @@ import {
   XAxis,
   YAxis
 } from "recharts";
+import { localizedTrustSummary } from "./lib/trustSummary";
 import {
   APIClientError,
   addWatchlistTicker,
@@ -208,35 +209,6 @@ function summarizeCoverage(tickerList: TickerList | null, copy: DashboardCopy): 
     parts.push(`${unknownCount} ${copy.markets.unknown}`);
   }
   return parts.join(" / ");
-}
-
-function hasReason(analysis: TickerAnalysis, code: string): boolean {
-  return analysis.reasons.some((reason) => reason.code === code);
-}
-
-function localizedTrustSummary(analysis: TickerAnalysis, copy: DashboardCopy): string {
-  if (hasReason(analysis, "insufficient_history")) {
-    return copy.trustSummaries.insufficientHistory;
-  }
-  if (hasReason(analysis, "calibration_drift_abstain")) {
-    return copy.trustSummaries.calibrationDriftAbstain;
-  }
-  if (hasReason(analysis, "calibration_drift_detected")) {
-    return copy.trustSummaries.calibrationDriftDetected;
-  }
-  if (hasReason(analysis, "calibration_drift_not_evaluated")) {
-    return copy.trustSummaries.calibrationDriftNotEvaluated;
-  }
-  if (hasReason(analysis, "uncertainty_above_threshold")) {
-    return copy.trustSummaries.highUncertainty;
-  }
-  if (hasReason(analysis, "trust_above_alert_threshold")) {
-    return copy.trustSummaries.trustedForAlert;
-  }
-  if (hasReason(analysis, "trust_below_alert_threshold")) {
-    return copy.trustSummaries.limitedTrust;
-  }
-  return copy.trustSummaries.default;
 }
 
 export default function App() {

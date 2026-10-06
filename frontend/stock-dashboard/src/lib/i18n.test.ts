@@ -24,3 +24,25 @@ describe("dashboard i18n", () => {
     expect(translations["zh-Hant"].reasonCodes.insufficient_history.title).toBe("價格歷史不足");
   });
 });
+
+describe("reliability reason codes", () => {
+  const codes = [
+    "ensemble_disagreement_high",
+    "input_out_of_distribution",
+    "limited_data_quality",
+    "stale_ticker_data",
+    "reliability_unavailable",
+    "conformal_set_ambiguous",
+    "conformal_set_drawdown_only",
+    "conformal_set_no_drawdown_only",
+    "conformal_set_empty",
+    "conformal_set_unavailable"
+  ] as const;
+
+  it("localizes every reliability reason code in both locales", () => {
+    for (const code of codes) {
+      expect(translations.en.reasonCodes[code].title).toBeTruthy();
+      expect(translations["zh-Hant"].reasonCodes[code].title).toBeTruthy();
+    }
+  });
+});

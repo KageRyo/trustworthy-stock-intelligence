@@ -151,6 +151,8 @@ export type DashboardCopy = {
     calibrationDriftDetected: string;
     calibrationDriftAbstain: string;
     calibrationDriftNotEvaluated: string;
+    limitedDataQuality: string;
+    reliabilityUnavailable: string;
     default: string;
   };
   severity: Record<ReasonSeverity, string>;
@@ -347,7 +349,12 @@ export const translations = {
       calibrationDriftDetected: "Calibration drift was detected and the trust score was reduced.",
       calibrationDriftAbstain: "Calibration drift crossed the abstention gate; treat this output as non-actionable.",
       calibrationDriftNotEvaluated: "Calibration drift was not evaluated because no later labeled window was available.",
-      default: "Trust assessment is based on calibrated probability and uncertainty for this batch."
+      limitedDataQuality:
+        "Data quality is limited (short labeled history or stale bars), so trust was reduced.",
+      reliabilityUnavailable:
+        "Reliability could not be assessed for this batch, so trust was set to zero.",
+      default:
+        "Trust reflects data quality and calibration drift; uncertainty is reported separately."
     },
     severity: {
       alert: "alert",
@@ -419,6 +426,46 @@ export const translations = {
       insufficient_history: {
         title: "Insufficient price history",
         detail: "The ticker has market data, but not enough labeled history for a calibrated risk prediction."
+      },
+      ensemble_disagreement_high: {
+        title: "Model refits disagree",
+        detail: "Models refit on resampled market days disagree more than on most recent labeled rows, so treat the probability as less stable."
+      },
+      input_out_of_distribution: {
+        title: "Unusual market conditions",
+        detail: "The latest features are far from the training data. Historically these periods carried higher drawdown rates, so a low reading is not reassuring."
+      },
+      limited_data_quality: {
+        title: "Limited data quality",
+        detail: "The ticker has a short labeled history or stale bars, so trust was reduced."
+      },
+      stale_ticker_data: {
+        title: "Stale ticker data",
+        detail: "The ticker's latest bar is older than the latest bar in this batch."
+      },
+      reliability_unavailable: {
+        title: "Reliability unavailable",
+        detail: "Reliability signals could not be fitted (for example single-class history), so trust was set to zero."
+      },
+      conformal_set_ambiguous: {
+        title: "Outcomes not separable",
+        detail: "The conformal prediction set contains both drawdown and no drawdown at the configured coverage."
+      },
+      conformal_set_drawdown_only: {
+        title: "Conformal set: drawdown",
+        detail: "At the configured coverage, the conformal prediction set contains only the drawdown outcome."
+      },
+      conformal_set_no_drawdown_only: {
+        title: "Conformal set: no drawdown",
+        detail: "At the configured coverage, the conformal prediction set contains only the no-drawdown outcome."
+      },
+      conformal_set_empty: {
+        title: "Conformal set empty",
+        detail: "The conformal prediction set is empty, which indicates an unusual calibrated probability for this batch."
+      },
+      conformal_set_unavailable: {
+        title: "Conformal set unavailable",
+        detail: "The calibration window did not contain both outcomes, so no conformal set was computed."
       }
     }
   },
@@ -598,7 +645,9 @@ export const translations = {
       calibrationDriftDetected: "偵測到校準漂移，信任分數已降低。",
       calibrationDriftAbstain: "校準漂移跨越暫不判斷門檻，這項輸出不可直接採取行動。",
       calibrationDriftNotEvaluated: "沒有較晚的標註資料窗，因此尚未評估校準漂移。",
-      default: "信任評估基於校準後機率與不確定性。"
+      limitedDataQuality: "資料品質有限（標註歷史較短或價格資料過舊），信任分數已降低。",
+      reliabilityUnavailable: "此批次無法評估可靠度，信任分數設為零。",
+      default: "信任分數反映資料品質與校準漂移；不確定性另行呈現。"
     },
     severity: {
       alert: "警示",
@@ -669,6 +718,46 @@ export const translations = {
       insufficient_history: {
         title: "價格歷史不足",
         detail: "此股票有市場資料，但標註歷史不足，無法產生校準後風險預測。"
+      },
+      ensemble_disagreement_high: {
+        title: "模型重訓結果分歧",
+        detail: "以重抽樣交易日重新訓練的模型，彼此分歧高於多數近期標註資料，風險機率較不穩定。"
+      },
+      input_out_of_distribution: {
+        title: "市場狀況不尋常",
+        detail: "最新特徵與訓練資料差異很大。歷史上這類期間的回撤比例較高，低風險讀數不代表安全。"
+      },
+      limited_data_quality: {
+        title: "資料品質有限",
+        detail: "此股票標註歷史較短或價格資料過舊，信任分數已降低。"
+      },
+      stale_ticker_data: {
+        title: "價格資料過舊",
+        detail: "此股票最新一根 K 線早於本批次的最新資料日期。"
+      },
+      reliability_unavailable: {
+        title: "無法評估可靠度",
+        detail: "無法建立可靠度訊號（例如歷史資料只有單一類別），信任分數設為零。"
+      },
+      conformal_set_ambiguous: {
+        title: "無法區分結果",
+        detail: "在設定的覆蓋率下，保形預測集合同時包含回撤與未回撤。"
+      },
+      conformal_set_drawdown_only: {
+        title: "保形預測：回撤",
+        detail: "在設定的覆蓋率下，保形預測集合只包含回撤結果。"
+      },
+      conformal_set_no_drawdown_only: {
+        title: "保形預測：未回撤",
+        detail: "在設定的覆蓋率下，保形預測集合只包含未回撤結果。"
+      },
+      conformal_set_empty: {
+        title: "保形預測集合為空",
+        detail: "保形預測集合為空，代表此批次的校準後機率不尋常。"
+      },
+      conformal_set_unavailable: {
+        title: "無保形預測集合",
+        detail: "校準資料窗未同時包含兩種結果，因此未計算保形預測集合。"
       }
     }
   }
