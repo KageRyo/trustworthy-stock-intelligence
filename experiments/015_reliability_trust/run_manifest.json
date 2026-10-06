@@ -1,0 +1,43 @@
+{
+  "experiment_id": "015_reliability_trust",
+  "run_id": "sp100_logistic_platt_reliability",
+  "executed_on": "2026-10-06",
+  "base_git_commit": "0fde1fea256ff55346eaab90c59775436a0e0b65",
+  "dataset": {
+    "provider": "Yahoo Finance via yfinance",
+    "downloaded_at_utc": "2026-05-08T02:50:28.018207+00:00",
+    "universe": "sp100",
+    "ticker_count": 101,
+    "row_count": 283289,
+    "ohlcv_sha256": "6b1357c8414888cb0a467eb717df0261ff69bd3b8e9b0244ff115be820395ba6",
+    "tickers_sha256": "3023bcc40e666c0151ac3aeb895aae9f8d1f04f9da6db01977a1f8204ef2d890"
+  },
+  "protocol": {
+    "feature_interval": "1d",
+    "horizon": 5,
+    "drawdown_threshold": -0.05,
+    "train_size": 252,
+    "purge_size": 5,
+    "calibration_size": 63,
+    "test_size": 63,
+    "fold_count": 39,
+    "test_rows": 244268,
+    "model": "logistic_regression",
+    "calibration_method": "platt",
+    "threshold_objective": "f1",
+    "ensemble_members": 10,
+    "conformal_alpha": 0.1,
+    "random_state": 42
+  },
+  "environment": {
+    "python": "3.11.16",
+    "numpy": "2.4.6",
+    "pandas": "3.0.5",
+    "scikit_learn": "1.9.0",
+    "device": "cpu (no deep-learning training in this experiment)"
+  },
+  "artifacts": {
+    "summary_sha256": "4b78d3b63e18730e92ff8492ba4146ce9633570aeb2f24430cdcb4aaef369212",
+    "risk_coverage_sha256": "bff8ac5cbbc5e7a00d777abff472a8a76b8583e94cecd98046dcb84ea6f9f229"
+  }
+}
