@@ -167,3 +167,93 @@ def test_run_prediction_preserves_leading_zero_ticker_symbols(tmp_path: Path) ->
 
     assert predictions["ticker"].tolist() == ["00878"]
     assert payload["records"][0]["ticker"] == "00878"
+
+
+def _prediction_args(tmp_path: Path, *extra: str) -> list[str]:
+    return [
+        "--input",
+        str(tmp_path / "ohlcv.csv"),
+        "--output",
+        str(tmp_path / "latest_predictions.csv"),
+        "--json-output",
+        str(tmp_path / "latest_warnings.json"),
+        "--calibration-size",
+        "10",
+        "--drift-size",
+        "0",
+        "--train-size",
+        "40",
+        "--calibration-method",
+        "none",
+        "--reliability-members",
+        "3",
+        "--required-history-rows",
+        "50",
+        *extra,
+    ]
+
+
+def test_run_prediction_defaults_to_reliability_trust(tmp_path: Path) -> None:
+    _ohlcv_frame().to_csv(tmp_path / "ohlcv.csv", index=False)
+    args = parse_args(_prediction_args(tmp_path))
+
+    predictions = run_prediction(args)
+    payload = json.loads((tmp_path / "latest_warnings.json").read_text(encoding="utf-8"))
+
+    assert args.trust_method == "reliability"
+    np.testing.assert_allclose(predictions["trust_score"], np.array([1.0, 1.0]))
+    assert predictions["uncertainty_score"].between(0.0, 1.0).all()
+    for record in payload["records"]:
+        assert any(code.startswith("conformal_set_") for code in record["reason_codes"])
+
+
+def test_run_prediction_lowers_trust_for_stale_ticker(tmp_path: Path) -> None:
+    frame = _ohlcv_frame()
+    stale_cutoff = frame["date"].max()
+    frame = frame[~((frame["ticker"] == "NVDA") & (frame["date"] == stale_cutoff))]
+    frame.to_csv(tmp_path / "ohlcv.csv", index=False)
+
+    predictions = run_prediction(parse_args(_prediction_args(tmp_path)))
+    payload = json.loads((tmp_path / "latest_warnings.json").read_text(encoding="utf-8"))
+
+    trust = dict(zip(predictions["ticker"], predictions["trust_score"], strict=True))
+    assert trust["2330"] == 1.0
+    assert trust["NVDA"] == 0.5
+    nvda_codes = next(r["reason_codes"] for r in payload["records"] if r["ticker"] == "NVDA")
+    assert "stale_ticker_data" in nvda_codes
+    assert "limited_data_quality" in nvda_codes
+
+
+def test_run_prediction_keeps_legacy_trust_method(tmp_path: Path) -> None:
+    _ohlcv_frame().to_csv(tmp_path / "ohlcv.csv", index=False)
+    args = parse_args(_prediction_args(tmp_path, "--trust-method", "legacy"))
+
+    predictions = run_prediction(args)
+    payload = json.loads((tmp_path / "latest_warnings.json").read_text(encoding="utf-8"))
+
+    assert args.trust_threshold is None
+    for record in payload["records"]:
+        assert not any(code.startswith("conformal_set_") for code in record["reason_codes"])
+    assert (predictions["trust_score"] <= predictions["calibrated_risk_probability"] + 1e-9).all()
+
+
+def test_run_prediction_reliability_trust_reflects_short_history(tmp_path: Path) -> None:
+    _ohlcv_frame().to_csv(tmp_path / "ohlcv.csv", index=False)
+    args = parse_args(_prediction_args(tmp_path, "--required-history-rows", "300"))
+
+    predictions = run_prediction(args)
+    payload = json.loads((tmp_path / "latest_warnings.json").read_text(encoding="utf-8"))
+
+    assert (predictions["trust_score"] < 0.5).all()
+    assert (predictions["warning_level"] != "alert").all()
+    assert all("limited_data_quality" in record["reason_codes"] for record in payload["records"])
+
+
+def test_resolve_trust_threshold_depends_on_trust_method() -> None:
+    from scripts.predict_latest_baseline import resolve_trust_threshold
+
+    base = ["--input", "x.csv", "--output", "y.csv", "--json-output", "z.json"]
+
+    assert resolve_trust_threshold(parse_args(base)) == 0.4
+    assert resolve_trust_threshold(parse_args([*base, "--trust-method", "legacy"])) == 0.1
+    assert resolve_trust_threshold(parse_args([*base, "--trust-threshold", "0.7"])) == 0.7

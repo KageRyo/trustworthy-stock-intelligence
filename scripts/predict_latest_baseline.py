@@ -35,7 +35,8 @@ from tsi.trust.decision import (
 )
 from tsi.trust.explainability import build_logistic_feature_attributions
 from tsi.trust.reason_codes import build_reason_codes
-from tsi.trust.trust_score import TrustScoreMethod, compute_trust_score
+from tsi.trust.reliability import ReliabilityAssessor, ReliabilityConfig, ReliabilityScores
+from tsi.trust.trust_score import TrustScoreMethod, compute_trust_score, data_quality_scores
 from tsi.trust.uncertainty import binary_entropy_uncertainty, margin_uncertainty
 
 
@@ -66,18 +67,37 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument("--watch-threshold-ratio", type=float, default=0.8)
     parser.add_argument("--min-watch-threshold", type=float, default=0.01)
-    parser.add_argument("--trust-threshold", type=float, default=0.1)
+    parser.add_argument(
+        "--trust-method",
+        choices=["reliability", "legacy"],
+        default="reliability",
+        help=(
+            "reliability: uncertainty from ensemble disagreement and feature novelty, trust "
+            "from data quality and drift. legacy: entropy of the risk probability."
+        ),
+    )
+    parser.add_argument(
+        "--trust-threshold",
+        type=float,
+        default=None,
+        help="Minimum trust for alerts. Defaults to 0.4 (reliability) or 0.1 (legacy).",
+    )
     parser.add_argument("--uncertainty-threshold", type=float, default=0.8)
+    parser.add_argument("--reliability-members", type=int, default=10)
+    parser.add_argument("--required-history-rows", type=int, default=252)
+    parser.add_argument("--conformal-alpha", type=float, default=0.1)
     parser.add_argument("--uncertainty-penalty", type=float, default=0.5)
     parser.add_argument(
         "--uncertainty-method",
         choices=["entropy", "margin"],
         default="entropy",
+        help="Legacy trust method only.",
     )
     parser.add_argument(
         "--trust-score-method",
         choices=["subtractive", "multiplicative"],
         default="multiplicative",
+        help="Legacy trust method only.",
     )
     parser.add_argument("--run-id", default="baseline_latest")
     parser.add_argument(
@@ -266,20 +286,37 @@ def run_prediction(args: argparse.Namespace) -> pd.DataFrame:
         watch_threshold_ratio=args.watch_threshold_ratio,
         min_watch_threshold=args.min_watch_threshold,
     )
-    uncertainty = uncertainty_scores(calibrated_probabilities, method=args.uncertainty_method)
-    trust_score_method: TrustScoreMethod = args.trust_score_method
-    trust_scores = compute_trust_score(
-        calibrated_probabilities,
-        uncertainty,
-        uncertainty_penalty=args.uncertainty_penalty,
-        method=trust_score_method,
-    )
+    row_reason_codes: list[list[str]] | None = None
+    if args.trust_method == "reliability":
+        reliability = assess_reliability(
+            args,
+            model,
+            calibrator,
+            train_frame=train_frame,
+            calibration_frame=calibration_frame,
+            training_frame=training_frame,
+            latest_frame=latest_frame,
+            calibrated_calibration_probabilities=calibrated_calibration_probabilities,
+            calibrated_probabilities=calibrated_probabilities,
+        )
+        uncertainty = reliability.uncertainty
+        trust_scores = reliability.trust
+        row_reason_codes = reliability.reason_codes
+    else:
+        uncertainty = uncertainty_scores(calibrated_probabilities, method=args.uncertainty_method)
+        trust_score_method: TrustScoreMethod = args.trust_score_method
+        trust_scores = compute_trust_score(
+            calibrated_probabilities,
+            uncertainty,
+            uncertainty_penalty=args.uncertainty_penalty,
+            method=trust_score_method,
+        )
     if drift_assessment is not None:
         trust_scores = np.clip(trust_scores * drift_assessment.trust_multiplier, 0.0, 1.0)
     decision_config = TrustDecisionConfig(
         alert_threshold=alert_threshold,
         watch_threshold=watch_threshold,
-        trust_threshold=args.trust_threshold,
+        trust_threshold=resolve_trust_threshold(args),
         uncertainty_threshold=args.uncertainty_threshold,
     )
     warning_levels = assign_trust_decisions(
@@ -301,6 +338,7 @@ def run_prediction(args: argparse.Namespace) -> pd.DataFrame:
         warning_levels=warning_levels,
         config=decision_config,
         extra_reason_codes=drift_reason_codes,
+        row_reason_codes=row_reason_codes,
     )
     feature_attributions = build_logistic_feature_attributions(
         model,
@@ -340,6 +378,80 @@ def run_prediction(args: argparse.Namespace) -> pd.DataFrame:
             feature_interval=args.feature_interval,
         )
     return predictions
+
+
+def resolve_trust_threshold(args: argparse.Namespace) -> float:
+    if args.trust_threshold is not None:
+        return float(args.trust_threshold)
+    # 0.4 lets full-quality data pass under the 0.5 drift multiplier only when quality >= 0.8.
+    return 0.4 if args.trust_method == "reliability" else 0.1
+
+
+def ticker_data_quality(
+    training_frame: pd.DataFrame,
+    latest_frame: pd.DataFrame,
+    *,
+    required_history_rows: int,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Score each latest row by labeled history depth and staleness versus the batch."""
+
+    history_rows = latest_frame["ticker"].map(training_frame["ticker"].value_counts()).fillna(0)
+    latest_dates = pd.to_datetime(latest_frame["date"])
+    stale = (latest_dates < latest_dates.max()).to_numpy()
+    quality = data_quality_scores(
+        history_rows=history_rows.to_numpy(),
+        required_history_rows=required_history_rows,
+        stale=stale,
+    )
+    return quality, stale
+
+
+def assess_reliability(
+    args: argparse.Namespace,
+    model: LogisticRiskModel | ConstantProbabilityModel,
+    calibrator: object,
+    *,
+    train_frame: pd.DataFrame,
+    calibration_frame: pd.DataFrame,
+    training_frame: pd.DataFrame,
+    latest_frame: pd.DataFrame,
+    calibrated_calibration_probabilities: np.ndarray,
+    calibrated_probabilities: np.ndarray,
+) -> ReliabilityScores:
+    """Score latest rows with model/data reliability, failing closed when unavailable."""
+
+    if isinstance(model, ConstantProbabilityModel):
+        return ReliabilityAssessor.unavailable(len(latest_frame))
+    config = ReliabilityConfig(
+        n_members=args.reliability_members,
+        conformal_alpha=args.conformal_alpha,
+    )
+    try:
+        assessor = ReliabilityAssessor(config).fit(
+            train_features=train_frame[DEFAULT_FEATURE_COLUMNS].to_numpy(),
+            train_labels=train_frame["risk_label"].to_numpy(),
+            train_groups=pd.to_datetime(train_frame["date"]).to_numpy(),
+            calibration_features=calibration_frame[DEFAULT_FEATURE_COLUMNS].to_numpy(),
+            calibration_labels=calibration_frame["risk_label"].to_numpy(),
+            calibrated_calibration_probabilities=calibrated_calibration_probabilities,
+            calibrator=calibrator,
+        )
+    except ValueError:
+        return ReliabilityAssessor.unavailable(len(latest_frame))
+    quality, stale = ticker_data_quality(
+        training_frame,
+        latest_frame,
+        required_history_rows=args.required_history_rows,
+    )
+    scores = assessor.score(
+        latest_frame[DEFAULT_FEATURE_COLUMNS].to_numpy(),
+        calibrated_probabilities=calibrated_probabilities,
+        data_quality=quality,
+    )
+    for codes, is_stale in zip(scores.reason_codes, stale, strict=True):
+        if is_stale:
+            codes.append("stale_ticker_data")
+    return scores
 
 
 def _has_drift_history(

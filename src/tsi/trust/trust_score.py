@@ -36,3 +36,70 @@ def compute_trust_score(
     else:
         raise ValueError(f"Unsupported trust score method: {method}")
     return np.clip(scores, 0.0, 1.0)
+
+
+def _unit_interval(name: str, values: np.ndarray) -> np.ndarray:
+    array = np.asarray(values, dtype=float)
+    if not np.all(np.isfinite(array)) or np.any((array < 0.0) | (array > 1.0)):
+        raise ValueError(f"{name} must be in [0, 1]")
+    return array
+
+
+def combine_epistemic_uncertainty(
+    *,
+    disagreement_percentile: np.ndarray,
+    novelty_percentile: np.ndarray,
+) -> np.ndarray:
+    """Average model-disagreement and input-novelty percentiles into one score.
+
+    Both inputs are percentiles against the calibration window, so 0.5 means
+    "as uncertain as a typical calibration row". Neither depends on the risk level.
+    """
+
+    disagreement = _unit_interval("disagreement_percentile", disagreement_percentile)
+    novelty = _unit_interval("novelty_percentile", novelty_percentile)
+    if disagreement.shape != novelty.shape:
+        raise ValueError("disagreement_percentile and novelty_percentile must have the same shape")
+    return (disagreement + novelty) / 2.0
+
+
+def data_quality_scores(
+    *,
+    history_rows: np.ndarray,
+    required_history_rows: int,
+    stale: np.ndarray,
+    stale_penalty: float = 0.5,
+) -> np.ndarray:
+    """Score per-ticker input quality from history depth and staleness."""
+
+    if required_history_rows < 1:
+        raise ValueError("required_history_rows must be at least 1")
+    if not 0.0 <= stale_penalty <= 1.0:
+        raise ValueError("stale_penalty must be in [0, 1]")
+    rows = np.asarray(history_rows, dtype=float)
+    stale_mask = np.asarray(stale, dtype=bool)
+    if rows.shape != stale_mask.shape:
+        raise ValueError("history_rows and stale must have the same shape")
+    coverage = np.clip(rows / float(required_history_rows), 0.0, 1.0)
+    return coverage * np.where(stale_mask, 1.0 - stale_penalty, 1.0)
+
+
+def compute_reliability_trust(
+    *,
+    epistemic_uncertainty: np.ndarray,
+    data_quality: np.ndarray,
+    epistemic_weight: float = 1.0,
+) -> np.ndarray:
+    """Compute how usable a prediction is, independent of how risky it says the ticker is.
+
+    ``trust = data_quality * (1 - epistemic_weight * epistemic_uncertainty)``. Unlike
+    :func:`compute_trust_score`, a high risk probability does not raise trust.
+    """
+
+    if not 0.0 <= epistemic_weight <= 1.0:
+        raise ValueError("epistemic_weight must be in [0, 1]")
+    uncertainty = _unit_interval("epistemic_uncertainty", epistemic_uncertainty)
+    quality = _unit_interval("data_quality", data_quality)
+    if uncertainty.shape != quality.shape:
+        raise ValueError("epistemic_uncertainty and data_quality must have the same shape")
+    return np.clip(quality * (1.0 - epistemic_weight * uncertainty), 0.0, 1.0)

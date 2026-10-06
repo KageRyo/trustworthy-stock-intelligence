@@ -165,6 +165,12 @@ func trustSummary(record warnings.PredictionRecord) string {
 	if hasReason(record.ReasonCodes, "calibration_drift_not_evaluated") {
 		return "Calibration drift was not evaluated because no later labeled window was available."
 	}
+	if hasReason(record.ReasonCodes, "reliability_unavailable") {
+		return "Reliability could not be assessed for this batch, so trust was set to zero."
+	}
+	if hasReason(record.ReasonCodes, "stale_ticker_data") || hasReason(record.ReasonCodes, "limited_data_quality") {
+		return "Data quality is limited (short labeled history or stale bars), so trust was reduced."
+	}
 	if hasReason(record.ReasonCodes, "uncertainty_above_threshold") {
 		return "Uncertainty is above the configured threshold, so the model output should be treated cautiously."
 	}
@@ -174,13 +180,16 @@ func trustSummary(record warnings.PredictionRecord) string {
 	if hasReason(record.ReasonCodes, "trust_below_alert_threshold") {
 		return "Trust score is below the configured alert threshold for this batch."
 	}
-	return "Trust assessment is based on calibrated probability and uncertainty for this batch."
+	return "Trust assessment is based on data quality and calibration drift; uncertainty is reported separately."
 }
 
 func trustStatus(reasonCodes []string) string {
 	if hasReason(reasonCodes, "calibration_drift_abstain") ||
 		hasReason(reasonCodes, "calibration_drift_detected") ||
-		hasReason(reasonCodes, "calibration_drift_not_evaluated") {
+		hasReason(reasonCodes, "calibration_drift_not_evaluated") ||
+		hasReason(reasonCodes, "limited_data_quality") ||
+		hasReason(reasonCodes, "stale_ticker_data") ||
+		hasReason(reasonCodes, "reliability_unavailable") {
 		return "limited_trust"
 	}
 	if hasReason(reasonCodes, "trust_above_alert_threshold") {
@@ -337,6 +346,76 @@ func explainReasonCode(code string) ReasonExplanation {
 			Severity: "watch",
 			Title:    "Calibration drift abstention",
 			Detail:   "Multiple calibration-drift signals crossed threshold, so the serving decision abstains.",
+		}
+	case "ensemble_disagreement_high":
+		return ReasonExplanation{
+			Code:     code,
+			Severity: "watch",
+			Title:    "Model refits disagree",
+			Detail:   "Models refit on resampled market days disagree more than on most recent labeled rows, so treat the probability as less stable.",
+		}
+	case "input_out_of_distribution":
+		return ReasonExplanation{
+			Code:     code,
+			Severity: "watch",
+			Title:    "Unusual market conditions",
+			Detail:   "The latest features are far from the training data. Historically these periods carried higher drawdown rates, so a low reading is not reassuring.",
+		}
+	case "limited_data_quality":
+		return ReasonExplanation{
+			Code:     code,
+			Severity: "watch",
+			Title:    "Limited data quality",
+			Detail:   "The ticker has a short labeled history or stale bars, so trust was reduced.",
+		}
+	case "stale_ticker_data":
+		return ReasonExplanation{
+			Code:     code,
+			Severity: "watch",
+			Title:    "Stale ticker data",
+			Detail:   "The ticker's latest bar is older than the latest bar in this batch.",
+		}
+	case "reliability_unavailable":
+		return ReasonExplanation{
+			Code:     code,
+			Severity: "watch",
+			Title:    "Reliability unavailable",
+			Detail:   "Reliability signals could not be fitted (for example single-class history), so trust was set to zero.",
+		}
+	case "conformal_set_ambiguous":
+		return ReasonExplanation{
+			Code:     code,
+			Severity: "info",
+			Title:    "Outcomes not separable",
+			Detail:   "The conformal prediction set contains both drawdown and no drawdown at the configured coverage.",
+		}
+	case "conformal_set_drawdown_only":
+		return ReasonExplanation{
+			Code:     code,
+			Severity: "watch",
+			Title:    "Conformal set: drawdown",
+			Detail:   "At the configured coverage, the conformal prediction set contains only the drawdown outcome.",
+		}
+	case "conformal_set_no_drawdown_only":
+		return ReasonExplanation{
+			Code:     code,
+			Severity: "info",
+			Title:    "Conformal set: no drawdown",
+			Detail:   "At the configured coverage, the conformal prediction set contains only the no-drawdown outcome.",
+		}
+	case "conformal_set_empty":
+		return ReasonExplanation{
+			Code:     code,
+			Severity: "watch",
+			Title:    "Conformal set empty",
+			Detail:   "The conformal prediction set is empty, which indicates an unusual calibrated probability for this batch.",
+		}
+	case "conformal_set_unavailable":
+		return ReasonExplanation{
+			Code:     code,
+			Severity: "info",
+			Title:    "Conformal set unavailable",
+			Detail:   "The calibration window did not contain both outcomes, so no conformal set was computed.",
 		}
 	case "insufficient_history":
 		return ReasonExplanation{

@@ -58,6 +58,7 @@ def build_reason_codes(
     warning_levels: Sequence[WarningDecision],
     config: TrustDecisionConfig,
     extra_reason_codes: Sequence[str] = (),
+    row_reason_codes: Sequence[Sequence[str]] | None = None,
 ) -> list[list[str]]:
     """Generate reason code lists for vectorized prediction outputs."""
 
@@ -69,6 +70,10 @@ def build_reason_codes(
         raise ValueError("calibrated_probabilities, uncertainty_scores, and trust_scores must match")
     if probabilities.shape != levels.shape:
         raise ValueError("warning_levels must match probability arrays")
+    if row_reason_codes is None:
+        row_reason_codes = [() for _ in range(len(probabilities))]
+    if len(row_reason_codes) != len(probabilities):
+        raise ValueError("row_reason_codes must match probability arrays")
 
     return [
         list(
@@ -78,14 +83,15 @@ def build_reason_codes(
                 trust_score=trust_score,
                 warning_level=level,
                 config=config,
-                extra_reason_codes=extra_reason_codes,
+                extra_reason_codes=[*extra_reason_codes, *row_codes],
             )
         )
-        for probability, uncertainty_score, trust_score, level in zip(
+        for probability, uncertainty_score, trust_score, level, row_codes in zip(
             probabilities,
             uncertainty,
             trust,
             levels,
+            row_reason_codes,
             strict=True,
         )
     ]

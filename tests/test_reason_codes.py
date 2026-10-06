@@ -94,3 +94,52 @@ def test_build_reason_codes_vectorizes_predictions() -> None:
     assert len(codes) == 2
     assert codes[0][0] == "probability_above_alert_threshold"
     assert codes[1][-1] == "warning_level_abstain"
+
+
+def test_build_reason_codes_appends_row_specific_codes_before_level() -> None:
+    config = TrustDecisionConfig(
+        alert_threshold=0.7,
+        watch_threshold=0.4,
+        trust_threshold=0.5,
+        uncertainty_threshold=0.8,
+    )
+
+    codes = build_reason_codes(
+        calibrated_probabilities=np.array([0.1, 0.2]),
+        uncertainty_scores=np.array([0.2, 0.9]),
+        trust_scores=np.array([0.7, 0.1]),
+        warning_levels=["no_alert", "abstain"],
+        config=config,
+        extra_reason_codes=["calibration_drift_stable"],
+        row_reason_codes=[[], ["input_out_of_distribution"]],
+    )
+
+    assert codes[0][-2:] == ["calibration_drift_stable", "warning_level_no_alert"]
+    assert codes[1][-3:] == [
+        "calibration_drift_stable",
+        "input_out_of_distribution",
+        "warning_level_abstain",
+    ]
+
+
+def test_build_reason_codes_rejects_row_code_length_mismatch() -> None:
+    config = TrustDecisionConfig(
+        alert_threshold=0.7,
+        watch_threshold=0.4,
+        trust_threshold=0.5,
+        uncertainty_threshold=0.8,
+    )
+
+    try:
+        build_reason_codes(
+            calibrated_probabilities=np.array([0.1]),
+            uncertainty_scores=np.array([0.2]),
+            trust_scores=np.array([0.7]),
+            warning_levels=["no_alert"],
+            config=config,
+            row_reason_codes=[[], []],
+        )
+    except ValueError as error:
+        assert "row_reason_codes" in str(error)
+    else:
+        raise AssertionError("Expected ValueError for row code mismatch")

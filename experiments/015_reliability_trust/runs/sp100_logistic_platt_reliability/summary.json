@@ -1,0 +1,183 @@
+{
+  "input": "data/raw/sp100/ohlcv.csv",
+  "input_sha256": "6b1357c8414888cb0a467eb717df0261ff69bd3b8e9b0244ff115be820395ba6",
+  "protocol": {
+    "feature_interval": "1d",
+    "feature_columns": [
+      "return_1d",
+      "return_5d",
+      "sma_5_gap",
+      "sma_10_gap",
+      "volatility_5d",
+      "volatility_10d",
+      "volume_ratio_5d"
+    ],
+    "horizon": 5,
+    "drawdown_threshold": -0.05,
+    "train_size": 252,
+    "calibration_size": 63,
+    "test_size": 63,
+    "purge_size": 5,
+    "calibration_method": "platt",
+    "n_members": 10,
+    "conformal_alpha": 0.1,
+    "random_state": 42,
+    "skipped_folds": 0
+  },
+  "rows": 244268,
+  "fold_count": 39,
+  "event_rate": 0.10213372197750012,
+  "pooled": {
+    "random": {
+      "aurc_brier": 0.09214222745362685,
+      "mean_brier_skill_score": -0.001424315092843531,
+      "mean_ece": 0.02931243489035351,
+      "mean_auc": 0.6112741152218826,
+      "full_coverage_brier": 0.0917925150226246,
+      "alerts_high_confidence": 39260.0,
+      "alert_fdr_high_confidence": 0.8361946001018848,
+      "alerts_low_confidence": 39398.0,
+      "alert_fdr_low_confidence": 0.8344332199604041
+    },
+    "legacy_trust": {
+      "aurc_brier": 0.11570193389663701,
+      "mean_brier_skill_score": -0.016677000305308897,
+      "mean_ece": 0.04460457289290127,
+      "mean_auc": 0.5755105441321436,
+      "full_coverage_brier": 0.0917925150226246,
+      "alerts_high_confidence": 70071.0,
+      "alert_fdr_high_confidence": 0.834011217193989,
+      "alerts_low_confidence": 8587.0,
+      "alert_fdr_low_confidence": 0.8459298940258531
+    },
+    "legacy_entropy_confidence": {
+      "aurc_brier": 0.06881726490640563,
+      "mean_brier_skill_score": -0.002926366077954101,
+      "mean_ece": 0.022859648349088272,
+      "mean_auc": 0.5828665948863646,
+      "full_coverage_brier": 0.0917925150226246,
+      "alerts_high_confidence": 8585.0,
+      "alert_fdr_high_confidence": 0.8460104834012813,
+      "alerts_low_confidence": 70073.0,
+      "alert_fdr_low_confidence": 0.8340016839581579
+    },
+    "disagreement_confidence": {
+      "aurc_brier": 0.0703113719809024,
+      "mean_brier_skill_score": -0.023814681776982805,
+      "mean_ece": 0.025542169789903462,
+      "mean_auc": 0.5895167062994984,
+      "full_coverage_brier": 0.0917925150226246,
+      "alerts_high_confidence": 15650.0,
+      "alert_fdr_high_confidence": 0.8477955271565495,
+      "alerts_low_confidence": 63008.0,
+      "alert_fdr_low_confidence": 0.8322117826307771
+    },
+    "novelty_confidence": {
+      "aurc_brier": 0.07261165552380788,
+      "mean_brier_skill_score": -0.0394309783772324,
+      "mean_ece": 0.03246081401267434,
+      "mean_auc": 0.5730000541732195,
+      "full_coverage_brier": 0.0917925150226246,
+      "alerts_high_confidence": 16985.0,
+      "alert_fdr_high_confidence": 0.8662937886370327,
+      "alerts_low_confidence": 61673.0,
+      "alert_fdr_low_confidence": 0.8267799523292203
+    },
+    "epistemic_trust": {
+      "aurc_brier": 0.07061191334270997,
+      "mean_brier_skill_score": -0.036563375899127636,
+      "mean_ece": 0.02969367329558665,
+      "mean_auc": 0.577202264703575,
+      "full_coverage_brier": 0.0917925150226246,
+      "alerts_high_confidence": 15703.0,
+      "alert_fdr_high_confidence": 0.8597083359867541,
+      "alerts_low_confidence": 62955.0,
+      "alert_fdr_low_confidence": 0.8292272257962037
+    }
+  },
+  "fold_mean_brier_skill_win_rate": {
+    "epistemic_trust_beats_random": 0.28205128205128205,
+    "epistemic_trust_beats_legacy_trust": 0.5641025641025641,
+    "epistemic_trust_beats_legacy_entropy_confidence": 0.6666666666666666,
+    "epistemic_trust_beats_disagreement_confidence": 0.4358974358974359,
+    "epistemic_trust_beats_novelty_confidence": 0.48717948717948717
+  },
+  "correlation_with_risk_probability": {
+    "epistemic_trust": -0.18625485989727314,
+    "legacy_trust": 0.9897412225447704
+  },
+  "epistemic_trust_quantiles": {
+    "0.1": 0.08365079365079364,
+    "0.25": 0.23744735989633947,
+    "0.5": 0.5102732050010962,
+    "0.75": 0.7488606003457489,
+    "0.9": 0.8756089894703756
+  },
+  "served_trust_mean": 0.9971690929634663,
+  "legacy_alert_gate": {
+    "trust_threshold": 0.1,
+    "ungated_alert_rate": 0.3220151636726874,
+    "ungated_fdr": 0.8353123649215591,
+    "ungated_recall": 0.5192400192400193,
+    "gated_alert_rate": 0.16993629947434785,
+    "gated_fdr": 0.8408576246687545,
+    "gated_recall": 0.2647907647907648
+  },
+  "epistemic_alert_gate": [
+    {
+      "trust_threshold": 0.05,
+      "alerts_kept": 64095.0,
+      "alerts_blocked": 14563.0,
+      "fdr_kept": 0.8547000546064436,
+      "fdr_blocked": 0.7499828332074435,
+      "recall_kept": 0.37329645662978994
+    },
+    {
+      "trust_threshold": 0.1,
+      "alerts_kept": 53562.0,
+      "alerts_blocked": 25096.0,
+      "fdr_kept": 0.8622904297823084,
+      "fdr_blocked": 0.777733503347147,
+      "recall_kept": 0.29565496232162897
+    },
+    {
+      "trust_threshold": 0.2,
+      "alerts_kept": 38756.0,
+      "alerts_blocked": 39902.0,
+      "fdr_kept": 0.8731809268242336,
+      "fdr_blocked": 0.7985314019347401,
+      "recall_kept": 0.19700978034311367
+    },
+    {
+      "trust_threshold": 0.3,
+      "alerts_kept": 28990.0,
+      "alerts_blocked": 49668.0,
+      "fdr_kept": 0.885201793721973,
+      "fdr_blocked": 0.8061931223322863,
+      "recall_kept": 0.13339746673080005
+    }
+  ],
+  "uncertainty_abstain": [
+    {
+      "uncertainty_threshold": 0.8,
+      "abstain_share": 0.017038662452715868,
+      "abstain_event_rate": 0.08313310908217203,
+      "abstain_mean_probability": 0.05022517326447744,
+      "no_alert_event_rate": 0.059319424536815844,
+      "no_alert_mean_probability": 0.059472199044164245
+    },
+    {
+      "uncertainty_threshold": 0.9,
+      "abstain_share": 0.003221871059655788,
+      "abstain_event_rate": 0.08640406607369759,
+      "abstain_mean_probability": 0.052573760261303365,
+      "no_alert_event_rate": 0.06011685116851168,
+      "no_alert_mean_probability": 0.05913336089356005
+    }
+  ],
+  "conformal": {
+    "coverage_drawdown": 0.9062850729517397,
+    "coverage_no_drawdown": 0.8745075688491701,
+    "ambiguous_rate": 0.6661085365254557
+  }
+}

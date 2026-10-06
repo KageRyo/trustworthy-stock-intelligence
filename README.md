@@ -295,6 +295,10 @@ warning policy or comprehensive market coverage.
   formal-research data are still open work.
 - Trust scores and abstention policies are engineered and tested, but have not yet been externally
   validated as guarantees of safety or reliability.
+- Serving trust no longer derives from the risk probability. In Experiment 015, ensemble and
+  feature-novelty uncertainty did not identify less-reliable predictions; high-uncertainty rows had
+  higher drawdown rates. Uncertainty therefore moves low-risk rows to abstain but never blocks
+  alerts, and trust reflects data quality and calibration drift.
 
 ## Documentation
 
