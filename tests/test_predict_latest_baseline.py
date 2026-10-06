@@ -257,3 +257,44 @@ def test_resolve_trust_threshold_depends_on_trust_method() -> None:
     assert resolve_trust_threshold(parse_args(base)) == 0.4
     assert resolve_trust_threshold(parse_args([*base, "--trust-method", "legacy"])) == 0.1
     assert resolve_trust_threshold(parse_args([*base, "--trust-threshold", "0.7"])) == 0.7
+
+
+def test_run_prediction_defaults_to_alert_rate_policies(tmp_path: Path) -> None:
+    _ohlcv_frame().to_csv(tmp_path / "ohlcv.csv", index=False)
+    args = parse_args(_prediction_args(tmp_path))
+
+    predictions = run_prediction(args)
+    payload = json.loads((tmp_path / "latest_warnings.json").read_text(encoding="utf-8"))
+
+    assert (args.alert_policy, args.watch_policy) == ("alert_rate:0.05", "alert_rate:0.2")
+    policy = payload["alert_policy"]
+    assert policy["alert_policy"] == "alert_rate:0.05"
+    assert policy["watch_policy"] == "alert_rate:0.2"
+    assert policy["calibration_alert_rate"] <= 0.05
+    assert (predictions["watch_threshold"] <= predictions["alert_threshold"]).all()
+
+
+def test_run_prediction_supports_legacy_objective_and_ratio(tmp_path: Path) -> None:
+    _ohlcv_frame().to_csv(tmp_path / "ohlcv.csv", index=False)
+    args = parse_args(
+        _prediction_args(
+            tmp_path,
+            "--alert-policy",
+            "objective",
+            "--watch-policy",
+            "ratio",
+            "--watch-threshold-ratio",
+            "0.5",
+            "--min-watch-threshold",
+            "0.0",
+        )
+    )
+
+    predictions = run_prediction(args)
+    payload = json.loads((tmp_path / "latest_warnings.json").read_text(encoding="utf-8"))
+
+    np.testing.assert_allclose(
+        predictions["watch_threshold"], predictions["alert_threshold"] * 0.5
+    )
+    assert payload["alert_policy"]["alert_policy"] == "objective:f1"
+    assert payload["alert_policy"]["watch_policy"] == "ratio:0.5"
