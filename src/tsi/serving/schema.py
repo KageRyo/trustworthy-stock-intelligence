@@ -73,6 +73,21 @@ class CalibrationDriftMetadata(BaseModel):
     note: str = ""
 
 
+class AlertPolicyMetadata(BaseModel):
+    """How the batch's alert and watch thresholds were chosen on the calibration window."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    alert_policy: str
+    watch_policy: str
+    alert_target_met: bool = True
+    watch_target_met: bool = True
+    calibration_alert_rate: float | None = Field(default=None, ge=0.0, le=1.0)
+    calibration_watch_rate: float | None = Field(default=None, ge=0.0, le=1.0)
+    calibration_alert_precision: float | None = Field(default=None, ge=0.0, le=1.0)
+    note: str = ""
+
+
 class PredictionBatch(BaseModel):
     """Batch of prediction records with generation metadata."""
 
@@ -86,6 +101,7 @@ class PredictionBatch(BaseModel):
     freshness: FreshnessAssessment | None = None
     record_count: int | None = None
     calibration_drift: CalibrationDriftMetadata = Field(default_factory=CalibrationDriftMetadata)
+    alert_policy: AlertPolicyMetadata | None = None
     records: list[PredictionRecord]
 
     def model_post_init(self, __context: object) -> None:
@@ -109,6 +125,7 @@ def build_prediction_batch(
     calibration_drift: CalibrationDriftMetadata | dict[str, object] | None = None,
     feature_interval: FreshnessInterval | None = None,
     market: str = "unknown",
+    alert_policy: AlertPolicyMetadata | None = None,
 ) -> PredictionBatch:
     """Build a serving JSON batch from prediction rows."""
 
@@ -168,6 +185,7 @@ def build_prediction_batch(
         feature_interval=feature_interval or "1d",
         freshness=freshness,
         calibration_drift=calibration_drift or CalibrationDriftMetadata(),
+        alert_policy=alert_policy,
         records=records,
     )
 
