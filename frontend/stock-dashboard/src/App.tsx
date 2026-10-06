@@ -26,6 +26,7 @@ import {
   XAxis,
   YAxis
 } from "recharts";
+import { formatAlertPolicy } from "./lib/alertPolicy";
 import { localizedTrustSummary } from "./lib/trustSummary";
 import {
   APIClientError,
@@ -957,6 +958,30 @@ function TrustPanel({
           }
         />
         <ValueRow label={copy.labels.calibration} value={analysis?.trust.calibration_method ?? copy.common.na} />
+        <ValueRow
+          label={copy.labels.alertPolicy}
+          value={
+            analysis?.alert_policy
+              ? formatAlertPolicy(
+                  analysis.alert_policy.alert_policy,
+                  analysis.alert_policy.alert_target_met,
+                  copy
+                )
+              : copy.common.na
+          }
+        />
+        <ValueRow
+          label={copy.labels.watchPolicy}
+          value={
+            analysis?.alert_policy
+              ? formatAlertPolicy(
+                  analysis.alert_policy.watch_policy,
+                  analysis.alert_policy.watch_target_met,
+                  copy
+                )
+              : copy.common.na
+          }
+        />
         <ValueRow
           label={copy.labels.dataAsOf}
           value={status?.data_as_of || analysis?.data_as_of || copy.common.na}

@@ -19,6 +19,19 @@ export const calibrationDriftSchema = z
   })
   .strict();
 
+export const alertPolicySchema = z
+  .object({
+    alert_policy: z.string(),
+    watch_policy: z.string(),
+    alert_target_met: z.boolean(),
+    watch_target_met: z.boolean(),
+    calibration_alert_rate: z.number().min(0).max(1).nullable(),
+    calibration_watch_rate: z.number().min(0).max(1).nullable(),
+    calibration_alert_precision: z.number().min(0).max(1).nullable(),
+    note: z.string()
+  })
+  .strict();
+
 export const reasonExplanationSchema = z
   .object({
     code: z.string(),
@@ -115,6 +128,8 @@ export const tickerAnalysisSchema = z
     model: modelAnalysisSchema,
     data_freshness: dataFreshnessSchema,
     calibration_drift: calibrationDriftSchema,
+    // Optional so the dashboard still parses responses from APIs that predate alert policies.
+    alert_policy: alertPolicySchema.nullable().optional(),
     reasons: z.array(reasonExplanationSchema),
     feature_attributions: z.array(featureAttributionSchema).optional(),
     limitations: z.array(z.string())
@@ -215,6 +230,7 @@ export const predictionBatchSchema = z
     feature_interval: z.enum(["1m", "5m", "1d"]).optional(),
     record_count: z.number().int().nonnegative(),
     calibration_drift: calibrationDriftSchema,
+    alert_policy: alertPolicySchema.nullable().optional(),
     records: z.array(predictionRecordSchema)
   })
   .strict();
@@ -405,6 +421,7 @@ export const apiErrorSchema = z
 
 export type WarningLevel = z.infer<typeof warningLevelSchema>;
 export type CalibrationDriftMetadata = z.infer<typeof calibrationDriftSchema>;
+export type AlertPolicyMetadata = z.infer<typeof alertPolicySchema>;
 export type ReasonExplanation = z.infer<typeof reasonExplanationSchema>;
 export type FeatureAttribution = z.infer<typeof featureAttributionSchema>;
 export type FreshnessAssessment = z.infer<typeof freshnessAssessmentSchema>;
