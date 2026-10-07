@@ -45,6 +45,10 @@ from tsi.trust.trust_score import TrustScoreMethod, compute_trust_score, data_qu
 from tsi.trust.uncertainty import binary_entropy_uncertainty, margin_uncertainty
 
 
+# Below this many calibration-window alerts, policy thresholds are too noisy to trust.
+MIN_RELIABLE_CALIBRATION_ALERTS = 20
+
+
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--input", type=Path, required=True, help="OHLCV CSV input.")
@@ -427,6 +431,13 @@ def select_warning_thresholds(
         watch_threshold = min(alert_threshold, watch.threshold)
         watch_label, watch_met = watch_policy.label, watch.target_met
 
+    calibration_alerts = int(np.sum(calibrated_probabilities >= alert_threshold))
+    note = ""
+    if calibration_alerts < MIN_RELIABLE_CALIBRATION_ALERTS:
+        note = (
+            f"small calibration window: {calibration_alerts} alert rows out of "
+            f"{len(calibrated_probabilities)}; thresholds and calibration precision are noisy"
+        )
     metadata = AlertPolicyMetadata(
         alert_policy=alert_label,
         watch_policy=watch_label,
@@ -435,6 +446,7 @@ def select_warning_thresholds(
         calibration_alert_rate=float(np.mean(calibrated_probabilities >= alert_threshold)),
         calibration_watch_rate=float(np.mean(calibrated_probabilities >= watch_threshold)),
         calibration_alert_precision=float(alert_metrics["precision"]),
+        note=note,
     )
     return alert_threshold, watch_threshold, metadata
 

@@ -298,3 +298,20 @@ def test_run_prediction_supports_legacy_objective_and_ratio(tmp_path: Path) -> N
     )
     assert payload["alert_policy"]["alert_policy"] == "objective:f1"
     assert payload["alert_policy"]["watch_policy"] == "ratio:0.5"
+
+
+def test_select_warning_thresholds_notes_small_calibration_windows() -> None:
+    from scripts.predict_latest_baseline import select_warning_thresholds
+
+    base = ["--input", "x.csv", "--output", "y.csv", "--json-output", "z.json"]
+    rng = np.random.default_rng(2)
+    labels = (rng.random(63) < 0.2).astype(int)
+    probabilities = rng.random(63)
+
+    _, _, small = select_warning_thresholds(parse_args(base), labels, probabilities)
+    big_labels = np.tile(labels, 20)
+    big_probabilities = np.tile(probabilities, 20)
+    _, _, big = select_warning_thresholds(parse_args(base), big_labels, big_probabilities)
+
+    assert "small calibration window" in small.note
+    assert big.note == ""
