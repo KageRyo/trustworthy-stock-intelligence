@@ -45,6 +45,40 @@ def _chips(*, covered: list[str] = ISO_DATES, foreign: float = 1_000.0) -> ChipT
             "margin_short_offset": 0.0,
         }
     )
+    sparse = {"date": covered[0], "ticker": "00981A"}
+    institutional = pd.concat(
+        [
+            institutional,
+            pd.DataFrame(
+                [
+                    {
+                        **sparse,
+                        "foreign_net": 7.0,
+                        "investment_trust_net": 0.0,
+                        "dealer_net": 0.0,
+                        "total_net": 7.0,
+                    }
+                ]
+            ),
+        ],
+        ignore_index=True,
+    )
+    margin = pd.concat(
+        [
+            margin,
+            pd.DataFrame(
+                [
+                    {
+                        **sparse,
+                        "margin_balance": 0.0,
+                        "short_balance": 0.0,
+                        "margin_short_offset": 0.0,
+                    }
+                ]
+            ),
+        ],
+        ignore_index=True,
+    )
     return ChipTables(
         institutional=institutional,
         margin=margin,
@@ -92,17 +126,22 @@ def test_chip_values_on_or_after_row_date_do_not_change_lagged_features() -> Non
     )
 
 
-def test_absent_ticker_on_covered_dates_is_zero_and_uncovered_dates_are_missing() -> None:
+def test_absent_known_ticker_is_zero_and_unknown_or_uncovered_values_are_missing() -> None:
     covered = ISO_DATES[:20] + ISO_DATES[21:]
-    features = build_chip_features(_ohlcv(), _chips(covered=covered), publication_lag=0)
+    features = build_chip_features(
+        _ohlcv(("2330", "00981A", "6147")), _chips(covered=covered), publication_lag=0
+    )
     listed = features[features["ticker"] == "00981A"].reset_index(drop=True)
     flows = features[features["ticker"] == "2330"].reset_index(drop=True)
+    tpex = features[features["ticker"] == "6147"].reset_index(drop=True)
 
     assert listed["ticker"].iloc[0] == "00981A"
+    assert listed["foreign_flow_5d"].iloc[4] == pytest.approx(7.0 / 50_000.0)
     assert listed["foreign_flow_5d"].iloc[10] == 0.0
     assert listed["short_to_margin"].iloc[10] == 0.0
     assert flows["foreign_flow_5d"].iloc[20:25].isna().all()
     assert not np.isnan(flows["foreign_flow_5d"].iloc[25])
+    assert tpex[CHIP_FEATURE_COLUMNS].isna().all().all()
 
 
 def test_negative_lag_is_rejected() -> None:

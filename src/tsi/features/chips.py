@@ -5,9 +5,10 @@ close of ``t``. Features are computed on each ticker's own trading calendar and
 then shifted by ``publication_lag`` rows, so with the default lag of 1 a row at
 date ``t`` only uses chip data through the previous trading date.
 
-On a date the archive covers, a ticker absent from T86 had no institutional
-trades (net flow 0), and a ticker absent from MI_MARGN has no margin balance
-(0 lots). On a date the archive does not cover, chip values are missing.
+On a date the archive covers, a ticker that appears elsewhere in T86 but not on
+that date had no institutional trades (net flow 0); the same rule gives a 0-lot
+margin balance for MI_MARGN. Tickers that never appear in a table, such as TPEx
+stocks, and dates the archive does not cover have missing chip values.
 """
 
 from __future__ import annotations
@@ -43,13 +44,16 @@ def _aligned(
     covered_dates: Sequence[str],
     columns: Sequence[str],
 ) -> pd.DataFrame:
-    """Chip values per stock row: table value, 0 on covered dates, NaN otherwise."""
+    """Chip values per stock row: table value, else 0 for known tickers on covered dates."""
 
     chips = table.loc[:, ["date", "ticker", *columns]].copy()
     chips["date"] = pd.to_datetime(chips["date"])
     chips["ticker"] = chips["ticker"].astype(str)
     merged = frame.loc[:, ["date", "ticker"]].merge(chips, on=["date", "ticker"], how="left")
-    covered = frame["date"].isin(pd.to_datetime(pd.Index(covered_dates))).to_numpy()
+    covered = (
+        frame["date"].isin(pd.to_datetime(pd.Index(covered_dates)))
+        & frame["ticker"].isin(set(chips["ticker"]))
+    ).to_numpy()
     for column in columns:
         values = merged[column].to_numpy(dtype=float)
         values = np.where(np.isnan(values) & covered, 0.0, values)
