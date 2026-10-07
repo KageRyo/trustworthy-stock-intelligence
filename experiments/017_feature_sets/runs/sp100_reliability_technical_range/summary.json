@@ -1,0 +1,188 @@
+{
+  "input": "data/raw/sp100/ohlcv.csv",
+  "input_sha256": "6b1357c8414888cb0a467eb717df0261ff69bd3b8e9b0244ff115be820395ba6",
+  "protocol": {
+    "feature_interval": "1d",
+    "feature_columns": [
+      "return_1d",
+      "return_5d",
+      "sma_5_gap",
+      "sma_10_gap",
+      "volatility_5d",
+      "volatility_10d",
+      "volume_ratio_5d",
+      "parkinson_vol_10d",
+      "garman_klass_vol_10d",
+      "atr_14_pct",
+      "volatility_20d",
+      "drawdown_from_20d_high"
+    ],
+    "horizon": 5,
+    "drawdown_threshold": -0.05,
+    "train_size": 252,
+    "calibration_size": 63,
+    "test_size": 63,
+    "purge_size": 5,
+    "calibration_method": "platt",
+    "n_members": 10,
+    "conformal_alpha": 0.1,
+    "random_state": 42,
+    "skipped_folds": 0
+  },
+  "rows": 244268,
+  "fold_count": 39,
+  "event_rate": 0.10253082679679697,
+  "pooled": {
+    "random": {
+      "aurc_brier": 0.09266584652417945,
+      "mean_brier_skill_score": -0.006404620595018717,
+      "mean_ece": 0.028546874515159866,
+      "mean_auc": 0.6433474584257322,
+      "full_coverage_brier": 0.09245136115802638,
+      "alerts_high_confidence": 35652.0,
+      "alert_fdr_high_confidence": 0.8244979243801189,
+      "alerts_low_confidence": 35763.0,
+      "alert_fdr_low_confidence": 0.8213796381735313
+    },
+    "legacy_trust": {
+      "aurc_brier": 0.12557886835437504,
+      "mean_brier_skill_score": -0.04280070872658774,
+      "mean_ece": 0.04924022741793865,
+      "mean_auc": 0.5781164846742349,
+      "full_coverage_brier": 0.09245136115802638,
+      "alerts_high_confidence": 58888.0,
+      "alert_fdr_high_confidence": 0.8166349680749898,
+      "alerts_low_confidence": 12527.0,
+      "alert_fdr_low_confidence": 0.8525584736968148
+    },
+    "legacy_entropy_confidence": {
+      "aurc_brier": 0.062500103390245,
+      "mean_brier_skill_score": 0.0018883961753684785,
+      "mean_ece": 0.017653008809318978,
+      "mean_auc": 0.600644775852894,
+      "full_coverage_brier": 0.09245136115802638,
+      "alerts_high_confidence": 12524.0,
+      "alert_fdr_high_confidence": 0.8526030022357074,
+      "alerts_low_confidence": 58891.0,
+      "alert_fdr_low_confidence": 0.816627328454263
+    },
+    "disagreement_confidence": {
+      "aurc_brier": 0.06957941574437614,
+      "mean_brier_skill_score": -0.013203904330730242,
+      "mean_ece": 0.01826240720793666,
+      "mean_auc": 0.6404369760236726,
+      "full_coverage_brier": 0.09245136115802638,
+      "alerts_high_confidence": 17199.0,
+      "alert_fdr_high_confidence": 0.829583115297401,
+      "alerts_low_confidence": 54216.0,
+      "alert_fdr_low_confidence": 0.8208277999114653
+    },
+    "novelty_confidence": {
+      "aurc_brier": 0.0726302197745046,
+      "mean_brier_skill_score": -0.08571112424746544,
+      "mean_ece": 0.03103267752043317,
+      "mean_auc": 0.607261661557627,
+      "full_coverage_brier": 0.09245136115802638,
+      "alerts_high_confidence": 19020.0,
+      "alert_fdr_high_confidence": 0.8518401682439537,
+      "alerts_low_confidence": 52395.0,
+      "alert_fdr_low_confidence": 0.8124439354900277
+    },
+    "epistemic_trust": {
+      "aurc_brier": 0.06866137179973383,
+      "mean_brier_skill_score": -0.05120910604461939,
+      "mean_ece": 0.024528366363187983,
+      "mean_auc": 0.6142448757789428,
+      "full_coverage_brier": 0.09245136115802638,
+      "alerts_high_confidence": 17301.0,
+      "alert_fdr_high_confidence": 0.8453846598462517,
+      "alerts_low_confidence": 54114.0,
+      "alert_fdr_low_confidence": 0.8157593229108918
+    }
+  },
+  "fold_mean_brier_skill_win_rate": {
+    "epistemic_trust_beats_random": 0.1794871794871795,
+    "epistemic_trust_beats_legacy_trust": 0.3076923076923077,
+    "epistemic_trust_beats_legacy_entropy_confidence": 0.8461538461538461,
+    "epistemic_trust_beats_disagreement_confidence": 0.358974358974359,
+    "epistemic_trust_beats_novelty_confidence": 0.5384615384615384
+  },
+  "correlation_with_risk_probability": {
+    "epistemic_trust": -0.23976628120474067,
+    "legacy_trust": 0.9883977631122507
+  },
+  "epistemic_trust_quantiles": {
+    "0.1": 0.0893262066731455,
+    "0.25": 0.2419015225137674,
+    "0.5": 0.5007210385913348,
+    "0.75": 0.7401587301587301,
+    "0.9": 0.8734920634920635
+  },
+  "served_trust_mean": 0.9971690929634663,
+  "legacy_alert_gate": {
+    "trust_threshold": 0.1,
+    "ungated_alert_rate": 0.2923633058771513,
+    "ungated_fdr": 0.8229363579080025,
+    "ungated_recall": 0.5048911958474745,
+    "gated_alert_rate": 0.18524735126991665,
+    "gated_fdr": 0.8268950276243094,
+    "gated_recall": 0.31275703733280097
+  },
+  "epistemic_alert_gate": [
+    {
+      "trust_threshold": 0.05,
+      "alerts_kept": 59214.0,
+      "alerts_blocked": 12201.0,
+      "fdr_kept": 0.8420306008714156,
+      "fdr_blocked": 0.7302680108187853,
+      "recall_kept": 0.37348772210021963
+    },
+    {
+      "trust_threshold": 0.1,
+      "alerts_kept": 50122.0,
+      "alerts_blocked": 21293.0,
+      "fdr_kept": 0.8474322652727345,
+      "fdr_blocked": 0.7652749729958203,
+      "recall_kept": 0.3053304052705131
+    },
+    {
+      "trust_threshold": 0.2,
+      "alerts_kept": 37125.0,
+      "alerts_blocked": 34290.0,
+      "fdr_kept": 0.8541952861952862,
+      "fdr_blocked": 0.789093030037912,
+      "recall_kept": 0.2161309642643242
+    },
+    {
+      "trust_threshold": 0.3,
+      "alerts_kept": 28296.0,
+      "alerts_blocked": 43119.0,
+      "fdr_kept": 0.8640797285835453,
+      "fdr_blocked": 0.7959368259931816,
+      "recall_kept": 0.15356358554601718
+    }
+  ],
+  "uncertainty_abstain": [
+    {
+      "uncertainty_threshold": 0.8,
+      "abstain_share": 0.04088132706699199,
+      "abstain_event_rate": 0.10164229921890647,
+      "abstain_mean_probability": 0.0608599218522259,
+      "no_alert_event_rate": 0.061223995152494444,
+      "no_alert_mean_probability": 0.05492646257271683
+    },
+    {
+      "uncertainty_threshold": 0.9,
+      "abstain_share": 0.012895671966856075,
+      "abstain_event_rate": 0.12253968253968255,
+      "abstain_mean_probability": 0.061275235305727226,
+      "no_alert_event_rate": 0.06283544265031277,
+      "no_alert_mean_probability": 0.05522699537819411
+    }
+  ],
+  "conformal": {
+    "coverage_drawdown": 0.9030944300259532,
+    "coverage_no_drawdown": 0.8730014642624178,
+    "ambiguous_rate": 0.6195858647059787
+  }
+}
