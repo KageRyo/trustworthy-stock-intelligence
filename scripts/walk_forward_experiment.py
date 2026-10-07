@@ -3,15 +3,22 @@
 from __future__ import annotations
 
 import argparse
+from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
 import pandas as pd
 
 from scripts.train import prepare_training_frame
-from tsi.data.csv import read_ohlcv_csv
+from tsi.data.csv import file_sha256, read_ohlcv_csv
+from tsi.data.market_reference import MarketReference, load_market_reference
 from tsi.data.split import WalkForwardFold, build_walk_forward_splits
-from tsi.features.technical import DEFAULT_FEATURE_COLUMNS
+from tsi.features.sets import (
+    DEFAULT_FEATURE_SET,
+    FEATURE_SETS,
+    feature_set_requires_market_reference,
+    resolve_feature_set,
+)
 
 
 def resolve_output_dir(output_dir: Path, *, root: Path) -> Path:
@@ -24,8 +31,12 @@ def resolve_output_dir(output_dir: Path, *, root: Path) -> Path:
     return resolved
 
 
-def add_walk_forward_arguments(parser: argparse.ArgumentParser) -> None:
-    """Add input/output, label, split, and calibration arguments shared by experiments."""
+def add_walk_forward_arguments(
+    parser: argparse.ArgumentParser,
+    *,
+    feature_set_argument: bool = True,
+) -> None:
+    """Add input/output, label, split, calibration, and feature-set arguments."""
 
     parser.add_argument("--input", type=Path, required=True, help="OHLCV CSV input.")
     parser.add_argument(
@@ -52,6 +63,19 @@ def add_walk_forward_arguments(parser: argparse.ArgumentParser) -> None:
         choices=["none", "platt", "isotonic"],
         default="platt",
     )
+    parser.add_argument(
+        "--market-reference",
+        type=Path,
+        default=None,
+        help="Directory from scripts.download_market_reference; needed for market features.",
+    )
+    if feature_set_argument:
+        parser.add_argument(
+            "--feature-set",
+            choices=list(FEATURE_SETS),
+            default=DEFAULT_FEATURE_SET,
+            help="Named feature set used to fit the baseline.",
+        )
 
 
 @dataclass(frozen=True)
@@ -69,15 +93,42 @@ class WalkForwardFolds:
     folds: list[FoldFrames]
     purge_size: int
     skipped: int
+    feature_columns: list[str]
+    market_reference_dir: Path | None = None
 
 
-def load_walk_forward_folds(args: argparse.Namespace) -> WalkForwardFolds:
-    """Build labeled rows and the purged walk-forward folds usable for fitting."""
+def load_args_market_reference(
+    args: argparse.Namespace, feature_columns: Sequence[str]
+) -> MarketReference | None:
+    """Load ``--market-reference`` when the feature columns need it."""
 
+    if not feature_set_requires_market_reference(feature_columns):
+        return None
+    if args.market_reference is None:
+        raise ValueError("--market-reference is required for market-relative feature sets")
+    return load_market_reference(args.market_reference)
+
+
+def load_walk_forward_folds(
+    args: argparse.Namespace,
+    *,
+    feature_columns: Sequence[str] | None = None,
+) -> WalkForwardFolds:
+    """Build labeled rows and the purged walk-forward folds usable for fitting.
+
+    Rows with any missing value in ``feature_columns`` (default: ``--feature-set``)
+    are dropped before splitting, so callers comparing feature sets should pass
+    the union of their columns to keep folds identical.
+    """
+
+    columns = list(feature_columns or resolve_feature_set(args.feature_set))
+    market_reference = load_args_market_reference(args, columns)
     frame = prepare_training_frame(
         read_ohlcv_csv(args.input),
         horizon=args.horizon,
         drawdown_threshold=args.drawdown_threshold,
+        feature_columns=columns,
+        market_reference=market_reference,
     )
     purge_size = args.horizon if args.purge_size is None else args.purge_size
     if purge_size < args.horizon:
@@ -105,7 +156,13 @@ def load_walk_forward_folds(args: argparse.Namespace) -> WalkForwardFolds:
         usable.append(FoldFrames(fold=fold, train=train, calibration=calibration, test=test))
     if not usable:
         raise ValueError("No walk-forward fold had both classes in train and calibration windows")
-    return WalkForwardFolds(folds=usable, purge_size=purge_size, skipped=skipped)
+    return WalkForwardFolds(
+        folds=usable,
+        purge_size=purge_size,
+        skipped=skipped,
+        feature_columns=columns,
+        market_reference_dir=args.market_reference if market_reference is not None else None,
+    )
 
 
 def walk_forward_protocol(
@@ -115,9 +172,17 @@ def walk_forward_protocol(
 ) -> dict[str, object]:
     """Protocol fields recorded in every experiment summary; ``extra`` precedes skipped_folds."""
 
+    reference: dict[str, object] = {}
+    if folds.market_reference_dir is not None:
+        reference["market_reference"] = {
+            "path": str(folds.market_reference_dir),
+            "ohlcv_sha256": file_sha256(folds.market_reference_dir / "ohlcv.csv"),
+            "sector_map_sha256": file_sha256(folds.market_reference_dir / "sector_map.csv"),
+        }
     return {
         "feature_interval": "1d",
-        "feature_columns": list(DEFAULT_FEATURE_COLUMNS),
+        "feature_columns": list(folds.feature_columns),
+        **reference,
         "horizon": args.horizon,
         "drawdown_threshold": args.drawdown_threshold,
         "train_size": args.train_size,

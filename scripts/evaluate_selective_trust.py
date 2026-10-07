@@ -24,7 +24,6 @@ from scripts.walk_forward_experiment import (
 )
 from tsi.data.csv import file_sha256
 from tsi.evaluation.selective import risk_coverage_curve, selective_summary
-from tsi.features.technical import DEFAULT_FEATURE_COLUMNS
 from tsi.labeling.warning_level import select_alert_threshold
 from tsi.models.logistic import LogisticRiskModel
 from tsi.trust.calibration import CalibrationMethod, fit_probability_calibrator
@@ -66,12 +65,13 @@ def score_fold(
     train_size: int,
     config: ReliabilityConfig,
     rng: np.random.Generator,
+    feature_columns: Sequence[str],
 ) -> pd.DataFrame:
     """Return test rows with calibrated probabilities and every confidence signal."""
 
-    train_features = train_frame[DEFAULT_FEATURE_COLUMNS].to_numpy()
-    calibration_features = calibration_frame[DEFAULT_FEATURE_COLUMNS].to_numpy()
-    test_features = test_frame[DEFAULT_FEATURE_COLUMNS].to_numpy()
+    train_features = train_frame[feature_columns].to_numpy()
+    calibration_features = calibration_frame[feature_columns].to_numpy()
+    test_features = test_frame[feature_columns].to_numpy()
     train_labels = train_frame["risk_label"].to_numpy()
     calibration_labels = calibration_frame["risk_label"].to_numpy()
 
@@ -315,6 +315,7 @@ def run(args: argparse.Namespace) -> dict[str, object]:
             train_size=args.train_size,
             config=config,
             rng=rng,
+            feature_columns=walk_forward.feature_columns,
         ).assign(fold_id=item.fold.fold_id)
         for item in walk_forward.folds
     ]
