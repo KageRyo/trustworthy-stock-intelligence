@@ -65,6 +65,8 @@ export type DashboardCopy = {
     uncertainty: string;
     uncertaintyStatus: string;
     calibration: string;
+    alertPolicy: string;
+    watchPolicy: string;
     dataAsOf: string;
     generatedAt: string;
     modelBundle: string;
@@ -142,6 +144,14 @@ export type DashboardCopy = {
     completed: string;
     failed: string;
     cancelled: string;
+  };
+  alertPolicies: {
+    alertRate: string;
+    targetPrecision: string;
+    ratio: string;
+    f1: string;
+    targetNotMet: string;
+    smallSample: string;
   };
   trustSummaries: {
     insufficientHistory: string;
@@ -228,6 +238,8 @@ export const translations = {
       uncertainty: "Uncertainty",
       uncertaintyStatus: "Uncertainty Status",
       calibration: "Calibration",
+      alertPolicy: "Alert threshold policy",
+      watchPolicy: "Watch threshold policy",
       dataAsOf: "Data As Of",
       generatedAt: "Generated At",
       modelBundle: "Model Bundle",
@@ -338,6 +350,14 @@ export const translations = {
       completed: "Completed",
       failed: "Failed",
       cancelled: "Cancelled"
+    },
+    alertPolicies: {
+      alertRate: "Top {value} of calibration-window risk",
+      targetPrecision: "Precision target {value}",
+      ratio: "{value} of alert threshold",
+      f1: "F1-optimized",
+      targetNotMet: " (target not met)",
+      smallSample: " (small calibration sample)"
     },
     trustSummaries: {
       insufficientHistory:
@@ -526,6 +546,8 @@ export const translations = {
       uncertainty: "不確定性",
       uncertaintyStatus: "不確定性狀態",
       calibration: "校準方式",
+      alertPolicy: "警示門檻策略",
+      watchPolicy: "觀察門檻策略",
       dataAsOf: "資料截至",
       generatedAt: "產生時間",
       modelBundle: "模型套件",
@@ -636,6 +658,14 @@ export const translations = {
       completed: "已完成",
       failed: "失敗",
       cancelled: "已取消"
+    },
+    alertPolicies: {
+      alertRate: "校準窗風險前 {value}",
+      targetPrecision: "精確度目標 {value}",
+      ratio: "警示門檻的 {value}",
+      f1: "F1 最佳化",
+      targetNotMet: "（未達目標）",
+      smallSample: "（校準樣本少）"
     },
     trustSummaries: {
       insufficientHistory: "此股票有市場資料，但標註歷史不足，無法產生校準後風險預測。",

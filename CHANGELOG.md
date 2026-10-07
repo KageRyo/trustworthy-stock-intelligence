@@ -2,6 +2,28 @@
 
 ## Unreleased
 
+### Changed
+
+- Serving now chooses thresholds with calibration-window alert-rate policies:
+  - `--alert-policy alert_rate:0.05` (alerts are the top 5% of calibration risk).
+  - `--watch-policy alert_rate:0.2` (watch is the top 20%).
+  - These replace the F1 threshold and the fixed 0.8 watch ratio.
+  - On the S&P 100 pilot, alert days per ticker-month fall from 6.75 to 1.67, and precision beats F1
+    in 85% of folds. Recall falls from 0.52 to 0.20.
+  - `--alert-policy objective --watch-policy ratio` keeps the previous behavior.
+
+### Added
+
+- `AlertPolicy` threshold selection (`f1`, `target_precision`, `alert_rate`) and Experiment 016
+  (`scripts/evaluate_alert_policies.py`).
+- `alert_policy` batch metadata in Python schemas, PostgreSQL batch metadata, the Go analysis
+  response, OpenAPI, and the dashboard, with a small-calibration-sample flag for single-ticker runs.
+
+### Fixed
+
+- Ticker analysis now uses calibration-drift and alert-policy metadata from the record's own batch
+  instead of the most recent batch, which could be an unrelated on-demand run.
+
 ## 0.5.0 - 2026-10-06
 
 ### Changed

@@ -1,0 +1,42 @@
+{
+  "experiment_id": "016_alert_policy",
+  "run_id": "sp100_logistic_platt_policies",
+  "executed_on": "2026-10-07",
+  "base_git_commit": "abef4a409ea7652755583ce23b05b87372369bfb",
+  "dataset": {
+    "provider": "Yahoo Finance via yfinance",
+    "downloaded_at_utc": "2026-05-08T02:50:28.018207+00:00",
+    "universe": "sp100",
+    "ticker_count": 101,
+    "row_count": 283289,
+    "ohlcv_sha256": "6b1357c8414888cb0a467eb717df0261ff69bd3b8e9b0244ff115be820395ba6",
+    "tickers_sha256": "3023bcc40e666c0151ac3aeb895aae9f8d1f04f9da6db01977a1f8204ef2d890"
+  },
+  "protocol": {
+    "feature_interval": "1d",
+    "horizon": 5,
+    "drawdown_threshold": -0.05,
+    "train_size": 252,
+    "purge_size": 5,
+    "calibration_size": 63,
+    "test_size": 63,
+    "fold_count": 39,
+    "test_rows": 244268,
+    "model": "logistic_regression",
+    "calibration_method": "platt",
+    "policies": ["f1", "target_precision:0.2", "target_precision:0.25", "target_precision:0.3", "alert_rate:0.02", "alert_rate:0.05", "alert_rate:0.1", "alert_rate:0.2"],
+    "min_alerts": 20,
+    "watch_threshold_ratio_for_coverage": 0.8
+  },
+  "environment": {
+    "python": "3.11.16",
+    "numpy": "2.4.6",
+    "pandas": "3.0.5",
+    "scikit_learn": "1.9.0",
+    "device": "cpu (no deep-learning training in this experiment)"
+  },
+  "artifacts": {
+    "summary_sha256": "8269dd8763ad9a0d2b0992ce25d8fb53befab7fc8116f1dce618c3f7f7c30c5e",
+    "per_fold_sha256": "b6fa9ff02ba1e329c5b71bf12b86de78f67451e4d516e3c3a1e1302a8e27e743"
+  }
+}

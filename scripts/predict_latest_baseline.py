@@ -20,9 +20,14 @@ from tsi.evaluation.drift import (
 from tsi.evaluation.metrics import classification_metrics
 from tsi.features.technical import DEFAULT_FEATURE_COLUMNS, build_technical_features
 from tsi.labeling.drawdown import add_future_drawdown_label
-from tsi.labeling.warning_level import select_alert_threshold
+from tsi.labeling.warning_level import (
+    parse_alert_policy,
+    select_alert_threshold,
+    select_alert_threshold_by_policy,
+)
 from tsi.models.logistic import LogisticRiskModel
 from tsi.serving.schema import (
+    AlertPolicyMetadata,
     CalibrationDriftMetadata,
     build_prediction_batch,
     write_prediction_batch_json,
@@ -38,6 +43,10 @@ from tsi.trust.reason_codes import build_reason_codes
 from tsi.trust.reliability import ReliabilityAssessor, ReliabilityConfig, ReliabilityScores
 from tsi.trust.trust_score import TrustScoreMethod, compute_trust_score, data_quality_scores
 from tsi.trust.uncertainty import binary_entropy_uncertainty, margin_uncertainty
+
+
+# Below this many calibration-window alerts, policy thresholds are too noisy to trust.
+MIN_RELIABLE_CALIBRATION_ALERTS = 20
 
 
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
@@ -64,6 +73,21 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         "--threshold-objective",
         choices=["f1", "precision", "recall"],
         default="f1",
+    )
+    parser.add_argument(
+        "--alert-policy",
+        default="alert_rate:0.05",
+        help=(
+            "Alert threshold policy chosen on the calibration window: alert_rate:<rate>, "
+            "target_precision:<precision>, f1, or objective (uses --threshold-objective). "
+            "See experiments/016_alert_policy."
+        ),
+    )
+    parser.add_argument(
+        "--watch-policy",
+        default="alert_rate:0.2",
+        help="Watch threshold policy (same forms as --alert-policy), or ratio to use "
+        "--watch-threshold-ratio times the alert threshold.",
     )
     parser.add_argument("--watch-threshold-ratio", type=float, default=0.8)
     parser.add_argument("--min-watch-threshold", type=float, default=0.01)
@@ -275,16 +299,10 @@ def run_prediction(args: argparse.Namespace) -> pd.DataFrame:
         evaluated=drift_evaluated,
         note=drift_note,
     )
-    threshold_selection = select_alert_threshold(
+    alert_threshold, watch_threshold, alert_policy_metadata = select_warning_thresholds(
+        args,
         calibration_frame["risk_label"].to_numpy(),
         calibrated_calibration_probabilities,
-        objective=args.threshold_objective,
-    )
-    alert_threshold = threshold_selection.threshold
-    watch_threshold = compute_watch_threshold(
-        alert_threshold,
-        watch_threshold_ratio=args.watch_threshold_ratio,
-        min_watch_threshold=args.min_watch_threshold,
     )
     row_reason_codes: list[list[str]] | None = None
     if args.trust_method == "reliability":
@@ -367,6 +385,7 @@ def run_prediction(args: argparse.Namespace) -> pd.DataFrame:
         run_id=args.run_id,
         calibration_drift=calibration_drift,
         feature_interval=args.feature_interval,
+        alert_policy=alert_policy_metadata,
     )
     write_prediction_batch_json(batch, args.json_output)
     if args.write_db:
@@ -378,6 +397,58 @@ def run_prediction(args: argparse.Namespace) -> pd.DataFrame:
             feature_interval=args.feature_interval,
         )
     return predictions
+
+
+def select_warning_thresholds(
+    args: argparse.Namespace,
+    labels: np.ndarray,
+    calibrated_probabilities: np.ndarray,
+) -> tuple[float, float, AlertPolicyMetadata]:
+    """Choose alert and watch thresholds on calibration rows according to the CLI policies."""
+
+    if args.alert_policy == "objective":
+        selection = select_alert_threshold(
+            labels, calibrated_probabilities, objective=args.threshold_objective
+        )
+        alert_label = f"objective:{args.threshold_objective}"
+        alert_threshold, alert_met, alert_metrics = selection.threshold, True, selection.metrics
+    else:
+        policy = parse_alert_policy(args.alert_policy)
+        chosen = select_alert_threshold_by_policy(labels, calibrated_probabilities, policy)
+        alert_label = policy.label
+        alert_threshold, alert_met, alert_metrics = chosen.threshold, chosen.target_met, chosen.metrics
+
+    if args.watch_policy == "ratio":
+        watch_threshold = compute_watch_threshold(
+            alert_threshold,
+            watch_threshold_ratio=args.watch_threshold_ratio,
+            min_watch_threshold=args.min_watch_threshold,
+        )
+        watch_label, watch_met = f"ratio:{args.watch_threshold_ratio:g}", True
+    else:
+        watch_policy = parse_alert_policy(args.watch_policy)
+        watch = select_alert_threshold_by_policy(labels, calibrated_probabilities, watch_policy)
+        watch_threshold = min(alert_threshold, watch.threshold)
+        watch_label, watch_met = watch_policy.label, watch.target_met
+
+    calibration_alerts = int(np.sum(calibrated_probabilities >= alert_threshold))
+    note = ""
+    if calibration_alerts < MIN_RELIABLE_CALIBRATION_ALERTS:
+        note = (
+            f"small calibration window: {calibration_alerts} alert rows out of "
+            f"{len(calibrated_probabilities)}; thresholds and calibration precision are noisy"
+        )
+    metadata = AlertPolicyMetadata(
+        alert_policy=alert_label,
+        watch_policy=watch_label,
+        alert_target_met=alert_met,
+        watch_target_met=watch_met,
+        calibration_alert_rate=float(np.mean(calibrated_probabilities >= alert_threshold)),
+        calibration_watch_rate=float(np.mean(calibrated_probabilities >= watch_threshold)),
+        calibration_alert_precision=float(alert_metrics["precision"]),
+        note=note,
+    )
+    return alert_threshold, watch_threshold, metadata
 
 
 def resolve_trust_threshold(args: argparse.Namespace) -> float:

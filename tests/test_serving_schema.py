@@ -154,3 +154,24 @@ def test_prediction_batch_json_does_not_replace_existing_file_when_replace_fails
 
     assert json.loads(output.read_text(encoding="utf-8")) == {"status": "old"}
     assert not list(tmp_path.glob("*.tmp"))
+
+
+def test_prediction_batch_accepts_alert_policy_metadata() -> None:
+    from tsi.serving.schema import AlertPolicyMetadata, PredictionBatch
+
+    batch = PredictionBatch(
+        records=[],
+        alert_policy=AlertPolicyMetadata(
+            alert_policy="alert_rate:0.05",
+            watch_policy="alert_rate:0.2",
+            alert_target_met=True,
+            watch_target_met=True,
+            calibration_alert_rate=0.05,
+            calibration_watch_rate=0.2,
+            calibration_alert_precision=0.21,
+        ),
+    )
+
+    payload = batch.model_dump(mode="json")
+    assert payload["alert_policy"]["alert_policy"] == "alert_rate:0.05"
+    assert PredictionBatch(records=[]).alert_policy is None

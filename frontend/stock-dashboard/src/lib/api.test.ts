@@ -347,6 +347,39 @@ describe("typed API client", () => {
     });
   });
 
+  it("parses alert policy metadata on ticker analysis", async () => {
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse({
+        ...analysisPayload("00981A"),
+        alert_policy: {
+          alert_policy: "alert_rate:0.05",
+          watch_policy: "alert_rate:0.2",
+          alert_target_met: true,
+          watch_target_met: true,
+          calibration_alert_rate: 0.05,
+          calibration_watch_rate: 0.2,
+          calibration_alert_precision: 0.27,
+          note: ""
+        }
+      })
+    );
+
+    const analysis = await fetchTickerAnalysis("00981A");
+
+    expect(analysis.ticker).toBe("00981A");
+    expect(analysis.alert_policy?.watch_policy).toBe("alert_rate:0.2");
+  });
+
+  it("accepts a null alert policy from legacy batches", async () => {
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse({ ...analysisPayload("5240"), alert_policy: null })
+    );
+
+    const analysis = await fetchTickerAnalysis("5240");
+
+    expect(analysis.alert_policy).toBeNull();
+  });
+
   it("parses typed ticker warning history with a bounded limit", async () => {
     fetchMock.mockResolvedValueOnce(jsonResponse(historyPayload("2330")));
 

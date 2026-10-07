@@ -29,22 +29,23 @@ Taiwan local tickers are string symbols. Numeric and alphanumeric inputs such as
 
 ### `TickerAnalysisResponse`
 
-| Field                  | Type                       | Description                                                                                  |
-| ---------------------- | -------------------------- | -------------------------------------------------------------------------------------------- |
-| `schema_version`       | string                     | Analysis response schema version. Current value: `analysis.v1`.                              |
-| `ticker`               | string                     | Requested ticker symbol from PostgreSQL warning records.                                     |
-| `date`                 | string                     | Prediction date for the ticker record, formatted as `YYYY-MM-DD`.                            |
-| `run_id`               | string                     | Warning batch run identifier.                                                                |
-| `data_as_of`           | string                     | Batch-level market data cutoff date.                                                         |
-| `generated_at`         | string                     | Batch generation timestamp.                                                                  |
-| `warning`              | `WarningAnalysis`          | Risk warning probability, thresholds, level, and summary.                                    |
-| `trust`                | `TrustAssessment`          | Calibration, uncertainty, trust status, and summary.                                         |
-| `model`                | `ModelAnalysis`            | Model name and model bundle path used for the prediction.                                    |
-| `data_freshness`       | `DataFreshness`            | Serving freshness metadata from the loaded DB warning batch.                                 |
-| `calibration_drift`    | `CalibrationDriftMetadata` | Chronological calibration-drift status, signals, deltas, and trust multiplier for the batch. |
-| `reasons`              | `ReasonExplanation[]`      | Typed explanations derived from reason codes.                                                |
-| `feature_attributions` | `FeatureAttribution[]`     | Top model-specific feature contributions when the model supports them.                       |
-| `limitations`          | `string[]`                 | Fixed limitations shown by clients.                                                          |
+| Field                  | Type                          | Description                                                                                  |
+| ---------------------- | ----------------------------- | -------------------------------------------------------------------------------------------- |
+| `schema_version`       | string                        | Analysis response schema version. Current value: `analysis.v1`.                              |
+| `ticker`               | string                        | Requested ticker symbol from PostgreSQL warning records.                                     |
+| `date`                 | string                        | Prediction date for the ticker record, formatted as `YYYY-MM-DD`.                            |
+| `run_id`               | string                        | Warning batch run identifier.                                                                |
+| `data_as_of`           | string                        | Batch-level market data cutoff date.                                                         |
+| `generated_at`         | string                        | Batch generation timestamp.                                                                  |
+| `warning`              | `WarningAnalysis`             | Risk warning probability, thresholds, level, and summary.                                    |
+| `trust`                | `TrustAssessment`             | Calibration, uncertainty, trust status, and summary.                                         |
+| `model`                | `ModelAnalysis`               | Model name and model bundle path used for the prediction.                                    |
+| `data_freshness`       | `DataFreshness`               | Serving freshness metadata from the loaded DB warning batch.                                 |
+| `calibration_drift`    | `CalibrationDriftMetadata`    | Chronological calibration-drift status, signals, deltas, and trust multiplier for the batch. |
+| `alert_policy`         | `AlertPolicyMetadata \| null` | How the alert and watch thresholds were chosen; null for batches that predate policies.      |
+| `reasons`              | `ReasonExplanation[]`         | Typed explanations derived from reason codes.                                                |
+| `feature_attributions` | `FeatureAttribution[]`        | Top model-specific feature contributions when the model supports them.                       |
+| `limitations`          | `string[]`                    | Fixed limitations shown by clients.                                                          |
 
 ### `WarningAnalysis`
 
@@ -70,6 +71,23 @@ Taiwan local tickers are string symbols. Numeric and alphanumeric inputs such as
 
 Batches produced with `--trust-method legacy` derive both scores from the risk probability. See
 [Experiment 015](../../experiments/015_reliability_trust/README.md) for why the default changed.
+
+### `AlertPolicyMetadata`
+
+| Field                         | Type           | Description                                                                                                 |
+| ----------------------------- | -------------- | ----------------------------------------------------------------------------------------------------------- |
+| `alert_policy`                | string         | Calibration-window alert policy, for example `alert_rate:0.05`, `target_precision:0.25`, or `objective:f1`. |
+| `watch_policy`                | string         | Watch policy, or `ratio:<r>` for a fixed fraction of the alert threshold.                                   |
+| `alert_target_met`            | boolean        | Whether the alert policy target was met on the calibration window.                                          |
+| `watch_target_met`            | boolean        | Whether the watch policy target was met on the calibration window.                                          |
+| `calibration_alert_rate`      | number \| null | Share of calibration rows at or above the alert threshold.                                                  |
+| `calibration_watch_rate`      | number \| null | Share of calibration rows at or above the watch threshold.                                                  |
+| `calibration_alert_precision` | number \| null | Precision of alerts on the calibration window.                                                              |
+| `note`                        | string         | Set when too few calibration rows alert for the thresholds to be stable.                                    |
+
+Calibration-drift and alert-policy metadata come from the batch that produced the ticker's record,
+not from the latest batch. See [Experiment 016](../../experiments/016_alert_policy/README.md) for
+the policy evaluation.
 
 ### `CalibrationDriftMetadata`
 

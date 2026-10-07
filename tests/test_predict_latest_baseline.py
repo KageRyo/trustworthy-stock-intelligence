@@ -257,3 +257,61 @@ def test_resolve_trust_threshold_depends_on_trust_method() -> None:
     assert resolve_trust_threshold(parse_args(base)) == 0.4
     assert resolve_trust_threshold(parse_args([*base, "--trust-method", "legacy"])) == 0.1
     assert resolve_trust_threshold(parse_args([*base, "--trust-threshold", "0.7"])) == 0.7
+
+
+def test_run_prediction_defaults_to_alert_rate_policies(tmp_path: Path) -> None:
+    _ohlcv_frame().to_csv(tmp_path / "ohlcv.csv", index=False)
+    args = parse_args(_prediction_args(tmp_path))
+
+    predictions = run_prediction(args)
+    payload = json.loads((tmp_path / "latest_warnings.json").read_text(encoding="utf-8"))
+
+    assert (args.alert_policy, args.watch_policy) == ("alert_rate:0.05", "alert_rate:0.2")
+    policy = payload["alert_policy"]
+    assert policy["alert_policy"] == "alert_rate:0.05"
+    assert policy["watch_policy"] == "alert_rate:0.2"
+    assert policy["calibration_alert_rate"] <= 0.05
+    assert (predictions["watch_threshold"] <= predictions["alert_threshold"]).all()
+
+
+def test_run_prediction_supports_legacy_objective_and_ratio(tmp_path: Path) -> None:
+    _ohlcv_frame().to_csv(tmp_path / "ohlcv.csv", index=False)
+    args = parse_args(
+        _prediction_args(
+            tmp_path,
+            "--alert-policy",
+            "objective",
+            "--watch-policy",
+            "ratio",
+            "--watch-threshold-ratio",
+            "0.5",
+            "--min-watch-threshold",
+            "0.0",
+        )
+    )
+
+    predictions = run_prediction(args)
+    payload = json.loads((tmp_path / "latest_warnings.json").read_text(encoding="utf-8"))
+
+    np.testing.assert_allclose(
+        predictions["watch_threshold"], predictions["alert_threshold"] * 0.5
+    )
+    assert payload["alert_policy"]["alert_policy"] == "objective:f1"
+    assert payload["alert_policy"]["watch_policy"] == "ratio:0.5"
+
+
+def test_select_warning_thresholds_notes_small_calibration_windows() -> None:
+    from scripts.predict_latest_baseline import select_warning_thresholds
+
+    base = ["--input", "x.csv", "--output", "y.csv", "--json-output", "z.json"]
+    rng = np.random.default_rng(2)
+    labels = (rng.random(63) < 0.2).astype(int)
+    probabilities = rng.random(63)
+
+    _, _, small = select_warning_thresholds(parse_args(base), labels, probabilities)
+    big_labels = np.tile(labels, 20)
+    big_probabilities = np.tile(probabilities, 20)
+    _, _, big = select_warning_thresholds(parse_args(base), big_labels, big_probabilities)
+
+    assert "small calibration window" in small.note
+    assert big.note == ""

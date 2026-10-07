@@ -23,6 +23,7 @@ type TickerAnalysisResponse struct {
 	Reasons             []ReasonExplanation               `json:"reasons"`
 	FeatureAttributions []warnings.FeatureAttribution     `json:"feature_attributions"`
 	CalibrationDrift    warnings.CalibrationDriftMetadata `json:"calibration_drift"`
+	AlertPolicy         *warnings.AlertPolicyMetadata     `json:"alert_policy"`
 	Limitations         []string                          `json:"limitations"`
 }
 
@@ -124,6 +125,19 @@ func buildTickerAnalysis(
 		FeatureAttributions: nonNilFeatureAttributions(record.FeatureAttributions),
 		Limitations:         analysisLimitations(),
 	}
+}
+
+// analysisBatchMetadata returns the calibration-drift and alert-policy metadata of the
+// batch that produced the record, falling back to the store-level batch when the store
+// does not track per-record batches.
+func analysisBatchMetadata(
+	record warnings.PredictionRecord,
+	batch warnings.PredictionBatch,
+) (warnings.CalibrationDriftMetadata, *warnings.AlertPolicyMetadata) {
+	if record.BatchMetadataLoaded {
+		return record.BatchCalibrationDrift, record.BatchAlertPolicy
+	}
+	return batch.CalibrationDrift, batch.AlertPolicy
 }
 
 func nonNilFeatureAttributions(attributions []warnings.FeatureAttribution) []warnings.FeatureAttribution {

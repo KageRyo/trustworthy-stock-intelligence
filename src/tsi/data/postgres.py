@@ -962,6 +962,11 @@ def _upsert_prediction_batch(
                     "source_schema": batch.schema_version,
                     "feature_interval": feature_interval,
                     "calibration_drift": batch.calibration_drift.model_dump(mode="json"),
+                    "alert_policy": (
+                        batch.alert_policy.model_dump(mode="json")
+                        if batch.alert_policy is not None
+                        else None
+                    ),
                     "freshness": (
                         batch.freshness.model_dump(mode="json") if batch.freshness is not None else None
                     ),

@@ -40,6 +40,16 @@ func writeRouterFixture(t *testing.T) string {
     "recent_rows": 21,
     "note": "fixture"
   },
+  "alert_policy": {
+    "alert_policy": "alert_rate:0.05",
+    "watch_policy": "alert_rate:0.2",
+    "alert_target_met": true,
+    "watch_target_met": true,
+    "calibration_alert_rate": 0.05,
+    "calibration_watch_rate": 0.2,
+    "calibration_alert_precision": 0.27,
+    "note": ""
+  },
   "records": [
     {
       "date": "2026-06-08",
@@ -598,6 +608,9 @@ func TestTickerAnalysisHandler(t *testing.T) {
 	}
 	if payload.CalibrationDrift.Status != "degraded" || !payload.CalibrationDrift.Abstain {
 		t.Fatalf("unexpected calibration drift metadata: %+v", payload.CalibrationDrift)
+	}
+	if payload.AlertPolicy == nil || payload.AlertPolicy.AlertPolicy != "alert_rate:0.05" {
+		t.Fatalf("unexpected alert policy metadata: %+v", payload.AlertPolicy)
 	}
 	if payload.Trust.TrustStatus != "limited_trust" {
 		t.Fatalf("trust status = %q, want limited_trust", payload.Trust.TrustStatus)
@@ -1290,5 +1303,55 @@ func TestTrustSummaryExplainsLimitedDataQuality(t *testing.T) {
 
 	if !strings.Contains(strings.ToLower(summary), "data quality") {
 		t.Fatalf("unexpected trust summary: %q", summary)
+	}
+}
+
+func TestAnalysisBatchMetadataUsesRecordBatchWhenLoaded(t *testing.T) {
+	recordPolicy := &warnings.AlertPolicyMetadata{AlertPolicy: "alert_rate:0.05"}
+	latestPolicy := &warnings.AlertPolicyMetadata{AlertPolicy: "f1"}
+	batch := warnings.PredictionBatch{
+		CalibrationDrift: warnings.CalibrationDriftMetadata{Status: "degraded"},
+		AlertPolicy:      latestPolicy,
+	}
+	cases := []struct {
+		name        string
+		record      warnings.PredictionRecord
+		driftStatus string
+		policy      *warnings.AlertPolicyMetadata
+	}{
+		{
+			name: "record batch overrides latest batch",
+			record: warnings.PredictionRecord{
+				BatchMetadataLoaded:   true,
+				BatchCalibrationDrift: warnings.CalibrationDriftMetadata{Status: "stable"},
+				BatchAlertPolicy:      recordPolicy,
+			},
+			driftStatus: "stable",
+			policy:      recordPolicy,
+		},
+		{
+			name: "legacy record batch has no policy",
+			record: warnings.PredictionRecord{
+				BatchMetadataLoaded:   true,
+				BatchCalibrationDrift: warnings.CalibrationDriftMetadata{Status: "not_evaluated"},
+			},
+			driftStatus: "not_evaluated",
+			policy:      nil,
+		},
+		{
+			name:        "file store falls back to batch",
+			record:      warnings.PredictionRecord{},
+			driftStatus: "degraded",
+			policy:      latestPolicy,
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			drift, policy := analysisBatchMetadata(tc.record, batch)
+			if drift.Status != tc.driftStatus || policy != tc.policy {
+				t.Fatalf("got drift=%q policy=%+v, want drift=%q policy=%+v",
+					drift.Status, policy, tc.driftStatus, tc.policy)
+			}
+		})
 	}
 }

@@ -8,7 +8,21 @@ type PredictionBatch struct {
 	FeatureInterval  string                   `json:"feature_interval,omitempty"`
 	RecordCount      int                      `json:"record_count"`
 	CalibrationDrift CalibrationDriftMetadata `json:"calibration_drift"`
+	AlertPolicy      *AlertPolicyMetadata     `json:"alert_policy"`
 	Records          []PredictionRecord       `json:"records"`
+}
+
+// AlertPolicyMetadata records how the batch's alert and watch thresholds were chosen.
+// It is nil for batches written before alert policies existed.
+type AlertPolicyMetadata struct {
+	AlertPolicy               string   `json:"alert_policy"`
+	WatchPolicy               string   `json:"watch_policy"`
+	AlertTargetMet            bool     `json:"alert_target_met"`
+	WatchTargetMet            bool     `json:"watch_target_met"`
+	CalibrationAlertRate      *float64 `json:"calibration_alert_rate"`
+	CalibrationWatchRate      *float64 `json:"calibration_watch_rate"`
+	CalibrationAlertPrecision *float64 `json:"calibration_alert_precision"`
+	Note                      string   `json:"note"`
 }
 
 type CalibrationDriftMetadata struct {
@@ -44,6 +58,12 @@ type PredictionRecord struct {
 	WarningLevel              string               `json:"warning_level"`
 	ReasonCodes               []string             `json:"reason_codes"`
 	FeatureAttributions       []FeatureAttribution `json:"feature_attributions"`
+	// Batch-level metadata of the batch this record came from. The latest batch can be
+	// an on-demand single-ticker run, so analysis must not borrow its metadata for
+	// records written by other batches. BatchMetadataLoaded is false for file stores.
+	BatchMetadataLoaded   bool                     `json:"-"`
+	BatchCalibrationDrift CalibrationDriftMetadata `json:"-"`
+	BatchAlertPolicy      *AlertPolicyMetadata     `json:"-"`
 }
 
 type FeatureAttribution struct {

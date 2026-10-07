@@ -12,14 +12,17 @@ from __future__ import annotations
 import argparse
 from collections.abc import Sequence
 import json
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-from scripts.train import prepare_training_frame
-from tsi.data.csv import file_sha256, read_ohlcv_csv
-from tsi.data.split import build_walk_forward_splits
+from scripts.walk_forward_experiment import (
+    add_walk_forward_arguments,
+    load_walk_forward_folds,
+    resolve_output_dir,
+    walk_forward_protocol,
+)
+from tsi.data.csv import file_sha256
 from tsi.evaluation.selective import risk_coverage_curve, selective_summary
 from tsi.features.technical import DEFAULT_FEATURE_COLUMNS
 from tsi.labeling.warning_level import select_alert_threshold
@@ -47,31 +50,7 @@ ABSTAIN_UNCERTAINTY_THRESHOLDS = (0.8, 0.9)
 
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--input", type=Path, required=True, help="OHLCV CSV input.")
-    parser.add_argument(
-        "--output-dir",
-        type=Path,
-        required=True,
-        help="Output directory; must resolve inside --output-root.",
-    )
-    parser.add_argument(
-        "--output-root",
-        type=Path,
-        default=Path.cwd(),
-        help="Directory that --output-dir must stay inside. Defaults to the working directory.",
-    )
-    parser.add_argument("--horizon", type=int, default=5)
-    parser.add_argument("--drawdown-threshold", type=float, default=-0.05)
-    parser.add_argument("--train-size", type=int, default=252)
-    parser.add_argument("--calibration-size", type=int, default=63)
-    parser.add_argument("--test-size", type=int, default=63)
-    parser.add_argument("--purge-size", type=int, default=None)
-    parser.add_argument("--max-folds", type=int, default=None)
-    parser.add_argument(
-        "--calibration-method",
-        choices=["none", "platt", "isotonic"],
-        default="platt",
-    )
+    add_walk_forward_arguments(parser)
     parser.add_argument("--n-members", type=int, default=10)
     parser.add_argument("--conformal-alpha", type=float, default=0.1)
     parser.add_argument("--random-state", type=int, default=42)
@@ -318,67 +297,27 @@ def summarize(scored: pd.DataFrame) -> dict[str, object]:
     }
 
 
-def resolve_output_dir(output_dir: Path, *, root: Path) -> Path:
-    """Resolve ``output_dir`` against ``root`` and reject paths that escape it."""
-
-    base = root.resolve()
-    resolved = (base / output_dir).resolve()
-    if not resolved.is_relative_to(base):
-        raise ValueError(f"--output-dir must stay inside {base}")
-    return resolved
-
-
 def run(args: argparse.Namespace) -> dict[str, object]:
     output_dir = resolve_output_dir(args.output_dir, root=args.output_root)
-    ohlcv = read_ohlcv_csv(args.input)
-    frame = prepare_training_frame(
-        ohlcv, horizon=args.horizon, drawdown_threshold=args.drawdown_threshold
-    )
-    purge_size = args.horizon if args.purge_size is None else args.purge_size
-    if purge_size < args.horizon:
-        raise ValueError("purge_size must be at least horizon to prevent label-window leakage")
-    folds = build_walk_forward_splits(
-        frame,
-        train_size=args.train_size,
-        calibration_size=args.calibration_size,
-        test_size=args.test_size,
-        purge_size=purge_size,
-        label_end_date_col="label_end_date",
-    )
-    if args.max_folds is not None:
-        folds = folds[: args.max_folds]
-
+    walk_forward = load_walk_forward_folds(args)
     config = ReliabilityConfig(
         n_members=args.n_members,
         random_state=args.random_state,
         conformal_alpha=args.conformal_alpha,
     )
     rng = np.random.default_rng(args.random_state)
-    scored_folds: list[pd.DataFrame] = []
-    skipped = 0
-    for fold in folds:
-        train_frame = frame.loc[list(fold.train_index)]
-        calibration_frame = frame.loc[list(fold.calibration_index)]
-        test_frame = frame.loc[list(fold.test_index)]
-        if (
-            train_frame["risk_label"].nunique() < 2
-            or calibration_frame["risk_label"].nunique() < 2
-            or test_frame.empty
-        ):
-            skipped += 1
-            continue
-        scored = score_fold(
-            train_frame,
-            calibration_frame,
-            test_frame,
+    scored_folds = [
+        score_fold(
+            item.train,
+            item.calibration,
+            item.test,
             calibration_method=args.calibration_method,
             train_size=args.train_size,
             config=config,
             rng=rng,
-        )
-        scored_folds.append(scored.assign(fold_id=fold.fold_id))
-    if not scored_folds:
-        raise ValueError("No walk-forward fold had both classes in train and calibration windows")
+        ).assign(fold_id=item.fold.fold_id)
+        for item in walk_forward.folds
+    ]
     scored_all = pd.concat(scored_folds, ignore_index=True)
 
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -397,21 +336,13 @@ def run(args: argparse.Namespace) -> dict[str, object]:
     summary = {
         "input": str(args.input),
         "input_sha256": file_sha256(args.input),
-        "protocol": {
-            "feature_interval": "1d",
-            "feature_columns": list(DEFAULT_FEATURE_COLUMNS),
-            "horizon": args.horizon,
-            "drawdown_threshold": args.drawdown_threshold,
-            "train_size": args.train_size,
-            "calibration_size": args.calibration_size,
-            "test_size": args.test_size,
-            "purge_size": purge_size,
-            "calibration_method": args.calibration_method,
-            "n_members": args.n_members,
-            "conformal_alpha": args.conformal_alpha,
-            "random_state": args.random_state,
-            "skipped_folds": skipped,
-        },
+        "protocol": walk_forward_protocol(
+            args,
+            walk_forward,
+            n_members=args.n_members,
+            conformal_alpha=args.conformal_alpha,
+            random_state=args.random_state,
+        ),
         **summarize(scored_all),
     }
     (output_dir / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
