@@ -210,3 +210,26 @@ def test_load_chip_archive_builds_tables_and_coverage(tmp_path: Path) -> None:
     assert tables.margin_dates == ["2015-01-05"]
     assert tables.institutional["ticker"].tolist() == ["2330", "00981A"]
     assert tables.margin.loc[0, "margin_balance"] == 102.0
+
+
+def test_backfill_cli_uses_calendar_dates_and_builds_tables(tmp_path: Path) -> None:
+    from scripts.backfill_twse_chips import build_tables, parse_args, trading_dates
+
+    calendar = tmp_path / "ohlcv.csv"
+    calendar.write_text(
+        "date,ticker,adj_close\n2015-01-02,2330,1\n2015-01-05,2330,1\n"
+        "2015-01-05,2317,1\n2015-01-06,2330,1\n"
+    )
+    args = parse_args(["--calendar", str(calendar), "--archive-dir", "chips"])
+    write_archive_payload(archive_path(tmp_path, "institutional", "2015-01-05"), _legacy_t86())
+    write_archive_payload(archive_path(tmp_path, "margin", "2015-01-05"), _margin("20150105"))
+
+    dates = trading_dates(calendar, start="2015-01-05", end="2015-01-07")
+    metadata = build_tables(tmp_path, requested=dates, failed={})
+
+    assert args.min_interval == 2.5
+    assert dates == ["2015-01-05", "2015-01-06"]
+    assert metadata["institutional_dates"] == 1
+    assert metadata["missing_margin_dates"] == ["2015-01-06"]
+    assert (tmp_path / "institutional.csv").exists()
+    assert len(metadata["margin_sha256"]) == 64
