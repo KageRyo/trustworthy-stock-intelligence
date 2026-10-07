@@ -1,5 +1,25 @@
 # Maintainer Release Checklist
 
+## 0.7.0 Scope
+
+`0.7.0` changes the served baseline's features:
+
+- Serving defaults to `--feature-set technical_range`. It adds split-adjusted Parkinson and
+  Garman-Klass volatility, ATR(14) as a share of price, 20-day volatility, and drawdown from the
+  20-day high to the 7 technical features. The batch `model_bundle` records the feature set.
+- Experiment 017 compared feature sets on identical purged walk-forward folds:
+  - Range features raised AUC by 0.023 to 0.029 on S&P 100, on 402 held-out S&P 500 tickers, and on
+    53 Taiwan large caps.
+  - Market regime features (SPY return and drawdown, VIX) lowered AUC and alert recall, so serving
+    does not use them.
+  - A 60-day beta helped slightly in the US only and needs a serving reference-data path, so it
+    stays experimental.
+- Reruns of Experiments 015 and 016 with the new set keep `alert_rate:0.05` and the rule that
+  uncertainty never blocks alerts.
+- `--feature-set technical` reproduces the previous features.
+
+Issue #29 remains open.
+
 ## 0.6.0 Scope
 
 `0.6.0` changes how alert and watch thresholds are chosen:
@@ -66,8 +86,8 @@ pending-publisher setup and package boundary.
 The package-only release sequence is:
 
 ```bash
-git tag -a v0.6.0 -m "release: v0.6.0"
-git push origin v0.6.0
+git tag -a v0.7.0 -m "release: v0.7.0"
+git push origin v0.7.0
 ```
 
 ## 0.4.0 Scope
@@ -134,6 +154,6 @@ response with the frontend Zod schema. It must be green before the release merge
 1. Prepare the version and changelog changes on a release branch.
 1. Merge the release PR only after all required checks pass.
 1. Confirm the merge commit is the current `main` head and rerun all checks.
-1. Create an annotated `v0.6.0` tag on that verified commit.
+1. Create an annotated `v0.7.0` tag on that verified commit.
 1. Push the tag and create a GitHub Release with `--verify-tag`.
 1. Confirm the remote tag, release target, release notes, and downloadable source archives.

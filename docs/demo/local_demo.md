@@ -1,6 +1,6 @@
 # Local Demo Walkthrough
 
-This walkthrough runs the `0.6.0` local dashboard demo:
+This walkthrough runs the `0.7.0` local dashboard demo:
 
 ```text
 Provider APIs
@@ -162,4 +162,4 @@ http://localhost:8501
 ## Optional JSON Export
 
 `latest_warnings.json` can still be generated for debug snapshots, notifications, or report exports.
-It is not the primary serving source for the Go API in the `0.6.0` dashboard path.
+It is not the primary serving source for the Go API in the `0.7.0` dashboard path.
