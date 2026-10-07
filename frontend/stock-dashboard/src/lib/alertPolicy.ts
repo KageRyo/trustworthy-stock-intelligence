@@ -8,7 +8,12 @@ function percent(value: string): string | null {
   return `${Math.round(parsed * 1000) / 10}%`;
 }
 
-export function formatAlertPolicy(policy: string, targetMet: boolean, copy: DashboardCopy): string {
+export function formatAlertPolicy(
+  policy: string,
+  targetMet: boolean,
+  copy: DashboardCopy,
+  smallSample = false
+): string {
   const [kind, target = ""] = policy.split(":", 2);
   const value = percent(target);
   let text: string;
@@ -23,5 +28,6 @@ export function formatAlertPolicy(policy: string, targetMet: boolean, copy: Dash
   } else {
     return policy;
   }
-  return targetMet ? text : `${text}${copy.alertPolicies.targetNotMet}`;
+  const flagged = targetMet ? text : `${text}${copy.alertPolicies.targetNotMet}`;
+  return smallSample ? `${flagged}${copy.alertPolicies.smallSample}` : flagged;
 }

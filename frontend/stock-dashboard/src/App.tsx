@@ -965,7 +965,8 @@ function TrustPanel({
               ? formatAlertPolicy(
                   analysis.alert_policy.alert_policy,
                   analysis.alert_policy.alert_target_met,
-                  copy
+                  copy,
+                  analysis.alert_policy.note !== ""
                 )
               : copy.common.na
           }
@@ -977,7 +978,8 @@ function TrustPanel({
               ? formatAlertPolicy(
                   analysis.alert_policy.watch_policy,
                   analysis.alert_policy.watch_target_met,
-                  copy
+                  copy,
+                  analysis.alert_policy.note !== ""
                 )
               : copy.common.na
           }
