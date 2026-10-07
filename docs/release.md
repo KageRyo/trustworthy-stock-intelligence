@@ -1,5 +1,23 @@
 # Maintainer Release Checklist
 
+## 0.6.0 Scope
+
+`0.6.0` changes how alert and watch thresholds are chosen:
+
+- Serving defaults to calibration-window alert-rate policies: `--alert-policy alert_rate:0.05` and
+  `--watch-policy alert_rate:0.2`. These replace the F1 threshold and the fixed 0.8 watch ratio.
+- Experiment 016 showed:
+  - Precision targets do not transfer to test windows.
+  - The 5% alert-rate cap beats F1 precision in 85% of folds and cuts alert days per ticker-month
+    from 6.75 to 1.67.
+  - Recall falls from 0.52 to 0.20; the watch tier covers 0.40.
+- Batches, the Go analysis API, and the dashboard expose `alert_policy` metadata. Small calibration
+  windows are flagged as noisy.
+- Ticker analysis reads calibration-drift and alert-policy metadata from the record's own batch.
+- `--alert-policy objective --watch-policy ratio` reproduces the previous thresholds.
+
+Issue #29 remains open.
+
 ## 0.5.0 Scope
 
 `0.5.0` changes the meaning of the served `trust_score` and `uncertainty_score`:
@@ -48,8 +66,8 @@ pending-publisher setup and package boundary.
 The package-only release sequence is:
 
 ```bash
-git tag -a v0.5.0 -m "release: v0.5.0"
-git push origin v0.5.0
+git tag -a v0.6.0 -m "release: v0.6.0"
+git push origin v0.6.0
 ```
 
 ## 0.4.0 Scope
@@ -116,6 +134,6 @@ response with the frontend Zod schema. It must be green before the release merge
 1. Prepare the version and changelog changes on a release branch.
 1. Merge the release PR only after all required checks pass.
 1. Confirm the merge commit is the current `main` head and rerun all checks.
-1. Create an annotated `v0.5.0` tag on that verified commit.
+1. Create an annotated `v0.6.0` tag on that verified commit.
 1. Push the tag and create a GitHub Release with `--verify-tag`.
 1. Confirm the remote tag, release target, release notes, and downloadable source archives.
