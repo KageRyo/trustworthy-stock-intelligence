@@ -5,6 +5,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from scripts.predict_latest_baseline import (
     parse_args,
@@ -13,6 +14,7 @@ from scripts.predict_latest_baseline import (
     split_train_calibration,
     split_train_calibration_recent,
 )
+from tsi.features.sets import resolve_feature_set
 from tsi.features.technical import DEFAULT_FEATURE_COLUMNS, build_technical_features
 
 
@@ -315,3 +317,57 @@ def test_select_warning_thresholds_notes_small_calibration_windows() -> None:
 
     assert "small calibration window" in small.note
     assert big.note == ""
+
+
+def _serving_args(tmp_path: Path, *extra: str) -> object:
+    input_path = tmp_path / "ohlcv.csv"
+    _ohlcv_frame().to_csv(input_path, index=False)
+    return parse_args(
+        [
+            "--input",
+            str(input_path),
+            "--output",
+            str(tmp_path / "latest_predictions.csv"),
+            "--json-output",
+            str(tmp_path / "latest_warnings.json"),
+            "--calibration-size",
+            "10",
+            "--drift-size",
+            "0",
+            "--calibration-method",
+            "none",
+            *extra,
+        ]
+    )
+
+
+def test_serving_defaults_to_range_feature_set_and_records_it(tmp_path: Path) -> None:
+    args = _serving_args(tmp_path)
+
+    predictions = run_prediction(args)
+
+    assert args.feature_set == "technical_range"
+    assert predictions["model_bundle"].str.startswith("baseline_latest:technical_range:").all()
+    attributed = {
+        attribution.feature
+        for row in predictions["feature_attributions"]
+        for attribution in row
+    }
+    assert attributed <= set(resolve_feature_set("technical_range"))
+
+
+def test_serving_can_restore_technical_feature_set(tmp_path: Path) -> None:
+    predictions = run_prediction(_serving_args(tmp_path, "--feature-set", "technical"))
+
+    attributed = {
+        attribution.feature
+        for row in predictions["feature_attributions"]
+        for attribution in row
+    }
+    assert attributed <= set(DEFAULT_FEATURE_COLUMNS)
+    assert predictions["model_bundle"].str.startswith("baseline_latest:technical:").all()
+
+
+def test_serving_rejects_feature_sets_that_need_market_reference(tmp_path: Path) -> None:
+    with pytest.raises(SystemExit):
+        _serving_args(tmp_path, "--feature-set", "technical_range_beta")
