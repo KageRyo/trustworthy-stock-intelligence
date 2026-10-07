@@ -328,6 +328,22 @@ class ChipTables:
     margin_dates: list[str]
 
 
+def load_chip_tables(directory: Path) -> ChipTables:
+    """Load ``institutional.csv`` and ``margin.csv`` written by the backfill command.
+
+    A covered date always has rows, because empty payloads are never archived.
+    """
+
+    institutional = pd.read_csv(directory / "institutional.csv", dtype={"ticker": str})
+    margin = pd.read_csv(directory / "margin.csv", dtype={"ticker": str})
+    return ChipTables(
+        institutional=institutional,
+        margin=margin,
+        institutional_dates=sorted(institutional["date"].unique()),
+        margin_dates=sorted(margin["date"].unique()),
+    )
+
+
 def load_chip_archive(archive_dir: Path) -> ChipTables:
     """Parse every cached payload into normalized institutional and margin tables."""
 
