@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 
 from tsi.data.csv import file_sha256, read_ohlcv_csv
+from tsi.data.market_reference import MarketReference
 from tsi.data.split import build_walk_forward_splits
 from tsi.data.universe import (
     PointInTimeUniverse,
@@ -19,7 +20,8 @@ from tsi.data.universe import (
     load_point_in_time_universe_versioned,
 )
 from tsi.evaluation.metrics import classification_metrics
-from tsi.features.technical import DEFAULT_FEATURE_COLUMNS, build_technical_features
+from tsi.features.sets import build_feature_frame
+from tsi.features.technical import DEFAULT_FEATURE_COLUMNS
 from tsi.labeling.drawdown import add_future_drawdown_label
 from tsi.labeling.warning_level import assign_warning_levels, select_alert_threshold
 from tsi.models.logistic import LogisticRiskModel
@@ -137,19 +139,21 @@ def prepare_training_frame(
     horizon: int,
     drawdown_threshold: float,
     universe_membership: PointInTimeUniverse | PointInTimeUniverseV2 | None = None,
+    feature_columns: Sequence[str] = DEFAULT_FEATURE_COLUMNS,
+    market_reference: MarketReference | None = None,
 ) -> pd.DataFrame:
     """Build features and labels, then drop rows that cannot be trained or evaluated."""
 
     if universe_membership is not None:
         ohlcv = filter_frame_by_point_in_time_universe(ohlcv, universe_membership)
-    featured = build_technical_features(ohlcv)
+    featured = build_feature_frame(ohlcv, feature_columns, market_reference=market_reference)
     labeled = add_future_drawdown_label(
         featured,
         horizon=horizon,
         threshold=drawdown_threshold,
     )
     training_frame = labeled[labeled["label_available"]].copy()
-    training_frame = training_frame.dropna(subset=DEFAULT_FEATURE_COLUMNS)
+    training_frame = training_frame.dropna(subset=list(feature_columns))
     training_frame["risk_label"] = training_frame["risk_label"].astype(int)
     training_frame = training_frame.sort_values(["date", "ticker"]).reset_index(drop=True)
     return training_frame
