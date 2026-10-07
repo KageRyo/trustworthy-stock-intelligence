@@ -116,3 +116,21 @@ def test_unknown_columns_are_rejected() -> None:
 
     with pytest.raises(ValueError, match="not_a_feature"):
         build_feature_frame(ohlcv, columns)
+
+
+def test_chip_feature_sets_require_chip_tables_and_build_with_them() -> None:
+    from tests.test_chip_features import _chips
+    from tsi.features.chips import CHIP_FEATURE_COLUMNS
+    from tsi.features.sets import feature_set_requires_chips
+
+    columns = resolve_feature_set("technical_range_chips")
+    ohlcv = _ohlcv(("2330",), days=40)
+
+    frame = build_feature_frame(ohlcv, columns, chip_tables=_chips())
+
+    assert feature_set_requires_chips(columns)
+    assert not feature_set_requires_chips(resolve_feature_set("technical_range"))
+    assert set(CHIP_FEATURE_COLUMNS) <= set(frame.columns)
+    assert frame.loc[frame.index[-1], columns].notna().all()
+    with pytest.raises(ValueError, match="Chip features"):
+        build_feature_frame(ohlcv, columns)

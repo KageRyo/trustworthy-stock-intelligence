@@ -12,6 +12,7 @@ import pandas as pd
 
 from tsi.data.csv import file_sha256, read_ohlcv_csv
 from tsi.data.market_reference import MarketReference
+from tsi.data.twse_chips import ChipTables
 from tsi.data.split import build_walk_forward_splits
 from tsi.data.universe import (
     PointInTimeUniverse,
@@ -141,12 +142,20 @@ def prepare_training_frame(
     universe_membership: PointInTimeUniverse | PointInTimeUniverseV2 | None = None,
     feature_columns: Sequence[str] = DEFAULT_FEATURE_COLUMNS,
     market_reference: MarketReference | None = None,
+    chip_tables: ChipTables | None = None,
+    chip_publication_lag: int = 1,
 ) -> pd.DataFrame:
     """Build features and labels, then drop rows that cannot be trained or evaluated."""
 
     if universe_membership is not None:
         ohlcv = filter_frame_by_point_in_time_universe(ohlcv, universe_membership)
-    featured = build_feature_frame(ohlcv, feature_columns, market_reference=market_reference)
+    featured = build_feature_frame(
+        ohlcv,
+        feature_columns,
+        market_reference=market_reference,
+        chip_tables=chip_tables,
+        chip_publication_lag=chip_publication_lag,
+    )
     labeled = add_future_drawdown_label(
         featured,
         horizon=horizon,

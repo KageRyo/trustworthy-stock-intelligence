@@ -7,6 +7,13 @@ from collections.abc import Sequence
 import pandas as pd
 
 from tsi.data.market_reference import MarketReference
+from tsi.data.twse_chips import ChipTables
+from tsi.features.chips import (
+    CHIP_FEATURE_COLUMNS,
+    FLOW_FEATURE_COLUMNS,
+    MARGIN_FEATURE_COLUMNS,
+    build_chip_features,
+)
 from tsi.features.market import (
     MARKET_FEATURE_COLUMNS,
     REGIME_FEATURE_COLUMNS,
@@ -36,6 +43,21 @@ FEATURE_SETS: dict[str, tuple[str, ...]] = {
         *RANGE_FEATURE_COLUMNS,
         *REGIME_FEATURE_COLUMNS,
     ),
+    "technical_range_chips": (
+        *DEFAULT_FEATURE_COLUMNS,
+        *RANGE_FEATURE_COLUMNS,
+        *CHIP_FEATURE_COLUMNS,
+    ),
+    "technical_range_flows": (
+        *DEFAULT_FEATURE_COLUMNS,
+        *RANGE_FEATURE_COLUMNS,
+        *FLOW_FEATURE_COLUMNS,
+    ),
+    "technical_range_margin": (
+        *DEFAULT_FEATURE_COLUMNS,
+        *RANGE_FEATURE_COLUMNS,
+        *MARGIN_FEATURE_COLUMNS,
+    ),
 }
 DEFAULT_FEATURE_SET = "technical"
 
@@ -54,19 +76,32 @@ def feature_set_requires_market_reference(columns: Sequence[str]) -> bool:
     return any(column in MARKET_FEATURE_COLUMNS for column in columns)
 
 
+def feature_set_requires_chips(columns: Sequence[str]) -> bool:
+    """Return whether any column needs TWSE institutional-flow or margin data."""
+
+    return any(column in CHIP_FEATURE_COLUMNS for column in columns)
+
+
 def build_feature_frame(
     ohlcv: pd.DataFrame,
     columns: Sequence[str],
     *,
     market_reference: MarketReference | None = None,
     same_session_reference: bool = True,
+    chip_tables: ChipTables | None = None,
+    chip_publication_lag: int = 1,
 ) -> pd.DataFrame:
-    """Build technical features plus any range or market columns listed in ``columns``.
+    """Build technical features plus any range, market, or chip columns in ``columns``.
 
     Rows are sorted by ticker and date, as with :func:`build_technical_features`.
     """
 
-    known = {*DEFAULT_FEATURE_COLUMNS, *RANGE_FEATURE_COLUMNS, *MARKET_FEATURE_COLUMNS}
+    known = {
+        *DEFAULT_FEATURE_COLUMNS,
+        *RANGE_FEATURE_COLUMNS,
+        *MARKET_FEATURE_COLUMNS,
+        *CHIP_FEATURE_COLUMNS,
+    }
     unknown = [column for column in columns if column not in known]
     if unknown:
         raise ValueError(f"Unknown feature columns: {', '.join(unknown)}")
@@ -85,4 +120,8 @@ def build_feature_frame(
             sector_etf_by_ticker=market_reference.sector_etf_by_ticker,
             same_session_reference=same_session_reference,
         )
+    if feature_set_requires_chips(columns):
+        if chip_tables is None:
+            raise ValueError("Chip features require TWSE institutional and margin tables")
+        frame = build_chip_features(frame, chip_tables, publication_lag=chip_publication_lag)
     return frame
