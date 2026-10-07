@@ -55,9 +55,16 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
 
 
 def trading_dates(calendar: Path, *, start: str, end: str | None) -> list[str]:
-    """Return sorted ``YYYY-MM-DD`` dates in ``[start, end)`` from an OHLCV file."""
+    """Return sorted ``YYYY-MM-DD`` dates in ``[start, end)`` from an OHLCV file.
 
-    dates = pd.to_datetime(pd.read_csv(calendar, usecols=["date"])["date"]).dt.normalize()
+    Dates on which every row has zero volume are skipped. Yahoo Finance writes
+    such placeholder bars on Taiwan typhoon closures.
+    """
+
+    bars = pd.read_csv(calendar, usecols=["date", "volume"])
+    bars["date"] = pd.to_datetime(bars["date"]).dt.normalize()
+    traded = bars.groupby("date")["volume"].max() > 0
+    dates = pd.Series(traded.index[traded.to_numpy()])
     stop = pd.Timestamp(end) if end else pd.Timestamp(datetime.now(UTC).date())
     selected = dates[(dates >= pd.Timestamp(start)) & (dates < stop)]
     return sorted(selected.dt.strftime("%Y-%m-%d").unique())
@@ -113,7 +120,10 @@ def main() -> None:
             log=lambda message: print(message, flush=True),
         )
         failed = report.failed
-        print(f"fetched={report.fetched} cached={report.cached} failed={len(report.failed)}")
+        print(
+            f"fetched={report.fetched} cached={report.cached} failed={len(report.failed)} "
+            f"no_data={report.no_data}"
+        )
     metadata = build_tables(archive_dir, requested=dates, failed=failed)
     print(
         json.dumps(

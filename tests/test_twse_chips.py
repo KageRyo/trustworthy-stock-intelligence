@@ -172,7 +172,8 @@ def test_backfill_spaces_requests_retries_invalid_payloads_and_resumes(tmp_path:
         clock=clock.time,
     )
 
-    assert report.fetched == 3
+    assert report.fetched == 2
+    assert report.no_data == ["institutional:2026-10-06"]
     assert list(report.failed) == ["margin:2026-10-06"]
     assert 10.0 in clock.sleeps
     assert all(seconds <= 10.0 for seconds in clock.sleeps)
@@ -182,6 +183,7 @@ def test_backfill_spaces_requests_retries_invalid_payloads_and_resumes(tmp_path:
     assert saved["date"] == "20261005"
 
     calls.clear()
+    responses[("institutional", "20261006")] = [_split_t86()]
     responses[("margin", "20261006")] = [_margin()]
     resumed = backfill_chip_archive(
         ["2026-10-05", "2026-10-06"],
@@ -191,9 +193,9 @@ def test_backfill_spaces_requests_retries_invalid_payloads_and_resumes(tmp_path:
         clock=clock.time,
     )
 
-    assert calls == [("margin", "20261006")]
-    assert resumed.cached == 3
-    assert resumed.fetched == 1
+    assert calls == [("institutional", "20261006"), ("margin", "20261006")]
+    assert resumed.cached == 2
+    assert resumed.fetched == 2
 
 
 def test_load_chip_archive_builds_tables_and_coverage(tmp_path: Path) -> None:
@@ -217,19 +219,19 @@ def test_backfill_cli_uses_calendar_dates_and_builds_tables(tmp_path: Path) -> N
 
     calendar = tmp_path / "ohlcv.csv"
     calendar.write_text(
-        "date,ticker,adj_close\n2015-01-02,2330,1\n2015-01-05,2330,1\n"
-        "2015-01-05,2317,1\n2015-01-06,2330,1\n"
+        "date,ticker,volume\n2015-01-02,2330,1\n2015-01-05,2330,1\n"
+        "2015-01-05,2317,0\n2015-01-06,2330,0\n2015-01-06,2317,0\n2015-01-07,2330,1\n"
     )
     args = parse_args(["--calendar", str(calendar), "--archive-dir", "chips"])
     write_archive_payload(archive_path(tmp_path, "institutional", "2015-01-05"), _legacy_t86())
     write_archive_payload(archive_path(tmp_path, "margin", "2015-01-05"), _margin("20150105"))
 
-    dates = trading_dates(calendar, start="2015-01-05", end="2015-01-07")
+    dates = trading_dates(calendar, start="2015-01-05", end="2015-01-08")
     metadata = build_tables(tmp_path, requested=dates, failed={})
 
     assert args.min_interval == 2.5
-    assert dates == ["2015-01-05", "2015-01-06"]
+    assert dates == ["2015-01-05", "2015-01-07"]
     assert metadata["institutional_dates"] == 1
-    assert metadata["missing_margin_dates"] == ["2015-01-06"]
+    assert metadata["missing_margin_dates"] == ["2015-01-07"]
     assert (tmp_path / "institutional.csv").exists()
     assert len(metadata["margin_sha256"]) == 64

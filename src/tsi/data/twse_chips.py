@@ -250,6 +250,7 @@ class BackfillReport:
     fetched: int = 0
     cached: int = 0
     failed: dict[str, str] = field(default_factory=dict)
+    no_data: list[str] = field(default_factory=list)
 
 
 def backfill_chip_archive(
@@ -268,9 +269,10 @@ def backfill_chip_archive(
     """Fetch and cache raw payloads for dates not yet in ``archive_dir``.
 
     Requests are spaced at least ``min_interval_seconds`` apart. A payload is
-    cached only after it validates and has rows, so a blocked, truncated, or
-    not-yet-published response is retried with growing backoff and never
-    poisons the archive. Pass exchange trading dates only.
+    cached only after it validates and has rows. Errors and invalid payloads are
+    retried with growing backoff. A valid "no data" answer, such as an
+    exchange closure or a date not yet published, is recorded in ``no_data``
+    without retrying or caching, so a later run asks again.
     """
 
     report = BackfillReport()
@@ -283,6 +285,7 @@ def backfill_chip_archive(
                 continue
             url, params = chip_request(kind, trading_date)
             error = ""
+            empty = False
             for attempt in range(max_attempts):
                 wait = min_interval_seconds - (clock() - last_request)
                 if wait > 0:
@@ -290,21 +293,26 @@ def backfill_chip_archive(
                 last_request = clock()
                 try:
                     payload = fetcher(url, params)
-                    if not parse_chip_payload(kind, payload):
-                        raise TWSEChipSchemaError(f"{kind} has no rows for {trading_date}")
+                    empty = not parse_chip_payload(kind, payload)
                 except Exception as exc:  # noqa: BLE001 - retried, then reported
                     error = f"{type(exc).__name__}: {exc}"
                     if attempt + 1 < max_attempts:
                         sleep(backoff_seconds * (2**attempt))
                     continue
-                write_archive_payload(path, payload)
-                report.fetched += 1
                 error = ""
+                if empty:
+                    report.no_data.append(f"{kind}:{trading_date}")
+                else:
+                    write_archive_payload(path, payload)
+                    report.fetched += 1
                 break
             if error:
                 report.failed[f"{kind}:{trading_date}"] = error
             if log is not None and (report.fetched + len(report.failed)) % 50 == 0:
-                log(f"{kind} {trading_date}: fetched={report.fetched} failed={len(report.failed)}")
+                log(
+                    f"{kind} {trading_date}: fetched={report.fetched} "
+                    f"failed={len(report.failed)} no_data={len(report.no_data)}"
+                )
     return report
 
 
