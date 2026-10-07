@@ -70,6 +70,9 @@ release. It remains a reproducible pilot, not externally validated research or i
   uncertainty and failure cases inspectable rather than implied.
 - Reproducible Taiwan and US/Taiwan transfer pilots are recorded with explicit current-universe,
   coverage, and provider-data limitations.
+- Experiment 017 compares range, market-relative, and market-regime feature sets on identical folds
+  across S&P 100, a 402-ticker S&P 500 holdout, and 53 Taiwan large caps. Serving now uses the
+  range-volatility set, which raised AUC by 0.023 to 0.029 in all three samples.
 - Repository controls include required CI, Dependabot, vulnerability analysis, race tests,
   full-history Gitleaks scanning, and SHA-pinned CodeQL analysis.
 - PostgreSQL is the source of truth for tickers, watchlists, market bars, prediction batches, and

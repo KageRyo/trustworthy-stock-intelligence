@@ -18,7 +18,13 @@ from tsi.evaluation.drift import (
     calibration_drift_reason_codes,
 )
 from tsi.evaluation.metrics import classification_metrics
-from tsi.features.technical import DEFAULT_FEATURE_COLUMNS, build_technical_features
+from tsi.features.sets import (
+    FEATURE_SETS,
+    build_feature_frame,
+    feature_set_requires_market_reference,
+    resolve_feature_set,
+)
+from tsi.features.technical import DEFAULT_FEATURE_COLUMNS
 from tsi.labeling.drawdown import add_future_drawdown_label
 from tsi.labeling.warning_level import (
     parse_alert_policy,
@@ -47,6 +53,13 @@ from tsi.trust.uncertainty import binary_entropy_uncertainty, margin_uncertainty
 
 # Below this many calibration-window alerts, policy thresholds are too noisy to trust.
 MIN_RELIABLE_CALIBRATION_ALERTS = 20
+# Serving computes features from the ticker's own OHLCV only; market-relative sets need a
+# reference-data path that serving does not have yet. See experiments/017_feature_sets.
+SERVING_FEATURE_SETS = [
+    name for name, columns in FEATURE_SETS.items()
+    if not feature_set_requires_market_reference(columns)
+]
+DEFAULT_SERVING_FEATURE_SET = "technical_range"
 
 
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
@@ -56,6 +69,12 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--json-output", type=Path, required=True, help="Serving JSON output.")
     parser.add_argument("--horizon", type=int, default=5)
     parser.add_argument("--drawdown-threshold", type=float, default=-0.05)
+    parser.add_argument(
+        "--feature-set",
+        choices=SERVING_FEATURE_SETS,
+        default=DEFAULT_SERVING_FEATURE_SET,
+        help="Named OHLCV feature set. See experiments/017_feature_sets.",
+    )
     parser.add_argument("--calibration-size", type=int, default=63)
     parser.add_argument(
         "--drift-size",
@@ -148,11 +167,12 @@ def prepare_frames(
     *,
     horizon: int,
     drawdown_threshold: float,
+    feature_columns: Sequence[str] = DEFAULT_FEATURE_COLUMNS,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Build leakage-aware training rows and latest inference rows."""
 
-    featured = build_technical_features(ohlcv)
-    latest_frame = select_latest_feature_rows(featured)
+    featured = build_feature_frame(ohlcv, feature_columns)
+    latest_frame = select_latest_feature_rows(featured, feature_columns)
 
     labeled = add_future_drawdown_label(
         featured,
@@ -160,17 +180,20 @@ def prepare_frames(
         threshold=drawdown_threshold,
     )
     training_frame = labeled[labeled["label_available"]].copy()
-    training_frame = training_frame.dropna(subset=DEFAULT_FEATURE_COLUMNS)
+    training_frame = training_frame.dropna(subset=list(feature_columns))
     training_frame["date"] = pd.to_datetime(training_frame["date"])
     training_frame["risk_label"] = training_frame["risk_label"].astype(int)
     training_frame = training_frame.sort_values(["date", "ticker"]).reset_index(drop=True)
     return training_frame, latest_frame
 
 
-def select_latest_feature_rows(featured: pd.DataFrame) -> pd.DataFrame:
+def select_latest_feature_rows(
+    featured: pd.DataFrame,
+    feature_columns: Sequence[str] = DEFAULT_FEATURE_COLUMNS,
+) -> pd.DataFrame:
     """Keep the latest feature-complete row for each ticker."""
 
-    frame = featured.dropna(subset=DEFAULT_FEATURE_COLUMNS).copy()
+    frame = featured.dropna(subset=list(feature_columns)).copy()
     if frame.empty:
         return frame
     frame["date"] = pd.to_datetime(frame["date"])
@@ -245,10 +268,12 @@ def run_prediction(args: argparse.Namespace) -> pd.DataFrame:
     if args.drift_size < 0:
         raise ValueError("--drift-size must be non-negative")
     ohlcv = read_ohlcv_csv(args.input)
+    feature_columns = resolve_feature_set(args.feature_set)
     training_frame, latest_frame = prepare_frames(
         ohlcv,
         horizon=args.horizon,
         drawdown_threshold=args.drawdown_threshold,
+        feature_columns=feature_columns,
     )
     if latest_frame.empty:
         raise ValueError("No latest feature rows were created; check input data")
@@ -279,9 +304,9 @@ def run_prediction(args: argparse.Namespace) -> pd.DataFrame:
             train_size=args.train_size,
         )
         recent_frame = training_frame.iloc[0:0].copy()
-    model, model_name = fit_baseline_model(train_frame)
-    calibration_probabilities = model.predict_proba(calibration_frame[DEFAULT_FEATURE_COLUMNS].to_numpy())
-    probabilities = model.predict_proba(latest_frame[DEFAULT_FEATURE_COLUMNS].to_numpy())
+    model, model_name = fit_baseline_model(train_frame, feature_columns)
+    calibration_probabilities = model.predict_proba(calibration_frame[feature_columns].to_numpy())
+    probabilities = model.predict_proba(latest_frame[feature_columns].to_numpy())
 
     calibration_method: CalibrationMethod = args.calibration_method
     calibrator = fit_probability_calibrator(
@@ -298,6 +323,7 @@ def run_prediction(args: argparse.Namespace) -> pd.DataFrame:
         recent_frame,
         evaluated=drift_evaluated,
         note=drift_note,
+        feature_columns=feature_columns,
     )
     alert_threshold, watch_threshold, alert_policy_metadata = select_warning_thresholds(
         args,
@@ -316,6 +342,7 @@ def run_prediction(args: argparse.Namespace) -> pd.DataFrame:
             latest_frame=latest_frame,
             calibrated_calibration_probabilities=calibrated_calibration_probabilities,
             calibrated_probabilities=calibrated_probabilities,
+            feature_columns=feature_columns,
         )
         uncertainty = reliability.uncertainty
         trust_scores = reliability.trust
@@ -360,8 +387,8 @@ def run_prediction(args: argparse.Namespace) -> pd.DataFrame:
     )
     feature_attributions = build_logistic_feature_attributions(
         model,
-        latest_frame[DEFAULT_FEATURE_COLUMNS].to_numpy(),
-        DEFAULT_FEATURE_COLUMNS,
+        latest_frame[feature_columns].to_numpy(),
+        feature_columns,
     )
     predictions = latest_frame.loc[:, ["date", "ticker"]].assign(
         model=model_name,
@@ -373,7 +400,7 @@ def run_prediction(args: argparse.Namespace) -> pd.DataFrame:
         alert_threshold=alert_threshold,
         watch_threshold=watch_threshold,
         warning_level=warning_levels,
-        model_bundle=f"baseline_latest:{args.input}",
+        model_bundle=f"baseline_latest:{args.feature_set}:{args.input}",
         feature_attributions=feature_attributions,
     )
 
@@ -488,6 +515,7 @@ def assess_reliability(
     latest_frame: pd.DataFrame,
     calibrated_calibration_probabilities: np.ndarray,
     calibrated_probabilities: np.ndarray,
+    feature_columns: Sequence[str] = DEFAULT_FEATURE_COLUMNS,
 ) -> ReliabilityScores:
     """Score latest rows with model/data reliability, failing closed when unavailable."""
 
@@ -499,10 +527,10 @@ def assess_reliability(
     )
     try:
         assessor = ReliabilityAssessor(config).fit(
-            train_features=train_frame[DEFAULT_FEATURE_COLUMNS].to_numpy(),
+            train_features=train_frame[list(feature_columns)].to_numpy(),
             train_labels=train_frame["risk_label"].to_numpy(),
             train_groups=pd.to_datetime(train_frame["date"]).to_numpy(),
-            calibration_features=calibration_frame[DEFAULT_FEATURE_COLUMNS].to_numpy(),
+            calibration_features=calibration_frame[list(feature_columns)].to_numpy(),
             calibration_labels=calibration_frame["risk_label"].to_numpy(),
             calibrated_calibration_probabilities=calibrated_calibration_probabilities,
             calibrator=calibrator,
@@ -515,7 +543,7 @@ def assess_reliability(
         required_history_rows=args.required_history_rows,
     )
     scores = assessor.score(
-        latest_frame[DEFAULT_FEATURE_COLUMNS].to_numpy(),
+        latest_frame[list(feature_columns)].to_numpy(),
         calibrated_probabilities=calibrated_probabilities,
         data_quality=quality,
     )
@@ -543,6 +571,7 @@ def evaluate_calibration_drift(
     *,
     evaluated: bool,
     note: str,
+    feature_columns: Sequence[str] = DEFAULT_FEATURE_COLUMNS,
 ) -> tuple[CalibrationDriftAssessment | None, CalibrationDriftMetadata]:
     """Evaluate later labeled rows without fitting on the recent window."""
 
@@ -553,10 +582,10 @@ def evaluate_calibration_drift(
         )
 
     calibration_probabilities = calibrator.predict(
-        model.predict_proba(calibration_frame[DEFAULT_FEATURE_COLUMNS].to_numpy())
+        model.predict_proba(calibration_frame[list(feature_columns)].to_numpy())
     )
     recent_probabilities = calibrator.predict(
-        model.predict_proba(recent_frame[DEFAULT_FEATURE_COLUMNS].to_numpy())
+        model.predict_proba(recent_frame[list(feature_columns)].to_numpy())
     )
     calibration_metrics = classification_metrics(
         calibration_frame["risk_label"].to_numpy(),
@@ -582,7 +611,10 @@ def evaluate_calibration_drift(
     )
 
 
-def fit_baseline_model(train_frame: pd.DataFrame) -> tuple[LogisticRiskModel, str]:
+def fit_baseline_model(
+    train_frame: pd.DataFrame,
+    feature_columns: Sequence[str] = DEFAULT_FEATURE_COLUMNS,
+) -> tuple[LogisticRiskModel, str]:
     """Fit a logistic model or a constant prior fallback for single-class data."""
 
     labels = train_frame["risk_label"].to_numpy()
@@ -590,7 +622,7 @@ def fit_baseline_model(train_frame: pd.DataFrame) -> tuple[LogisticRiskModel, st
         model = ConstantProbabilityModel(float(np.mean(labels)))
         return model, "constant_prior_latest"
     model = LogisticRiskModel()
-    model.fit(train_frame[DEFAULT_FEATURE_COLUMNS].to_numpy(), labels)
+    model.fit(train_frame[list(feature_columns)].to_numpy(), labels)
     return model, "logistic_regression_latest"
 
 

@@ -2,6 +2,36 @@
 
 ## Unreleased
 
+### Changed
+
+- Serving now defaults to `--feature-set technical_range`:
+  - It adds 5 split-adjusted range and drawdown features to the 7 technical features: Parkinson and
+    Garman-Klass volatility, ATR(14) as a share of price, 20-day volatility, and drawdown from the
+    20-day high.
+  - In Experiment 017, against `technical`, AUC rose by 0.023 to 0.029 on S&P 100, on 402 held-out
+    S&P 500 tickers, and on 53 Taiwan large caps. Watch recall rose by 0.034 to 0.047.
+  - At the `alert_rate:0.05` default on S&P 100, alert precision rose from 0.250 to 0.279 and recall
+    from 0.195 to 0.220.
+  - The batch `model_bundle` now records the set as `baseline_latest:<feature_set>:<input>`.
+  - `--feature-set technical` keeps the previous features.
+
+### Added
+
+- `tsi.features.volatility` range features, `tsi.features.market` as-of aligned market-relative
+  features, and named feature sets in `tsi.features.sets`.
+- `scripts/download_market_reference.py` for US reference series (SPY, ^VIX, Select Sector SPDR
+  ETFs, and a Yahoo sector map) and the Taiwan TAIEX (^TWII).
+- `scripts/evaluate_feature_sets.py`, which compares feature sets on identical walk-forward folds
+  with paired fold-bootstrap intervals. Experiments 015 and 016 accept `--feature-set` and
+  `--market-reference`.
+
+### Notes
+
+- Market regime features (SPY return and drawdown, VIX level and change) lowered AUC and alert
+  recall in Experiment 017, so serving does not use them. A 60-day beta added 0.005 to 0.010 AUC in
+  the US samples but nothing significant in Taiwan, and it would need a reference-data path in
+  serving, so it remains experimental.
+
 ## 0.6.0 - 2026-10-07
 
 ### Changed
