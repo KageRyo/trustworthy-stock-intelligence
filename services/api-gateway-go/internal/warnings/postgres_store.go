@@ -349,7 +349,8 @@ func (s *PostgresStore) loadLatestBatch(
 		       model, model_bundle, risk_probability,
 		       calibrated_risk_probability, calibration_method,
 		       uncertainty_score, trust_score, alert_threshold,
-		       watch_threshold, warning_level, reason_codes, feature_attributions
+		       watch_threshold, warning_level, reason_codes, feature_attributions,
+		       batch_metadata
 		FROM (
 			SELECT DISTINCT ON (t.symbol)
 			       wr.prediction_date, t.symbol, pb.run_id, pb.data_as_of,
@@ -357,7 +358,7 @@ func (s *PostgresStore) loadLatestBatch(
 			       wr.calibrated_risk_probability, wr.calibration_method,
 			       wr.uncertainty_score, wr.trust_score, wr.alert_threshold,
 			       wr.watch_threshold, wr.warning_level, wr.reason_codes,
-			       wr.feature_attributions,
+			       wr.feature_attributions, pb.metadata AS batch_metadata,
 			       pb.created_at
 			FROM warning_records wr
 			JOIN prediction_batches pb ON pb.id = wr.batch_id
@@ -379,6 +380,7 @@ func (s *PostgresStore) loadLatestBatch(
 		var recordDataAsOf time.Time
 		var recordGeneratedAt time.Time
 		var featureAttributionsJSON []byte
+		var batchMetadataJSON []byte
 		var record PredictionRecord
 		if err := rows.Scan(
 			&predictionDate,
@@ -398,9 +400,17 @@ func (s *PostgresStore) loadLatestBatch(
 			&record.WarningLevel,
 			&record.ReasonCodes,
 			&featureAttributionsJSON,
+			&batchMetadataJSON,
 		); err != nil {
 			return PredictionBatch{}, nil, fmt.Errorf("scan warning record: %w", err)
 		}
+		record.BatchCalibrationDrift, record.BatchAlertPolicy, err = decodeBatchMetadata(
+			batchMetadataJSON,
+		)
+		if err != nil {
+			return PredictionBatch{}, nil, fmt.Errorf("decode warning record batch metadata: %w", err)
+		}
+		record.BatchMetadataLoaded = true
 		record.FeatureAttributions, err = decodeFeatureAttributions(featureAttributionsJSON)
 		if err != nil {
 			return PredictionBatch{}, nil, fmt.Errorf("decode warning record attributions: %w", err)

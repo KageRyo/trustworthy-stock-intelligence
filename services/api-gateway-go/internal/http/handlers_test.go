@@ -1305,3 +1305,55 @@ func TestTrustSummaryExplainsLimitedDataQuality(t *testing.T) {
 		t.Fatalf("unexpected trust summary: %q", summary)
 	}
 }
+
+func TestAnalysisBatchMetadataPrefersRecordBatch(t *testing.T) {
+	recordPolicy := &warnings.AlertPolicyMetadata{AlertPolicy: "alert_rate:0.05", WatchPolicy: "alert_rate:0.2"}
+	latestPolicy := &warnings.AlertPolicyMetadata{AlertPolicy: "f1", WatchPolicy: "ratio:0.8"}
+	batch := warnings.PredictionBatch{
+		CalibrationDrift: warnings.CalibrationDriftMetadata{Status: "degraded", CalibrationRows: 63},
+		AlertPolicy:      latestPolicy,
+	}
+	record := warnings.PredictionRecord{
+		BatchMetadataLoaded:   true,
+		BatchCalibrationDrift: warnings.CalibrationDriftMetadata{Status: "stable", CalibrationRows: 6300},
+		BatchAlertPolicy:      recordPolicy,
+	}
+
+	drift, policy := analysisBatchMetadata(record, batch)
+
+	if drift.Status != "stable" || drift.CalibrationRows != 6300 {
+		t.Fatalf("drift = %+v, want the record's own batch metadata", drift)
+	}
+	if policy != recordPolicy {
+		t.Fatalf("policy = %+v, want the record's own batch policy", policy)
+	}
+}
+
+func TestAnalysisBatchMetadataKeepsLegacyRecordWithoutPolicy(t *testing.T) {
+	batch := warnings.PredictionBatch{
+		AlertPolicy: &warnings.AlertPolicyMetadata{AlertPolicy: "alert_rate:0.05"},
+	}
+	record := warnings.PredictionRecord{
+		BatchMetadataLoaded:   true,
+		BatchCalibrationDrift: warnings.CalibrationDriftMetadata{Status: "not_evaluated"},
+	}
+
+	_, policy := analysisBatchMetadata(record, batch)
+
+	if policy != nil {
+		t.Fatalf("policy = %+v, want nil for a record from a legacy batch", policy)
+	}
+}
+
+func TestAnalysisBatchMetadataFallsBackToBatchForFileStore(t *testing.T) {
+	batch := warnings.PredictionBatch{
+		CalibrationDrift: warnings.CalibrationDriftMetadata{Status: "degraded"},
+		AlertPolicy:      &warnings.AlertPolicyMetadata{AlertPolicy: "alert_rate:0.05"},
+	}
+
+	drift, policy := analysisBatchMetadata(warnings.PredictionRecord{}, batch)
+
+	if drift.Status != "degraded" || policy == nil {
+		t.Fatalf("expected batch metadata fallback, got %+v %+v", drift, policy)
+	}
+}

@@ -127,6 +127,19 @@ func buildTickerAnalysis(
 	}
 }
 
+// analysisBatchMetadata returns the calibration-drift and alert-policy metadata of the
+// batch that produced the record, falling back to the store-level batch when the store
+// does not track per-record batches.
+func analysisBatchMetadata(
+	record warnings.PredictionRecord,
+	batch warnings.PredictionBatch,
+) (warnings.CalibrationDriftMetadata, *warnings.AlertPolicyMetadata) {
+	if record.BatchMetadataLoaded {
+		return record.BatchCalibrationDrift, record.BatchAlertPolicy
+	}
+	return batch.CalibrationDrift, batch.AlertPolicy
+}
+
 func nonNilFeatureAttributions(attributions []warnings.FeatureAttribution) []warnings.FeatureAttribution {
 	if attributions == nil {
 		return []warnings.FeatureAttribution{}

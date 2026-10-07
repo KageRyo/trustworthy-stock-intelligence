@@ -58,6 +58,12 @@ type PredictionRecord struct {
 	WarningLevel              string               `json:"warning_level"`
 	ReasonCodes               []string             `json:"reason_codes"`
 	FeatureAttributions       []FeatureAttribution `json:"feature_attributions"`
+	// Batch-level metadata of the batch this record came from. The latest batch can be
+	// an on-demand single-ticker run, so analysis must not borrow its metadata for
+	// records written by other batches. BatchMetadataLoaded is false for file stores.
+	BatchMetadataLoaded   bool                     `json:"-"`
+	BatchCalibrationDrift CalibrationDriftMetadata `json:"-"`
+	BatchAlertPolicy      *AlertPolicyMetadata     `json:"-"`
 }
 
 type FeatureAttribution struct {
