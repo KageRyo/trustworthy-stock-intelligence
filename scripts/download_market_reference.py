@@ -10,6 +10,7 @@ from pathlib import Path
 
 import pandas as pd
 
+from scripts.walk_forward_experiment import resolve_output_dir
 from tsi.data.market_reference import download_market_reference
 
 
@@ -29,7 +30,13 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         "--output-dir",
         type=Path,
         default=Path("data/raw/market/us"),
-        help="Directory for ohlcv.csv, sector_map.csv, and metadata.json.",
+        help="Output directory for ohlcv.csv, sector_map.csv, and metadata.json.",
+    )
+    parser.add_argument(
+        "--output-root",
+        type=Path,
+        default=Path.cwd(),
+        help="Directory that --output-dir must stay inside. Defaults to the working directory.",
     )
     return parser.parse_args(argv)
 
@@ -43,9 +50,10 @@ def resolve_tickers(args: argparse.Namespace) -> list[str]:
 
 def main() -> None:
     args = parse_args()
+    output_dir = resolve_output_dir(args.output_dir, root=args.output_root)
     result = download_market_reference(
         resolve_tickers(args),
-        output_dir=args.output_dir,
+        output_dir=output_dir,
         start=args.start,
         end=args.end,
         market=args.market,

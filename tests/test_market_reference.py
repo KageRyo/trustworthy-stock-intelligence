@@ -89,8 +89,10 @@ def test_fetch_ticker_sectors_validates_payloads_and_keeps_failures() -> None:
 
 
 def test_fetch_ticker_sectors_rejects_taiwan_codes() -> None:
+    fetcher = _info_fetcher({})
+
     with pytest.raises(ValueError, match="US tickers"):
-        fetch_ticker_sectors(["2330"], info_fetcher=_info_fetcher({}))
+        fetch_ticker_sectors(["2330"], info_fetcher=fetcher)
 
 
 def test_download_market_reference_writes_artifacts(tmp_path: Path) -> None:
@@ -176,3 +178,16 @@ def test_cli_reads_tickers_file_as_strings(tmp_path: Path) -> None:
 
     assert resolve_tickers(args) == ["AAPL", "BRK-B"]
     assert args.start == "2015-01-01"
+
+
+def test_cli_rejects_output_dir_outside_root(tmp_path: Path) -> None:
+    from scripts.download_market_reference import parse_args
+    from scripts.walk_forward_experiment import resolve_output_dir
+
+    args = parse_args(
+        ["--tickers", "AAPL", "--output-dir", "../escape", "--output-root", str(tmp_path)]
+    )
+
+    assert args.output_root == tmp_path
+    with pytest.raises(ValueError, match="must stay inside"):
+        resolve_output_dir(args.output_dir, root=args.output_root)
