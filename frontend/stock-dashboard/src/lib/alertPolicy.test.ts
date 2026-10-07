@@ -30,7 +30,7 @@ describe("formatAlertPolicy", () => {
 
   it("flags noisy thresholds from small calibration samples", () => {
     expect(formatAlertPolicy("alert_rate:0.05", true, translations["zh-Hant"], true)).toBe(
-      "校準窗風險前 5%（校準樣本少，門檻不穩定）"
+      "校準窗風險前 5%（校準樣本少）"
     );
   });
 });

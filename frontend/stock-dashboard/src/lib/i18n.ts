@@ -357,7 +357,7 @@ export const translations = {
       ratio: "{value} of alert threshold",
       f1: "F1-optimized",
       targetNotMet: " (target not met)",
-      smallSample: " (small calibration sample; threshold is noisy)"
+      smallSample: " (small calibration sample)"
     },
     trustSummaries: {
       insufficientHistory:
@@ -665,7 +665,7 @@ export const translations = {
       ratio: "警示門檻的 {value}",
       f1: "F1 最佳化",
       targetNotMet: "（未達目標）",
-      smallSample: "（校準樣本少，門檻不穩定）"
+      smallSample: "（校準樣本少）"
     },
     trustSummaries: {
       insufficientHistory: "此股票有市場資料，但標註歷史不足，無法產生校準後風險預測。",
