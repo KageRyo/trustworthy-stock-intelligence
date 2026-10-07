@@ -1,4 +1,4 @@
-"""Download US market reference series (SPY, ^VIX, sector ETFs) for a ticker universe."""
+"""Download market reference series (US: SPY, ^VIX, sector ETFs; Taiwan: ^TWII)."""
 
 from __future__ import annotations
 
@@ -21,7 +21,8 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         type=Path,
         help="CSV with a ticker column, for example data/raw/sp100/tickers.csv.",
     )
-    source.add_argument("--tickers", nargs="+", help="Explicit US ticker symbols.")
+    source.add_argument("--tickers", nargs="+", help="Explicit ticker symbols.")
+    parser.add_argument("--market", choices=["us", "taiwan"], default="us")
     parser.add_argument("--start", default="2015-01-01", help="Inclusive start date.")
     parser.add_argument("--end", default=None, help="Exclusive end date.")
     parser.add_argument(
@@ -43,7 +44,11 @@ def resolve_tickers(args: argparse.Namespace) -> list[str]:
 def main() -> None:
     args = parse_args()
     result = download_market_reference(
-        resolve_tickers(args), output_dir=args.output_dir, start=args.start, end=args.end
+        resolve_tickers(args),
+        output_dir=args.output_dir,
+        start=args.start,
+        end=args.end,
+        market=args.market,
     )
     print(json.dumps(asdict(result), indent=2))
 

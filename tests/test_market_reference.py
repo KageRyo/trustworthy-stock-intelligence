@@ -10,6 +10,7 @@ import pytest
 
 from tsi.data.download import DownloadFrameResult, DownloadTicker
 from tsi.data.market_reference import (
+    TAIWAN_MARKET_SYMBOL,
     US_MARKET_SYMBOL,
     US_VOLATILITY_SYMBOL,
     download_market_reference,
@@ -123,6 +124,28 @@ def test_download_market_reference_writes_artifacts(tmp_path: Path) -> None:
     assert reference.volatility_symbol == "^VIX"
     assert reference.sector_etf_by_ticker == {"AAPL": "XLK", "MSFT": "XLK", "JPM": "XLF"}
     assert set(reference.ohlcv["ticker"]) == {"SPY", "^VIX", "XLF", "XLK"}
+
+
+def test_taiwan_reference_uses_taiex_without_sector_lookup(tmp_path: Path) -> None:
+    calls: list[list[str]] = []
+
+    download_market_reference(
+        ["2330", "00981A", "5240"],
+        output_dir=tmp_path,
+        start="2024-01-01",
+        market="taiwan",
+        info_fetcher=_info_fetcher({}),
+        frame_downloader=_frame_downloader(calls),
+    )
+
+    assert calls == [[TAIWAN_MARKET_SYMBOL]]
+    metadata = json.loads((tmp_path / "metadata.json").read_text())
+    assert metadata["market"] == "taiwan"
+    assert metadata["unmapped_tickers"] == ["2330", "00981A", "5240"]
+    reference = load_market_reference(tmp_path)
+    assert reference.market_symbol == "^TWII"
+    assert reference.volatility_symbol is None
+    assert reference.sector_etf_by_ticker == {}
 
 
 def test_load_market_reference_keeps_ticker_strings(tmp_path: Path) -> None:

@@ -1,11 +1,15 @@
-"""US market reference series used by market-relative features.
+"""Market reference series used by market-relative features.
 
-The reference set is the broad market ETF (SPY), the CBOE volatility index (^VIX),
-and the Select Sector SPDR ETF for each universe ticker's Yahoo sector. Sector
-assignments are a current snapshot, not point-in-time history, so historical
-features inherit today's classification (for example, GOOGL as Communication
-Services before the 2018 GICS change). XLC starts in 2018-06 and XLRE in 2015-10;
-feature code falls back to the market series before a sector ETF has prices.
+For US universes the reference set is the broad market ETF (SPY), the CBOE
+volatility index (^VIX), and the Select Sector SPDR ETF for each universe
+ticker's Yahoo sector. Sector assignments are a current snapshot, not
+point-in-time history, so historical features inherit today's classification
+(for example, GOOGL as Communication Services before the 2018 GICS change). XLC
+starts in 2018-06 and XLRE in 2015-10; feature code falls back to the market
+series before a sector ETF has prices.
+
+Taiwan universes use the TAIEX (^TWII) only: it closes with the local session,
+and there is no sector ETF or volatility-index series in this reference set.
 """
 
 from __future__ import annotations
@@ -15,6 +19,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 import json
 from pathlib import Path
+from typing import Literal
 
 import pandas as pd
 from pydantic import BaseModel, ConfigDict, Field
@@ -30,6 +35,8 @@ from tsi.data.download import (
 
 US_MARKET_SYMBOL = "SPY"
 US_VOLATILITY_SYMBOL = "^VIX"
+TAIWAN_MARKET_SYMBOL = "^TWII"
+ReferenceMarket = Literal["us", "taiwan"]
 SECTOR_ETF_BY_SECTOR_KEY: dict[str, str] = {
     "basic-materials": "XLB",
     "communication-services": "XLC",
@@ -143,20 +150,32 @@ def download_market_reference(
     output_dir: Path,
     start: str,
     end: str | None = None,
+    market: ReferenceMarket = "us",
     info_fetcher: InfoFetcher = yfinance_info,
     frame_downloader: FrameDownloader = download_ticker_frame,
 ) -> MarketReferenceResult:
-    """Download SPY, ^VIX, and the universe's sector ETFs, then write CSV artifacts."""
+    """Download the market's reference series and write CSV artifacts.
 
-    sectors = fetch_ticker_sectors(tickers, info_fetcher=info_fetcher)
+    ``us`` downloads SPY, ^VIX, and the universe's sector ETFs; ``taiwan``
+    downloads ^TWII and records every ticker without a sector ETF.
+    """
+
+    if market == "us":
+        sectors = fetch_ticker_sectors(tickers, info_fetcher=info_fetcher)
+        market_symbol, volatility_symbol = US_MARKET_SYMBOL, US_VOLATILITY_SYMBOL
+    elif market == "taiwan":
+        sectors = [TickerSectorRecord(ticker=ticker.strip().upper()) for ticker in tickers]
+        market_symbol, volatility_symbol = TAIWAN_MARKET_SYMBOL, None
+    else:
+        raise ValueError(f"Unsupported reference market: {market}")
     sector_etfs = sorted({record.sector_etf for record in sectors if record.sector_etf})
-    symbols = [US_MARKET_SYMBOL, US_VOLATILITY_SYMBOL, *sector_etfs]
+    symbols = [market_symbol, *([volatility_symbol] if volatility_symbol else []), *sector_etfs]
     downloaded = frame_downloader(
         symbols, start, end, market="us", interval="1d", dataset_name="market_reference"
     )
     missing = sorted(set(symbols) - set(downloaded.ohlcv["ticker"]))
-    if US_MARKET_SYMBOL in missing:
-        raise RuntimeError(f"Market reference download returned no {US_MARKET_SYMBOL} rows")
+    if market_symbol in missing:
+        raise RuntimeError(f"Market reference download returned no {market_symbol} rows")
 
     output_dir.mkdir(parents=True, exist_ok=True)
     ohlcv_path = output_dir / "ohlcv.csv"
@@ -175,8 +194,9 @@ def download_market_reference(
         "start": start,
         "end": end,
         "interval": "1d",
-        "market_symbol": US_MARKET_SYMBOL,
-        "volatility_symbol": US_VOLATILITY_SYMBOL,
+        "market": market,
+        "market_symbol": market_symbol,
+        "volatility_symbol": volatility_symbol,
         "sector_etfs": sector_etfs,
         "missing_symbols": missing,
         "universe_ticker_count": len(sectors),
