@@ -8,7 +8,10 @@ date ``t`` only uses chip data through the previous trading date.
 On a date the archive covers, a ticker that appears elsewhere in T86 but not on
 that date had no institutional trades (net flow 0); the same rule gives a 0-lot
 margin balance for MI_MARGN. Tickers that never appear in a table, such as TPEx
-stocks, and dates the archive does not cover have missing chip values.
+stocks, and dates the archive does not cover have missing chip values. The
+exception is a zero-volume bar on an uncovered date, such as a Yahoo placeholder
+bar on a typhoon closure: it counts as a no-trade day with zero flows and an
+unchanged margin balance.
 """
 
 from __future__ import annotations
@@ -91,6 +94,10 @@ def build_chip_features(
         frame, chips.margin, chips.margin_dates, ["margin_balance", "short_balance"]
     ) * SHARES_PER_LOT
     volume = frame["volume"].astype(float)
+    no_trade = (volume == 0).to_numpy()[:, None]
+    flows = flows.mask(flows.isna() & no_trade, 0.0)
+    carried = margin.groupby(tickers).ffill()
+    margin = margin.mask(margin.isna() & no_trade, carried)
 
     def rolling_sum(values: pd.Series, window: int) -> pd.Series:
         return values.groupby(tickers).transform(

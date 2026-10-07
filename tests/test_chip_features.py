@@ -144,6 +144,20 @@ def test_absent_known_ticker_is_zero_and_unknown_or_uncovered_values_are_missing
     assert tpex[CHIP_FEATURE_COLUMNS].isna().all().all()
 
 
+def test_zero_volume_uncovered_bar_is_a_no_trade_day() -> None:
+    covered = ISO_DATES[:20] + ISO_DATES[21:]
+    ohlcv = _ohlcv(("2330",))
+    ohlcv.loc[20, "volume"] = 0.0
+
+    features = build_chip_features(ohlcv, _chips(covered=covered), publication_lag=0)
+
+    assert features["foreign_flow_5d"].iloc[20:25].notna().all()
+    assert features["foreign_flow_5d"].iloc[22] == pytest.approx(4 * 1_000.0 / 40_000.0)
+    assert features["margin_days_of_volume"].iloc[20] == pytest.approx(
+        29.0 * 1_000.0 / (19 * 10_000.0 / 20.0)
+    )
+
+
 def test_negative_lag_is_rejected() -> None:
     ohlcv = _ohlcv()
     chips = _chips()
