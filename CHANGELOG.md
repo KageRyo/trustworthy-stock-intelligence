@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.7.0 - 2026-10-07
+
 ### Changed
 
 - Serving now defaults to `--feature-set technical_range`:
