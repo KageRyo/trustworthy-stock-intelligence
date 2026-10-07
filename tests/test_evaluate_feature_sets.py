@@ -8,7 +8,13 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from scripts.evaluate_feature_sets import parse_args, parse_feature_sets, run, union_columns
+from scripts.evaluate_feature_sets import (
+    parse_args,
+    parse_feature_sets,
+    parse_pairs,
+    run,
+    union_columns,
+)
 from tests.test_evaluate_selective_trust import _write_ohlcv
 from tests.test_walk_forward_experiment import _write_reference
 from tsi.features.sets import resolve_feature_set
@@ -24,6 +30,24 @@ def test_parse_feature_sets_puts_baseline_first_without_duplicates() -> None:
 def test_parse_feature_sets_rejects_unknown_names() -> None:
     with pytest.raises(ValueError, match="Unknown feature set"):
         parse_feature_sets("technical,nope", baseline="technical")
+
+
+def test_parse_pairs_adds_extras_after_baseline_pairs() -> None:
+    sets = parse_feature_sets("technical_range,technical_range_beta", baseline="technical")
+
+    pairs = parse_pairs(
+        "technical_range_beta:technical_range,technical_range:technical", sets, baseline="technical"
+    )
+
+    assert pairs == [
+        ("technical_range", "technical"),
+        ("technical_range_beta", "technical"),
+        ("technical_range_beta", "technical_range"),
+    ]
+    with pytest.raises(ValueError, match="two compared"):
+        parse_pairs("technical_market:technical", sets, baseline="technical")
+    with pytest.raises(ValueError, match="itself"):
+        parse_pairs("technical:technical", sets, baseline="technical")
 
 
 def test_run_scores_every_set_on_identical_folds(tmp_path: Path) -> None:
@@ -49,6 +73,10 @@ def test_run_scores_every_set_on_identical_folds(tmp_path: Path) -> None:
             "3",
             "--bootstrap-resamples",
             "200",
+            "--feature-sets",
+            "technical,technical_range,technical_market,technical_range_market",
+            "--extra-pairs",
+            "technical_range_market:technical_range",
         ]
     )
 
@@ -63,11 +91,12 @@ def test_run_scores_every_set_on_identical_folds(tmp_path: Path) -> None:
         "technical_market",
         "technical_range_market",
     ]
-    assert set(saved["paired_vs_baseline"]) == {
-        "technical_range",
-        "technical_market",
-        "technical_range_market",
-    }
+    assert list(saved["paired_comparisons"]) == [
+        "technical_range vs technical",
+        "technical_market vs technical",
+        "technical_range_market vs technical",
+        "technical_range_market vs technical_range",
+    ]
     assert saved["fold_count"] == summary["fold_count"] >= 1
     rows_per_fold = per_fold.groupby("fold_id")["rows"].nunique()
     assert (rows_per_fold == 1).all()

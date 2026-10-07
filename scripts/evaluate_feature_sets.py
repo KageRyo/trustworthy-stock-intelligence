@@ -57,6 +57,11 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     add_walk_forward_arguments(parser, feature_set_argument=False)
     parser.add_argument("--feature-sets", default=DEFAULT_FEATURE_SETS)
     parser.add_argument("--baseline-feature-set", default="technical")
+    parser.add_argument(
+        "--extra-pairs",
+        default="",
+        help="Extra paired comparisons as comparison:baseline items separated by commas.",
+    )
     parser.add_argument("--alert-policy", default="alert_rate:0.05")
     parser.add_argument("--watch-policy", default="alert_rate:0.2")
     parser.add_argument("--min-alerts", type=int, default=20)
@@ -71,6 +76,22 @@ def parse_feature_sets(text: str, *, baseline: str) -> dict[str, list[str]]:
     names = [name.strip() for name in text.split(",") if name.strip()]
     ordered = [baseline, *(name for name in names if name != baseline)]
     return {name: resolve_feature_set(name) for name in dict.fromkeys(ordered)}
+
+
+def parse_pairs(
+    text: str, feature_sets: dict[str, list[str]], *, baseline: str
+) -> list[tuple[str, str]]:
+    """Every set versus ``baseline`` plus ``comparison:baseline`` extras, without repeats."""
+
+    pairs = [(name, baseline) for name in feature_sets if name != baseline]
+    for item in (item.strip() for item in text.split(",") if item.strip()):
+        comparison, _, reference = item.partition(":")
+        if comparison not in feature_sets or reference not in feature_sets:
+            raise ValueError(f"Paired comparison {item!r} must name two compared feature sets")
+        if comparison == reference:
+            raise ValueError(f"Paired comparison {item!r} compares a set with itself")
+        pairs.append((comparison, reference))
+    return list(dict.fromkeys(pairs))
 
 
 def union_columns(feature_sets: dict[str, list[str]]) -> list[str]:
@@ -199,6 +220,7 @@ def run(args: argparse.Namespace) -> dict[str, object]:
     feature_sets = parse_feature_sets(args.feature_sets, baseline=args.baseline_feature_set)
     alert_policy = parse_alert_policy(args.alert_policy, min_alerts=args.min_alerts)
     watch_policy = parse_alert_policy(args.watch_policy, min_alerts=args.min_alerts)
+    pairs = parse_pairs(args.extra_pairs, feature_sets, baseline=args.baseline_feature_set)
     walk_forward = load_walk_forward_folds(args, feature_columns=union_columns(feature_sets))
 
     fold_rows: list[dict[str, object]] = []
@@ -257,16 +279,15 @@ def run(args: argparse.Namespace) -> dict[str, object]:
         "feature_sets": {
             name: summarize_set(per_fold[per_fold["feature_set"] == name]) for name in feature_sets
         },
-        "paired_vs_baseline": {
-            name: compare_to_baseline(
+        "paired_comparisons": {
+            f"{comparison} vs {reference}": compare_to_baseline(
                 per_fold,
-                baseline=baseline,
-                comparison=name,
+                baseline=reference,
+                comparison=comparison,
                 resamples=args.bootstrap_resamples,
                 seed=args.seed,
             )
-            for name in feature_sets
-            if name != baseline
+            for comparison, reference in pairs
         },
     }
     (output_dir / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
