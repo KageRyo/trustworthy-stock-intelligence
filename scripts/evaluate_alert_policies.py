@@ -11,15 +11,17 @@ from __future__ import annotations
 import argparse
 from collections.abc import Sequence
 import json
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-from scripts.evaluate_selective_trust import resolve_output_dir
-from scripts.train import prepare_training_frame
-from tsi.data.csv import file_sha256, read_ohlcv_csv
-from tsi.data.split import build_walk_forward_splits
+from scripts.walk_forward_experiment import (
+    add_walk_forward_arguments,
+    load_walk_forward_folds,
+    resolve_output_dir,
+    walk_forward_protocol,
+)
+from tsi.data.csv import file_sha256
 from tsi.features.technical import DEFAULT_FEATURE_COLUMNS
 from tsi.labeling.warning_level import (
     AlertPolicy,
@@ -52,31 +54,7 @@ def parse_policies(text: str, *, min_alerts: int) -> list[AlertPolicy]:
 
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--input", type=Path, required=True, help="OHLCV CSV input.")
-    parser.add_argument(
-        "--output-dir",
-        type=Path,
-        required=True,
-        help="Output directory; must resolve inside --output-root.",
-    )
-    parser.add_argument(
-        "--output-root",
-        type=Path,
-        default=Path.cwd(),
-        help="Directory that --output-dir must stay inside. Defaults to the working directory.",
-    )
-    parser.add_argument("--horizon", type=int, default=5)
-    parser.add_argument("--drawdown-threshold", type=float, default=-0.05)
-    parser.add_argument("--train-size", type=int, default=252)
-    parser.add_argument("--calibration-size", type=int, default=63)
-    parser.add_argument("--test-size", type=int, default=63)
-    parser.add_argument("--purge-size", type=int, default=None)
-    parser.add_argument("--max-folds", type=int, default=None)
-    parser.add_argument(
-        "--calibration-method",
-        choices=["none", "platt", "isotonic"],
-        default="platt",
-    )
+    add_walk_forward_arguments(parser)
     parser.add_argument("--policies", default=DEFAULT_POLICIES)
     parser.add_argument("--min-alerts", type=int, default=20)
     return parser.parse_args(argv)
@@ -226,56 +204,24 @@ def run(args: argparse.Namespace) -> dict[str, object]:
     policies = parse_policies(args.policies, min_alerts=args.min_alerts)
     if "f1" not in {policy.label for policy in policies}:
         policies.insert(0, AlertPolicy(kind="f1", min_alerts=args.min_alerts))
-    frame = prepare_training_frame(
-        read_ohlcv_csv(args.input),
-        horizon=args.horizon,
-        drawdown_threshold=args.drawdown_threshold,
-    )
-    purge_size = args.horizon if args.purge_size is None else args.purge_size
-    if purge_size < args.horizon:
-        raise ValueError("purge_size must be at least horizon to prevent label-window leakage")
-    folds = build_walk_forward_splits(
-        frame,
-        train_size=args.train_size,
-        calibration_size=args.calibration_size,
-        test_size=args.test_size,
-        purge_size=purge_size,
-        label_end_date_col="label_end_date",
-    )
-    if args.max_folds is not None:
-        folds = folds[: args.max_folds]
-
-    fold_rows: list[dict[str, object]] = []
-    skipped = 0
-    for fold in folds:
-        train_frame = frame.loc[list(fold.train_index)]
-        calibration_frame = frame.loc[list(fold.calibration_index)]
-        test_frame = frame.loc[list(fold.test_index)]
-        if (
-            train_frame["risk_label"].nunique() < 2
-            or calibration_frame["risk_label"].nunique() < 2
-            or test_frame.empty
-        ):
-            skipped += 1
-            continue
+    walk_forward = load_walk_forward_folds(args)
+    fold_rows = [
+        {
+            "fold_id": item.fold.fold_id,
+            "test_start": str(item.fold.test_dates[0].date()),
+            "rows": float(len(item.test)),
+            "positives": float(item.test["risk_label"].sum()),
+            **row,
+        }
+        for item in walk_forward.folds
         for row in score_fold(
-            train_frame,
-            calibration_frame,
-            test_frame,
+            item.train,
+            item.calibration,
+            item.test,
             policies=policies,
             calibration_method=args.calibration_method,
-        ):
-            fold_rows.append(
-                {
-                    "fold_id": fold.fold_id,
-                    "test_start": str(fold.test_dates[0].date()),
-                    "rows": float(len(test_frame)),
-                    "positives": float(test_frame["risk_label"].sum()),
-                    **row,
-                }
-            )
-    if not fold_rows:
-        raise ValueError("No walk-forward fold had both classes in train and calibration windows")
+        )
+    ]
     per_fold = pd.DataFrame(fold_rows)
 
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -283,19 +229,7 @@ def run(args: argparse.Namespace) -> dict[str, object]:
     summary = {
         "input": str(args.input),
         "input_sha256": file_sha256(args.input),
-        "protocol": {
-            "feature_interval": "1d",
-            "feature_columns": list(DEFAULT_FEATURE_COLUMNS),
-            "horizon": args.horizon,
-            "drawdown_threshold": args.drawdown_threshold,
-            "train_size": args.train_size,
-            "calibration_size": args.calibration_size,
-            "test_size": args.test_size,
-            "purge_size": purge_size,
-            "calibration_method": args.calibration_method,
-            "min_alerts": args.min_alerts,
-            "skipped_folds": skipped,
-        },
+        "protocol": walk_forward_protocol(args, walk_forward, min_alerts=args.min_alerts),
         "rows": int(per_fold.groupby("fold_id")["rows"].first().sum()),
         "fold_count": int(per_fold["fold_id"].nunique()),
         "event_rate": float(
