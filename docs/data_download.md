@@ -63,6 +63,24 @@ python -m scripts.download_tickers \
   --output-dir data/raw/watchlist
 ```
 
+Download market reference series for market-relative feature experiments:
+
+```bash
+python -m scripts.download_market_reference \
+  --tickers-file data/raw/sp100/tickers.csv \
+  --output-dir data/raw/market/us
+
+python -m scripts.download_market_reference \
+  --market taiwan \
+  --tickers-file data/raw/tw_large/tickers.csv \
+  --output-dir data/raw/market/taiwan
+```
+
+The US reference holds SPY, ^VIX, and the Select Sector SPDR ETF for each ticker's Yahoo sector. It
+also writes `sector_map.csv`, which is a current snapshot applied to all history. The Taiwan
+reference holds the TAIEX (^TWII) only. `metadata.json` records unmapped tickers and SHA-256 hashes.
+Experiment 017 uses these artifacts; serving does not use them yet.
+
 The reproducible Taiwan baseline pilot uses the explicit six-ticker list in
 [`configs/dataset/taiwan_pilot.yaml`](../configs/dataset/taiwan_pilot.yaml) and is documented in
 [`experiments/009_taiwan_pilot/README.md`](../experiments/009_taiwan_pilot/README.md). It commits

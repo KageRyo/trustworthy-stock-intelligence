@@ -114,10 +114,10 @@ prediction as equally trustworthy.
 
 ### `ModelAnalysis`
 
-| Field          | Type   | Description                                       |
-| -------------- | ------ | ------------------------------------------------- |
-| `name`         | string | Model family, for example `temporal_transformer`. |
-| `model_bundle` | string | Model bundle path from the prediction record.     |
+| Field          | Type   | Description                                                                                                  |
+| -------------- | ------ | ------------------------------------------------------------------------------------------------------------ |
+| `name`         | string | Model family, for example `temporal_transformer`.                                                            |
+| `model_bundle` | string | Model bundle from the prediction record. Daily baseline batches use `baseline_latest:<feature_set>:<input>`. |
 
 ### `DataFreshness`
 
