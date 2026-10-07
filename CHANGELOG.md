@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.6.0 - 2026-10-07
+
 ### Changed
 
 - Serving now chooses thresholds with calibration-window alert-rate policies:
@@ -23,6 +25,11 @@
 
 - Ticker analysis now uses calibration-drift and alert-policy metadata from the record's own batch
   instead of the most recent batch, which could be an unrelated on-demand run.
+
+### Notes
+
+- Alert precision remains low in absolute terms (about 0.16 in the median fold against a 0.10 base
+  rate). Feature work is the next planned step. Issue #29 remains open.
 
 ## 0.5.0 - 2026-10-06
 
