@@ -1,0 +1,256 @@
+{
+  "experiment_id": "018_taiwan_chip_features",
+  "executed_on": "2026-10-07",
+  "base_git_commit": "4e335564393acab7033013522814763bc9c25d6c",
+  "datasets": {
+    "tw_large": {
+      "provider": "Yahoo Finance via yfinance",
+      "downloaded_at_utc": "2026-10-07T01:45:35.369276+00:00",
+      "row_count": 150935,
+      "ticker_count": 53,
+      "ohlcv_sha256": "6cc6e2f8ddf2d4eed22fcad7aaf02083cff284c2c1649486c1f251f48dc4ac1d",
+      "tickers_sha256": "3c49bdc4fb5ddf52a68831edbb1a4bf0b6155cfddbadb6a46239678c81d14006"
+    },
+    "tw_holdout": {
+      "provider": "Yahoo Finance via yfinance",
+      "downloaded_at_utc": "2026-10-07T04:39:23.975263+00:00",
+      "row_count": 572199,
+      "ticker_count": 200,
+      "ohlcv_sha256": "d23af64901682ccdd30f5a7ce113f626497ad5e6a066a408dbf4d27c56a7f6c7",
+      "tickers_sha256": "dc1687e6b41c8173a3684df79cfd2c8d1e2303d2b3d70accbfb4d807310c1a33",
+      "sampling": {
+        "catalogue": "TWSE OpenAPI t187ap03_L",
+        "catalogue_as_of": "2026-10-06",
+        "catalogue_sha256": "cd6305fd2fcbd0db8f5dfd37b0fe8125aaa785c4cd8074741a4abfa000a03e19",
+        "rule": "market twse, 4-digit common-stock code, listing_date <= 2014-12-31, not in tw_large",
+        "pool_size": 747,
+        "sample_size": 200,
+        "rng": "numpy.random.default_rng(18).choice(sorted pool, 200, replace=False)",
+        "sample_sha256": "4a8065df33db87b50887f28cc47a6174505b2d8f47171baf45ff98f6006a6056"
+      }
+    }
+  },
+  "chip_archive": {
+    "source": {
+      "institutional": "https://www.twse.com.tw/rwd/zh/fund/T86",
+      "margin": "https://www.twse.com.tw/rwd/zh/marginTrading/MI_MARGN"
+    },
+    "requested_start": "2015-01-05",
+    "requested_end": "2026-10-06",
+    "dates": 2854,
+    "institutional_rows": 2981482,
+    "margin_rows": 3042004,
+    "missing_dates": {
+      "institutional": [],
+      "margin": []
+    },
+    "units": {
+      "institutional": "shares",
+      "margin": "lots of 1,000 shares"
+    },
+    "institutional_sha256": "e7776f9d62e752d0690c775b6f9bb635636f009a2daa813336a198f6dc4cafa6",
+    "margin_sha256": "9bbbc3de1820d19ec38b0d7a2009e8193e85ca1d78526103c97c37aeeff3fc81"
+  },
+  "protocol": {
+    "feature_interval": "1d",
+    "horizon": 5,
+    "drawdown_threshold": -0.05,
+    "train_size": 252,
+    "purge_size": 5,
+    "calibration_size": 63,
+    "test_size": 63,
+    "model": "logistic_regression",
+    "calibration_method": "platt",
+    "alert_policy": "alert_rate:0.05",
+    "watch_policy": "alert_rate:0.2",
+    "min_alerts": 20,
+    "baseline_feature_set": "technical_range",
+    "chip_publication_lags": [
+      1,
+      0
+    ],
+    "bootstrap": {
+      "unit": "temporal test fold",
+      "resamples": 4000,
+      "seed": 42,
+      "confidence": 0.95
+    },
+    "feature_sets": {
+      "technical_range": [
+        "return_1d",
+        "return_5d",
+        "sma_5_gap",
+        "sma_10_gap",
+        "volatility_5d",
+        "volatility_10d",
+        "volume_ratio_5d",
+        "parkinson_vol_10d",
+        "garman_klass_vol_10d",
+        "atr_14_pct",
+        "volatility_20d",
+        "drawdown_from_20d_high"
+      ],
+      "technical_range_chips": [
+        "return_1d",
+        "return_5d",
+        "sma_5_gap",
+        "sma_10_gap",
+        "volatility_5d",
+        "volatility_10d",
+        "volume_ratio_5d",
+        "parkinson_vol_10d",
+        "garman_klass_vol_10d",
+        "atr_14_pct",
+        "volatility_20d",
+        "drawdown_from_20d_high",
+        "foreign_flow_5d",
+        "foreign_flow_20d",
+        "trust_flow_5d",
+        "trust_flow_20d",
+        "dealer_flow_5d",
+        "margin_change_5d",
+        "short_change_5d",
+        "margin_days_of_volume",
+        "short_to_margin"
+      ],
+      "technical_range_flows": [
+        "return_1d",
+        "return_5d",
+        "sma_5_gap",
+        "sma_10_gap",
+        "volatility_5d",
+        "volatility_10d",
+        "volume_ratio_5d",
+        "parkinson_vol_10d",
+        "garman_klass_vol_10d",
+        "atr_14_pct",
+        "volatility_20d",
+        "drawdown_from_20d_high",
+        "foreign_flow_5d",
+        "foreign_flow_20d",
+        "trust_flow_5d",
+        "trust_flow_20d",
+        "dealer_flow_5d"
+      ],
+      "technical_range_margin": [
+        "return_1d",
+        "return_5d",
+        "sma_5_gap",
+        "sma_10_gap",
+        "volatility_5d",
+        "volatility_10d",
+        "volume_ratio_5d",
+        "parkinson_vol_10d",
+        "garman_klass_vol_10d",
+        "atr_14_pct",
+        "volatility_20d",
+        "drawdown_from_20d_high",
+        "margin_change_5d",
+        "short_change_5d",
+        "margin_days_of_volume",
+        "short_to_margin"
+      ]
+    }
+  },
+  "environment": {
+    "python": "3.11.16",
+    "numpy": "2.4.6",
+    "pandas": "3.0.5",
+    "scikit_learn": "1.9.0",
+    "device": "cpu (no deep-learning training in this experiment)"
+  },
+  "runs": {
+    "tw_holdout_logistic_platt_chips_lag0": {
+      "input": "data/raw/tw_holdout/ohlcv.csv",
+      "input_sha256": "d23af64901682ccdd30f5a7ce113f626497ad5e6a066a408dbf4d27c56a7f6c7",
+      "fold_count": 39,
+      "test_rows": 488198,
+      "feature_sets": [
+        "technical_range",
+        "technical_range_chips",
+        "technical_range_flows",
+        "technical_range_margin"
+      ],
+      "chip_archive": {
+        "path": "data/raw/twse_chips",
+        "publication_lag": 0,
+        "institutional_sha256": "e7776f9d62e752d0690c775b6f9bb635636f009a2daa813336a198f6dc4cafa6",
+        "margin_sha256": "9bbbc3de1820d19ec38b0d7a2009e8193e85ca1d78526103c97c37aeeff3fc81"
+      },
+      "artifacts": {
+        "coefficients.csv": "7910f1cd0e2d3a6cac95b63637bf1c222b41bafe438827f948f90fa08dae73aa",
+        "per_fold.csv": "6ec750609d8d36c4662721893d3bfe52cec4f43c919a1aff5922b38024863af2",
+        "summary.json": "90751c3ab9554eb4edda0b6e2027401840919d89cba37a9318828be05365ec37"
+      }
+    },
+    "tw_holdout_logistic_platt_chips_lag1": {
+      "input": "data/raw/tw_holdout/ohlcv.csv",
+      "input_sha256": "d23af64901682ccdd30f5a7ce113f626497ad5e6a066a408dbf4d27c56a7f6c7",
+      "fold_count": 39,
+      "test_rows": 488078,
+      "feature_sets": [
+        "technical_range",
+        "technical_range_chips",
+        "technical_range_flows",
+        "technical_range_margin"
+      ],
+      "chip_archive": {
+        "path": "data/raw/twse_chips",
+        "publication_lag": 1,
+        "institutional_sha256": "e7776f9d62e752d0690c775b6f9bb635636f009a2daa813336a198f6dc4cafa6",
+        "margin_sha256": "9bbbc3de1820d19ec38b0d7a2009e8193e85ca1d78526103c97c37aeeff3fc81"
+      },
+      "artifacts": {
+        "coefficients.csv": "542744ff7abe982ca19bed2651ceed9d8721acb785e0fad9b7534afd299b3d7e",
+        "per_fold.csv": "851a6f47a29d7745dc9a7cac2fdb0c3ae7afc0437120f589b8ecae2f999fd1e5",
+        "summary.json": "23107701b51c15bf20261606a60429d630524688b8f88f34bb74e0dfd2548c26"
+      }
+    },
+    "tw_large_logistic_platt_chips_lag0": {
+      "input": "data/raw/tw_large/ohlcv.csv",
+      "input_sha256": "6cc6e2f8ddf2d4eed22fcad7aaf02083cff284c2c1649486c1f251f48dc4ac1d",
+      "fold_count": 39,
+      "test_rows": 122448,
+      "feature_sets": [
+        "technical_range",
+        "technical_range_chips",
+        "technical_range_flows",
+        "technical_range_margin"
+      ],
+      "chip_archive": {
+        "path": "data/raw/twse_chips",
+        "publication_lag": 0,
+        "institutional_sha256": "e7776f9d62e752d0690c775b6f9bb635636f009a2daa813336a198f6dc4cafa6",
+        "margin_sha256": "9bbbc3de1820d19ec38b0d7a2009e8193e85ca1d78526103c97c37aeeff3fc81"
+      },
+      "artifacts": {
+        "coefficients.csv": "1964a32c5a6d3416a89efb97209c4eed721d8030fbfbc963e27ceca58939d80f",
+        "per_fold.csv": "2934a5a18cd52d9594105aef7a6a292246bffe3ba0f9fd6057473d34d92cff47",
+        "summary.json": "31b3c9eab7a179468474267991713812689a11659196b5451eeb4469b77c7eb6"
+      }
+    },
+    "tw_large_logistic_platt_chips_lag1": {
+      "input": "data/raw/tw_large/ohlcv.csv",
+      "input_sha256": "6cc6e2f8ddf2d4eed22fcad7aaf02083cff284c2c1649486c1f251f48dc4ac1d",
+      "fold_count": 39,
+      "test_rows": 122440,
+      "feature_sets": [
+        "technical_range",
+        "technical_range_chips",
+        "technical_range_flows",
+        "technical_range_margin"
+      ],
+      "chip_archive": {
+        "path": "data/raw/twse_chips",
+        "publication_lag": 1,
+        "institutional_sha256": "e7776f9d62e752d0690c775b6f9bb635636f009a2daa813336a198f6dc4cafa6",
+        "margin_sha256": "9bbbc3de1820d19ec38b0d7a2009e8193e85ca1d78526103c97c37aeeff3fc81"
+      },
+      "artifacts": {
+        "coefficients.csv": "dfde703ae671399f4e7838d7ea4cea1105c03a23e8bb0944da0ee88078eefc20",
+        "per_fold.csv": "36e50fbeeae87da31668d484c9c3954d5942e122da45455412bfd32c31f740e5",
+        "summary.json": "70dbf16128b5115228e378d9807edb6d40646eccf1579def87c88bf9cd4492a6"
+      }
+    }
+  }
+}

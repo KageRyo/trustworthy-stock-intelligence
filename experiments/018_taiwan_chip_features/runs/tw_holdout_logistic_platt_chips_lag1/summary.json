@@ -1,0 +1,899 @@
+{
+  "input": "data/raw/tw_holdout/ohlcv.csv",
+  "input_sha256": "d23af64901682ccdd30f5a7ce113f626497ad5e6a066a408dbf4d27c56a7f6c7",
+  "protocol": {
+    "feature_interval": "1d",
+    "feature_columns": [
+      "return_1d",
+      "return_5d",
+      "sma_5_gap",
+      "sma_10_gap",
+      "volatility_5d",
+      "volatility_10d",
+      "volume_ratio_5d",
+      "parkinson_vol_10d",
+      "garman_klass_vol_10d",
+      "atr_14_pct",
+      "volatility_20d",
+      "drawdown_from_20d_high",
+      "foreign_flow_5d",
+      "foreign_flow_20d",
+      "trust_flow_5d",
+      "trust_flow_20d",
+      "dealer_flow_5d",
+      "margin_change_5d",
+      "short_change_5d",
+      "margin_days_of_volume",
+      "short_to_margin"
+    ],
+    "chip_archive": {
+      "path": "data/raw/twse_chips",
+      "publication_lag": 1,
+      "institutional_sha256": "e7776f9d62e752d0690c775b6f9bb635636f009a2daa813336a198f6dc4cafa6",
+      "margin_sha256": "9bbbc3de1820d19ec38b0d7a2009e8193e85ca1d78526103c97c37aeeff3fc81"
+    },
+    "horizon": 5,
+    "drawdown_threshold": -0.05,
+    "train_size": 252,
+    "calibration_size": 63,
+    "test_size": 63,
+    "purge_size": 5,
+    "calibration_method": "platt",
+    "feature_sets": {
+      "technical_range": [
+        "return_1d",
+        "return_5d",
+        "sma_5_gap",
+        "sma_10_gap",
+        "volatility_5d",
+        "volatility_10d",
+        "volume_ratio_5d",
+        "parkinson_vol_10d",
+        "garman_klass_vol_10d",
+        "atr_14_pct",
+        "volatility_20d",
+        "drawdown_from_20d_high"
+      ],
+      "technical_range_chips": [
+        "return_1d",
+        "return_5d",
+        "sma_5_gap",
+        "sma_10_gap",
+        "volatility_5d",
+        "volatility_10d",
+        "volume_ratio_5d",
+        "parkinson_vol_10d",
+        "garman_klass_vol_10d",
+        "atr_14_pct",
+        "volatility_20d",
+        "drawdown_from_20d_high",
+        "foreign_flow_5d",
+        "foreign_flow_20d",
+        "trust_flow_5d",
+        "trust_flow_20d",
+        "dealer_flow_5d",
+        "margin_change_5d",
+        "short_change_5d",
+        "margin_days_of_volume",
+        "short_to_margin"
+      ],
+      "technical_range_flows": [
+        "return_1d",
+        "return_5d",
+        "sma_5_gap",
+        "sma_10_gap",
+        "volatility_5d",
+        "volatility_10d",
+        "volume_ratio_5d",
+        "parkinson_vol_10d",
+        "garman_klass_vol_10d",
+        "atr_14_pct",
+        "volatility_20d",
+        "drawdown_from_20d_high",
+        "foreign_flow_5d",
+        "foreign_flow_20d",
+        "trust_flow_5d",
+        "trust_flow_20d",
+        "dealer_flow_5d"
+      ],
+      "technical_range_margin": [
+        "return_1d",
+        "return_5d",
+        "sma_5_gap",
+        "sma_10_gap",
+        "volatility_5d",
+        "volatility_10d",
+        "volume_ratio_5d",
+        "parkinson_vol_10d",
+        "garman_klass_vol_10d",
+        "atr_14_pct",
+        "volatility_20d",
+        "drawdown_from_20d_high",
+        "margin_change_5d",
+        "short_change_5d",
+        "margin_days_of_volume",
+        "short_to_margin"
+      ]
+    },
+    "baseline_feature_set": "technical_range",
+    "alert_policy": "alert_rate:0.05",
+    "watch_policy": "alert_rate:0.2",
+    "min_alerts": 20,
+    "skipped_folds": 0
+  },
+  "rows": 488078,
+  "fold_count": 39,
+  "event_rate": 0.12240256680284708,
+  "feature_sets": {
+    "technical_range": {
+      "auc_mean": 0.7322875050056437,
+      "pr_auc_mean": 0.2701183219347041,
+      "brier_score_mean": 0.10011014988023663,
+      "brier_skill_score_mean": 0.07642216156560175,
+      "ece_mean": 0.04566111418988216,
+      "alert_rate": 0.06742364949864571,
+      "alert_precision": 0.32879542968275194,
+      "alert_recall": 0.18111211542968095,
+      "alert_episode_recall": 0.20382280714699558,
+      "watch_rate": 0.22023529026098287,
+      "watch_recall": 0.47241471661477685,
+      "fold_median_auc": 0.7671146824511218,
+      "fold_median_pr_auc": 0.2696418748174477,
+      "fold_median_brier_skill_score": 0.09419551115735025,
+      "fold_median_ece": 0.0334810824038509,
+      "fold_median_alert_precision": 0.3480278422273782
+    },
+    "technical_range_chips": {
+      "auc_mean": 0.7315001693325089,
+      "pr_auc_mean": 0.27053194010276455,
+      "brier_score_mean": 0.10009093058032406,
+      "brier_skill_score_mean": 0.07634528515518173,
+      "ece_mean": 0.04567887321052237,
+      "alert_rate": 0.06572719934108892,
+      "alert_precision": 0.3313279301745636,
+      "alert_recall": 0.17791503464899067,
+      "alert_episode_recall": 0.2006086830167774,
+      "watch_rate": 0.21765578452624376,
+      "watch_recall": 0.4686317833350072,
+      "fold_median_auc": 0.7657567785411905,
+      "fold_median_pr_auc": 0.2647720100654347,
+      "fold_median_brier_skill_score": 0.09511399137657994,
+      "fold_median_ece": 0.03342066752853204,
+      "fold_median_alert_precision": 0.33506493506493507
+    },
+    "technical_range_flows": {
+      "auc_mean": 0.7311590000515185,
+      "pr_auc_mean": 0.26964565909268273,
+      "brier_score_mean": 0.10018017447803193,
+      "brier_skill_score_mean": 0.07573572853424522,
+      "ece_mean": 0.04553524223754372,
+      "alert_rate": 0.06750765246538463,
+      "alert_precision": 0.3275061458617864,
+      "alert_recall": 0.1806266947875866,
+      "alert_episode_recall": 0.20318008395726808,
+      "watch_rate": 0.21907768840226358,
+      "watch_recall": 0.46883264704897726,
+      "fold_median_auc": 0.7659809173581316,
+      "fold_median_pr_auc": 0.2689793204715471,
+      "fold_median_brier_skill_score": 0.0932750209076415,
+      "fold_median_ece": 0.03399273297392021,
+      "fold_median_alert_precision": 0.3416856492027335
+    },
+    "technical_range_margin": {
+      "auc_mean": 0.7325300909457709,
+      "pr_auc_mean": 0.2710194635815073,
+      "brier_score_mean": 0.10001426275861193,
+      "brier_skill_score_mean": 0.07710043126609611,
+      "ece_mean": 0.04573399917214475,
+      "alert_rate": 0.06594232889005446,
+      "alert_precision": 0.33173838744756873,
+      "alert_recall": 0.17871848950487096,
+      "alert_episode_recall": 0.20214011111918287,
+      "watch_rate": 0.2185839148660665,
+      "watch_recall": 0.47130996618794146,
+      "fold_median_auc": 0.7671609782883468,
+      "fold_median_pr_auc": 0.2652102676902751,
+      "fold_median_brier_skill_score": 0.09564569762839503,
+      "fold_median_ece": 0.03344244992196406,
+      "fold_median_alert_precision": 0.3395061728395062
+    }
+  },
+  "paired_comparisons": {
+    "technical_range_chips vs technical_range": {
+      "method": "percentile bootstrap over paired temporal test folds",
+      "baseline_minus_comparison": "comparison - baseline",
+      "fold_count": 39,
+      "confidence": 0.95,
+      "resamples": 4000,
+      "seed": 42,
+      "metrics": {
+        "auc": {
+          "baseline": {
+            "estimate": 0.7322875050056437,
+            "lower": 0.6938659000444936,
+            "upper": 0.7629529837714452,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "comparison": {
+            "estimate": 0.7315001693325089,
+            "lower": 0.6936922760080233,
+            "upper": 0.7622730336853584,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "delta": {
+            "estimate": -0.000787335673134667,
+            "lower": -0.001907962184169944,
+            "upper": 0.0004279496427953707,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "excluded_non_finite_pairs": 0
+        },
+        "pr_auc": {
+          "baseline": {
+            "estimate": 0.2701183219347041,
+            "lower": 0.2461276055213835,
+            "upper": 0.2947632612652274,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "comparison": {
+            "estimate": 0.27053194010276455,
+            "lower": 0.24619615287985894,
+            "upper": 0.29465786909965497,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "delta": {
+            "estimate": 0.0004136181680603801,
+            "lower": -0.0005253185562456371,
+            "upper": 0.001325187671543001,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "excluded_non_finite_pairs": 0
+        },
+        "brier_score": {
+          "baseline": {
+            "estimate": 0.10011014988023663,
+            "lower": 0.08792788974188719,
+            "upper": 0.11298063571114993,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "comparison": {
+            "estimate": 0.10009093058032406,
+            "lower": 0.08791841609108492,
+            "upper": 0.11272722294678691,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "delta": {
+            "estimate": -1.9219299912580153e-05,
+            "lower": -0.0001430661381738962,
+            "upper": 0.00010925526826031591,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "excluded_non_finite_pairs": 0
+        },
+        "brier_skill_score": {
+          "baseline": {
+            "estimate": 0.07642216156560175,
+            "lower": 0.048731730251571695,
+            "upper": 0.10071226397484127,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "comparison": {
+            "estimate": 0.07634528515518173,
+            "lower": 0.050404774897054624,
+            "upper": 0.10042538293337708,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "delta": {
+            "estimate": -7.687641041999636e-05,
+            "lower": -0.0014964466250155799,
+            "upper": 0.0011483048092171125,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "excluded_non_finite_pairs": 0
+        },
+        "ece": {
+          "baseline": {
+            "estimate": 0.04566111418988216,
+            "lower": 0.034630674114023804,
+            "upper": 0.058300377846081025,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "comparison": {
+            "estimate": 0.04567887321052237,
+            "lower": 0.03453219677133102,
+            "upper": 0.058597388842195466,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "delta": {
+            "estimate": 1.7759020640209476e-05,
+            "lower": -0.0007325186111663633,
+            "upper": 0.0007062843273926762,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "excluded_non_finite_pairs": 0
+        },
+        "alert_precision": {
+          "baseline": {
+            "estimate": 0.3449249385990556,
+            "lower": 0.3133248903261005,
+            "upper": 0.3750742433185682,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "comparison": {
+            "estimate": 0.3479559430689558,
+            "lower": 0.31560498764552963,
+            "upper": 0.378133362117577,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "delta": {
+            "estimate": 0.003031004469900182,
+            "lower": -0.000659840043348069,
+            "upper": 0.006397899743606805,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "excluded_non_finite_pairs": 0
+        },
+        "alert_recall": {
+          "baseline": {
+            "estimate": 0.17539823337958063,
+            "lower": 0.14393127034379244,
+            "upper": 0.20747524037549725,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "comparison": {
+            "estimate": 0.17252124776025637,
+            "lower": 0.14246256418106626,
+            "upper": 0.20482917222103775,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "delta": {
+            "estimate": -0.002876985619324284,
+            "lower": -0.006181502876786567,
+            "upper": 0.00026389656653161856,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "excluded_non_finite_pairs": 0
+        },
+        "watch_recall": {
+          "baseline": {
+            "estimate": 0.4712663502504282,
+            "lower": 0.4245586245616507,
+            "upper": 0.5137871158834948,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "comparison": {
+            "estimate": 0.4691697605154016,
+            "lower": 0.4256098237532459,
+            "upper": 0.5105282750613888,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "delta": {
+            "estimate": -0.002096589735026466,
+            "lower": -0.00582985875830883,
+            "upper": 0.0020898945975924544,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "excluded_non_finite_pairs": 0
+        }
+      },
+      "fold_win_rate": {
+        "auc": 0.3333333333333333,
+        "pr_auc": 0.5384615384615384,
+        "brier_skill_score": 0.5128205128205128,
+        "alert_precision": 0.6153846153846154
+      }
+    },
+    "technical_range_flows vs technical_range": {
+      "method": "percentile bootstrap over paired temporal test folds",
+      "baseline_minus_comparison": "comparison - baseline",
+      "fold_count": 39,
+      "confidence": 0.95,
+      "resamples": 4000,
+      "seed": 42,
+      "metrics": {
+        "auc": {
+          "baseline": {
+            "estimate": 0.7322875050056437,
+            "lower": 0.6938659000444936,
+            "upper": 0.7629529837714452,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "comparison": {
+            "estimate": 0.7311590000515185,
+            "lower": 0.6935742581173027,
+            "upper": 0.76188214885768,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "delta": {
+            "estimate": -0.001128504954125462,
+            "lower": -0.002065332956114369,
+            "upper": -0.0001351055382562481,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "excluded_non_finite_pairs": 0
+        },
+        "pr_auc": {
+          "baseline": {
+            "estimate": 0.2701183219347041,
+            "lower": 0.2461276055213835,
+            "upper": 0.2947632612652274,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "comparison": {
+            "estimate": 0.26964565909268273,
+            "lower": 0.2453409375725769,
+            "upper": 0.2936944349725943,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "delta": {
+            "estimate": -0.00047266284202143207,
+            "lower": -0.0009577408305444223,
+            "upper": -2.5627984728412257e-05,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "excluded_non_finite_pairs": 0
+        },
+        "brier_score": {
+          "baseline": {
+            "estimate": 0.10011014988023663,
+            "lower": 0.08792788974188719,
+            "upper": 0.11298063571114993,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "comparison": {
+            "estimate": 0.10018017447803193,
+            "lower": 0.08797302917873381,
+            "upper": 0.11288958305556365,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "delta": {
+            "estimate": 7.002459779528077e-05,
+            "lower": 7.955360417250092e-06,
+            "upper": 0.00014455071150903213,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "excluded_non_finite_pairs": 0
+        },
+        "brier_skill_score": {
+          "baseline": {
+            "estimate": 0.07642216156560175,
+            "lower": 0.048731730251571695,
+            "upper": 0.10071226397484127,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "comparison": {
+            "estimate": 0.07573572853424522,
+            "lower": 0.049678862238836316,
+            "upper": 0.09994376491827572,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "delta": {
+            "estimate": -0.0006864330313565006,
+            "lower": -0.0016569663155505533,
+            "upper": 4.899414026450344e-05,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "excluded_non_finite_pairs": 0
+        },
+        "ece": {
+          "baseline": {
+            "estimate": 0.04566111418988216,
+            "lower": 0.034630674114023804,
+            "upper": 0.058300377846081025,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "comparison": {
+            "estimate": 0.04553524223754372,
+            "lower": 0.03432840758163248,
+            "upper": 0.05855666602064079,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "delta": {
+            "estimate": -0.00012587195233844292,
+            "lower": -0.0005866858173076919,
+            "upper": 0.00032558404475338765,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "excluded_non_finite_pairs": 0
+        },
+        "alert_precision": {
+          "baseline": {
+            "estimate": 0.3449249385990556,
+            "lower": 0.3133248903261005,
+            "upper": 0.3750742433185682,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "comparison": {
+            "estimate": 0.34525668998092124,
+            "lower": 0.3135862509265583,
+            "upper": 0.3753918882980097,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "delta": {
+            "estimate": 0.0003317513818655403,
+            "lower": -0.0012124195666893152,
+            "upper": 0.0019366527783197334,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "excluded_non_finite_pairs": 0
+        },
+        "alert_recall": {
+          "baseline": {
+            "estimate": 0.17539823337958063,
+            "lower": 0.14393127034379244,
+            "upper": 0.20747524037549725,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "comparison": {
+            "estimate": 0.1748221689534228,
+            "lower": 0.14368106126294058,
+            "upper": 0.2077737068759471,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "delta": {
+            "estimate": -0.0005760644261578474,
+            "lower": -0.001667662080046347,
+            "upper": 0.0004427815955524285,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "excluded_non_finite_pairs": 0
+        },
+        "watch_recall": {
+          "baseline": {
+            "estimate": 0.4712663502504282,
+            "lower": 0.4245586245616507,
+            "upper": 0.5137871158834948,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "comparison": {
+            "estimate": 0.4688453943988527,
+            "lower": 0.42360818342405254,
+            "upper": 0.5122041119302277,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "delta": {
+            "estimate": -0.002420955851575441,
+            "lower": -0.004398129979895209,
+            "upper": -0.0003748928349065893,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "excluded_non_finite_pairs": 0
+        }
+      },
+      "fold_win_rate": {
+        "auc": 0.2564102564102564,
+        "pr_auc": 0.48717948717948717,
+        "brier_skill_score": 0.41025641025641024,
+        "alert_precision": 0.5128205128205128
+      }
+    },
+    "technical_range_margin vs technical_range": {
+      "method": "percentile bootstrap over paired temporal test folds",
+      "baseline_minus_comparison": "comparison - baseline",
+      "fold_count": 39,
+      "confidence": 0.95,
+      "resamples": 4000,
+      "seed": 42,
+      "metrics": {
+        "auc": {
+          "baseline": {
+            "estimate": 0.7322875050056437,
+            "lower": 0.6938659000444936,
+            "upper": 0.7629529837714452,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "comparison": {
+            "estimate": 0.7325300909457709,
+            "lower": 0.694854850546367,
+            "upper": 0.7635960881838371,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "delta": {
+            "estimate": 0.00024258594012715947,
+            "lower": -0.0004279033694697773,
+            "upper": 0.0009166618821479435,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "excluded_non_finite_pairs": 0
+        },
+        "pr_auc": {
+          "baseline": {
+            "estimate": 0.2701183219347041,
+            "lower": 0.2461276055213835,
+            "upper": 0.2947632612652274,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "comparison": {
+            "estimate": 0.2710194635815073,
+            "lower": 0.24675497533055513,
+            "upper": 0.2952670219470365,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "delta": {
+            "estimate": 0.0009011416468031594,
+            "lower": 0.0001720774330456627,
+            "upper": 0.001645522219927694,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "excluded_non_finite_pairs": 0
+        },
+        "brier_score": {
+          "baseline": {
+            "estimate": 0.10011014988023663,
+            "lower": 0.08792788974188719,
+            "upper": 0.11298063571114993,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "comparison": {
+            "estimate": 0.10001426275861193,
+            "lower": 0.08787863926969669,
+            "upper": 0.11260322766283294,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "delta": {
+            "estimate": -9.58871216247183e-05,
+            "lower": -0.00020029705280681512,
+            "upper": 6.506440139587743e-06,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "excluded_non_finite_pairs": 0
+        },
+        "brier_skill_score": {
+          "baseline": {
+            "estimate": 0.07642216156560175,
+            "lower": 0.048731730251571695,
+            "upper": 0.10071226397484127,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "comparison": {
+            "estimate": 0.07710043126609611,
+            "lower": 0.051453918161301515,
+            "upper": 0.10106875779520023,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "delta": {
+            "estimate": 0.0006782697004943525,
+            "lower": -0.0002843028593229146,
+            "upper": 0.001610575271818633,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "excluded_non_finite_pairs": 0
+        },
+        "ece": {
+          "baseline": {
+            "estimate": 0.04566111418988216,
+            "lower": 0.034630674114023804,
+            "upper": 0.058300377846081025,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "comparison": {
+            "estimate": 0.04573399917214475,
+            "lower": 0.03462563171286391,
+            "upper": 0.05858040107552891,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "delta": {
+            "estimate": 7.28849822625872e-05,
+            "lower": -0.0004554609402136781,
+            "upper": 0.000555881258069115,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "excluded_non_finite_pairs": 0
+        },
+        "alert_precision": {
+          "baseline": {
+            "estimate": 0.3449249385990556,
+            "lower": 0.3133248903261005,
+            "upper": 0.3750742433185682,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "comparison": {
+            "estimate": 0.34800591251371077,
+            "lower": 0.3158885266658268,
+            "upper": 0.37757300485807244,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "delta": {
+            "estimate": 0.0030809739146551184,
+            "lower": -0.00012195912167511259,
+            "upper": 0.006126416191100196,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "excluded_non_finite_pairs": 0
+        },
+        "alert_recall": {
+          "baseline": {
+            "estimate": 0.17539823337958063,
+            "lower": 0.14393127034379244,
+            "upper": 0.20747524037549725,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "comparison": {
+            "estimate": 0.17369741731407762,
+            "lower": 0.14379703378705266,
+            "upper": 0.20591353453071595,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "delta": {
+            "estimate": -0.0017008160655030292,
+            "lower": -0.005099855692112503,
+            "upper": 0.0014913339294085036,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "excluded_non_finite_pairs": 0
+        },
+        "watch_recall": {
+          "baseline": {
+            "estimate": 0.4712663502504282,
+            "lower": 0.4245586245616507,
+            "upper": 0.5137871158834948,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "comparison": {
+            "estimate": 0.4707858770845896,
+            "lower": 0.4268318114707611,
+            "upper": 0.5132370745579179,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "delta": {
+            "estimate": -0.0004804731658385668,
+            "lower": -0.0042261814516965845,
+            "upper": 0.003391021633589285,
+            "sample_count": 39,
+            "resamples": 4000,
+            "confidence": 0.95
+          },
+          "excluded_non_finite_pairs": 0
+        }
+      },
+      "fold_win_rate": {
+        "auc": 0.5641025641025641,
+        "pr_auc": 0.6153846153846154,
+        "brier_skill_score": 0.6153846153846154,
+        "alert_precision": 0.6923076923076923
+      }
+    }
+  }
+}
