@@ -7,7 +7,12 @@ from collections.abc import Sequence
 import pandas as pd
 
 from tsi.data.market_reference import MarketReference
-from tsi.features.market import MARKET_FEATURE_COLUMNS, build_market_features
+from tsi.features.market import (
+    MARKET_FEATURE_COLUMNS,
+    REGIME_FEATURE_COLUMNS,
+    RELATIVE_FEATURE_COLUMNS,
+    build_market_features,
+)
 from tsi.features.technical import DEFAULT_FEATURE_COLUMNS, build_technical_features
 from tsi.features.volatility import RANGE_FEATURE_COLUMNS, build_range_features
 
@@ -19,6 +24,17 @@ FEATURE_SETS: dict[str, tuple[str, ...]] = {
         *DEFAULT_FEATURE_COLUMNS,
         *RANGE_FEATURE_COLUMNS,
         *MARKET_FEATURE_COLUMNS,
+    ),
+    "technical_range_beta": (*DEFAULT_FEATURE_COLUMNS, *RANGE_FEATURE_COLUMNS, "beta_60d"),
+    "technical_range_relative": (
+        *DEFAULT_FEATURE_COLUMNS,
+        *RANGE_FEATURE_COLUMNS,
+        *RELATIVE_FEATURE_COLUMNS,
+    ),
+    "technical_range_regime": (
+        *DEFAULT_FEATURE_COLUMNS,
+        *RANGE_FEATURE_COLUMNS,
+        *REGIME_FEATURE_COLUMNS,
     ),
 }
 DEFAULT_FEATURE_SET = "technical"

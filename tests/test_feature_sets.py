@@ -73,6 +73,7 @@ def test_feature_sets_extend_the_technical_baseline_without_duplicates() -> None
     ]
     for columns in FEATURE_SETS.values():
         assert len(columns) == len(set(columns))
+    assert resolve_feature_set("technical_range_beta")[-1] == "beta_60d"
     assert not feature_set_requires_market_reference(resolve_feature_set("technical_range"))
     assert feature_set_requires_market_reference(resolve_feature_set("technical_market"))
 

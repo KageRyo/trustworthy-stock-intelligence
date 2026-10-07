@@ -15,17 +15,20 @@ from collections.abc import Mapping
 import numpy as np
 import pandas as pd
 
-MARKET_FEATURE_COLUMNS = [
+RELATIVE_FEATURE_COLUMNS = [
     "excess_return_5d",
     "excess_return_20d",
     "sector_excess_return_5d",
     "sector_excess_return_20d",
     "beta_60d",
+]
+REGIME_FEATURE_COLUMNS = [
     "market_return_5d",
     "market_drawdown_from_60d_high",
     "vix_level",
     "vix_change_5d",
 ]
+MARKET_FEATURE_COLUMNS = [*RELATIVE_FEATURE_COLUMNS, *REGIME_FEATURE_COLUMNS]
 
 _STOCK_COLUMNS = ("date", "ticker", "adj_close")
 _REFERENCE_COLUMNS = ("date", "ticker", "adj_close")
