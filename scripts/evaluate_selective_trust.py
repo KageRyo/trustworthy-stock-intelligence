@@ -18,6 +18,7 @@ import pandas as pd
 
 from scripts.walk_forward_experiment import (
     add_walk_forward_arguments,
+    fit_calibrated_logistic,
     load_walk_forward_folds,
     resolve_output_dir,
     walk_forward_protocol,
@@ -25,8 +26,7 @@ from scripts.walk_forward_experiment import (
 from tsi.data.csv import file_sha256
 from tsi.evaluation.selective import risk_coverage_curve, selective_summary
 from tsi.labeling.warning_level import select_alert_threshold
-from tsi.models.logistic import LogisticRiskModel
-from tsi.trust.calibration import CalibrationMethod, fit_probability_calibrator
+from tsi.trust.calibration import CalibrationMethod
 from tsi.trust.reliability import ReliabilityAssessor, ReliabilityConfig
 from tsi.trust.trust_score import (
     compute_reliability_trust,
@@ -75,13 +75,16 @@ def score_fold(
     train_labels = train_frame["risk_label"].to_numpy()
     calibration_labels = calibration_frame["risk_label"].to_numpy()
 
-    model = LogisticRiskModel().fit(train_features, train_labels)
-    raw_calibration = model.predict_proba(calibration_features)
-    calibrator = fit_probability_calibrator(
-        raw_calibration, calibration_labels, method=calibration_method
+    fit = fit_calibrated_logistic(
+        train_frame,
+        calibration_frame,
+        test_frame,
+        feature_columns=feature_columns,
+        calibration_method=calibration_method,
     )
-    calibrated_calibration = calibrator.predict(raw_calibration)
-    calibrated_test = calibrator.predict(model.predict_proba(test_features))
+    calibrator = fit.calibrator
+    calibrated_calibration = fit.calibration_probabilities
+    calibrated_test = fit.test_probabilities
     alert_threshold = select_alert_threshold(
         calibration_labels, calibrated_calibration, objective="f1"
     ).threshold

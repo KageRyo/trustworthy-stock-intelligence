@@ -17,6 +17,7 @@ import pandas as pd
 
 from scripts.walk_forward_experiment import (
     add_walk_forward_arguments,
+    fit_calibrated_logistic,
     load_walk_forward_folds,
     resolve_output_dir,
     walk_forward_protocol,
@@ -27,8 +28,7 @@ from tsi.labeling.warning_level import (
     parse_alert_policy,
     select_alert_threshold_by_policy,
 )
-from tsi.models.logistic import LogisticRiskModel
-from tsi.trust.calibration import CalibrationMethod, fit_probability_calibrator
+from tsi.trust.calibration import CalibrationMethod
 
 DEFAULT_POLICIES = (
     "f1,"
@@ -110,18 +110,16 @@ def score_fold(
     calibration_method: CalibrationMethod,
     feature_columns: Sequence[str],
 ) -> list[dict[str, object]]:
-    model = LogisticRiskModel().fit(
-        train_frame[feature_columns].to_numpy(), train_frame["risk_label"].to_numpy()
+    fit = fit_calibrated_logistic(
+        train_frame,
+        calibration_frame,
+        test_frame,
+        feature_columns=feature_columns,
+        calibration_method=calibration_method,
     )
-    raw_calibration = model.predict_proba(calibration_frame[feature_columns].to_numpy())
     calibration_labels = calibration_frame["risk_label"].to_numpy()
-    calibrator = fit_probability_calibrator(
-        raw_calibration, calibration_labels, method=calibration_method
-    )
-    calibrated_calibration = calibrator.predict(raw_calibration)
-    calibrated_test = calibrator.predict(
-        model.predict_proba(test_frame[feature_columns].to_numpy())
-    )
+    calibrated_calibration = fit.calibration_probabilities
+    calibrated_test = fit.test_probabilities
     test_labels = test_frame["risk_label"].to_numpy()
     episodes = drawdown_episodes(test_frame).to_numpy()
     tickers = int(test_frame["ticker"].nunique())

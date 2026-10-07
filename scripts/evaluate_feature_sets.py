@@ -22,6 +22,7 @@ from scripts.evaluate_alert_policies import drawdown_episodes, policy_test_metri
 from scripts.walk_forward_experiment import (
     FoldFrames,
     add_walk_forward_arguments,
+    fit_calibrated_logistic,
     load_walk_forward_folds,
     resolve_output_dir,
     walk_forward_protocol,
@@ -35,8 +36,7 @@ from tsi.labeling.warning_level import (
     parse_alert_policy,
     select_alert_threshold_by_policy,
 )
-from tsi.models.logistic import LogisticRiskModel
-from tsi.trust.calibration import CalibrationMethod, fit_probability_calibrator
+from tsi.trust.calibration import CalibrationMethod
 
 DEFAULT_FEATURE_SETS = ",".join(FEATURE_SETS)
 PAIRED_METRICS = (
@@ -108,17 +108,18 @@ def score_fold(
 ) -> tuple[dict[str, float], np.ndarray]:
     """Return test metrics and standardized logistic coefficients for one fold and set."""
 
-    columns = list(feature_columns)
+    fit = fit_calibrated_logistic(
+        item.train,
+        item.calibration,
+        item.test,
+        feature_columns=feature_columns,
+        calibration_method=calibration_method,
+    )
     train_labels = item.train["risk_label"].to_numpy()
     calibration_labels = item.calibration["risk_label"].to_numpy()
     test_labels = item.test["risk_label"].to_numpy()
-    model = LogisticRiskModel().fit(item.train[columns].to_numpy(), train_labels)
-    raw_calibration = model.predict_proba(item.calibration[columns].to_numpy())
-    calibrator = fit_probability_calibrator(
-        raw_calibration, calibration_labels, method=calibration_method
-    )
-    calibrated_calibration = calibrator.predict(raw_calibration)
-    calibrated_test = calibrator.predict(model.predict_proba(item.test[columns].to_numpy()))
+    calibrated_calibration = fit.calibration_probabilities
+    calibrated_test = fit.test_probabilities
 
     metrics = classification_metrics(test_labels, calibrated_test)
     prior_brier = float(np.mean((train_labels.mean() - test_labels) ** 2))
@@ -157,7 +158,7 @@ def score_fold(
         "watch_recall": watch["recall"],
         "watch_episode_recall": watch["episode_recall"],
     }
-    coefficients = model.pipeline.named_steps["classifier"].coef_[0]
+    coefficients = fit.model.pipeline.named_steps["classifier"].coef_[0]
     return row, coefficients
 
 

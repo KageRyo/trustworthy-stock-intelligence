@@ -7,6 +7,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
 from scripts.train import prepare_training_frame
@@ -18,6 +19,12 @@ from tsi.features.sets import (
     FEATURE_SETS,
     feature_set_requires_market_reference,
     resolve_feature_set,
+)
+from tsi.models.logistic import LogisticRiskModel
+from tsi.trust.calibration import (
+    CalibrationMethod,
+    ProbabilityCalibrator,
+    fit_probability_calibrator,
 )
 
 
@@ -162,6 +169,40 @@ def load_walk_forward_folds(
         skipped=skipped,
         feature_columns=columns,
         market_reference_dir=args.market_reference if market_reference is not None else None,
+    )
+
+
+@dataclass(frozen=True)
+class CalibratedLogisticFit:
+    """Logistic baseline fit on train rows and calibrated on calibration rows."""
+
+    model: LogisticRiskModel
+    calibrator: ProbabilityCalibrator
+    calibration_probabilities: np.ndarray
+    test_probabilities: np.ndarray
+
+
+def fit_calibrated_logistic(
+    train: pd.DataFrame,
+    calibration: pd.DataFrame,
+    test: pd.DataFrame,
+    *,
+    feature_columns: Sequence[str],
+    calibration_method: CalibrationMethod,
+) -> CalibratedLogisticFit:
+    """Fit the baseline and calibrator; probabilities are calibrated for both windows."""
+
+    columns = list(feature_columns)
+    model = LogisticRiskModel().fit(train[columns].to_numpy(), train["risk_label"].to_numpy())
+    raw_calibration = model.predict_proba(calibration[columns].to_numpy())
+    calibrator = fit_probability_calibrator(
+        raw_calibration, calibration["risk_label"].to_numpy(), method=calibration_method
+    )
+    return CalibratedLogisticFit(
+        model=model,
+        calibrator=calibrator,
+        calibration_probabilities=calibrator.predict(raw_calibration),
+        test_probabilities=calibrator.predict(model.predict_proba(test[columns].to_numpy())),
     )
 
 
