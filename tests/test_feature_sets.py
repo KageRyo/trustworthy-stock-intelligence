@@ -103,10 +103,16 @@ def test_full_feature_frame_builds_all_columns_and_keeps_ticker_strings() -> Non
 
 
 def test_market_columns_require_reference() -> None:
+    ohlcv = _ohlcv()
+    columns = resolve_feature_set("technical_market")
+
     with pytest.raises(ValueError, match="market reference"):
-        build_feature_frame(_ohlcv(), resolve_feature_set("technical_market"))
+        build_feature_frame(ohlcv, columns)
 
 
 def test_unknown_columns_are_rejected() -> None:
+    ohlcv = _ohlcv()
+    columns = [*DEFAULT_FEATURE_COLUMNS, "not_a_feature"]
+
     with pytest.raises(ValueError, match="not_a_feature"):
-        build_feature_frame(_ohlcv(), [*DEFAULT_FEATURE_COLUMNS, "not_a_feature"])
+        build_feature_frame(ohlcv, columns)

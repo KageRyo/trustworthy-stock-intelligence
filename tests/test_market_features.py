@@ -132,10 +132,13 @@ def test_stale_reference_beyond_tolerance_is_missing() -> None:
 
 
 def test_missing_market_symbol_is_rejected() -> None:
+    stocks = _prices(_market(), "AAPL")
+    reference = _reference()
+
     with pytest.raises(ValueError, match="QQQ"):
         build_market_features(
-            _prices(_market(), "AAPL"),
-            _reference(),
+            stocks,
+            reference,
             market_symbol="QQQ",
             volatility_symbol=None,
             sector_etf_by_ticker={},
