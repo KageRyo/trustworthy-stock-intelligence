@@ -347,7 +347,9 @@ export default function App() {
       setHistoryState("idle");
       const canQueueAsync =
         error instanceof APIClientError &&
-        (error.code === "ticker_not_found" || error.code === "on_demand_analysis_failed");
+        (error.code === "ticker_not_found" ||
+          error.code === "on_demand_analysis_failed" ||
+          error.code === "on_demand_analysis_busy");
       if (canQueueAsync) {
         if (allowAsyncFallback) {
           try {
@@ -364,9 +366,11 @@ export default function App() {
           }
         }
         setAnalysisError(
-          error instanceof APIClientError && error.code === "ticker_not_found"
+          error.code === "ticker_not_found"
             ? copy.errors.noMarketData(normalized)
-            : errorMessage(error, copy)
+            : error.code === "on_demand_analysis_busy"
+              ? copy.errors.onDemandBusy
+              : errorMessage(error, copy)
         );
         setAnalysisState("error");
         return;

@@ -508,14 +508,15 @@ describe("typed API client", () => {
     });
   });
 
-  it("uses the typed API error envelope when available", async () => {
-    fetchMock.mockResolvedValueOnce(
-      jsonResponse({ error: { code: "ticker_not_found", message: "ticker not found" } }, 404)
-    );
+  it.each([
+    { code: "ticker_not_found", status: 404 },
+    { code: "on_demand_analysis_busy", status: 429 }
+  ])("uses the typed API error envelope for $code", async ({ code, status }) => {
+    fetchMock.mockResolvedValueOnce(jsonResponse({ error: { code, message: "typed failure" } }, status));
 
     await expect(fetchTickerAnalysis("9999")).rejects.toMatchObject({
-      code: "ticker_not_found",
-      status: 404
+      code,
+      status
     } satisfies Partial<APIClientError>);
   });
 
