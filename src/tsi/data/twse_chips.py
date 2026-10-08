@@ -253,6 +253,44 @@ class BackfillReport:
     no_data: list[str] = field(default_factory=list)
 
 
+@dataclass
+class _PacedFetcher:
+    """Space requests ``min_interval_seconds`` apart and retry failures with backoff."""
+
+    fetcher: JsonFetcher
+    min_interval_seconds: float
+    max_attempts: int
+    backoff_seconds: float
+    sleep: Callable[[float], None]
+    clock: Callable[[], float]
+    last_request: float = float("-inf")
+
+    def _wait_turn(self) -> None:
+        wait = self.min_interval_seconds - (self.clock() - self.last_request)
+        if wait > 0:
+            self.sleep(wait)
+        self.last_request = self.clock()
+
+    def fetch_validated(
+        self, kind: ChipKind, trading_date: str
+    ) -> tuple[dict[str, object] | None, bool, str]:
+        """Return ``(payload, has_rows, error)``; ``error`` is set only after every attempt."""
+
+        url, params = chip_request(kind, trading_date)
+        error = ""
+        for attempt in range(self.max_attempts):
+            self._wait_turn()
+            try:
+                payload = self.fetcher(url, params)
+                return payload, bool(parse_chip_payload(kind, payload)), ""
+            # Provider and schema failures are retried with backoff, then reported.
+            except Exception as exc:  # noqa: BLE001
+                error = f"{type(exc).__name__}: {exc}"
+                if attempt + 1 < self.max_attempts:
+                    self.sleep(self.backoff_seconds * (2**attempt))
+        return None, False, error
+
+
 def backfill_chip_archive(
     trading_dates: Iterable[str],
     *,
@@ -276,38 +314,29 @@ def backfill_chip_archive(
     """
 
     report = BackfillReport()
-    last_request = float("-inf")
+    paced = _PacedFetcher(
+        fetcher=fetcher,
+        min_interval_seconds=min_interval_seconds,
+        max_attempts=max_attempts,
+        backoff_seconds=backoff_seconds,
+        sleep=sleep,
+        clock=clock,
+    )
     for trading_date in trading_dates:
         for kind in kinds:
             path = archive_path(archive_dir, kind, trading_date)
             if path.exists():
                 report.cached += 1
                 continue
-            url, params = chip_request(kind, trading_date)
-            error = ""
-            empty = False
-            for attempt in range(max_attempts):
-                wait = min_interval_seconds - (clock() - last_request)
-                if wait > 0:
-                    sleep(wait)
-                last_request = clock()
-                try:
-                    payload = fetcher(url, params)
-                    empty = not parse_chip_payload(kind, payload)
-                except Exception as exc:  # noqa: BLE001 - retried, then reported
-                    error = f"{type(exc).__name__}: {exc}"
-                    if attempt + 1 < max_attempts:
-                        sleep(backoff_seconds * (2**attempt))
-                    continue
-                error = ""
-                if empty:
-                    report.no_data.append(f"{kind}:{trading_date}")
-                else:
-                    write_archive_payload(path, payload)
-                    report.fetched += 1
-                break
+            payload, has_rows, error = paced.fetch_validated(kind, trading_date)
+            key = f"{kind}:{trading_date}"
             if error:
-                report.failed[f"{kind}:{trading_date}"] = error
+                report.failed[key] = error
+            elif not has_rows:
+                report.no_data.append(key)
+            elif payload is not None:
+                write_archive_payload(path, payload)
+                report.fetched += 1
             if log is not None and (report.fetched + len(report.failed)) % 50 == 0:
                 log(
                     f"{kind} {trading_date}: fetched={report.fetched} "
