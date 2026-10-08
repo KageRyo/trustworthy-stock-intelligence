@@ -326,6 +326,8 @@ paths:
                 $ref: "#/components/schemas/TickerAnalysisResponse"
         "404":
           $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/OnDemandBusy"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
   /api/v1/analysis/{ticker}/history:
@@ -355,6 +357,8 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "404":
           $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/OnDemandBusy"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
   /api/v1/analysis/{ticker}/transitions:
@@ -425,6 +429,17 @@ components:
             $ref: "#/components/schemas/ErrorResponse"
     NotFound:
       description: Ticker was not found and could not be generated on demand.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    OnDemandBusy:
+      description: Every on-demand analysis slot is in use (error code on_demand_analysis_busy). Retry after the Retry-After seconds or queue a prediction job.
+      headers:
+        Retry-After:
+          description: Seconds to wait before retrying.
+          schema:
+            type: integer
       content:
         application/json:
           schema:

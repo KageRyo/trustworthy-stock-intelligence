@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+### Added
+
+- On-demand analysis protects the Go API from request bursts:
+  - concurrent requests for the same ticker share one run;
+  - `TSI_ON_DEMAND_MAX_CONCURRENCY` (default 2) caps how many tickers run at once;
+  - extra tickers get `429 on_demand_analysis_busy` with `Retry-After`, and the dashboard queues a
+    prediction job for them instead of failing;
+  - a disconnecting client no longer cancels a run that other requests share.
+
 ### Fixed
 
 - Freshness treated a date-only `data_as_of` as 23:59:59 UTC. As a result, every daily prediction

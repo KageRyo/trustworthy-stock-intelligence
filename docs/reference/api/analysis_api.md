@@ -203,10 +203,17 @@ Errors use the shared typed envelope from the warning API:
 
 Known analysis endpoint errors:
 
-| HTTP Status | Code                        | Meaning                                                           |
-| ----------- | --------------------------- | ----------------------------------------------------------------- |
-| `404`       | `ticker_not_found`          | The ticker is missing and was not produced by on-demand analysis. |
-| `503`       | `on_demand_analysis_failed` | The configured on-demand analysis command failed or timed out.    |
+| HTTP Status | Code                        | Meaning                                                                                               |
+| ----------- | --------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `404`       | `ticker_not_found`          | The ticker is missing and was not produced by on-demand analysis.                                     |
+| `429`       | `on_demand_analysis_busy`   | Every on-demand analysis slot is in use. Retry after `Retry-After` seconds or queue a prediction job. |
+| `503`       | `on_demand_analysis_failed` | The configured on-demand analysis command failed or timed out.                                        |
+
+On-demand analysis runs one analysis per ticker at a time. Concurrent requests for the same ticker
+share one run. `TSI_ON_DEMAND_MAX_CONCURRENCY` caps how many different tickers run at once (default
+2). A request for another ticker while every slot is busy gets `429` immediately instead of waiting,
+and the dashboard then queues a prediction job. A client that disconnects stops waiting but does not
+cancel a run other requests share. The command timeout still applies.
 
 ## Schema Ownership
 
