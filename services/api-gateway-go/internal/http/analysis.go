@@ -42,6 +42,7 @@ type TrustAssessment struct {
 	CalibrationMethod string  `json:"calibration_method"`
 	TrustStatus       string  `json:"trust_status"`
 	UncertaintyStatus string  `json:"uncertainty_status"`
+	SummaryCode       string  `json:"summary_code"`
 	Summary           string  `json:"summary"`
 }
 
@@ -85,6 +86,7 @@ func buildTickerAnalysis(
 		inferTickerMarket(record.Ticker),
 		featureInterval,
 	)
+	trustSummaryCode, trustSummaryText := trustSummary(record)
 	return TickerAnalysisResponse{
 		SchemaVersion: analysisSchemaVersion,
 		Ticker:        record.Ticker,
@@ -106,7 +108,8 @@ func buildTickerAnalysis(
 			CalibrationMethod: record.CalibrationMethod,
 			TrustStatus:       trustStatus(record.ReasonCodes),
 			UncertaintyStatus: uncertaintyStatus(record.ReasonCodes),
-			Summary:           trustSummary(record),
+			SummaryCode:       trustSummaryCode,
+			Summary:           trustSummaryText,
 		},
 		Model: ModelAnalysis{
 			Name:        record.Model,
@@ -169,32 +172,74 @@ func warningSummary(record warnings.PredictionRecord) string {
 	}
 }
 
-func trustSummary(record warnings.PredictionRecord) string {
-	if hasReason(record.ReasonCodes, "calibration_drift_abstain") {
-		return "Calibration drift crossed the abstention gate, so this output is not reliable enough for a warning."
+// trustSummaryRule maps reason codes to a stable summary code for the dashboard to localize,
+// plus an English fallback. Rules are checked in order and the first match wins.
+type trustSummaryRule struct {
+	reasonCodes []string
+	code        string
+	text        string
+}
+
+const trustSummaryDefaultCode = "default"
+
+var trustSummaryRules = []trustSummaryRule{
+	{
+		[]string{"insufficient_history"},
+		"insufficient_history",
+		"The ticker has market data, but not enough labeled history for a calibrated risk prediction.",
+	},
+	{
+		[]string{"calibration_drift_abstain"},
+		"calibration_drift_abstain",
+		"Calibration drift crossed the abstention gate, so this output is not reliable enough for a warning.",
+	},
+	{
+		[]string{"calibration_drift_detected"},
+		"calibration_drift_detected",
+		"Calibration drift was detected and the trust score was reduced for this output.",
+	},
+	{
+		[]string{"calibration_drift_not_evaluated"},
+		"calibration_drift_not_evaluated",
+		"Calibration drift was not evaluated because no later labeled window was available.",
+	},
+	{
+		[]string{"reliability_unavailable"},
+		"reliability_unavailable",
+		"Reliability could not be assessed for this batch, so trust was set to zero.",
+	},
+	{
+		[]string{"stale_ticker_data", "limited_data_quality"},
+		"limited_data_quality",
+		"Data quality is limited (short labeled history or stale bars), so trust was reduced.",
+	},
+	{
+		[]string{"uncertainty_above_threshold"},
+		"high_uncertainty",
+		"Uncertainty is above the configured threshold, so the model output should be treated cautiously.",
+	},
+	{
+		[]string{"trust_above_alert_threshold"},
+		"trusted_for_alert",
+		"Trust score is above the configured alert threshold for this batch.",
+	},
+	{
+		[]string{"trust_below_alert_threshold"},
+		"limited_trust",
+		"Trust score is below the configured alert threshold for this batch.",
+	},
+}
+
+// trustSummary returns the summary code and English text for the first matching rule.
+func trustSummary(record warnings.PredictionRecord) (string, string) {
+	for _, rule := range trustSummaryRules {
+		for _, reasonCode := range rule.reasonCodes {
+			if hasReason(record.ReasonCodes, reasonCode) {
+				return rule.code, rule.text
+			}
+		}
 	}
-	if hasReason(record.ReasonCodes, "calibration_drift_detected") {
-		return "Calibration drift was detected and the trust score was reduced for this output."
-	}
-	if hasReason(record.ReasonCodes, "calibration_drift_not_evaluated") {
-		return "Calibration drift was not evaluated because no later labeled window was available."
-	}
-	if hasReason(record.ReasonCodes, "reliability_unavailable") {
-		return "Reliability could not be assessed for this batch, so trust was set to zero."
-	}
-	if hasReason(record.ReasonCodes, "stale_ticker_data") || hasReason(record.ReasonCodes, "limited_data_quality") {
-		return "Data quality is limited (short labeled history or stale bars), so trust was reduced."
-	}
-	if hasReason(record.ReasonCodes, "uncertainty_above_threshold") {
-		return "Uncertainty is above the configured threshold, so the model output should be treated cautiously."
-	}
-	if hasReason(record.ReasonCodes, "trust_above_alert_threshold") {
-		return "Trust score is above the configured alert threshold for this batch."
-	}
-	if hasReason(record.ReasonCodes, "trust_below_alert_threshold") {
-		return "Trust score is below the configured alert threshold for this batch."
-	}
-	return "Trust assessment is based on data quality and calibration drift; uncertainty is reported separately."
+	return trustSummaryDefaultCode, "Trust assessment is based on data quality and calibration drift; uncertainty is reported separately."
 }
 
 func trustStatus(reasonCodes []string) string {

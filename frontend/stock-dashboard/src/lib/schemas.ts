@@ -69,6 +69,7 @@ export const trustAssessmentSchema = z
     calibration_method: z.string(),
     trust_status: z.string(),
     uncertainty_status: z.string(),
+    summary_code: z.string(),
     summary: z.string()
   })
   .strict();

@@ -60,14 +60,19 @@ Taiwan local tickers are string symbols. Numeric and alphanumeric inputs such as
 
 ### `TrustAssessment`
 
-| Field                | Type   | Description                                                                             |
-| -------------------- | ------ | --------------------------------------------------------------------------------------- |
-| `trust_score`        | number | Usability in `[0, 1]` from data quality and calibration drift; independent of risk.     |
-| `uncertainty_score`  | number | Ensemble disagreement and feature novelty, ranked against the calibration window.       |
-| `calibration_method` | string | Calibration method used by the model bundle.                                            |
-| `trust_status`       | string | Derived trust status, for example `trusted_for_alert` or `limited_trust`.               |
-| `uncertainty_status` | string | Derived uncertainty status, for example `acceptable_uncertainty` or `high_uncertainty`. |
-| `summary`            | string | Human-readable trust assessment.                                                        |
+| Field                | Type   | Description                                                                                                               |
+| -------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------- |
+| `trust_score`        | number | Usability in `[0, 1]` from data quality and calibration drift; independent of risk.                                       |
+| `uncertainty_score`  | number | Ensemble disagreement and feature novelty, ranked against the calibration window.                                         |
+| `calibration_method` | string | Calibration method used by the model bundle.                                                                              |
+| `trust_status`       | string | Derived trust status, for example `trusted_for_alert` or `limited_trust`.                                                 |
+| `uncertainty_status` | string | Derived uncertainty status, for example `acceptable_uncertainty` or `high_uncertainty`.                                   |
+| `summary_code`       | string | Stable trust summary code, for example `limited_data_quality` or `calibration_drift_abstain`. The dashboard localizes it. |
+| `summary`            | string | English trust summary for `summary_code`; clients fall back to it for unknown codes.                                      |
+
+The Go API picks `summary_code` from the record's reason codes with one ordered rule table. The
+dashboard translates the code with its i18n dictionary, and translates the freshness message by
+`freshness.reason_code`, so neither card shows the English API text in 正體中文.
 
 Batches produced with `--trust-method legacy` derive both scores from the risk probability. See
 [Experiment 015](../../experiments/015_reliability_trust/README.md) for why the default changed.

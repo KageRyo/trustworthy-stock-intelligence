@@ -1296,13 +1296,24 @@ func TestTrustStatusIsLimitedForDataQualityReasons(t *testing.T) {
 	}
 }
 
-func TestTrustSummaryExplainsLimitedDataQuality(t *testing.T) {
-	summary := trustSummary(warnings.PredictionRecord{
-		ReasonCodes: []string{"trust_above_alert_threshold", "limited_data_quality"},
-	})
-
-	if !strings.Contains(strings.ToLower(summary), "data quality") {
-		t.Fatalf("unexpected trust summary: %q", summary)
+func TestTrustSummaryCodesFollowRulePrecedence(t *testing.T) {
+	cases := []struct {
+		reasons []string
+		code    string
+	}{
+		{[]string{"trust_above_alert_threshold", "limited_data_quality"}, "limited_data_quality"},
+		{[]string{"stale_ticker_data"}, "limited_data_quality"},
+		{[]string{"limited_data_quality", "calibration_drift_detected"}, "calibration_drift_detected"},
+		{[]string{"calibration_drift_detected", "insufficient_history"}, "insufficient_history"},
+		{[]string{"uncertainty_above_threshold", "trust_above_alert_threshold"}, "high_uncertainty"},
+		{[]string{"trust_below_alert_threshold"}, "limited_trust"},
+		{nil, "default"},
+	}
+	for _, testCase := range cases {
+		code, text := trustSummary(warnings.PredictionRecord{ReasonCodes: testCase.reasons})
+		if code != testCase.code || text == "" {
+			t.Fatalf("reasons %v: got code %q text %q, want code %q", testCase.reasons, code, text, testCase.code)
+		}
 	}
 }
 
