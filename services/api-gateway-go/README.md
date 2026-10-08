@@ -116,11 +116,11 @@ The service requires PostgreSQL through `TSI_DATABASE_URL`. It does not call Pyt
 command before the handler returns.
 
 `/api/v1/analysis/{ticker}` returns a typed dashboard analysis schema built from the latest warning
-record. See `docs/api/analysis_api.md`.
+record. See `docs/reference/api/analysis_api.md`.
 
 `/api/v1/analysis/{ticker}/transitions` returns deterministic warning-change events such as
 `new_alert`, `upgraded`, `resolved`, and `low_trust_warning`. Repeated identical snapshots are
-omitted. See the root `docs/warning_transitions.md` for semantics.
+omitted. See the root `docs/operations/warning_transitions.md` for semantics.
 
 `/api/v1/tickers` returns the symbols that currently have PostgreSQL warning records. It is not a
 complete market universe endpoint.
@@ -136,7 +136,7 @@ Missing `TSI_DATABASE_URL` or an unreachable database is a startup error.
 Prediction work is queued in PostgreSQL with an idempotency key and returns `202 Accepted`; a
 separate Python worker claims the job and writes the linked prediction batch and warning records.
 Query `GET /api/v1/prediction-jobs/{id}` for `queued`, `running`, `completed`, or typed `failed`
-state. See the root `docs/prediction_jobs.md` for worker startup and retry semantics.
+state. See the root `docs/operations/prediction_jobs.md` for worker startup and retry semantics.
 
 The lightweight Docker image contains only the Go API binary. Use the local `make api` workflow for
 on-demand Python analysis, or build a combined runtime/worker image before enabling

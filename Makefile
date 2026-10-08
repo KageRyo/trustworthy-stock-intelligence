@@ -49,6 +49,7 @@ docs-format:
 
 docs-check:
 	$(MDFORMAT) --check --wrap 100 $(MARKDOWN_FILES)
+	python3 -m scripts.check_markdown_links
 
 download-tickers:
 	$(PYTHON) -m scripts.download_tickers \

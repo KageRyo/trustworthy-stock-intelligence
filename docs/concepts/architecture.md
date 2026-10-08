@@ -144,7 +144,8 @@ GET /api/v1/models/current
 ```
 
 The analysis endpoint is schema-owned by Go structs in
-`services/api-gateway-go/internal/http/analysis.go` and documented in `docs/api/analysis_api.md`.
+`services/api-gateway-go/internal/http/analysis.go` and documented in
+`docs/reference/api/analysis_api.md`.
 
 Streamlit has two views:
 

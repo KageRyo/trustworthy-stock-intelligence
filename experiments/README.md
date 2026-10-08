@@ -1,0 +1,49 @@
+# Experiments
+
+Each experiment directory holds a `README.md` report and, for reproducible runs, a
+`run_manifest.json` with input and output hashes. Small aggregate outputs are committed under
+`runs/`; raw provider data and large prediction files stay outside Git.
+
+Reports are research evidence for this pilot, not investment advice or trading-performance claims.
+
+## How to read this index
+
+- **Current evidence** supports a decision that the served system still relies on. The decision
+  records in [`docs/decisions/`](../docs/decisions/README.md) link to these reports.
+- **Foundation** defines a protocol, label, or data asset that later experiments reuse.
+- **Pilot** is a reproducible result with explicit coverage limits that does not drive serving.
+- **Superseded** is kept for provenance. The replacement is named.
+
+## Index
+
+| ID                                                  | Question                                                                                      | Outcome                                                                                             | Role today                                                                           |
+| --------------------------------------------------- | --------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| [000](000_problem_definition/README.md)             | What is the drawdown-risk warning problem and its scope?                                      | Framing and exclusions                                                                              | Foundation                                                                           |
+| [001](001_risk_labeling/README.md)                  | How should future-drawdown labels be defined?                                                 | Five-day, -5% drawdown label                                                                        | Foundation (label still served)                                                      |
+| [002](002_baseline_models/README.md)                | How do first baseline models perform?                                                         | Preliminary table without label purging                                                             | Superseded by 007                                                                    |
+| [003](003_calibration/README.md)                    | Does probability calibration help?                                                            | Calibration tooling and first comparisons                                                           | Superseded by 007                                                                    |
+| [004](004_explainability/README.md)                 | Which explanation factors should warnings show?                                               | Reason-code and attribution scope                                                                   | Foundation                                                                           |
+| [005](005_temporal_transformer_trust/README.md)     | Does a Temporal Transformer closed loop with trust scoring work end to end?                   | Working deep-learning pipeline; old probability-derived trust                                       | Superseded by 011 and 015                                                            |
+| [006](006_recall_oriented_trust_policy/README.md)   | Which warning policies trade precision for recall?                                            | Candidate recall-oriented policies from a threshold sweep                                           | Superseded by 016                                                                    |
+| [007](007_research_evidence/README.md)              | Does calibration hold under purged walk-forward evaluation?                                   | Purged `252 / 5 / 63 / 5 / 63` protocol; Platt calibration improves Brier and ECE in 38 of 39 folds | Foundation (protocol still used)                                                     |
+| [008](008_model_family_comparison/README.md)        | Which baseline model family is best under the purged protocol?                                | First purged comparison                                                                             | Superseded by 013                                                                    |
+| [009](009_taiwan_pilot/README.md)                   | Does the baseline run on Taiwan stocks?                                                       | Six-ticker Taiwan pilot                                                                             | Pilot                                                                                |
+| [010](010_cross_market_transfer/README.md)          | Do models transfer between US and Taiwan markets?                                             | Within- and cross-market transfer results                                                           | Pilot                                                                                |
+| [011](011_deep_alignment/README.md)                 | Does the Transformer beat the baseline on identical folds?                                    | More recall at its threshold, worse calibration and false-alarm rates                               | Current evidence for keeping the logistic baseline                                   |
+| [012](012_taiwan_universe_capture/README.md)        | What is the current official Taiwan company universe?                                         | Dated TWSE, TPEx, and emerging catalogue capture                                                    | Foundation (sampling for 018)                                                        |
+| [013](013_aligned_model_family_benchmark/README.md) | Which of logistic, random forest, gradient boosting, and Transformer is best on aligned rows? | Logistic regression has the best calibrated AUC, calibration, and false-discovery rate              | Current evidence for the served model family                                         |
+| [014](014_taiwan_listed_tpex_pilot/README.md)       | Does the baseline hold on TWSE and TPEx listed stocks?                                        | Six-company pilot, calibrated AUC about 0.56                                                        | Pilot                                                                                |
+| [015](015_reliability_trust/README.md)              | Can trust and uncertainty be made independent of the risk probability?                        | Epistemic uncertainty does not find less reliable predictions; it must not block alerts             | Current evidence ([ADR 0002](../docs/decisions/0002-trust-independent-of-risk.md))   |
+| [016](016_alert_policy/README.md)                   | Which calibration-window threshold policy should serving use?                                 | `alert_rate:0.05` alerts and `alert_rate:0.2` watch; precision targets do not transfer              | Current evidence ([ADR 0003](../docs/decisions/0003-alert-rate-threshold-policy.md)) |
+| [017](017_feature_sets/README.md)                   | Do range, market-relative, or market-regime features improve discrimination?                  | Range volatility raises AUC by 0.023 to 0.029 in three samples; regime features hurt                | Current evidence ([ADR 0004](../docs/decisions/0004-range-volatility-features.md))   |
+| [018](018_taiwan_chip_features/README.md)           | Do Taiwan institutional-flow and margin features help?                                        | No gain on 50 large caps or a 199-stock holdout                                                     | Current evidence ([ADR 0005](../docs/decisions/0005-no-taiwan-chip-features.md))     |
+
+## Adding an experiment
+
+1. Use the next free three-digit ID and a short snake_case name, for example `019_label_variants`.
+1. Reuse `scripts/walk_forward_experiment.py` so folds, calibration, and protocol fields match
+   earlier runs. Compare feature sets with `scripts/evaluate_feature_sets.py` when possible.
+1. Write `README.md` with these sections: Question, Data, Protocol, Result, Findings, Decision for
+   serving, Reproduce, Limitations. Record hashes in `run_manifest.json`.
+1. Add a row to this index. If the result changes serving, add or update a decision record in
+   [`docs/decisions/`](../docs/decisions/README.md).

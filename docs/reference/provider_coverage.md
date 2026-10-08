@@ -84,17 +84,17 @@ the resolved symbol and its retention rules.
   thinly traded symbols may have no usable response.
 - The current research pilots use current-universe or selected-symbol samples; this does not remove
   survivorship, sector, liquidity, market-cap, or provider availability bias. See
-  [research readiness](research_readiness.md) and
+  [research readiness](../research/research_readiness.md) and
   [issue #29](https://github.com/KageRyo/trustworthy-stock-intelligence/issues/29).
 - Official exchange responses and Yahoo Finance data have separate terms and redistribution
-  constraints. See [data and model licenses](data_and_model_licenses.md) before publishing raw bars
-  or provider payloads.
+  constraints. See [data and model licenses](../concepts/data_and_model_licenses.md) before
+  publishing raw bars or provider payloads.
 - Coverage metadata should be treated as a point-in-time observation. It must be refreshed when
   provider adapters, symbol catalogues, or exchange rules change.
 
 ## Related Runbooks and Contracts
 
-- [User guide](user_guide.md) for ticker input and Taiwan fallback behavior.
+- [User guide](../guides/user_guide.md) for ticker input and Taiwan fallback behavior.
 - [Data store](data_store.md) for PostgreSQL market-bar persistence.
-- [Local demo](demo/local_demo.md) for running the DB-backed serving path.
-- [Roadmap](project_roadmap.md) for the current `v0.7.0` operational-prototype priorities.
+- [Local demo](../guides/local_demo.md) for running the DB-backed serving path.
+- [Roadmap](../roadmap.md) for the current `v0.7.0` operational-prototype priorities.

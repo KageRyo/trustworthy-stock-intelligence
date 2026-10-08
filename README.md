@@ -52,8 +52,8 @@ python -m pip install "trustworthy-stock-intelligence[data]"
 
 The Go API, PostgreSQL schema, workers, and TypeScript dashboard remain the full-stack operational
 prototype described below; they are not bundled into the PyPI wheel. See
-[`docs/python-package.md`](docs/python-package.md) for the package API, extras, local build checks,
-and Trusted Publishing setup.
+[`docs/guides/python_package.md`](docs/guides/python_package.md) for the package API, extras, local
+build checks, and Trusted Publishing setup.
 
 ## Current Status
 
@@ -316,22 +316,22 @@ docs/README.md
 
 High-traffic documents:
 
-| Need                                           | Document                                              |
-| ---------------------------------------------- | ----------------------------------------------------- |
-| Use the Python package or CLI                  | `docs/python-package.md`                              |
-| Use the dashboard and ticker search            | `docs/user_guide.md`                                  |
-| Run the local demo                             | `docs/demo/local_demo.md`                             |
-| Understand the system architecture             | `docs/architecture.md`                                |
-| Understand PostgreSQL and provider data        | `docs/data_store.md`                                  |
-| Review supported markets and provider coverage | `docs/provider_coverage.md`                           |
-| Read API contracts                             | `docs/api/warning_api.md`, `docs/api/analysis_api.md` |
-| Review trustworthy AI checkpoints              | `docs/trustworthy_ai_checklist.md`                    |
-| Review research evidence and gaps              | `experiments/007_research_evidence/README.md`         |
-| Review data/model licensing                    | `docs/data_and_model_licenses.md`                     |
-| Review public/private boundaries               | `docs/public_private_boundary.md`                     |
-| Develop and test changes                       | `docs/development.md`                                 |
-| Cite or contribute                             | `CITATION.cff`, `CONTRIBUTING.md`                     |
-| Review release notes                           | `CHANGELOG.md`                                        |
+| Need                                           | Document                                                                  |
+| ---------------------------------------------- | ------------------------------------------------------------------------- |
+| Use the Python package or CLI                  | `docs/guides/python_package.md`                                           |
+| Use the dashboard and ticker search            | `docs/guides/user_guide.md`                                               |
+| Run the local demo                             | `docs/guides/local_demo.md`                                               |
+| Understand the system architecture             | `docs/concepts/architecture.md`                                           |
+| Understand PostgreSQL and provider data        | `docs/reference/data_store.md`                                            |
+| Review supported markets and provider coverage | `docs/reference/provider_coverage.md`                                     |
+| Read API contracts                             | `docs/reference/api/warning_api.md`, `docs/reference/api/analysis_api.md` |
+| Review trustworthy AI checkpoints              | `docs/concepts/trustworthy_ai_checklist.md`                               |
+| Review research evidence and gaps              | `experiments/007_research_evidence/README.md`                             |
+| Review data/model licensing                    | `docs/concepts/data_and_model_licenses.md`                                |
+| Review public/private boundaries               | `docs/concepts/public_private_boundary.md`                                |
+| Develop and test changes                       | `docs/guides/development.md`                                              |
+| Cite or contribute                             | `CITATION.cff`, `CONTRIBUTING.md`                                         |
+| Review release notes                           | `CHANGELOG.md`                                                            |
 
 ## Development Checks
 
@@ -374,7 +374,7 @@ Project targets:
 | PostgreSQL container | `17-alpine`                            |
 
 Portable requirements, the current maintainer workstation, and historical GPU experiment provenance
-are separated in `docs/environment.md`.
+are separated in `docs/guides/environment.md`.
 
 ## Repository Layout
 
@@ -395,7 +395,7 @@ experiments/              Experiment notes and reports
 Repository source code and documentation are Apache License 2.0. That license does not grant rights
 to downloaded Yahoo Finance, TWSE, or TPEx data. Raw data and local model artifacts are gitignored;
 users must comply with each provider's terms and separately review redistribution or commercial use.
-See `docs/data_and_model_licenses.md`.
+See `docs/concepts/data_and_model_licenses.md`.
 
 ## Roadmap
 
@@ -403,8 +403,8 @@ The v0.7.0 scope preserves the operational prototype: scheduled 5-minute watchli
 provider health and freshness/stale-state handling, queue-backed prediction jobs, warning-change
 detection, and richer session-scoped watchlists. Point-in-time identity/import/benchmark engineering
 supports research readiness, but licensed historical constituents and inactive/delisted OHLCV are
-still required before Issue #29 can be closed. Detailed work lives in `docs/project_roadmap.md` and
-`docs/backlog.md`.
+still required before Issue #29 can be closed. Detailed work lives in
+[`docs/roadmap.md`](docs/roadmap.md).
 
 ## License
 

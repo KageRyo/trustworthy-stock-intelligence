@@ -406,12 +406,12 @@ func TestSwaggerHandler(t *testing.T) {
 }
 
 func TestEmbeddedOpenAPISpecMatchesDocsSpec(t *testing.T) {
-	docsSpec, err := os.ReadFile(filepath.Join("..", "..", "..", "..", "docs", "api", "openapi.yaml"))
+	docsSpec, err := os.ReadFile(filepath.Join("..", "..", "..", "..", "docs", "reference", "api", "openapi.yaml"))
 	if err != nil {
 		t.Fatalf("read docs openapi spec: %v", err)
 	}
 	if string(openAPISpec) != string(docsSpec) {
-		t.Fatal("embedded openapi spec must match docs/api/openapi.yaml")
+		t.Fatal("embedded openapi spec must match docs/reference/api/openapi.yaml")
 	}
 }
 

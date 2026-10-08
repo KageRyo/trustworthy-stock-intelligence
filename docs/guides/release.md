@@ -80,7 +80,7 @@ Configure PyPI's Trusted Publisher with owner `KageRyo`, repository
 `trustworthy-stock-intelligence`, workflow filename `release.yml`, and GitHub environment `pypi`.
 The workflow is stored in the repository at `.github/workflows/release.yml`. It verifies that the
 tag version matches `pyproject.toml`, publishes the wheel and sdist, and creates the GitHub Release
-only after PyPI succeeds. See [`python-package.md`](python-package.md) for the initial
+only after PyPI succeeds. See [`python-package.md`](python_package.md) for the initial
 pending-publisher setup and package boundary.
 
 The package-only release sequence is:
@@ -116,16 +116,16 @@ frontend/stock-dashboard/package.json
 frontend/stock-dashboard/package-lock.json
 frontend/stock-dashboard/README.md
 dashboard/README.md
-docs/api/openapi.yaml
+docs/reference/api/openapi.yaml
 services/api-gateway-go/internal/http/openapi.yaml
 services/api-gateway-go/README.md
 README.md
 CITATION.cff
-docs/environment.md
-docs/project_roadmap.md
-docs/demo/local_demo.md
+docs/guides/environment.md
+docs/roadmap.md
+docs/guides/local_demo.md
 CHANGELOG.md
-docs/release.md
+docs/guides/release.md
 ```
 
 ## Required Checks

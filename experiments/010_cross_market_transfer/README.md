@@ -107,4 +107,4 @@ fingerprints, and the exact protocol. Prediction CSVs are provider-derived and r
 - No formal licensed dataset, sector/liquidity stratification, confidence interval, deep-model
   alignment, or economic-cost analysis is included.
 - Review external-data rights before publication or commercial use; see
-  [`docs/data_and_model_licenses.md`](../../docs/data_and_model_licenses.md).
+  [`docs/concepts/data_and_model_licenses.md`](../../docs/concepts/data_and_model_licenses.md).

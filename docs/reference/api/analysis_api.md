@@ -75,7 +75,7 @@ dashboard translates the code with its i18n dictionary, and translates the fresh
 `freshness.reason_code`, so neither card shows the English API text in 正體中文.
 
 Batches produced with `--trust-method legacy` derive both scores from the risk probability. See
-[Experiment 015](../../experiments/015_reliability_trust/README.md) for why the default changed.
+[Experiment 015](../../../experiments/015_reliability_trust/README.md) for why the default changed.
 
 ### `AlertPolicyMetadata`
 
@@ -91,7 +91,7 @@ Batches produced with `--trust-method legacy` derive both scores from the risk p
 | `note`                        | string         | Set when too few calibration rows alert for the thresholds to be stable.                                    |
 
 Calibration-drift and alert-policy metadata come from the batch that produced the ticker's record,
-not from the latest batch. See [Experiment 016](../../experiments/016_alert_policy/README.md) for
+not from the latest batch. See [Experiment 016](../../../experiments/016_alert_policy/README.md) for
 the policy evaluation.
 
 ### `CalibrationDriftMetadata`
