@@ -172,7 +172,7 @@ warning record with warning, trust, model, data freshness, reason explanation, a
 schemas. If the ticker is missing and on-demand analysis is configured, the API runs the Python
 command, refreshes PostgreSQL-backed warning records, and returns the newly generated analysis.
 
-See `docs/api/analysis_api.md` for the response schema.
+See `docs/reference/api/analysis_api.md` for the response schema.
 
 ### `GET /api/v1/analysis/{ticker}/history`
 

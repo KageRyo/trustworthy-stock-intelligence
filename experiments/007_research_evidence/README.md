@@ -244,8 +244,8 @@ scikit-learn: 1.8.0
 - No purged random-forest or gradient-boosting comparison yet.
 - No Taiwan, cross-market, sector, liquidity, or market-cap evaluation.
 - The repository now provides a point-in-time membership validator and benchmark filter
-  ([docs/point_in_time_universe.md](../../docs/point_in_time_universe.md)), but this pilot still has
-  no legally selected historical membership source or re-run using it.
+  ([docs/reference/point_in_time_universe.md](../../docs/reference/point_in_time_universe.md)), but
+  this pilot still has no legally selected historical membership source or re-run using it.
 - No multiple-comparison correction; the interval artifact is a fold-level uncertainty summary
   rather than formal external validation.
 - ECE is equal-width 10-bin ECE and remains bin-sensitive.

@@ -88,8 +88,8 @@ tsi evaluate predictions.csv \
 ```
 
 The full ticker-driven lookup path remains the Go API's local on-demand bridge and the
-production-oriented ingestion/worker flow; see the main README and `docs/architecture.md` for those
-boundaries.
+production-oriented ingestion/worker flow; see the main README and `docs/concepts/architecture.md`
+for those boundaries.
 
 ## Local package checks
 

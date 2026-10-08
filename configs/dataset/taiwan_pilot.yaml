@@ -15,7 +15,7 @@ data_source:
   formal_research_preferred:
     - official TWSE data with redistribution rights cleared
     - WRDS/CRSP or another licensed research vendor
-  rights_note: docs/data_and_model_licenses.md
+  rights_note: docs/concepts/data_and_model_licenses.md
 schema:
   - date
   - ticker

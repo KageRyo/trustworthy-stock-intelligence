@@ -1,72 +1,88 @@
-# Documentation Index
+# Documentation
 
-This documentation set is organized by reader intent. The repository still contains research notes
-and engineering contracts, but this index is the main entry point for finding the right document.
+Start here to find the right document. Documents are grouped by what the reader is trying to do.
 
-## Start Here
+## Layout
 
-| Document             | Purpose                                                                               |
-| -------------------- | ------------------------------------------------------------------------------------- |
-| `../README.md`       | Project overview, quick start, badges, and release status.                            |
-| `user_guide.md`      | Dashboard-oriented usage: ticker input, analysis output, watchlists, and limitations. |
-| `demo/local_demo.md` | Local end-to-end runbook for PostgreSQL, Go API, and TypeScript dashboard.            |
+| Folder                                        | Holds                                                         | Ask yourself                |
+| --------------------------------------------- | ------------------------------------------------------------- | --------------------------- |
+| [`guides/`](guides/)                          | Task-oriented steps: run, develop, release, download data     | "How do I ...?"             |
+| [`reference/`](reference/)                    | Contracts and definitions: API, schema, metrics, labels       | "What exactly is ...?"      |
+| [`concepts/`](concepts/)                      | Design and boundaries: architecture, trustworthy AI, licenses | "Why is it built this way?" |
+| [`operations/`](operations/)                  | Runtime behavior: jobs, freshness, observability, E2E         | "What happens when ...?"    |
+| [`research/`](research/)                      | Experiment rules: protocol, reproducibility, readiness        | "How is evidence produced?" |
+| [`decisions/`](decisions/)                    | Decision records with their evidence                          | "Why did we choose this?"   |
+| [`roadmap.md`](roadmap.md)                    | Now, next, later, and completed milestones                    | "What is planned?"          |
+| [`../experiments/`](../experiments/README.md) | Experiment reports and their index                            | "What did we measure?"      |
 
-## Architecture And Operations
+## Guides
 
-| Document                  | Purpose                                                                                    |
-| ------------------------- | ------------------------------------------------------------------------------------------ |
-| `architecture.md`         | Python, PostgreSQL, Go, and dashboard boundaries.                                          |
-| `data_store.md`           | PostgreSQL schema intent, provider ingestion, freshness target, and Taiwan provider notes. |
-| `prediction_jobs.md`      | PostgreSQL prediction queue lifecycle, idempotency, worker claims, and local startup.      |
-| `warning_transitions.md`  | Deterministic warning-change semantics, deduplication, and serving endpoint.               |
-| `dashboard_operations.md` | Freshness, trust, provider coverage, and prediction-job states shown by the dashboard.     |
-| `watchlist_grouping.md`   | Session-scoped watchlist groups, filters, sorting, and confirmed bulk cleanup.             |
-| `observability.md`        | Health/readiness probes, metrics, structured logs, and local inspection commands.          |
-| `e2e.md`                  | Deterministic PostgreSQL watchlist-to-warning pipeline and CI smoke test.                  |
-| `provider_coverage.md`    | Supported markets, provider fallback paths, intervals, and coverage limits.                |
-| `environment.md`          | Python, Go, Node, CUDA, and local environment versions.                                    |
-| `python-package.md`       | PyPI package API, extras, CLI, build checks, and release setup.                            |
-| `development.md`          | Development rules, tests, schema-first policy, and commit/release workflow.                |
-| `project_roadmap.md`      | Current milestone state and next implementation tasks.                                     |
-| `backlog.md`              | Prioritized task backlog after `0.3.1`.                                                    |
+| Document                                   | Purpose                                                                |
+| ------------------------------------------ | ---------------------------------------------------------------------- |
+| [User guide](guides/user_guide.md)         | Dashboard use: ticker input, analysis output, watchlists, limitations. |
+| [Local demo](guides/local_demo.md)         | End-to-end local run of PostgreSQL, the Go API, and the dashboard.     |
+| [Development](guides/development.md)       | Development rules, tests, schema-first policy, and commit workflow.    |
+| [Environment](guides/environment.md)       | Python, Go, Node, CUDA, and local tool versions.                       |
+| [Python package](guides/python_package.md) | PyPI package API, extras, CLI, and build checks.                       |
+| [Data download](guides/data_download.md)   | Market data, reference series, and TWSE chip-history downloads.        |
+| [Release](guides/release.md)               | Maintainer release checklist and per-release scope notes.              |
 
-## API Contracts
+## Reference
 
-| Document              | Purpose                                                           |
-| --------------------- | ----------------------------------------------------------------- |
-| `api/warning_api.md`  | Warning, watchlist, health, status, and model endpoint contracts. |
-| `api/analysis_api.md` | Ticker analysis response schema used by the dashboard.            |
-| `api/openapi.yaml`    | OpenAPI 3.1 document served by the API.                           |
+| Document                                                      | Purpose                                                           |
+| ------------------------------------------------------------- | ----------------------------------------------------------------- |
+| [Analysis API](reference/api/analysis_api.md)                 | Ticker analysis response used by the dashboard.                   |
+| [Warning API](reference/api/warning_api.md)                   | Warning, watchlist, health, status, and model endpoints.          |
+| [OpenAPI spec](reference/api/openapi.yaml)                    | OpenAPI 3.1 document; must match the copy embedded in the Go API. |
+| [Data store](reference/data_store.md)                         | PostgreSQL schema, provider ingestion, and freshness targets.     |
+| [Provider coverage](reference/provider_coverage.md)           | Supported markets, provider fallbacks, intervals, and limits.     |
+| [Evaluation metrics](reference/evaluation_metrics.md)         | Alert-oriented and calibration-aware metrics.                     |
+| [Risk labeling](reference/risk_labeling.md)                   | Future-drawdown label definitions.                                |
+| [Point-in-time universe](reference/point_in_time_universe.md) | Versioned identity mappings and membership filtering.             |
 
-## Trustworthy AI
+## Concepts
 
-| Document                      | Purpose                                                        |
-| ----------------------------- | -------------------------------------------------------------- |
-| `trustworthy_ai_checklist.md` | TAI dimensions mapped to this stock-risk system.               |
-| `reproducibility.md`          | Reproducibility requirements for experiments and artifacts.    |
-| `evaluation_metrics.md`       | Alert-oriented and calibration-aware evaluation metrics.       |
-| `data_and_model_licenses.md`  | Code, provider-data, model, and redistribution boundaries.     |
-| `research_readiness.md`       | Evidence gates and source boundaries for open research issues. |
-| `public_private_boundary.md`  | What belongs in public source versus private operations.       |
+| Document                                                           | Purpose                                                  |
+| ------------------------------------------------------------------ | -------------------------------------------------------- |
+| [Architecture](concepts/architecture.md)                           | Python, PostgreSQL, Go, and dashboard boundaries.        |
+| [Trustworthy AI checklist](concepts/trustworthy_ai_checklist.md)   | TAI dimensions mapped to this system.                    |
+| [Problem definition](concepts/problem_definition.md)               | Research framing for drawdown-risk warning.              |
+| [Research scope](concepts/research_scope.md)                       | Formal scope and exclusions.                             |
+| [Data and model licenses](concepts/data_and_model_licenses.md)     | Code, provider-data, model, and redistribution limits.   |
+| [Public and private boundary](concepts/public_private_boundary.md) | What belongs in public source versus private operations. |
 
-## Research Protocol
+## Operations
 
-| Document                 | Purpose                                         |
-| ------------------------ | ----------------------------------------------- |
-| `problem_definition.md`  | Research framing for drawdown-risk warning.     |
-| `research_scope.md`      | Formal research scope and exclusions.           |
-| `risk_labeling.md`       | Future drawdown label definitions.              |
-| `experiment_protocol.md` | Temporal validation and experiment rules.       |
-| `data_download.md`       | Batch market-data download notes.               |
-| `literature_plan.md`     | Literature-review plan and benchmark direction. |
+| Document                                                   | Purpose                                                            |
+| ---------------------------------------------------------- | ------------------------------------------------------------------ |
+| [Dashboard operations](operations/dashboard_operations.md) | Freshness, trust, coverage, and job states shown in the dashboard. |
+| [Prediction jobs](operations/prediction_jobs.md)           | Queue lifecycle, idempotency, worker claims, and recovery.         |
+| [Warning transitions](operations/warning_transitions.md)   | Warning-change semantics and deduplication.                        |
+| [Watchlist grouping](operations/watchlist_grouping.md)     | Session watchlist groups, filters, and cleanup.                    |
+| [Observability](operations/observability.md)               | Health probes, metrics, and structured logs.                       |
+| [End-to-end pipeline](operations/e2e.md)                   | PostgreSQL watchlist-to-warning pipeline and its CI smoke test.    |
 
-## Experiment Reports
+## Research
 
-Experiment reports live under `../experiments/`. They are retained as research artifacts and are
-separate from the live dashboard runbooks.
+| Document                                               | Purpose                                                  |
+| ------------------------------------------------------ | -------------------------------------------------------- |
+| [Experiment protocol](research/experiment_protocol.md) | Temporal validation and experiment rules.                |
+| [Reproducibility](research/reproducibility.md)         | Requirements for reproducible experiments and artifacts. |
+| [Research readiness](research/research_readiness.md)   | Evidence gates for open research issues.                 |
+| [Literature plan](research/literature_plan.md)         | Literature review plan and benchmark direction.          |
 
-The current primary pilot evidence is `../experiments/007_research_evidence/README.md`.
+## Writing and maintaining docs
 
-## Release Notes
-
-Use `../CHANGELOG.md` for release notes and `release.md` for the maintainer release checklist.
+- **Placement.** Put each document in the one folder that matches its reader's question, and add it
+  to the table above in the same pull request.
+- **Names.** Use lowercase `snake_case.md`. Decision records use `NNNN-short-title.md`.
+- **Opening.** Start with a title and one or two sentences saying what the document covers and who
+  it is for.
+- **Single source.**
+  - Link to a fact instead of copying it.
+  - Plans go in the roadmap, and decisions go in decision records.
+  - Experiment numbers go in experiment reports. Other documents summarize them and link back.
+- **Checks.** `make docs-check` runs mdformat (`--wrap 100`) and `scripts/check_markdown_links.py`.
+  The link checker fails on a relative link or an inline repository path (such as `docs/roadmap.md`)
+  that Git does not track. Python CI runs the same check through `tests/test_markdown_links.py`.
+- **Moves.** Use `git mv` so history follows the file, then run `make docs-check`.

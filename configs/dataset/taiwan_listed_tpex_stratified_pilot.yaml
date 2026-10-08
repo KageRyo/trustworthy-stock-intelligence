@@ -24,7 +24,7 @@ frequency: daily
 data_source:
   pilot: Yahoo Finance via yfinance for TWSE and TPEx components
   emerging_fallback: TPEx official emerging monthly historical endpoint
-  rights_note: docs/data_and_model_licenses.md
+  rights_note: docs/concepts/data_and_model_licenses.md
 label:
   task: 5-day drawdown risk warning
   horizon_trading_days: 5

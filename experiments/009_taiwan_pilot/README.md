@@ -70,7 +70,7 @@ must not be presented as actionable alerts.
   Issue #29.
 - Yahoo Finance data is suitable here only for pipeline validation. TWSE/TPEx terms and any formal
   vendor license must be reviewed before redistribution, publication, or commercial use; see
-  [`docs/data_and_model_licenses.md`](../../docs/data_and_model_licenses.md).
+  [`docs/concepts/data_and_model_licenses.md`](../../docs/concepts/data_and_model_licenses.md).
 - The aggregate table has no multiple-comparison correction or external confidence interval. It does
   not establish cross-market transfer, deep-model parity, profitability, or investment advice.
 

@@ -111,5 +111,5 @@ For a version release:
 1. Push the branch and tag.
 
 For a Python package-only patch release, use the narrower file and validation scope in
-`docs/python-package.md` and `docs/release.md`; do not change the Go or frontend contract versions
-unless that release also changes those surfaces.
+`docs/guides/python_package.md` and `docs/guides/release.md`; do not change the Go or frontend
+contract versions unless that release also changes those surfaces.

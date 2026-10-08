@@ -24,11 +24,11 @@ output records aggregate and per-fold ROC-AUC, PR-AUC, Brier, ECE, precision, re
 false-positive rate, false-discovery rate, and alert coverage.
 
 The prior one-fold deep GPU smoke result has been superseded by the full 39-fold current-universe
-pilot in [`experiments/011_deep_alignment`](../experiments/011_deep_alignment/). That result remains
-bounded by its current-universe and provider limitations; it does not resolve point-in-time
+pilot in [`experiments/011_deep_alignment`](../../experiments/011_deep_alignment/). That result
+remains bounded by its current-universe and provider limitations; it does not resolve point-in-time
 membership or establish investment usefulness. The four-model result, including the two tree
 baselines, is recorded in
-[`experiments/013_aligned_model_family_benchmark`](../experiments/013_aligned_model_family_benchmark/).
+[`experiments/013_aligned_model_family_benchmark`](../../experiments/013_aligned_model_family_benchmark/).
 
 ## Issue #23: Taiwan Universe Capture
 
@@ -54,12 +54,12 @@ This is intentionally a *current* catalogue. It cannot establish historical memb
 suspensions, or whether a security was knowable on an earlier date. A formal Taiwan evaluation must
 pair a dated membership/history source with OHLCV rights adequate for the intended use. Before
 downloading or redistributing provider data, recheck the project's
-[data and model licence boundary](data_and_model_licenses.md), including the
+[data and model licence boundary](../concepts/data_and_model_licenses.md), including the
 [TWSE terms](https://www.twse.com.tw/en/terms/use.html) and
 [TPEx terms](https://www.tpex.org.tw/en-us/gtsm_disclaimer.html).
 
 The first multi-market evidence is the 39-fold current-company pilot in
-[`experiments/014_taiwan_listed_tpex_pilot`](../experiments/014_taiwan_listed_tpex_pilot/). It
+[`experiments/014_taiwan_listed_tpex_pilot`](../../experiments/014_taiwan_listed_tpex_pilot/). It
 covers an explicit three-TWSE / three-TPEx-listed sample, uses only calibration-window fitting, and
 records both the input and shared-row fingerprints. It is deliberately partial: the TPEx emerging
 long-horizon fallback did not complete reliably in the recorded pilot run, so no emerging-market

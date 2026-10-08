@@ -6,8 +6,8 @@ automated-trading system.
 
 ## Before You Start
 
-- Read the [development guide](docs/development.md), [roadmap](docs/project_roadmap.md), and
-  [public/private boundary](docs/public_private_boundary.md).
+- Read the [development guide](docs/guides/development.md), [roadmap](docs/roadmap.md), and
+  [public/private boundary](docs/concepts/public_private_boundary.md).
 - Do not commit `.env` files, credentials, downloaded provider data, database dumps, model weights,
   generated caches, or private user data.
 - Keep API, provider, CLI, and frontend boundaries schema-first. Tickers are identifiers and must

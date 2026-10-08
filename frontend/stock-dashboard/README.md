@@ -30,7 +30,7 @@ DELETE /api/v1/watchlists/{session-name}/tickers/{ticker}
 See:
 
 ```text
-docs/api/analysis_api.md
+docs/reference/api/analysis_api.md
 ```
 
 The UI supports English and 正體中文 through a client-side language switcher. Ticker symbols are handled
