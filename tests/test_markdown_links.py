@@ -28,7 +28,7 @@ def test_links_escaping_the_repository_are_broken() -> None:
 
 def test_external_links_anchors_and_fenced_blocks_are_ignored() -> None:
     text = (
-        "[Site](https://example.com) [Mail](mailto:a@b.c) [Top](#intro)\n"
+        "[Site](https://example.com) [Mail](mailto:a@b.c) [Top](#intro) [Ftp](ftp://x.y)\n"
         "```bash\ncat [x](missing.md) `docs/missing.md`\n```\n"
     )
 

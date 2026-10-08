@@ -38,7 +38,8 @@ CODE_PATH_PATTERN = re.compile(
     r"`((?:" + "|".join(PATH_ROOTS) + r")/[A-Za-z0-9_./-]+)`"
 )
 FENCE_PATTERN = re.compile(r"^(```|~~~).*?^\1", re.MULTILINE | re.DOTALL)
-EXTERNAL_PREFIXES = ("http://", "https://", "mailto:", "#")
+# Any URI scheme (https:, mailto:, ...) marks an external target.
+SCHEME_PATTERN = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*:")
 
 
 @dataclass(frozen=True)
@@ -97,7 +98,7 @@ def broken_references(source: str, text: str, known: set[str]) -> list[BrokenRef
     base = PurePosixPath(source).parent
     broken: list[BrokenReference] = []
     for target in LINK_PATTERN.findall(body):
-        if target.startswith(EXTERNAL_PREFIXES):
+        if target.startswith("#") or SCHEME_PATTERN.match(target):
             continue
         relative = target.split("#", 1)[0].split("?", 1)[0]
         if not relative:
