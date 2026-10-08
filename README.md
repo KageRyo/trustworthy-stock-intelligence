@@ -1,411 +1,168 @@
 # Trustworthy Stock Intelligence
 
 [![CI](https://github.com/KageRyo/trustworthy-stock-intelligence/actions/workflows/ci.yml/badge.svg)](https://github.com/KageRyo/trustworthy-stock-intelligence/actions/workflows/ci.yml)
-![Version](https://img.shields.io/badge/version-0.7.0-blue)
-![Python](https://img.shields.io/badge/python-3.10%2B-blue)
-![Go](https://img.shields.io/badge/go-1.25-blue)
-![TypeScript](https://img.shields.io/badge/typescript-7.0-blue)
-![License](https://img.shields.io/badge/license-Apache--2.0-green)
+[![CodeQL](https://github.com/KageRyo/trustworthy-stock-intelligence/actions/workflows/codeql.yml/badge.svg)](https://github.com/KageRyo/trustworthy-stock-intelligence/actions/workflows/codeql.yml)
+[![Secret scan](https://github.com/KageRyo/trustworthy-stock-intelligence/actions/workflows/secret-scan.yml/badge.svg)](https://github.com/KageRyo/trustworthy-stock-intelligence/actions/workflows/secret-scan.yml)
+[![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=KageRyo_trustworthy-stock-intelligence&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=KageRyo_trustworthy-stock-intelligence)
+[![PyPI](https://img.shields.io/pypi/v/trustworthy-stock-intelligence)](https://pypi.org/project/trustworthy-stock-intelligence/)
+[![Python](https://img.shields.io/pypi/pyversions/trustworthy-stock-intelligence)](https://pypi.org/project/trustworthy-stock-intelligence/)
+[![License](https://img.shields.io/github/license/KageRyo/trustworthy-stock-intelligence)](LICENSE)
 
-**Status: Active Open-Source Project**
+Trustworthy Stock Intelligence analyzes short-horizon drawdown risk for US and Taiwan stocks. Enter
+a ticker, and the system returns:
 
-Software maturity: operational prototype. This is a public portfolio project for trustworthy ML and
-backend systems, with reproducible pilot evidence rather than externally validated research.
+- a calibrated risk probability;
+- a warning level from an explicit threshold policy;
+- trust and uncertainty scores;
+- reason codes and feature attributions;
+- data freshness;
+- the model's limitations.
 
-## What Problem Does This Solve?
+Every result comes from a PostgreSQL-backed, schema-first pipeline that you can audit and reproduce.
 
-Trustworthy Stock Intelligence is a local stock drawdown-risk analysis system. It accepts a stock
-ticker as input and returns a schema-validated risk analysis:
+> **Not investment advice.** This is an operational prototype and a public portfolio project for
+> trustworthy ML. It does not trade, recommend positions, or predict prices, and its pilot evidence
+> is not externally validated.
 
-```text
-ticker
--> market data ingestion
--> calibrated risk probability
--> uncertainty and trust score
--> warning level
--> reason codes and limitations
--> dashboard/API response
-```
+![Stock risk dashboard in English, showing calibrated risk, trust, freshness, and threshold policy for PANW](docs/assets/dashboard-en.png)
 
-The project is not investment advice, an automated trading system, or an exact price prediction
-tool. It is designed for human-in-the-loop risk assessment with auditable data, model, and API
-contracts.
+<details>
+<summary>正體中文介面</summary>
 
-## Python Package
+![正體中文股票風險儀表板，顯示 2330 的校準後風險、信任、資料新鮮度與門檻策略](docs/assets/dashboard-zh-hant.png)
 
-Version `0.7.0` adds range-based volatility features to the served baseline, on top of the
-calibration-window alert-rate policies introduced in `0.6.0`. It includes the public `tsi` API,
-leakage-aware feature and label helpers, calibration/trust utilities, serving schemas, and a
-deterministic local CLI:
+</details>
 
-```bash
-python -m pip install trustworthy-stock-intelligence
-tsi --version
-tsi inspect-csv path/to/ohlcv.csv --json
-```
+## What makes it trustworthy
 
-Provider ingestion is optional and can be installed with the `data` extra:
+- **Calibrated, not just ranked.** Platt calibration on a held-out window turns scores into
+  probabilities. Thresholds come from calibration-window alert rates, not a fixed 0.5
+  ([ADR 0003](docs/decisions/0003-alert-rate-threshold-policy.md)).
+- **Trust that is not the risk score in disguise.** Trust reflects data quality and calibration
+  drift. Uncertainty can move a quiet row to `abstain` but never hides an alert
+  ([ADR 0002](docs/decisions/0002-trust-independent-of-risk.md)).
+- **Fails closed.**
+  - The API refuses to start without PostgreSQL.
+  - Stale or still-open daily bars are downgraded or blocked.
+  - Small calibration samples are flagged.
+- **Evidence before features.** Every model change is tested on identical purged walk-forward folds,
+  with a held-out sample. Negative results are recorded too ([experiments](experiments/README.md)).
+- **Explained in two languages.** Stable API codes are localized in English and 正體中文
+  ([ADR 0006](docs/decisions/0006-dashboard-localizes-api-codes.md)).
 
-```bash
-python -m pip install "trustworthy-stock-intelligence[data]"
-```
+## The served model at a glance
 
-The Go API, PostgreSQL schema, workers, and TypeScript dashboard remain the full-stack operational
-prototype described below; they are not bundled into the PyPI wheel. See
-[`docs/guides/python_package.md`](docs/guides/python_package.md) for the package API, extras, local
-build checks, and Trusted Publishing setup.
+| Item       | Today                                                                                                     |
+| ---------- | --------------------------------------------------------------------------------------------------------- |
+| Label      | Price falls 5% or more below today's close within 5 trading days                                          |
+| Features   | 12 daily features from the ticker's own OHLCV: returns, moving-average gaps, volume, and range volatility |
+| Model      | Logistic regression with Platt calibration                                                                |
+| Thresholds | Alert on the top 5% of calibration-window risk; watch the top 20%                                         |
+| Evidence   | AUC 0.64 on S&P 100, 0.63 on a 402-ticker S&P 500 holdout, 0.74 on 53 Taiwan large caps                   |
+| Precision  | About 0.28 at a 10% base rate on S&P 100. Most alerts are still false alarms.                             |
 
-## Current Status
+Details, limitations, and reproduction steps are in the [model card](docs/model_card.md).
 
-Version `0.7.0` is the current operational prototype following the `0.6.0` alert-policy release. It
-remains a reproducible pilot, not externally validated research or investment advice:
+## Quick start
 
-- Experiment 007 uses purged walk-forward train/calibration/test boundaries and per-row
-  `label_end_date` overlap checks.
-- Calibration results report ECE, Brier score, simple no-feature baselines, and breakdowns by fold,
-  ticker, and year without presenting limited predictive skill as a trading edge.
-- A dedicated AUC invariance audit records per-fold sample identity, recovered Platt parameters,
-  ranking behavior, and mean-fold, weighted, and pooled AUC.
-- Model-family comparisons, paired bootstrap intervals, and calibration-drift audits make
-  uncertainty and failure cases inspectable rather than implied.
-- Reproducible Taiwan and US/Taiwan transfer pilots are recorded with explicit current-universe,
-  coverage, and provider-data limitations.
-- Experiment 017 compares range, market-relative, and market-regime feature sets on identical folds
-  across S&P 100, a 402-ticker S&P 500 holdout, and 53 Taiwan large caps. Serving now uses the
-  range-volatility set, which raised AUC by 0.023 to 0.029 in all three samples.
-- Experiment 018 backfills TWSE institutional-flow and margin history from 2015 and tests it on 50
-  large caps and a 199-stock random TWSE holdout. Chip features did not improve discrimination, so
-  serving does not use them.
-- Repository controls include required CI, Dependabot, vulnerability analysis, race tests,
-  full-history Gitleaks scanning, and SHA-pinned CodeQL analysis.
-- PostgreSQL is the source of truth for tickers, watchlists, market bars, prediction batches, and
-  warning records.
-- The Go API requires PostgreSQL at startup and serves schema-owned API responses.
-- The TypeScript dashboard is the primary UI for ticker search and risk analysis.
-- On-demand analysis can generate a missing ticker record through the Python ML core, then write the
-  result back to PostgreSQL.
-- US stocks, Taiwan listed stocks, TPEx listed stocks, Taiwan alphanumeric ETF codes, and TPEx
-  emerging-stock daily fallback data are supported where the providers have coverage.
-- Ticker-level feature attributions, warning-history timelines, calibration drift state, and per-run
-  TAI audit artifacts are available through typed contracts and reproducible artifacts.
-- Scheduled 5-minute watchlist ingestion records provider health, retry, and coverage state in
-  PostgreSQL.
-- Freshness policies, queue-backed prediction jobs, typed job failures, and deterministic warning
-  transitions make stale or degraded outputs explicit.
-- Versioned point-in-time identity mappings, vendor-neutral archive import, coverage audits, and
-  fail-closed paired benchmark reports make the current-vs-historical-universe comparison explicit.
-- Five-minute bars remain an ingestion/freshness capability; the current trusted risk baseline is
-  daily and rejects intraday jobs until an interval-trained model and evaluation protocol exist.
-- The dashboard exposes freshness, trust, provider coverage, job lifecycle, session grouping,
-  filtering, and confirmed cleanup states.
-- Readiness probes, structured request/worker logs, Prometheus-style metrics, and a deterministic
-  PostgreSQL watchlist-to-warning CI smoke test cover the serving path end to end.
-- The dashboard supports English and 正體中文.
-
-## Quick Start
-
-Create local configuration:
+Requirements: Docker, [uv](https://docs.astral.sh/uv/), Go 1.25, and Node.js 22.
+[`mise`](https://mise.jdx.dev/) can install the pinned Go and Node versions.
 
 ```bash
-cp .env.example .env
-```
-
-Fill in local PostgreSQL values in `.env`. Do not commit `.env`.
-
-Start PostgreSQL:
-
-```bash
+cp .env.example .env            # fill in local PostgreSQL values; never commit .env
 docker compose up -d postgres
+
+uv sync --locked --extra dev --extra data --extra db --extra dashboard --extra deep
+(cd frontend/stock-dashboard && npm ci)
+
+make api                        # Go API on :18080 (Swagger UI at /swagger/)
+make stock-dashboard            # dashboard on http://localhost:5175
 ```
 
-Install dependencies:
+- **GPU:** use `--extra deep-cu126` instead of `--extra deep` on a CUDA 12.6 workstation.
+- **Missing tickers:** searching for a ticker that is not in the database runs the on-demand Python
+  analysis, writes the result to PostgreSQL, and returns it.
+- **Full walkthrough:** see the [local demo guide](docs/guides/local_demo.md).
+
+## Tickers
+
+Ticker symbols are strings. Taiwan codes keep leading zeros and suffix letters.
+
+| Input      | Market behavior                                             |
+| ---------- | ----------------------------------------------------------- |
+| `NVDA`     | US stock through yfinance                                   |
+| `2330`     | Taiwan local code, TWSE first                               |
+| `6488.TWO` | TPEx listed symbol                                          |
+| `00981A`   | Taiwan alphanumeric ETF code, not a US ticker               |
+| `5240`     | Falls back to TPEx emerging data when listed providers miss |
 
 ```bash
-uv sync --locked \
-  --extra dev \
-  --extra data \
-  --extra db \
-  --extra dashboard \
-  --extra deep
-mise install  # optional version manager for the pinned Node.js and Go runtimes
-cd frontend/stock-dashboard
-npm ci
-cd ../..
+curl http://localhost:18080/api/v1/analysis/2330
 ```
 
-Use `--extra deep-cu126` instead of `--extra deep` on a compatible CUDA 12.6 workstation. The CPU
-and CUDA extras are intentionally mutually exclusive.
-
-Start the API on all interfaces:
-
-```bash
-make api API_ADDR=0.0.0.0:18080
-```
-
-Start the stock dashboard on all interfaces:
-
-```bash
-make stock-dashboard
-```
-
-Open:
-
-```text
-http://localhost:5175
-http://<dashboard-host>:5175
-```
-
-Swagger UI is available from the Go API:
-
-```text
-http://localhost:18080/swagger/
-http://localhost:18080/openapi.yaml
-```
-
-## Example Tickers
-
-Use the dashboard search box or call the API directly:
-
-```text
-GET /api/v1/analysis/NVDA
-GET /api/v1/analysis/2330
-GET /api/v1/analysis/00981A
-GET /api/v1/analysis/5240
-```
-
-Ticker handling:
-
-| Input      | Intended market behavior                                         |
-| ---------- | ---------------------------------------------------------------- |
-| `NVDA`     | US stock through yfinance                                        |
-| `2330`     | Taiwan local code, TWSE first                                    |
-| `6488.TWO` | TPEx listed symbol                                               |
-| `00981A`   | Taiwan alphanumeric ETF code, not a US ticker                    |
-| `02001L`   | Taiwan leveraged/inverse-style local code                        |
-| `5240`     | Can resolve to TPEx emerging fallback when listed providers miss |
-
-If the provider has data but the local model cannot produce a calibrated prediction with enough
-history, the API returns a typed `abstain` analysis with an `insufficient_history` reason code
-instead of `ticker_not_found`.
-
-## Example Output
-
-The typed analysis response contains warning, trust, model, freshness, explanations, and
-limitations:
-
-```json
-{
-  "schema_version": "analysis.v1",
-  "ticker": "2330",
-  "date": "2026-07-28",
-  "run_id": "daily-baseline-20260728",
-  "data_as_of": "2026-07-28",
-  "generated_at": "2026-07-29T00:10:00Z",
-  "warning": {
-    "level": "watch",
-    "risk_probability": 0.1832,
-    "calibrated_risk_probability": 0.1214,
-    "alert_threshold": 0.15,
-    "watch_threshold": 0.10,
-    "summary": "Moderate drawdown-risk signal that should remain on watch."
-  },
-  "trust": {
-    "trust_score": 0.0952,
-    "uncertainty_score": 0.4321,
-    "calibration_method": "platt",
-    "trust_status": "limited_trust",
-    "uncertainty_status": "acceptable_uncertainty",
-    "summary": "Trust is below the configured alert threshold."
-  },
-  "model": {
-    "name": "logistic_regression",
-    "model_bundle": "baseline_daily_v1"
-  },
-  "data_freshness": {
-    "data_as_of": "2026-07-28",
-    "generated_at": "2026-07-29T00:10:00Z",
-    "last_loaded_at": "2026-07-29T00:11:00Z",
-    "file_modified_at": "",
-    "record_count": 101
-  },
-  "reasons": [
-    {
-      "code": "probability_above_watch_threshold",
-      "severity": "watch",
-      "title": "Risk probability above watch threshold",
-      "detail": "The calibrated probability is above the watch threshold."
-    }
-  ],
-  "limitations": ["Drawdown-risk analysis, not investment advice."]
-}
-```
+The response schema is documented in the
+[analysis API reference](docs/reference/api/analysis_api.md) and in
+[`openapi.yaml`](docs/reference/api/openapi.yaml). A ticker without enough labeled history returns a
+typed `abstain` analysis with an `insufficient_history` reason, not an error.
 
 ## Architecture
 
 ```text
-Provider APIs: yfinance / TWSE / TPEx
+yfinance / TWSE / TPEx
 -> Python ingestion and ML core
--> PostgreSQL market_bars / prediction_batches / warning_records
--> Go API gateway
--> TypeScript dashboard
+-> PostgreSQL: market_bars, prediction_batches, warning_records, watchlists
+-> Go API gateway (DB-required, typed errors, OpenAPI)
+-> TypeScript dashboard (Zod-validated, English and 正體中文)
 ```
 
-The optional `latest_warnings.json` export is only a debug, notification, or snapshot artifact. It
-is not the primary serving store.
+See [architecture](docs/concepts/architecture.md) and the
+[PostgreSQL serving decision](docs/decisions/0001-postgresql-serving-source.md).
 
-## Evaluation Evidence
+## Python package
 
-The current reproducible pilot uses an S&P 100 snapshot, a 5-day/-5% drawdown label, and 39 sliding
-walk-forward folds:
+The ML core is published on PyPI. Provider ingestion is an optional extra:
 
-```text
-252 train dates
--> 5 purged dates
--> 63 calibration dates
--> 5 purged dates
--> 63 test dates
+```bash
+python -m pip install "trustworthy-stock-intelligence[data]"
+tsi --version
+tsi inspect-csv path/to/ohlcv.csv --json
 ```
 
-Mean fold results:
-
-| Variant                                               |    AUC |  Brier |    ECE | Precision | Recall |     F1 |
-| ----------------------------------------------------- | -----: | -----: | -----: | --------: | -----: | -----: |
-| Training-window event-rate prior                      | 0.5000 | 0.0935 | 0.0655 |    0.0000 | 0.0000 | 0.0000 |
-| Raw logistic                                          | 0.6153 | 0.2318 | 0.3736 |    0.1432 | 0.4502 | 0.2101 |
-| Logistic + Platt at 0.5                               | 0.6086 | 0.0917 | 0.0546 |    0.0622 | 0.0015 | 0.0030 |
-| Logistic + Platt, threshold tuned on calibration only | 0.6086 | 0.0917 | 0.0546 |    0.1469 | 0.4344 | 0.2077 |
-
-Calibration improved Brier and ECE over the raw logistic output in 38 of 39 folds. The exception
-covers the COVID-19 regime shift and is retained as a failure case. Improvements over the no-feature
-prior are modest, and the fixed 0.5 warning threshold is unusable after calibration. See
-`experiments/007_research_evidence/README.md` for dates, hashes, standard deviations, subgroup
-checks, commands, and limitations.
-
-The evidence record now also includes a paired model-family comparison with bootstrap intervals,
-Taiwan current-universe pilots, and a US/Taiwan cross-market transfer pilot. These artifacts
-demonstrate reproducible engineering and expose failure modes; they do not claim a production-ready
-warning policy or comprehensive market coverage.
-
-## Limitations
-
-- This is an S&P 100 daily-data pilot with survivorship and provider-revision risk, not evidence of
-  all-market or intraday performance.
-- Taiwan and cross-market pilots are available, but their current-universe, selected-symbol,
-  provider, sector, liquidity, and market-cap coverage limits mean they are not all-market
-  validation.
-- Paired bootstrap intervals are reported for the documented comparisons. ECE remains bin-dependent,
-  and pilot intervals do not remove data-selection or external-validation limitations.
-- Transaction cost is outside the current risk-probability claim because the project does not
-  execute a trading strategy. It becomes mandatory for any future strategy backtest.
-- Provider snapshots are now fingerprinted, but repeat-download revision audits and licensed
-  formal-research data are still open work.
-- Trust scores and abstention policies are engineered and tested, but have not yet been externally
-  validated as guarantees of safety or reliability.
-- Serving trust no longer derives from the risk probability. In Experiment 015, ensemble and
-  feature-novelty uncertainty did not identify less-reliable predictions; high-uncertainty rows had
-  higher drawdown rates. Uncertainty therefore moves low-risk rows to abstain but never blocks
-  alerts, and trust reflects data quality and calibration drift.
+The Go API, dashboard, and PostgreSQL schema are not part of the wheel; see the
+[Python package guide](docs/guides/python_package.md).
 
 ## Documentation
 
-Start from the documentation index:
+| I want to...                               | Go to                                                                                        |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------- |
+| Find any document                          | [Documentation index](docs/README.md)                                                        |
+| Understand the served model and its limits | [Model card](docs/model_card.md)                                                             |
+| See why the system is built this way       | [Decision records](docs/decisions/README.md)                                                 |
+| Read the evidence                          | [Experiment index](experiments/README.md)                                                    |
+| Use the dashboard                          | [User guide](docs/guides/user_guide.md)                                                      |
+| Develop, test, and release                 | [Development guide](docs/guides/development.md), [release checklist](docs/guides/release.md) |
+| Check data and model licensing             | [Data and model licenses](docs/concepts/data_and_model_licenses.md)                          |
+| See what is planned                        | [Roadmap](docs/roadmap.md)                                                                   |
+| Contribute or cite                         | [CONTRIBUTING.md](CONTRIBUTING.md), [CITATION.cff](CITATION.cff)                             |
+| Read release notes                         | [CHANGELOG.md](CHANGELOG.md)                                                                 |
 
-```text
-docs/README.md
-```
-
-High-traffic documents:
-
-| Need                                           | Document                                                                  |
-| ---------------------------------------------- | ------------------------------------------------------------------------- |
-| Use the Python package or CLI                  | `docs/guides/python_package.md`                                           |
-| Use the dashboard and ticker search            | `docs/guides/user_guide.md`                                               |
-| Run the local demo                             | `docs/guides/local_demo.md`                                               |
-| Understand the system architecture             | `docs/concepts/architecture.md`                                           |
-| Understand PostgreSQL and provider data        | `docs/reference/data_store.md`                                            |
-| Review supported markets and provider coverage | `docs/reference/provider_coverage.md`                                     |
-| Read API contracts                             | `docs/reference/api/warning_api.md`, `docs/reference/api/analysis_api.md` |
-| Review trustworthy AI checkpoints              | `docs/concepts/trustworthy_ai_checklist.md`                               |
-| Review research evidence and gaps              | `experiments/007_research_evidence/README.md`                             |
-| Review data/model licensing                    | `docs/concepts/data_and_model_licenses.md`                                |
-| Review public/private boundaries               | `docs/concepts/public_private_boundary.md`                                |
-| Develop and test changes                       | `docs/guides/development.md`                                              |
-| Cite or contribute                             | `CITATION.cff`, `CONTRIBUTING.md`                                         |
-| Review release notes                           | `CHANGELOG.md`                                                            |
-
-## Development Checks
-
-Run the same checks before commit:
+## Development checks
 
 ```bash
+make docs-check                                   # mdformat and Markdown link checks
 uv run --locked --no-sync python -m pytest
 uv run --locked --no-sync python -m ruff check src tests scripts dashboard
-cd services/api-gateway-go
-GOCACHE=/tmp/tsi-go-build-cache CGO_ENABLED=0 go vet ./...
-GOCACHE=/tmp/tsi-go-build-cache CGO_ENABLED=0 go run golang.org/x/vuln/cmd/govulncheck@v1.6.0 ./...
-GOCACHE=/tmp/tsi-go-build-cache CGO_ENABLED=0 go test ./...
-GOCACHE=/tmp/tsi-go-build-cache CGO_ENABLED=1 go test -race ./...
-cd ../../frontend/stock-dashboard
-npm test -- --run
-npm run build
-npm audit --audit-level=moderate
+(cd services/api-gateway-go && CGO_ENABLED=0 go test ./...)
+(cd frontend/stock-dashboard && npm test && npm run build)
 ```
 
-CI runs Python tests/lint, Go API tests, frontend tests/build, and a separate PostgreSQL
-watchlist-to-warning E2E pipeline on pull requests. Dependabot covers Python, Go, npm, and GitHub
-Actions. Basic static analysis covers Python with Ruff, Go with `go vet`, pinned `govulncheck`, and
-race tests, and TypeScript through the production build's typecheck. A least-privilege, SHA-pinned
-Gitleaks workflow scans repository history, while the SHA-pinned CodeQL workflow analyzes Python,
-Go, and JavaScript/TypeScript. Native GitHub Secret Scanning and Push Protection are enabled; their
-status is recorded in `.github/REPOSITORY_SETTINGS.md`. Applied remote controls and remaining
-plan-dependent settings are recorded in `.github/REPOSITORY_SETTINGS.md`.
-
-## Environment Versions
-
-Project targets:
-
-| Runtime              | Version                                |
-| -------------------- | -------------------------------------- |
-| Python package       | `0.7.0`                                |
-| Python               | `>=3.10`, maintainer and CI use `3.11` |
-| Go API               | `1.25.13`                              |
-| Node.js CI runtime   | `22.23.2`                              |
-| TypeScript           | `7.0.x`                                |
-| PostgreSQL container | `17-alpine`                            |
-
-Portable requirements, the current maintainer workstation, and historical GPU experiment provenance
-are separated in `docs/guides/environment.md`.
-
-## Repository Layout
-
-```text
-src/tsi/                  Python data, features, labels, models, trust, evaluation
-scripts/                  CLI entry points for ingestion, training, prediction
-services/api-gateway-go/  Go PostgreSQL-backed API gateway
-frontend/stock-dashboard/ TypeScript React dashboard
-dashboard/                Streamlit research and live API dashboard
-infra/postgres/init/      PostgreSQL schema and migrations
-docs/                     User, API, architecture, research, and development docs
-tests/                    Python tests for leakage-sensitive and serving behavior
-experiments/              Experiment notes and reports
-```
-
-## Data And Model License
-
-Repository source code and documentation are Apache License 2.0. That license does not grant rights
-to downloaded Yahoo Finance, TWSE, or TPEx data. Raw data and local model artifacts are gitignored;
-users must comply with each provider's terms and separately review redistribution or commercial use.
-See `docs/concepts/data_and_model_licenses.md`.
-
-## Roadmap
-
-The v0.7.0 scope preserves the operational prototype: scheduled 5-minute watchlist ingestion,
-provider health and freshness/stale-state handling, queue-backed prediction jobs, warning-change
-detection, and richer session-scoped watchlists. Point-in-time identity/import/benchmark engineering
-supports research readiness, but licensed historical constituents and inactive/delisted OHLCV are
-still required before Issue #29 can be closed. Detailed work lives in
-[`docs/roadmap.md`](docs/roadmap.md).
+- **CI:** runs these checks, plus Go vulnerability and race tests, `npm audit`, a PostgreSQL
+  watchlist-to-warning E2E pipeline, CodeQL, and full-history Gitleaks.
+- **Repository settings:** see [`.github/REPOSITORY_SETTINGS.md`](.github/REPOSITORY_SETTINGS.md).
+- **Tool versions:** see the [environment guide](docs/guides/environment.md).
 
 ## License
 
-Apache License 2.0
+Source code and documentation are licensed under the [Apache License 2.0](LICENSE). The license does
+not grant rights to Yahoo Finance, TWSE, or TPEx data. Raw data and model artifacts are not
+distributed; see [data and model licenses](docs/concepts/data_and_model_licenses.md).
