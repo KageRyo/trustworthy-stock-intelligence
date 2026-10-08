@@ -371,3 +371,37 @@ def test_serving_can_restore_technical_feature_set(tmp_path: Path) -> None:
 def test_serving_rejects_feature_sets_that_need_market_reference(tmp_path: Path) -> None:
     with pytest.raises(SystemExit):
         _serving_args(tmp_path, "--feature-set", "technical_range_beta")
+
+
+def test_short_history_raises_insufficient_history_error(tmp_path: Path) -> None:
+    from scripts.predict_latest_baseline import InsufficientHistoryError
+
+    input_path = tmp_path / "ohlcv.csv"
+    args = parse_args(
+        [
+            "--input",
+            str(input_path),
+            "--output",
+            str(tmp_path / "out.csv"),
+            "--json-output",
+            str(tmp_path / "out.json"),
+        ]
+    )
+
+    _ohlcv_frame(days=12).to_csv(input_path, index=False)
+    with pytest.raises(InsufficientHistoryError, match="No latest feature rows"):
+        run_prediction(args)
+
+    _ohlcv_frame(days=60).to_csv(input_path, index=False)
+    with pytest.raises(InsufficientHistoryError, match="Not enough labeled dates"):
+        run_prediction(args)
+
+
+def test_configuration_errors_are_not_insufficient_history() -> None:
+    from scripts.predict_latest_baseline import InsufficientHistoryError
+
+    frame = pd.DataFrame({"date": pd.date_range("2025-01-01", periods=5), "risk_label": 0})
+
+    with pytest.raises(ValueError, match="calibration_size") as raised:
+        split_train_calibration(frame, calibration_size=0, train_size=None)
+    assert not isinstance(raised.value, InsufficientHistoryError)

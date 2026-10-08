@@ -13,6 +13,7 @@ from typing import Literal
 import pandas as pd
 from pydantic import BaseModel, ConfigDict, Field
 
+from scripts.predict_latest_baseline import InsufficientHistoryError
 from scripts.predict_latest_baseline import parse_args as parse_prediction_args
 from scripts.predict_latest_baseline import run_prediction
 from tsi.data.download import download_ticker_frame
@@ -181,9 +182,7 @@ def run_on_demand_analysis(args: argparse.Namespace) -> OnDemandAnalysisSummary:
 
     try:
         predictions = run_prediction(parse_prediction_args(prediction_args))
-    except ValueError as exc:
-        if not is_insufficient_history_error(exc):
-            raise
+    except InsufficientHistoryError:
         predictions = write_insufficient_history_prediction(
             result.ohlcv,
             ticker=ticker,
@@ -235,18 +234,6 @@ def build_run_id(ticker: str) -> str:
 
 def default_fresh_start() -> str:
     return (datetime.now(UTC).date() - timedelta(days=7)).isoformat()
-
-
-def is_insufficient_history_error(error: ValueError) -> bool:
-    message = str(error)
-    return any(
-        marker in message
-        for marker in (
-            "Not enough labeled dates",
-            "No latest feature rows were created",
-            "train and calibration frames must not be empty",
-        )
-    )
 
 
 def write_insufficient_history_prediction(
