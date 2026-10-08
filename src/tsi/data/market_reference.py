@@ -130,7 +130,8 @@ def fetch_ticker_sectors(
         symbol = normalize_yfinance_symbol(ticker)
         try:
             info = YahooSectorInfo.model_validate(dict(info_fetcher(symbol)))
-        except Exception as error:  # noqa: BLE001 - provider failures become audit records
+        # Provider failures become audit records instead of aborting the lookup.
+        except Exception as error:  # noqa: BLE001
             records.append(TickerSectorRecord(ticker=symbol, error=str(error)))
             continue
         records.append(
