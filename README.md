@@ -73,6 +73,9 @@ remains a reproducible pilot, not externally validated research or investment ad
 - Experiment 017 compares range, market-relative, and market-regime feature sets on identical folds
   across S&P 100, a 402-ticker S&P 500 holdout, and 53 Taiwan large caps. Serving now uses the
   range-volatility set, which raised AUC by 0.023 to 0.029 in all three samples.
+- Experiment 018 backfills TWSE institutional-flow and margin history from 2015 and tests it on 50
+  large caps and a 199-stock random TWSE holdout. Chip features did not improve discrimination, so
+  serving does not use them.
 - Repository controls include required CI, Dependabot, vulnerability analysis, race tests,
   full-history Gitleaks scanning, and SHA-pinned CodeQL analysis.
 - PostgreSQL is the source of truth for tickers, watchlists, market bars, prediction batches, and

@@ -2,6 +2,29 @@
 
 ## Unreleased
 
+### Added
+
+- `tsi.data.twse_chips`:
+  - Schema-validated adapters for TWSE T86 institutional flows and MI_MARGN margin balances. The
+    pre-2018 and post-2018 foreign-investor columns are normalized to one meaning.
+- `scripts/backfill_twse_chips.py`:
+  - Resumable, rate-limited backfill with gzip payload caching, no-data handling, and normalized
+    tables with coverage metadata.
+- `tsi.features.chips`:
+  - 9 institutional-flow and margin features with a default one-trading-day publication lag.
+  - Feature sets `technical_range_chips`, `technical_range_flows`, and `technical_range_margin`.
+  - Experiment scripts accept `--chip-archive` and `--chip-lag`.
+
+### Notes
+
+- Experiment 018 found that chip features do not improve Taiwan drawdown-risk discrimination:
+  - On 50 large caps, adding them lowered AUC by 0.007.
+  - On a 199-stock seed-18 TWSE holdout, every AUC change was 0.0011 or smaller, at both publication
+    lags.
+  - Serving stays on `technical_range`.
+- Yahoo Finance writes zero-volume placeholder bars on Taiwan typhoon closures. The chip backfill
+  skips those dates, and chip features treat them as no-trade days.
+
 ## 0.7.0 - 2026-10-07
 
 ### Changed

@@ -14,9 +14,11 @@ from scripts.train import prepare_training_frame
 from tsi.data.csv import file_sha256, read_ohlcv_csv
 from tsi.data.market_reference import MarketReference, load_market_reference
 from tsi.data.split import WalkForwardFold, build_walk_forward_splits
+from tsi.data.twse_chips import ChipTables, load_chip_tables
 from tsi.features.sets import (
     DEFAULT_FEATURE_SET,
     FEATURE_SETS,
+    feature_set_requires_chips,
     feature_set_requires_market_reference,
     resolve_feature_set,
 )
@@ -76,6 +78,18 @@ def add_walk_forward_arguments(
         default=None,
         help="Directory from scripts.download_market_reference; needed for market features.",
     )
+    parser.add_argument(
+        "--chip-archive",
+        type=Path,
+        default=None,
+        help="Directory from scripts.backfill_twse_chips; needed for chip features.",
+    )
+    parser.add_argument(
+        "--chip-lag",
+        type=int,
+        default=1,
+        help="Trading days between a chip publication date and the rows that may use it.",
+    )
     if feature_set_argument:
         parser.add_argument(
             "--feature-set",
@@ -102,6 +116,7 @@ class WalkForwardFolds:
     skipped: int
     feature_columns: list[str]
     market_reference_dir: Path | None = None
+    chip_archive_dir: Path | None = None
 
 
 def load_args_market_reference(
@@ -114,6 +129,18 @@ def load_args_market_reference(
     if args.market_reference is None:
         raise ValueError("--market-reference is required for market-relative feature sets")
     return load_market_reference(args.market_reference)
+
+
+def load_args_chip_tables(
+    args: argparse.Namespace, feature_columns: Sequence[str]
+) -> ChipTables | None:
+    """Load ``--chip-archive`` tables when the feature columns need them."""
+
+    if not feature_set_requires_chips(feature_columns):
+        return None
+    if args.chip_archive is None:
+        raise ValueError("--chip-archive is required for chip feature sets")
+    return load_chip_tables(args.chip_archive)
 
 
 def load_walk_forward_folds(
@@ -130,12 +157,15 @@ def load_walk_forward_folds(
 
     columns = list(feature_columns or resolve_feature_set(args.feature_set))
     market_reference = load_args_market_reference(args, columns)
+    chip_tables = load_args_chip_tables(args, columns)
     frame = prepare_training_frame(
         read_ohlcv_csv(args.input),
         horizon=args.horizon,
         drawdown_threshold=args.drawdown_threshold,
         feature_columns=columns,
         market_reference=market_reference,
+        chip_tables=chip_tables,
+        chip_publication_lag=args.chip_lag,
     )
     purge_size = args.horizon if args.purge_size is None else args.purge_size
     if purge_size < args.horizon:
@@ -169,6 +199,7 @@ def load_walk_forward_folds(
         skipped=skipped,
         feature_columns=columns,
         market_reference_dir=args.market_reference if market_reference is not None else None,
+        chip_archive_dir=args.chip_archive if chip_tables is not None else None,
     )
 
 
@@ -219,6 +250,15 @@ def walk_forward_protocol(
             "path": str(folds.market_reference_dir),
             "ohlcv_sha256": file_sha256(folds.market_reference_dir / "ohlcv.csv"),
             "sector_map_sha256": file_sha256(folds.market_reference_dir / "sector_map.csv"),
+        }
+    if folds.chip_archive_dir is not None:
+        reference["chip_archive"] = {
+            "path": str(folds.chip_archive_dir),
+            "publication_lag": args.chip_lag,
+            "institutional_sha256": file_sha256(
+                folds.chip_archive_dir / "institutional.csv"
+            ),
+            "margin_sha256": file_sha256(folds.chip_archive_dir / "margin.csv"),
         }
     return {
         "feature_interval": "1d",

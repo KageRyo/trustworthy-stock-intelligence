@@ -21,7 +21,9 @@ _REQUIRED_COLUMNS = ("date", "ticker", "open", "high", "low", "close", "adj_clos
 
 
 def _rolling_mean(grouped: pd.core.groupby.SeriesGroupBy, window: int) -> pd.Series:
-    return grouped.transform(lambda series: series.rolling(window=window, min_periods=window).mean())
+    return grouped.transform(
+        lambda series: series.rolling(window=window, min_periods=window).mean()
+    )
 
 
 def build_range_features(ohlcv: pd.DataFrame) -> pd.DataFrame:

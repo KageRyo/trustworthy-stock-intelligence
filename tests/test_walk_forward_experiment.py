@@ -108,3 +108,63 @@ def test_explicit_columns_override_feature_set_and_skip_unused_reference(tmp_pat
 
     assert folds.feature_columns == columns
     assert "market_reference" not in protocol
+
+
+def _write_chip_archive(directory: Path, tickers: tuple[str, ...]) -> None:
+    directory.mkdir()
+    dates = pd.bdate_range("2020-01-01", periods=260).strftime("%Y-%m-%d")
+    rng = np.random.default_rng(9)
+    institutional = pd.DataFrame(
+        [
+            {
+                "date": date,
+                "ticker": ticker,
+                "foreign_net": rng.normal(0, 500),
+                "investment_trust_net": rng.normal(0, 100),
+                "dealer_net": rng.normal(0, 50),
+                "total_net": 0.0,
+            }
+            for date in dates
+            for ticker in tickers
+        ]
+    )
+    margin = pd.DataFrame(
+        [
+            {
+                "date": date,
+                "ticker": ticker,
+                "margin_balance": 100.0 + rng.normal(0, 5),
+                "short_balance": 10.0,
+                "margin_short_offset": 0.0,
+            }
+            for date in dates
+            for ticker in tickers
+        ]
+    )
+    institutional.to_csv(directory / "institutional.csv", index=False)
+    margin.to_csv(directory / "margin.csv", index=False)
+
+
+def test_chip_feature_set_requires_and_records_chip_archive(tmp_path: Path) -> None:
+    _write_chip_archive(tmp_path / "chips", ("AAA", "BBB", "2330", "00981A"))
+    missing = _args(tmp_path, "--feature-set", "technical_range_chips")
+    with pytest.raises(ValueError, match="--chip-archive"):
+        load_walk_forward_folds(missing)
+
+    args = _args(
+        tmp_path,
+        "--feature-set",
+        "technical_range_chips",
+        "--chip-archive",
+        str(tmp_path / "chips"),
+        "--chip-lag",
+        "2",
+    )
+    folds = load_walk_forward_folds(args)
+    protocol = walk_forward_protocol(args, folds)
+
+    chip_archive = protocol["chip_archive"]
+    assert isinstance(chip_archive, dict)
+    assert chip_archive["publication_lag"] == 2
+    assert len(chip_archive["margin_sha256"]) == 64
+    assert {"2330", "00981A"} <= set(folds.folds[0].train["ticker"])

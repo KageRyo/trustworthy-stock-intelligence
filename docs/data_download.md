@@ -81,6 +81,29 @@ also writes `sector_map.csv`, which is a current snapshot applied to all history
 reference holds the TAIEX (^TWII) only. `metadata.json` records unmapped tickers and SHA-256 hashes.
 Experiment 017 uses these artifacts; serving does not use them yet.
 
+Backfill TWSE institutional flows (T86) and margin balances (MI_MARGN) for Taiwan chip-feature
+experiments:
+
+```bash
+python -m scripts.backfill_twse_chips \
+  --calendar data/raw/tw_large/ohlcv.csv \
+  --start 2015-01-01 \
+  --archive-dir data/raw/twse_chips
+```
+
+- The command requests one date per call, only on dates when the calendar file shows trading, with
+  at least `--min-interval` seconds between requests (default 2.5).
+- Each validated payload is stored gzip-compressed under
+  `data/raw/twse_chips/{institutional,margin}`. Rerunning the command resumes from that archive.
+- A "no data" answer, such as a typhoon closure, is reported but not cached.
+- The command then rebuilds `institutional.csv`, `margin.csv`, and `metadata.json`. The metadata
+  records coverage, missing dates, failures, and hashes.
+- T86 renamed its foreign-investor columns on 2018-01-02. The adapter sums the two newer foreign
+  columns so `foreign_net` keeps its earlier meaning.
+- Institutional flows for a date are published after that day's close. Chip features therefore use a
+  one-trading-day publication lag by default.
+- Review TWSE terms before redistributing any derived data.
+
 The reproducible Taiwan baseline pilot uses the explicit six-ticker list in
 [`configs/dataset/taiwan_pilot.yaml`](../configs/dataset/taiwan_pilot.yaml) and is documented in
 [`experiments/009_taiwan_pilot/README.md`](../experiments/009_taiwan_pilot/README.md). It commits
