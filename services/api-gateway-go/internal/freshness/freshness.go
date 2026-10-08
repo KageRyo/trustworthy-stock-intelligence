@@ -4,6 +4,8 @@ package freshness
 import (
 	"strings"
 	"time"
+	// Embed the IANA database so session closes resolve in minimal containers.
+	_ "time/tzdata"
 )
 
 const SchemaVersion = "freshness.v1"
@@ -81,7 +83,30 @@ func thresholdFor(market, interval string) threshold {
 	return thresholds["unknown:1d"]
 }
 
-func parseDataAsOf(value string) (time.Time, bool) {
+type sessionClose struct {
+	location string
+	hour     int
+	minute   int
+}
+
+const (
+	newYorkTimeZone = "America/New_York"
+	taipeiTimeZone  = "Asia/Taipei"
+)
+
+// dailySessionCloses is the regular-session close at which a market's daily bar is complete.
+var dailySessionCloses = map[string]sessionClose{
+	"us":       {location: newYorkTimeZone, hour: 16, minute: 0},
+	"twse":     {location: taipeiTimeZone, hour: 13, minute: 30},
+	"tpex":     {location: taipeiTimeZone, hour: 13, minute: 30},
+	"taiwan":   {location: taipeiTimeZone, hour: 13, minute: 30},
+	"emerging": {location: taipeiTimeZone, hour: 15, minute: 0},
+}
+
+// parseDataAsOf returns the cutoff instant of a data_as_of value. A date-only value names a
+// daily bar, which is complete at the market's session close. Unknown markets use the start
+// of the UTC day, which can only make a prediction look older, never newer.
+func parseDataAsOf(value, market string) (time.Time, bool) {
 	value = strings.TrimSpace(value)
 	if value == "" {
 		return time.Time{}, false
@@ -89,10 +114,21 @@ func parseDataAsOf(value string) (time.Time, bool) {
 	if parsed, err := time.Parse(time.RFC3339, value); err == nil {
 		return parsed.UTC(), true
 	}
-	if parsed, err := time.Parse("2006-01-02", value); err == nil {
-		return time.Date(parsed.Year(), parsed.Month(), parsed.Day(), 23, 59, 59, 0, time.UTC), true
+	parsed, err := time.Parse("2006-01-02", value)
+	if err != nil {
+		return time.Time{}, false
 	}
-	return time.Time{}, false
+	sessionEnd, known := dailySessionCloses[market]
+	if !known {
+		return parsed.UTC(), true
+	}
+	location, err := time.LoadLocation(sessionEnd.location)
+	if err != nil {
+		return parsed.UTC(), true
+	}
+	return time.Date(
+		parsed.Year(), parsed.Month(), parsed.Day(), sessionEnd.hour, sessionEnd.minute, 0, 0, location,
+	).UTC(), true
 }
 
 func Assess(dataAsOf, evaluatedAt, market, interval string) Assessment {
@@ -118,7 +154,7 @@ func Assess(dataAsOf, evaluatedAt, market, interval string) Assessment {
 		FreshWithinSeconds: limits.fresh,
 		StaleWithinSeconds: limits.stale,
 	}
-	parsed, ok := parseDataAsOf(dataAsOf)
+	parsed, ok := parseDataAsOf(dataAsOf, market)
 	if !ok {
 		assessment.State = StateUnusable
 		assessment.Action = ActionBlock
