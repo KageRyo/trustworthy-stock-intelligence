@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+### Changed
+
+- The analysis API adds `trust.summary_code`. It is chosen by one ordered rule table in Go that now
+  also covers `insufficient_history`. The English `summary` remains.
+- The dashboard localizes the trust-status and data-freshness cards by `trust.summary_code` and
+  `freshness.reason_code`, with English API text as the fallback. Previously both cards showed
+  English text in 正體中文. The duplicated reason-code precedence in the frontend is removed.
+
 ### Added
 
 - `tsi.data.twse_chips`:
