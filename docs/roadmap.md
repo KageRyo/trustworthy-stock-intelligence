@@ -22,10 +22,12 @@ limitations. It is not an investment recommendation or automated trading system.
 Version `0.7.0` is an operational prototype. Since that release, `main` also has:
 
 - the Taiwan chip-data research path (Experiment 018, no serving change);
-- dashboard localization of trust and freshness summaries;
-- a Go dependency security update.
+- dashboard localization of trust and freshness summaries, and layout fixes;
+- daily freshness cutoffs at each market's session close;
+- a Go dependency security update;
+- reorganized documentation with decision records, an experiment index, and a model card.
 
-The served model and the evidence behind it are summarized in the
+The served model is described in the [model card](model_card.md). The evidence behind it is in the
 [experiment index](../experiments/README.md) and the decision records.
 
 ## Now
@@ -36,9 +38,6 @@ The served model and the evidence behind it are summarized in the
      features.
 1. **On-demand concurrency.** Run one analysis per ticker at a time (singleflight) and cap
    concurrent analyses in the Go bridge.
-1. **Documentation.**
-   - Add a model card for the served model.
-   - Refresh the README with dashboard screenshots and live badges.
 
 ## Next
 
