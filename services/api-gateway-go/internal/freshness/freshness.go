@@ -89,13 +89,18 @@ type sessionClose struct {
 	minute   int
 }
 
+const (
+	newYorkTimeZone = "America/New_York"
+	taipeiTimeZone  = "Asia/Taipei"
+)
+
 // dailySessionCloses is the regular-session close at which a market's daily bar is complete.
 var dailySessionCloses = map[string]sessionClose{
-	"us":       {location: "America/New_York", hour: 16, minute: 0},
-	"twse":     {location: "Asia/Taipei", hour: 13, minute: 30},
-	"tpex":     {location: "Asia/Taipei", hour: 13, minute: 30},
-	"taiwan":   {location: "Asia/Taipei", hour: 13, minute: 30},
-	"emerging": {location: "Asia/Taipei", hour: 15, minute: 0},
+	"us":       {location: newYorkTimeZone, hour: 16, minute: 0},
+	"twse":     {location: taipeiTimeZone, hour: 13, minute: 30},
+	"tpex":     {location: taipeiTimeZone, hour: 13, minute: 30},
+	"taiwan":   {location: taipeiTimeZone, hour: 13, minute: 30},
+	"emerging": {location: taipeiTimeZone, hour: 15, minute: 0},
 }
 
 // parseDataAsOf returns the cutoff instant of a data_as_of value. A date-only value names a
