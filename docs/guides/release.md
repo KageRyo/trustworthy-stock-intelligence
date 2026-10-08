@@ -108,24 +108,34 @@ rerun are not present in the repository.
 
 ## Version Files
 
-Update:
+Update the version in:
 
 ```text
 pyproject.toml
+uv.lock                                   (the trustworthy-stock-intelligence package entry only)
+src/tsi/__init__.py
+tests/test_cli.py
+CITATION.cff                              (version, date-released, abstract)
+CONTRIBUTING.md                           (release branch example)
 frontend/stock-dashboard/package.json
-frontend/stock-dashboard/package-lock.json
+frontend/stock-dashboard/package-lock.json (both root entries)
 frontend/stock-dashboard/README.md
-dashboard/README.md
-docs/reference/api/openapi.yaml
-services/api-gateway-go/internal/http/openapi.yaml
 services/api-gateway-go/README.md
-README.md
-CITATION.cff
-docs/guides/environment.md
-docs/roadmap.md
+services/api-gateway-go/internal/http/openapi.yaml
+docs/reference/api/openapi.yaml
+docs/reference/provider_coverage.md
 docs/guides/local_demo.md
-CHANGELOG.md
+docs/guides/python_package.md
+docs/roadmap.md
 docs/guides/release.md
+CHANGELOG.md
+```
+
+The root `README.md` has no version text; its PyPI badges update on their own. Before tagging,
+confirm that no stale version remains:
+
+```bash
+git grep -n "<previous version>" -- ':!CHANGELOG.md' ':!experiments' ':!docs/decisions'
 ```
 
 ## Required Checks
