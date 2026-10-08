@@ -141,6 +141,17 @@ Freshness is evaluated at API read time against the prediction's feature interva
 `fresh` permits normal display, `stale` retains the result for context while requiring a confidence
 downgrade, and `unusable` blocks an actionable interpretation and supplies an `abstain` override.
 
+A date-only `data_as_of` names a daily bar. The bar counts as complete at the market's regular
+session close:
+
+- US: 16:00 New York.
+- TWSE and TPEx: 13:30 Taipei.
+- Emerging stocks: 15:00 Taipei.
+- Unknown markets: 00:00 UTC on that date.
+
+Age is measured from that instant. A query made before the close on the same date gets
+`freshness_future_data_as_of`, because that daily bar is still open.
+
 | Field                    | Type              | Description                                                                                    |
 | ------------------------ | ----------------- | ---------------------------------------------------------------------------------------------- |
 | `schema_version`         | string            | Current value: `freshness.v1`.                                                                 |

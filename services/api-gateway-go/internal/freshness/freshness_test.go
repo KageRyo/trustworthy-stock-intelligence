@@ -39,3 +39,33 @@ func TestAssessMissingFutureAndUnusableCutoffsBlock(t *testing.T) {
 		t.Fatalf("unexpected old assessment: %+v", old)
 	}
 }
+
+func TestDailyCutoffIsTheMarketSessionClose(t *testing.T) {
+	cases := []struct {
+		name        string
+		dataAsOf    string
+		evaluatedAt string
+		market      string
+		reason      string
+		ageSeconds  float64
+	}{
+		// 13:30 Taipei is 05:30 UTC; 19:00 Taipei on the same day is fresh, not future.
+		{"taiwan same evening", "2026-10-08", "2026-10-08T11:00:00Z", "twse", "freshness_fresh", 5.5 * 3600},
+		// 10:00 Taipei is before the close, so today's daily bar is not complete yet.
+		{"taiwan intraday partial bar", "2026-10-08", "2026-10-08T02:00:00Z", "twse", "freshness_future_data_as_of", 0},
+		{"emerging closes at 15:00", "2026-10-08", "2026-10-08T07:30:00Z", "emerging", "freshness_fresh", 1800},
+		// 16:00 New York in October (EDT) is 20:00 UTC.
+		{"us after the close", "2026-10-07", "2026-10-07T21:00:00Z", "us", "freshness_fresh", 3600},
+		{"us before the close", "2026-10-07", "2026-10-07T19:00:00Z", "us", "freshness_future_data_as_of", 0},
+		{"unknown market uses UTC midnight", "2026-10-07", "2026-10-07T06:00:00Z", "unknown", "freshness_fresh", 6 * 3600},
+	}
+	for _, testCase := range cases {
+		assessment := Assess(testCase.dataAsOf, testCase.evaluatedAt, testCase.market, "1d")
+		if assessment.ReasonCode != testCase.reason {
+			t.Fatalf("%s: reason = %q, want %q", testCase.name, assessment.ReasonCode, testCase.reason)
+		}
+		if assessment.AgeSeconds == nil || *assessment.AgeSeconds != testCase.ageSeconds {
+			t.Fatalf("%s: age = %v, want %v", testCase.name, assessment.AgeSeconds, testCase.ageSeconds)
+		}
+	}
+}

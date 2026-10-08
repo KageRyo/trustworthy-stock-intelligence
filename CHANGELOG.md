@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+### Fixed
+
+- Freshness treated a date-only `data_as_of` as 23:59:59 UTC. As a result, every daily prediction
+  made on the same day was marked unusable as "in the future" until 08:00 the next morning, Taipei
+  time.
+  - The daily cutoff is now the market's regular session close: 16:00 New York for US stocks, 13:30
+    Taipei for TWSE and TPEx stocks, and 15:00 Taipei for emerging stocks.
+  - An intraday query on a still-open daily bar is blocked until the close.
+
 ### Changed
 
 - The analysis API adds `trust.summary_code`. It is chosen by one ordered rule table in Go that now
