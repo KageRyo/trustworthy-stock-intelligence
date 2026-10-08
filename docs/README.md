@@ -15,6 +15,11 @@ Start here to find the right document. Documents are grouped by what the reader 
 | [`roadmap.md`](roadmap.md)                    | Now, next, later, and completed milestones                    | "What is planned?"          |
 | [`../experiments/`](../experiments/README.md) | Experiment reports and their index                            | "What did we measure?"      |
 
+## Model card
+
+The [model card](model_card.md) describes the model served today: task, data, label, features,
+training and serving steps, performance, explanations, and limitations.
+
 ## Guides
 
 | Document                                   | Purpose                                                                |
