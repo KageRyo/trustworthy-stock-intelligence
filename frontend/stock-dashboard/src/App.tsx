@@ -650,6 +650,10 @@ export default function App() {
   );
 }
 
+function formatAxisPercent(value: number): string {
+  return `${Math.round(Number(value) * 100)}%`;
+}
+
 function MetricCard({
   icon,
   label,
@@ -677,8 +681,10 @@ function MetricCard({
         <span className={`grid h-8 w-8 place-items-center rounded-md ${toneClass}`}>{icon}</span>
       </div>
       <div className="mt-3 flex items-end justify-between gap-3">
-        <span className="truncate text-2xl font-semibold tracking-normal">{value}</span>
-        {detail ? <span className="pb-1 text-sm font-medium text-slate-500">{detail}</span> : null}
+        <span className="shrink-0 text-2xl font-semibold tracking-normal">{value}</span>
+        {detail ? (
+          <span className="min-w-0 pb-1 text-right text-sm font-medium text-slate-500">{detail}</span>
+        ) : null}
       </div>
     </div>
   );
@@ -873,10 +879,10 @@ function AnalysisPanel({
         <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,0.9fr)_minmax(260px,0.7fr)]">
           <div className="min-h-[260px]">
             <ResponsiveContainer width="100%" height={260}>
-              <BarChart data={chartData} margin={{ top: 8, right: 8, bottom: 0, left: -24 }}>
+              <BarChart data={chartData} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
                 <CartesianGrid stroke="#e5e7eb" vertical={false} />
-                <XAxis dataKey="name" tickLine={false} axisLine={false} />
-                <YAxis domain={[0, 1]} tickFormatter={(value) => `${Number(value) * 100}%`} />
+                <XAxis dataKey="name" tickLine={false} axisLine={false} interval={0} tick={{ fontSize: 12 }} />
+                <YAxis domain={[0, 1]} width={52} tickFormatter={formatAxisPercent} />
                 <Tooltip formatter={(value) => formatPercent(Number(value), copy.common.na)} />
                 <Bar dataKey="value" radius={[6, 6, 0, 0]}>
                   {chartData.map((entry, index) => (
@@ -925,7 +931,7 @@ function TrustPanel({
   copy: DashboardCopy;
 }) {
   return (
-    <section className="rounded-lg border border-line bg-white p-5 shadow-panel">
+    <section className="min-w-0 rounded-lg border border-line bg-white p-5 shadow-panel">
       <div className="flex items-center justify-between border-b border-line pb-4">
         <div>
           <h2 className="text-lg font-semibold tracking-normal">{copy.panels.trustAndModel}</h2>
@@ -1087,10 +1093,10 @@ function WarningTimelinePanel({
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1.4fr)_minmax(360px,0.9fr)]">
           <div className="min-h-[300px]">
             <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={chartData} margin={{ top: 8, right: 8, bottom: 0, left: -24 }}>
+              <LineChart data={chartData} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
                 <CartesianGrid stroke="#e5e7eb" vertical={false} />
                 <XAxis dataKey="date" tickLine={false} axisLine={false} minTickGap={24} />
-                <YAxis domain={[0, 1]} tickFormatter={(value) => `${Number(value) * 100}%`} />
+                <YAxis domain={[0, 1]} width={52} tickFormatter={formatAxisPercent} />
                 <Tooltip formatter={(value) => formatPercent(Number(value), copy.common.na)} />
                 <Legend />
                 <Line type="monotone" dataKey="risk" name={copy.chart.risk} stroke="#c2410c" dot={false} />
@@ -1723,9 +1729,9 @@ function LevelBadge({ level, copy }: { level: WarningLevel; copy: DashboardCopy 
 
 function ValueRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex min-h-[38px] items-center justify-between gap-4 border-b border-line pb-2 last:border-0">
-      <span className="text-sm font-medium text-slate-500">{label}</span>
-      <span className="max-w-[60%] truncate text-right text-sm font-semibold text-ink">{value}</span>
+    <div className="flex min-h-[38px] min-w-0 items-center justify-between gap-4 border-b border-line pb-2 last:border-0">
+      <span className="shrink-0 text-sm font-medium text-slate-500">{label}</span>
+      <span className="min-w-0 max-w-[60%] break-words text-right text-sm font-semibold text-ink">{value}</span>
     </div>
   );
 }
