@@ -1,39 +1,58 @@
 import { describe, expect, it } from "vitest";
-import { translations } from "./i18n";
-import { localizedTrustSummary } from "./trustSummary";
-
-function reasons(...codes: string[]) {
-  return { reasons: codes.map((code) => ({ code })) };
-}
+import { freshnessReasonCodes, translations, trustSummaryCodes } from "./i18n";
+import { localizedFreshnessMessage, localizedTrustSummary } from "./trustSummary";
 
 describe("localizedTrustSummary", () => {
-  it("prioritizes calibration drift over data quality", () => {
-    expect(
-      localizedTrustSummary(
-        reasons("limited_data_quality", "calibration_drift_detected"),
-        translations.en
-      )
-    ).toBe(translations.en.trustSummaries.calibrationDriftDetected);
+  it("translates the API summary code", () => {
+    const trust = { summary_code: "limited_data_quality", summary: "English text" };
+
+    expect(localizedTrustSummary(trust, translations["zh-Hant"])).toBe(
+      translations["zh-Hant"].trustSummaries.limited_data_quality
+    );
+    expect(localizedTrustSummary(trust, translations.en)).toBe(
+      translations.en.trustSummaries.limited_data_quality
+    );
   });
 
-  it("explains limited data quality before alert trust", () => {
+  it("falls back to the API summary for unknown or inherited codes", () => {
     expect(
-      localizedTrustSummary(
-        reasons("trust_above_alert_threshold", "stale_ticker_data"),
+      localizedTrustSummary({ summary_code: "new_code", summary: "From API" }, translations.en)
+    ).toBe("From API");
+    expect(
+      localizedTrustSummary({ summary_code: "toString", summary: "From API" }, translations.en)
+    ).toBe("From API");
+  });
+
+  it("has wording for every summary code in both locales", () => {
+    for (const copy of Object.values(translations)) {
+      for (const code of trustSummaryCodes) {
+        expect(copy.trustSummaries[code]).toBeTruthy();
+      }
+    }
+  });
+});
+
+describe("localizedFreshnessMessage", () => {
+  it("translates freshness reason codes", () => {
+    expect(
+      localizedFreshnessMessage(
+        { reason_code: "freshness_stale", message: "English text" },
         translations["zh-Hant"]
       )
-    ).toBe(translations["zh-Hant"].trustSummaries.limitedDataQuality);
+    ).toBe(translations["zh-Hant"].freshnessMessages.freshness_stale);
   });
 
-  it("explains unavailable reliability signals", () => {
-    expect(localizedTrustSummary(reasons("reliability_unavailable"), translations.en)).toBe(
-      translations.en.trustSummaries.reliabilityUnavailable
-    );
+  it("falls back to the API message for unknown codes", () => {
+    expect(
+      localizedFreshnessMessage({ reason_code: "freshness_new", message: "From API" }, translations.en)
+    ).toBe("From API");
   });
 
-  it("falls back to the default summary", () => {
-    expect(localizedTrustSummary(reasons(), translations.en)).toBe(
-      translations.en.trustSummaries.default
-    );
+  it("has wording for every freshness reason code in both locales", () => {
+    for (const copy of Object.values(translations)) {
+      for (const code of freshnessReasonCodes) {
+        expect(copy.freshnessMessages[code]).toBeTruthy();
+      }
+    }
   });
 });

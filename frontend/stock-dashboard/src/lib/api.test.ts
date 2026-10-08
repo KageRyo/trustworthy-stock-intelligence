@@ -62,6 +62,7 @@ function analysisPayload(ticker = "2330") {
       calibration_method: "platt",
       trust_status: "limited_trust",
       uncertainty_status: "acceptable_uncertainty",
+      summary_code: "limited_trust",
       summary: "Trust score is below the configured alert threshold for this batch."
     },
     model: {

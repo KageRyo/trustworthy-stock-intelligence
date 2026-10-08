@@ -8,6 +8,29 @@ type TextPair = {
   detail: string;
 };
 
+export const trustSummaryCodes = [
+  "insufficient_history",
+  "calibration_drift_abstain",
+  "calibration_drift_detected",
+  "calibration_drift_not_evaluated",
+  "reliability_unavailable",
+  "limited_data_quality",
+  "high_uncertainty",
+  "trusted_for_alert",
+  "limited_trust",
+  "default"
+] as const;
+export type TrustSummaryCode = (typeof trustSummaryCodes)[number];
+
+export const freshnessReasonCodes = [
+  "freshness_fresh",
+  "freshness_stale",
+  "freshness_unusable",
+  "freshness_missing_data_as_of",
+  "freshness_future_data_as_of"
+] as const;
+export type FreshnessReasonCode = (typeof freshnessReasonCodes)[number];
+
 export type DashboardCopy = {
   localeName: string;
   productName: string;
@@ -153,18 +176,8 @@ export type DashboardCopy = {
     targetNotMet: string;
     smallSample: string;
   };
-  trustSummaries: {
-    insufficientHistory: string;
-    highUncertainty: string;
-    trustedForAlert: string;
-    limitedTrust: string;
-    calibrationDriftDetected: string;
-    calibrationDriftAbstain: string;
-    calibrationDriftNotEvaluated: string;
-    limitedDataQuality: string;
-    reliabilityUnavailable: string;
-    default: string;
-  };
+  trustSummaries: Record<TrustSummaryCode, string>;
+  freshnessMessages: Record<FreshnessReasonCode, string>;
   severity: Record<ReasonSeverity, string>;
   markets: Record<string, string>;
   chart: {
@@ -332,6 +345,16 @@ export const translations = {
       downgrade: "Downgrade confidence",
       block: "Blocked / abstain"
     },
+    freshnessMessages: {
+      freshness_fresh: "The prediction cutoff is within the configured freshness window.",
+      freshness_stale:
+        "The prediction is retained for context but is too old for a full-confidence warning.",
+      freshness_unusable:
+        "The prediction is beyond the usable freshness window and must be treated as abstain.",
+      freshness_missing_data_as_of:
+        "The prediction has no data cutoff and must not be served as actionable.",
+      freshness_future_data_as_of: "The prediction cutoff is in the future and must not be served."
+    },
     operational: {
       fresh: "Fresh",
       stale: "Stale",
@@ -360,18 +383,18 @@ export const translations = {
       smallSample: " (small calibration sample)"
     },
     trustSummaries: {
-      insufficientHistory:
+      insufficient_history:
         "The ticker has market data, but not enough labeled history for a calibrated risk prediction.",
-      highUncertainty:
+      high_uncertainty:
         "Uncertainty is above the configured threshold, so the model output should be treated cautiously.",
-      trustedForAlert: "Trust score is above the configured alert threshold for this batch.",
-      limitedTrust: "Trust score is below the configured alert threshold for this batch.",
-      calibrationDriftDetected: "Calibration drift was detected and the trust score was reduced.",
-      calibrationDriftAbstain: "Calibration drift crossed the abstention gate; treat this output as non-actionable.",
-      calibrationDriftNotEvaluated: "Calibration drift was not evaluated because no later labeled window was available.",
-      limitedDataQuality:
+      trusted_for_alert: "Trust score is above the configured alert threshold for this batch.",
+      limited_trust: "Trust score is below the configured alert threshold for this batch.",
+      calibration_drift_detected: "Calibration drift was detected and the trust score was reduced.",
+      calibration_drift_abstain: "Calibration drift crossed the abstention gate; treat this output as non-actionable.",
+      calibration_drift_not_evaluated: "Calibration drift was not evaluated because no later labeled window was available.",
+      limited_data_quality:
         "Data quality is limited (short labeled history or stale bars), so trust was reduced.",
-      reliabilityUnavailable:
+      reliability_unavailable:
         "Reliability could not be assessed for this batch, so trust was set to zero.",
       default:
         "Trust reflects data quality and calibration drift; uncertainty is reported separately."
@@ -640,6 +663,13 @@ export const translations = {
       downgrade: "降低信心",
       block: "阻擋／暫不判斷"
     },
+    freshnessMessages: {
+      freshness_fresh: "預測的資料截止時間在設定的新鮮度範圍內。",
+      freshness_stale: "預測保留供參考，但資料已過舊，不足以發出完全可信的警示。",
+      freshness_unusable: "預測已超出可用的新鮮度範圍，必須視為暫不判斷。",
+      freshness_missing_data_as_of: "預測沒有資料截止時間，不得當作可採取行動的結果。",
+      freshness_future_data_as_of: "預測的資料截止時間在未來，不得提供。"
+    },
     operational: {
       fresh: "新鮮",
       stale: "過期",
@@ -668,15 +698,15 @@ export const translations = {
       smallSample: "（校準樣本少）"
     },
     trustSummaries: {
-      insufficientHistory: "此股票有市場資料，但標註歷史不足，無法產生校準後風險預測。",
-      highUncertainty: "不確定性高於設定門檻，模型輸出應保守解讀。",
-      trustedForAlert: "此批次的信任分數高於警示門檻。",
-      limitedTrust: "此批次的信任分數低於警示門檻。",
-      calibrationDriftDetected: "偵測到校準漂移，信任分數已降低。",
-      calibrationDriftAbstain: "校準漂移跨越暫不判斷門檻，這項輸出不可直接採取行動。",
-      calibrationDriftNotEvaluated: "沒有較晚的標註資料窗，因此尚未評估校準漂移。",
-      limitedDataQuality: "資料品質有限（標註歷史較短或價格資料過舊），信任分數已降低。",
-      reliabilityUnavailable: "此批次無法評估可靠度，信任分數設為零。",
+      insufficient_history: "此股票有市場資料，但標註歷史不足，無法產生校準後風險預測。",
+      high_uncertainty: "不確定性高於設定門檻，模型輸出應保守解讀。",
+      trusted_for_alert: "此批次的信任分數高於警示門檻。",
+      limited_trust: "此批次的信任分數低於警示門檻。",
+      calibration_drift_detected: "偵測到校準漂移，信任分數已降低。",
+      calibration_drift_abstain: "校準漂移跨越暫不判斷門檻，這項輸出不可直接採取行動。",
+      calibration_drift_not_evaluated: "沒有較晚的標註資料窗，因此尚未評估校準漂移。",
+      limited_data_quality: "資料品質有限（標註歷史較短或價格資料過舊），信任分數已降低。",
+      reliability_unavailable: "此批次無法評估可靠度，信任分數設為零。",
       default: "信任分數反映資料品質與校準漂移；不確定性另行呈現。"
     },
     severity: {

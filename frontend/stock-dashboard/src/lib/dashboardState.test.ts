@@ -30,6 +30,7 @@ function analysis(overrides: Partial<TickerAnalysis> = {}): TickerAnalysis {
       calibration_method: "platt",
       trust_status: "trusted_for_alert",
       uncertainty_status: "acceptable_uncertainty",
+      summary_code: "trusted_for_alert",
       summary: "trusted"
     },
     model: { name: "baseline", model_bundle: "bundle" },

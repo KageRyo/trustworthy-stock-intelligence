@@ -27,7 +27,7 @@ import {
   YAxis
 } from "recharts";
 import { formatAlertPolicy } from "./lib/alertPolicy";
-import { localizedTrustSummary } from "./lib/trustSummary";
+import { localizedFreshnessMessage, localizedTrustSummary } from "./lib/trustSummary";
 import {
   APIClientError,
   addWatchlistTicker,
@@ -761,13 +761,17 @@ function OperationalStatusPanel({
         <OperationalCard
           label={copy.labels.freshness}
           value={copy.operational[freshnessState]}
-          detail={analysis?.data_freshness.freshness.message || copy.common.na}
+          detail={
+            analysis
+              ? localizedFreshnessMessage(analysis.data_freshness.freshness, copy)
+              : copy.common.na
+          }
           tone={freshnessState}
         />
         <OperationalCard
           label={copy.labels.trustStatus}
           value={copy.operational[trustState]}
-          detail={analysis?.trust.summary || copy.common.na}
+          detail={analysis ? localizedTrustSummary(analysis.trust, copy) : copy.common.na}
           tone={trustState}
         />
         <OperationalCard
@@ -1000,7 +1004,7 @@ function TrustPanel({
       </div>
       {analysis ? (
         <p className="mt-4 rounded-md border border-line bg-emerald-50 p-3 text-sm leading-6 text-emerald-900">
-          {localizedTrustSummary(analysis, copy)}
+          {localizedTrustSummary(analysis.trust, copy)}
         </p>
       ) : null}
       {analysis ? <FeatureAttributionList attributions={analysis.feature_attributions ?? []} copy={copy} /> : null}
@@ -1033,7 +1037,7 @@ function FreshnessPanel({
       <p className="mt-1 text-sm font-semibold">
         {copy.freshnessActions[freshness.action] ?? freshness.action}
       </p>
-      <p className="mt-1 text-xs leading-5">{freshness.message}</p>
+      <p className="mt-1 text-xs leading-5">{localizedFreshnessMessage(freshness, copy)}</p>
       <p className="mt-2 break-all font-mono text-[11px] opacity-75">
         {copy.labels.freshnessReason}: {freshness.reason_code} · {freshness.interval}
       </p>
