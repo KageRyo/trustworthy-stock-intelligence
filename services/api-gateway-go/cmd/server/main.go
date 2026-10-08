@@ -53,8 +53,18 @@ func main() {
 			logger.Error("service_start_failed", "schema_version", "tsi_log.v1", "service", "api_gateway", "stage", "on_demand_analyzer", "error", err)
 			os.Exit(1)
 		}
-		handlers.SetOnDemandAnalyzer(analyzer)
-		logger.Info("on_demand_analysis_enabled", "schema_version", "tsi_log.v1", "service", "api_gateway")
+		limited, err := apihttp.NewLimitedOnDemandAnalyzer(analyzer, cfg.OnDemandMaxConcurrency)
+		if err != nil {
+			logger.Error("service_start_failed", "schema_version", "tsi_log.v1", "service", "api_gateway", "stage", "on_demand_limit", "error", err)
+			os.Exit(1)
+		}
+		handlers.SetOnDemandAnalyzer(limited)
+		logger.Info(
+			"on_demand_analysis_enabled",
+			"schema_version", "tsi_log.v1",
+			"service", "api_gateway",
+			"max_concurrency", cfg.OnDemandMaxConcurrency,
+		)
 	}
 	router := apihttp.NewRouter(
 		handlers,

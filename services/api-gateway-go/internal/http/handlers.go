@@ -3,6 +3,7 @@ package apihttp
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -357,11 +358,7 @@ func (h *Handlers) TickerAnalysis(response http.ResponseWriter, request *http.Re
 			return
 		}
 		if err := h.onDemandAnalyzer.Analyze(request.Context(), ticker); err != nil {
-			writeError(
-				response,
-				http.StatusServiceUnavailable,
-				newHTTPError("on_demand_analysis_failed", err.Error()),
-			)
+			writeOnDemandError(response, err)
 			return
 		}
 		h.refreshStore()
@@ -409,7 +406,7 @@ func (h *Handlers) TickerWarningHistory(response http.ResponseWriter, request *h
 	}
 	if len(history) == 0 && h.onDemandAnalyzer != nil {
 		if err := h.onDemandAnalyzer.Analyze(request.Context(), ticker); err != nil {
-			writeError(response, http.StatusServiceUnavailable, newHTTPError("on_demand_analysis_failed", err.Error()))
+			writeOnDemandError(response, err)
 			return
 		}
 		h.refreshStore()
@@ -462,6 +459,20 @@ func writeJSON(response http.ResponseWriter, status int, payload any) {
 	response.Header().Set("Content-Type", "application/json")
 	response.WriteHeader(status)
 	_ = json.NewEncoder(response).Encode(payload)
+}
+
+// onDemandRetryAfterSeconds is the Retry-After hint returned while every analysis slot is busy.
+const onDemandRetryAfterSeconds = "15"
+
+// writeOnDemandError maps a full on-demand capacity to 429 so clients can queue a prediction job,
+// and any other failure to 503.
+func writeOnDemandError(response http.ResponseWriter, err error) {
+	if errors.Is(err, ErrOnDemandBusy) {
+		response.Header().Set("Retry-After", onDemandRetryAfterSeconds)
+		writeError(response, http.StatusTooManyRequests, newHTTPError("on_demand_analysis_busy", err.Error()))
+		return
+	}
+	writeError(response, http.StatusServiceUnavailable, newHTTPError("on_demand_analysis_failed", err.Error()))
 }
 
 func writeError(response http.ResponseWriter, status int, err error) {

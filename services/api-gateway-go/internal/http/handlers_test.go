@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -800,23 +801,34 @@ func TestTickerAnalysisHandlerRunsOnDemandWhenTickerMissing(t *testing.T) {
 	}
 }
 
-func TestTickerAnalysisHandlerReturnsUnavailableWhenOnDemandFails(t *testing.T) {
-	store := newMutableWarningStore()
-	handlers := NewHandlers(store)
-	handlers.SetOnDemandAnalyzer(&fakeOnDemandAnalyzer{err: errors.New("provider failed")})
-	router := NewRouter(handlers)
-
-	response := getJSON(t, router, "/api/v1/analysis/2884")
-
-	if response.Code != http.StatusServiceUnavailable {
-		t.Fatalf("status = %d, want 503", response.Code)
+func TestTickerAnalysisHandlerMapsOnDemandFailures(t *testing.T) {
+	cases := []struct {
+		err        error
+		status     int
+		code       string
+		retryAfter string
+	}{
+		{errors.New("provider failed"), http.StatusServiceUnavailable, "on_demand_analysis_failed", ""},
+		{fmt.Errorf("wrapped: %w", ErrOnDemandBusy), http.StatusTooManyRequests, "on_demand_analysis_busy", "15"},
 	}
-	var payload ErrorResponse
-	if err := json.NewDecoder(response.Body).Decode(&payload); err != nil {
-		t.Fatalf("decode response: %v", err)
-	}
-	if payload.Error.Code != "on_demand_analysis_failed" {
-		t.Fatalf("error code = %q, want on_demand_analysis_failed", payload.Error.Code)
+	for _, testCase := range cases {
+		handlers := NewHandlers(newMutableWarningStore())
+		handlers.SetOnDemandAnalyzer(&fakeOnDemandAnalyzer{err: testCase.err})
+		router := NewRouter(handlers)
+
+		for _, path := range []string{"/api/v1/analysis/2884", "/api/v1/analysis/2884/history"} {
+			response := getJSON(t, router, path)
+			var payload ErrorResponse
+			if err := json.NewDecoder(response.Body).Decode(&payload); err != nil {
+				t.Fatalf("%s: decode response: %v", path, err)
+			}
+			if response.Code != testCase.status || payload.Error.Code != testCase.code {
+				t.Fatalf("%s: got %d %q, want %d %q", path, response.Code, payload.Error.Code, testCase.status, testCase.code)
+			}
+			if got := response.Header().Get("Retry-After"); got != testCase.retryAfter {
+				t.Fatalf("%s: Retry-After = %q, want %q", path, got, testCase.retryAfter)
+			}
+		}
 	}
 }
 
