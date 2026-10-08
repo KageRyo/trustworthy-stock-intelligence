@@ -1323,6 +1323,7 @@ components:
         - calibration_method
         - trust_status
         - uncertainty_status
+        - summary_code
         - summary
       properties:
         trust_score:
@@ -1341,8 +1342,23 @@ components:
           type: string
         uncertainty_status:
           type: string
+        summary_code:
+          type: string
+          description: Stable code for the trust summary. Clients localize it and fall back to summary for unknown codes.
+          enum:
+            - insufficient_history
+            - calibration_drift_abstain
+            - calibration_drift_detected
+            - calibration_drift_not_evaluated
+            - reliability_unavailable
+            - limited_data_quality
+            - high_uncertainty
+            - trusted_for_alert
+            - limited_trust
+            - default
         summary:
           type: string
+          description: English trust summary matching summary_code.
     AlertPolicyMetadata:
       type: object
       additionalProperties: false
