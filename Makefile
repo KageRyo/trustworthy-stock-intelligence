@@ -104,13 +104,15 @@ model-bundles:
 		--output $(MODEL_BUNDLE_DIR)/batch/us_predictions.csv \
 		--json-output $(MODEL_BUNDLE_DIR)/batch/us_warnings.json \
 		--run-id model_bundle_us \
-		--model-bundle-output $(MODEL_BUNDLE_DIR)/us.json
+		--model-bundle-root $(MODEL_BUNDLE_DIR) \
+		--model-bundle-output us.json
 	$(PYTHON) -m scripts.predict_latest_baseline \
 		--input $(TAIWAN_BUNDLE_INPUT) \
 		--output $(MODEL_BUNDLE_DIR)/batch/taiwan_predictions.csv \
 		--json-output $(MODEL_BUNDLE_DIR)/batch/taiwan_warnings.json \
 		--run-id model_bundle_taiwan \
-		--model-bundle-output $(MODEL_BUNDLE_DIR)/taiwan.json
+		--model-bundle-root $(MODEL_BUNDLE_DIR) \
+		--model-bundle-output taiwan.json
 
 api:
 	cd services/api-gateway-go && \

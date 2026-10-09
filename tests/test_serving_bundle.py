@@ -30,6 +30,8 @@ COMPARED = [
 def _args(tmp_path: Path, input_path: Path, name: str, *extra: str):
     return parse_args(
         [
+            "--model-bundle-root",
+            str(tmp_path / "bundles"),
             "--input",
             str(input_path),
             "--output",
@@ -55,9 +57,7 @@ def _batch_with_bundle(tmp_path: Path) -> tuple[pd.DataFrame, Path]:
     universe = tmp_path / "universe.csv"
     _write_ohlcv(universe)
     bundle_path = tmp_path / "bundles" / "us.json"
-    batch = run_prediction(
-        _args(tmp_path, universe, "batch", "--model-bundle-output", str(bundle_path))
-    )
+    batch = run_prediction(_args(tmp_path, universe, "batch", "--model-bundle-output", "us.json"))
     return batch, bundle_path
 
 
@@ -79,7 +79,7 @@ def _assert_same_scores(actual: pd.DataFrame, expected: pd.DataFrame) -> None:
 def test_batch_writes_a_schema_validated_bundle(tmp_path: Path) -> None:
     _, bundle_path = _batch_with_bundle(tmp_path)
 
-    bundle = load_serving_bundle(bundle_path)
+    bundle = load_serving_bundle(bundle_path, root=bundle_path.parent)
 
     assert bundle.schema_version == SERVING_BUNDLE_SCHEMA_VERSION
     assert bundle.run_id == "batch"
@@ -120,37 +120,29 @@ def test_bundle_scores_a_single_ticker_like_its_batch_row(tmp_path: Path) -> Non
 
 def test_bundle_options_are_mutually_exclusive(tmp_path: Path) -> None:
     _, bundle_path = _batch_with_bundle(tmp_path)
+    args = _args(
+        tmp_path,
+        tmp_path / "universe.csv",
+        "both",
+        "--model-bundle",
+        str(bundle_path),
+        "--model-bundle-output",
+        "other.json",
+    )
 
     with pytest.raises(ValueError, match="either"):
-        run_prediction(
-            _args(
-                tmp_path,
-                tmp_path / "universe.csv",
-                "both",
-                "--model-bundle",
-                str(bundle_path),
-                "--model-bundle-output",
-                str(tmp_path / "other.json"),
-            )
-        )
+        run_prediction(args)
 
 
 def test_legacy_trust_cannot_be_stored(tmp_path: Path) -> None:
     universe = tmp_path / "universe.csv"
     _write_ohlcv(universe)
+    args = _args(
+        tmp_path, universe, "legacy", "--trust-method", "legacy", "--model-bundle-output", "x.json"
+    )
 
     with pytest.raises(ValueError, match="reliability"):
-        run_prediction(
-            _args(
-                tmp_path,
-                universe,
-                "legacy",
-                "--trust-method",
-                "legacy",
-                "--model-bundle-output",
-                str(tmp_path / "legacy.json"),
-            )
-        )
+        run_prediction(args)
 
 
 def test_single_ticker_fits_are_flagged(tmp_path: Path) -> None:
@@ -175,10 +167,10 @@ def test_single_ticker_fits_cannot_be_stored(tmp_path: Path) -> None:
     single = tmp_path / "single.csv"
     frame[frame["ticker"] == "AAA"].to_csv(single, index=False)
 
+    args = _args(tmp_path, single, "alone", "--model-bundle-output", "x.json")
+
     with pytest.raises(ValueError, match="more than one ticker"):
-        run_prediction(
-            _args(tmp_path, single, "alone", "--model-bundle-output", str(tmp_path / "x.json"))
-        )
+        run_prediction(args)
 
 
 def test_an_old_bundle_is_flagged_as_stale(tmp_path: Path) -> None:
@@ -197,3 +189,13 @@ def test_an_old_bundle_is_flagged_as_stale(tmp_path: Path) -> None:
     assert "model_bundle_stale" in _records(tmp_path / "later.json")["BBB"]["reason_codes"]
     for record in _records(tmp_path / "same.json").values():
         assert "model_bundle_stale" not in record["reason_codes"]
+
+
+@pytest.mark.parametrize("option", ["--model-bundle", "--model-bundle-output"])
+def test_bundle_paths_must_stay_inside_the_bundle_root(tmp_path: Path, option: str) -> None:
+    universe = tmp_path / "universe.csv"
+    _write_ohlcv(universe)
+    args = _args(tmp_path, universe, "escape", option, "../outside.json")
+
+    with pytest.raises(ValueError, match="must stay inside"):
+        run_prediction(args)

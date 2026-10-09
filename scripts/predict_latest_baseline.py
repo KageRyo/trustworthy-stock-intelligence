@@ -35,7 +35,12 @@ from tsi.labeling.warning_level import (
 )
 from tsi.models.linear import LinearLogitModel, linear_logit_params
 from tsi.models.logistic import LogisticRiskModel
-from tsi.serving.bundle import ServingModelBundle, load_serving_bundle, write_serving_bundle
+from tsi.serving.bundle import (
+    ServingModelBundle,
+    load_serving_bundle,
+    resolve_bundle_path,
+    write_serving_bundle,
+)
 from tsi.serving.schema import (
     AlertPolicyMetadata,
     CalibrationDriftMetadata,
@@ -178,6 +183,12 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         choices=["1m", "5m", "1d"],
         default="1d",
         help="Feature interval metadata stored with the prediction batch.",
+    )
+    parser.add_argument(
+        "--model-bundle-root",
+        type=Path,
+        default=Path(os.getenv("TSI_MODEL_BUNDLE_DIR", "data/artifacts/model_bundles")),
+        help="Directory that --model-bundle and --model-bundle-output must stay inside.",
     )
     parser.add_argument(
         "--model-bundle",
@@ -327,19 +338,13 @@ MODEL_BUNDLE_STALE = "model_bundle_stale"
 def run_prediction(args: argparse.Namespace) -> pd.DataFrame:
     """Fit a baseline on historical labels, or load a stored one, and write latest predictions."""
 
-    if args.drift_size < 0:
-        raise ValueError("--drift-size must be non-negative")
-    if args.model_bundle is not None and args.model_bundle_output is not None:
-        raise ValueError("Pass either --model-bundle or --model-bundle-output, not both")
-    if (args.model_bundle or args.model_bundle_output) and args.trust_method != "reliability":
-        raise ValueError("Model bundles store and use --trust-method reliability only")
-    bundle = None if args.model_bundle is None else load_serving_bundle(args.model_bundle)
-    if bundle is None:
-        feature_columns = resolve_feature_set(args.feature_set)
-        horizon, drawdown_threshold = args.horizon, args.drawdown_threshold
-    else:
-        feature_columns = list(bundle.feature_columns)
-        horizon, drawdown_threshold = bundle.horizon, bundle.drawdown_threshold
+    bundle_output = validate_bundle_args(args)
+    bundle = (
+        None
+        if args.model_bundle is None
+        else load_serving_bundle(args.model_bundle, root=args.model_bundle_root)
+    )
+    feature_columns, horizon, drawdown_threshold = label_settings(args, bundle)
     training_frame, latest_frame = prepare_frames(
         read_ohlcv_csv(args.input),
         horizon=horizon,
@@ -354,9 +359,11 @@ def run_prediction(args: argparse.Namespace) -> pd.DataFrame:
     else:
         state = serving_state_from_bundle(bundle)
     predictions, reason_codes = score_serving_state(args, state, training_frame, latest_frame)
-    if args.model_bundle_output is not None:
+    if bundle_output is not None:
         write_serving_bundle(
-            serving_bundle(args, state, training_frame, latest_frame), args.model_bundle_output
+            serving_bundle(args, state, training_frame, latest_frame),
+            bundle_output,
+            root=args.model_bundle_root,
         )
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
@@ -379,6 +386,30 @@ def run_prediction(args: argparse.Namespace) -> pd.DataFrame:
             feature_interval=args.feature_interval,
         )
     return predictions
+
+
+def validate_bundle_args(args: argparse.Namespace) -> Path | None:
+    """Reject incompatible options early and return the confined bundle output path."""
+
+    if args.drift_size < 0:
+        raise ValueError("--drift-size must be non-negative")
+    if args.model_bundle is not None and args.model_bundle_output is not None:
+        raise ValueError("Pass either --model-bundle or --model-bundle-output, not both")
+    if (args.model_bundle or args.model_bundle_output) and args.trust_method != "reliability":
+        raise ValueError("Model bundles store and use --trust-method reliability only")
+    if args.model_bundle_output is None:
+        return None
+    return resolve_bundle_path(args.model_bundle_output, root=args.model_bundle_root)
+
+
+def label_settings(
+    args: argparse.Namespace, bundle: ServingModelBundle | None
+) -> tuple[list[str], int, float]:
+    """Feature columns, label horizon, and drawdown threshold from the bundle or the CLI."""
+
+    if bundle is None:
+        return resolve_feature_set(args.feature_set), args.horizon, args.drawdown_threshold
+    return list(bundle.feature_columns), bundle.horizon, bundle.drawdown_threshold
 
 
 def fit_serving_state(

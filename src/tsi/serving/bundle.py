@@ -57,21 +57,36 @@ class ServingModelBundle(BaseModel):
     reliability: ReliabilityParams
 
 
-def write_serving_bundle(bundle: ServingModelBundle, path: Path) -> None:
-    """Write ``bundle`` atomically so a concurrent reader never sees a partial file."""
+def resolve_bundle_path(path: Path, *, root: Path) -> Path:
+    """Resolve ``path`` against the bundle ``root`` and reject paths that escape it."""
 
-    path.parent.mkdir(parents=True, exist_ok=True)
-    handle, temporary = tempfile.mkstemp(dir=path.parent, prefix=f".{path.name}.", suffix=".tmp")
+    base = Path(root).resolve()
+    resolved = (base / path).resolve()
+    if not resolved.is_relative_to(base):
+        raise ValueError(f"Model bundle paths must stay inside {base}")
+    return resolved
+
+
+def write_serving_bundle(bundle: ServingModelBundle, path: Path, *, root: Path) -> Path:
+    """Write ``bundle`` atomically inside ``root`` so a reader never sees a partial file."""
+
+    target = resolve_bundle_path(path, root=root)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    handle, temporary = tempfile.mkstemp(
+        dir=target.parent, prefix=f".{target.name}.", suffix=".tmp"
+    )
     try:
         with os.fdopen(handle, "w", encoding="utf-8") as stream:
             stream.write(bundle.model_dump_json())
-        os.replace(temporary, path)
+        os.replace(temporary, target)
     except BaseException:
         Path(temporary).unlink(missing_ok=True)
         raise
+    return target
 
 
-def load_serving_bundle(path: Path) -> ServingModelBundle:
-    """Read and validate a bundle written by ``write_serving_bundle``."""
+def load_serving_bundle(path: Path, *, root: Path) -> ServingModelBundle:
+    """Read and validate a bundle inside ``root`` written by ``write_serving_bundle``."""
 
-    return ServingModelBundle.model_validate_json(Path(path).read_text(encoding="utf-8"))
+    target = resolve_bundle_path(path, root=root)
+    return ServingModelBundle.model_validate_json(target.read_text(encoding="utf-8"))

@@ -211,7 +211,9 @@ def run_on_demand_analysis(args: argparse.Namespace) -> OnDemandAnalysisSummary:
     resolved_market = result.tickers[0].market if result.tickers else "unknown"
     model_bundle = resolve_model_bundle(args.model_bundle_dir, resolved_market)
     if model_bundle is not None:
-        prediction_args.extend(["--model-bundle", str(model_bundle)])
+        prediction_args.extend(
+            ["--model-bundle-root", str(args.model_bundle_dir), "--model-bundle", str(model_bundle)]
+        )
 
     try:
         predictions = run_prediction(parse_prediction_args(prediction_args))
