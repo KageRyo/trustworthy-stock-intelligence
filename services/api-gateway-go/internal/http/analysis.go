@@ -278,225 +278,170 @@ func explainReasonCodes(reasonCodes []string) []ReasonExplanation {
 	return explanations
 }
 
+// reasonExplanations holds the English explanation for each reason code the model emits.
+var reasonExplanations = map[string]ReasonExplanation{
+	"probability_above_alert_threshold": {
+		Severity: "alert",
+		Title:    "Risk probability above alert threshold",
+		Detail:   "The calibrated risk probability is at or above the configured alert threshold.",
+	},
+	"probability_above_watch_threshold": {
+		Severity: "watch",
+		Title:    "Risk probability above watch threshold",
+		Detail:   "The calibrated risk probability is at or above the configured watch threshold.",
+	},
+	"calibrated_probability_below_watch_threshold": {
+		Severity: "info",
+		Title:    "Risk probability below watch threshold",
+		Detail:   "The calibrated risk probability is below the configured watch threshold.",
+	},
+	"trust_above_alert_threshold": {
+		Severity: "info",
+		Title:    "Trust score above alert threshold",
+		Detail:   "The trust score is high enough to support an alert decision.",
+	},
+	"trust_below_alert_threshold": {
+		Severity: "watch",
+		Title:    "Trust score below alert threshold",
+		Detail:   "The trust score is not high enough to support an alert decision.",
+	},
+	"uncertainty_above_threshold": {
+		Severity: "watch",
+		Title:    "Uncertainty above threshold",
+		Detail:   "The uncertainty score is above the configured threshold.",
+	},
+	"uncertainty_below_threshold": {
+		Severity: "info",
+		Title:    "Uncertainty below threshold",
+		Detail:   "The uncertainty score is below the configured threshold.",
+	},
+	"warning_level_alert": {
+		Severity: "alert",
+		Title:    "Alert warning level",
+		Detail:   "The final warning decision is alert.",
+	},
+	"warning_level_watch": {
+		Severity: "watch",
+		Title:    "Watch warning level",
+		Detail:   "The final warning decision is watch.",
+	},
+	"warning_level_abstain": {
+		Severity: "watch",
+		Title:    "Abstain warning level",
+		Detail:   "The final warning decision is abstain because confidence is limited.",
+	},
+	"warning_level_no_alert": {
+		Severity: "info",
+		Title:    "No alert warning level",
+		Detail:   "The final warning decision is no alert.",
+	},
+	"calibration_drift_not_evaluated": {
+		Severity: "watch",
+		Title:    "Calibration drift not evaluated",
+		Detail:   "No later labeled window was available, so serving could not check calibration drift.",
+	},
+	"calibration_drift_stable": {
+		Severity: "info",
+		Title:    "Calibration drift stable",
+		Detail:   "The later labeled window did not cross the configured event-rate, ECE, or Brier drift thresholds.",
+	},
+	"calibration_drift_detected": {
+		Severity: "watch",
+		Title:    "Calibration drift detected",
+		Detail:   "Calibration reliability degraded in the later labeled window, so trust was reduced.",
+	},
+	"calibration_drift_event_rate_shift": {
+		Severity: "watch",
+		Title:    "Event-rate shift",
+		Detail:   "The later labeled event rate shifted beyond the configured calibration-drift threshold.",
+	},
+	"calibration_drift_ece_increase": {
+		Severity: "watch",
+		Title:    "Calibration error increased",
+		Detail:   "The later window's expected calibration error increased beyond the configured threshold.",
+	},
+	"calibration_drift_brier_increase": {
+		Severity: "watch",
+		Title:    "Brier score degraded",
+		Detail:   "The later window's Brier score increased beyond the configured threshold.",
+	},
+	"calibration_drift_abstain": {
+		Severity: "watch",
+		Title:    "Calibration drift abstention",
+		Detail:   "Multiple calibration-drift signals crossed threshold, so the serving decision abstains.",
+	},
+	"calibration_slope_nonpositive": {
+		Severity: "watch",
+		Title:    "Recent ranking did not hold",
+		Detail:   "In the calibration window, higher model scores did not mean more drawdowns. The model's ranking is kept and only its probability level is adjusted, so treat this ranking as unconfirmed.",
+	},
+	"ensemble_disagreement_high": {
+		Severity: "watch",
+		Title:    "Model refits disagree",
+		Detail:   "Models refit on resampled market days disagree more than on most recent labeled rows, so treat the probability as less stable.",
+	},
+	"input_out_of_distribution": {
+		Severity: "watch",
+		Title:    "Unusual market conditions",
+		Detail:   "The latest features are far from the training data. Historically these periods carried higher drawdown rates, so a low reading is not reassuring.",
+	},
+	"limited_data_quality": {
+		Severity: "watch",
+		Title:    "Limited data quality",
+		Detail:   "The ticker has a short labeled history or stale bars, so trust was reduced.",
+	},
+	"stale_ticker_data": {
+		Severity: "watch",
+		Title:    "Stale ticker data",
+		Detail:   "The ticker's latest bar is older than the latest bar in this batch.",
+	},
+	"reliability_unavailable": {
+		Severity: "watch",
+		Title:    "Reliability unavailable",
+		Detail:   "Reliability signals could not be fitted (for example single-class history), so trust was set to zero.",
+	},
+	"conformal_set_ambiguous": {
+		Severity: "info",
+		Title:    "Outcomes not separable",
+		Detail:   "The conformal prediction set contains both drawdown and no drawdown at the configured coverage.",
+	},
+	"conformal_set_drawdown_only": {
+		Severity: "watch",
+		Title:    "Conformal set: drawdown",
+		Detail:   "At the configured coverage, the conformal prediction set contains only the drawdown outcome.",
+	},
+	"conformal_set_no_drawdown_only": {
+		Severity: "info",
+		Title:    "Conformal set: no drawdown",
+		Detail:   "At the configured coverage, the conformal prediction set contains only the no-drawdown outcome.",
+	},
+	"conformal_set_empty": {
+		Severity: "watch",
+		Title:    "Conformal set empty",
+		Detail:   "The conformal prediction set is empty, which indicates an unusual calibrated probability for this batch.",
+	},
+	"conformal_set_unavailable": {
+		Severity: "info",
+		Title:    "Conformal set unavailable",
+		Detail:   "The calibration window did not contain both outcomes, so no conformal set was computed.",
+	},
+	"insufficient_history": {
+		Severity: "watch",
+		Title:    "Insufficient price history",
+		Detail:   "The ticker has market data, but not enough labeled history for a calibrated risk prediction.",
+	},
+}
+
 func explainReasonCode(code string) ReasonExplanation {
-	switch code {
-	case "probability_above_alert_threshold":
-		return ReasonExplanation{
-			Code:     code,
-			Severity: "alert",
-			Title:    "Risk probability above alert threshold",
-			Detail:   "The calibrated risk probability is at or above the configured alert threshold.",
-		}
-	case "probability_above_watch_threshold":
-		return ReasonExplanation{
-			Code:     code,
-			Severity: "watch",
-			Title:    "Risk probability above watch threshold",
-			Detail:   "The calibrated risk probability is at or above the configured watch threshold.",
-		}
-	case "calibrated_probability_below_watch_threshold":
-		return ReasonExplanation{
-			Code:     code,
-			Severity: "info",
-			Title:    "Risk probability below watch threshold",
-			Detail:   "The calibrated risk probability is below the configured watch threshold.",
-		}
-	case "trust_above_alert_threshold":
-		return ReasonExplanation{
-			Code:     code,
-			Severity: "info",
-			Title:    "Trust score above alert threshold",
-			Detail:   "The trust score is high enough to support an alert decision.",
-		}
-	case "trust_below_alert_threshold":
-		return ReasonExplanation{
-			Code:     code,
-			Severity: "watch",
-			Title:    "Trust score below alert threshold",
-			Detail:   "The trust score is not high enough to support an alert decision.",
-		}
-	case "uncertainty_above_threshold":
-		return ReasonExplanation{
-			Code:     code,
-			Severity: "watch",
-			Title:    "Uncertainty above threshold",
-			Detail:   "The uncertainty score is above the configured threshold.",
-		}
-	case "uncertainty_below_threshold":
-		return ReasonExplanation{
-			Code:     code,
-			Severity: "info",
-			Title:    "Uncertainty below threshold",
-			Detail:   "The uncertainty score is below the configured threshold.",
-		}
-	case "warning_level_alert":
-		return ReasonExplanation{
-			Code:     code,
-			Severity: "alert",
-			Title:    "Alert warning level",
-			Detail:   "The final warning decision is alert.",
-		}
-	case "warning_level_watch":
-		return ReasonExplanation{
-			Code:     code,
-			Severity: "watch",
-			Title:    "Watch warning level",
-			Detail:   "The final warning decision is watch.",
-		}
-	case "warning_level_abstain":
-		return ReasonExplanation{
-			Code:     code,
-			Severity: "watch",
-			Title:    "Abstain warning level",
-			Detail:   "The final warning decision is abstain because confidence is limited.",
-		}
-	case "warning_level_no_alert":
-		return ReasonExplanation{
-			Code:     code,
-			Severity: "info",
-			Title:    "No alert warning level",
-			Detail:   "The final warning decision is no alert.",
-		}
-	case "calibration_drift_not_evaluated":
-		return ReasonExplanation{
-			Code:     code,
-			Severity: "watch",
-			Title:    "Calibration drift not evaluated",
-			Detail:   "No later labeled window was available, so serving could not check calibration drift.",
-		}
-	case "calibration_drift_stable":
-		return ReasonExplanation{
-			Code:     code,
-			Severity: "info",
-			Title:    "Calibration drift stable",
-			Detail:   "The later labeled window did not cross the configured event-rate, ECE, or Brier drift thresholds.",
-		}
-	case "calibration_drift_detected":
-		return ReasonExplanation{
-			Code:     code,
-			Severity: "watch",
-			Title:    "Calibration drift detected",
-			Detail:   "Calibration reliability degraded in the later labeled window, so trust was reduced.",
-		}
-	case "calibration_drift_event_rate_shift":
-		return ReasonExplanation{
-			Code:     code,
-			Severity: "watch",
-			Title:    "Event-rate shift",
-			Detail:   "The later labeled event rate shifted beyond the configured calibration-drift threshold.",
-		}
-	case "calibration_drift_ece_increase":
-		return ReasonExplanation{
-			Code:     code,
-			Severity: "watch",
-			Title:    "Calibration error increased",
-			Detail:   "The later window's expected calibration error increased beyond the configured threshold.",
-		}
-	case "calibration_drift_brier_increase":
-		return ReasonExplanation{
-			Code:     code,
-			Severity: "watch",
-			Title:    "Brier score degraded",
-			Detail:   "The later window's Brier score increased beyond the configured threshold.",
-		}
-	case "calibration_drift_abstain":
-		return ReasonExplanation{
-			Code:     code,
-			Severity: "watch",
-			Title:    "Calibration drift abstention",
-			Detail:   "Multiple calibration-drift signals crossed threshold, so the serving decision abstains.",
-		}
-	case "calibration_slope_nonpositive":
-		return ReasonExplanation{
-			Code:     code,
-			Severity: "watch",
-			Title:    "Recent ranking did not hold",
-			Detail:   "In the calibration window, higher model scores did not mean more drawdowns. The model's ranking is kept and only its probability level is adjusted, so treat this ranking as unconfirmed.",
-		}
-	case "ensemble_disagreement_high":
-		return ReasonExplanation{
-			Code:     code,
-			Severity: "watch",
-			Title:    "Model refits disagree",
-			Detail:   "Models refit on resampled market days disagree more than on most recent labeled rows, so treat the probability as less stable.",
-		}
-	case "input_out_of_distribution":
-		return ReasonExplanation{
-			Code:     code,
-			Severity: "watch",
-			Title:    "Unusual market conditions",
-			Detail:   "The latest features are far from the training data. Historically these periods carried higher drawdown rates, so a low reading is not reassuring.",
-		}
-	case "limited_data_quality":
-		return ReasonExplanation{
-			Code:     code,
-			Severity: "watch",
-			Title:    "Limited data quality",
-			Detail:   "The ticker has a short labeled history or stale bars, so trust was reduced.",
-		}
-	case "stale_ticker_data":
-		return ReasonExplanation{
-			Code:     code,
-			Severity: "watch",
-			Title:    "Stale ticker data",
-			Detail:   "The ticker's latest bar is older than the latest bar in this batch.",
-		}
-	case "reliability_unavailable":
-		return ReasonExplanation{
-			Code:     code,
-			Severity: "watch",
-			Title:    "Reliability unavailable",
-			Detail:   "Reliability signals could not be fitted (for example single-class history), so trust was set to zero.",
-		}
-	case "conformal_set_ambiguous":
-		return ReasonExplanation{
-			Code:     code,
-			Severity: "info",
-			Title:    "Outcomes not separable",
-			Detail:   "The conformal prediction set contains both drawdown and no drawdown at the configured coverage.",
-		}
-	case "conformal_set_drawdown_only":
-		return ReasonExplanation{
-			Code:     code,
-			Severity: "watch",
-			Title:    "Conformal set: drawdown",
-			Detail:   "At the configured coverage, the conformal prediction set contains only the drawdown outcome.",
-		}
-	case "conformal_set_no_drawdown_only":
-		return ReasonExplanation{
-			Code:     code,
-			Severity: "info",
-			Title:    "Conformal set: no drawdown",
-			Detail:   "At the configured coverage, the conformal prediction set contains only the no-drawdown outcome.",
-		}
-	case "conformal_set_empty":
-		return ReasonExplanation{
-			Code:     code,
-			Severity: "watch",
-			Title:    "Conformal set empty",
-			Detail:   "The conformal prediction set is empty, which indicates an unusual calibrated probability for this batch.",
-		}
-	case "conformal_set_unavailable":
-		return ReasonExplanation{
-			Code:     code,
-			Severity: "info",
-			Title:    "Conformal set unavailable",
-			Detail:   "The calibration window did not contain both outcomes, so no conformal set was computed.",
-		}
-	case "insufficient_history":
-		return ReasonExplanation{
-			Code:     code,
-			Severity: "watch",
-			Title:    "Insufficient price history",
-			Detail:   "The ticker has market data, but not enough labeled history for a calibrated risk prediction.",
-		}
-	default:
-		return ReasonExplanation{
-			Code:     code,
-			Severity: "info",
-			Title:    humanizeReasonCode(code),
-			Detail:   "The model emitted this reason code in the latest warning batch.",
-		}
+	if explanation, ok := reasonExplanations[code]; ok {
+		explanation.Code = code
+		return explanation
+	}
+	return ReasonExplanation{
+		Code:     code,
+		Severity: "info",
+		Title:    humanizeReasonCode(code),
+		Detail:   "The model emitted this reason code in the latest warning batch.",
 	}
 }
 
