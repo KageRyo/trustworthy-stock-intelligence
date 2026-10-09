@@ -20,6 +20,35 @@
       "ticker_count": 53,
       "downloaded_at_utc": "2026-10-07T01:45:35.369276+00:00",
       "tickers_sha256": "3c49bdc4fb5ddf52a68831edbb1a4bf0b6155cfddbadb6a46239678c81d14006"
+    },
+    "sp500_ex_sp100": {
+      "universe": "sp500_ex_sp100",
+      "provider": "Yahoo Finance via yfinance",
+      "ohlcv_sha256": "25ce913d781be92c40d261a827701c4b4f18d3aa1d9797a0bda46d6c58d77a65",
+      "row_count": 1105354,
+      "ticker_count": 402,
+      "derived_from": "data/raw/sp500/ohlcv.csv",
+      "derived_from_sha256": "cd0cb719c5145ed8538b97d6b9d02824dc05bee0ef10e0c066908bdb12b64326",
+      "excluded_tickers_sha256": "3023bcc40e666c0151ac3aeb895aae9f8d1f04f9da6db01977a1f8204ef2d890",
+      "tickers_sha256": "0faabd207c699b126efb6b051f800ee9282191523673777ffdf3d5e7e21846a2"
+    },
+    "tw_holdout": {
+      "provider": "Yahoo Finance via yfinance",
+      "downloaded_at_utc": "2026-10-07T04:39:23.975263+00:00",
+      "row_count": 572199,
+      "ticker_count": 200,
+      "ohlcv_sha256": "d23af64901682ccdd30f5a7ce113f626497ad5e6a066a408dbf4d27c56a7f6c7",
+      "tickers_sha256": "dc1687e6b41c8173a3684df79cfd2c8d1e2303d2b3d70accbfb4d807310c1a33",
+      "sampling": {
+        "catalogue": "TWSE OpenAPI t187ap03_L",
+        "catalogue_as_of": "2026-10-06",
+        "catalogue_sha256": "cd6305fd2fcbd0db8f5dfd37b0fe8125aaa785c4cd8074741a4abfa000a03e19",
+        "rule": "market twse, 4-digit common-stock code, listing_date <= 2014-12-31, not in tw_large",
+        "pool_size": 747,
+        "sample_size": 200,
+        "rng": "numpy.random.default_rng(18).choice(sorted pool, 200, replace=False)",
+        "sample_sha256": "4a8065df33db87b50887f28cc47a6174505b2d8f47171baf45ff98f6006a6056"
+      }
     }
   },
   "protocol": {
@@ -87,6 +116,44 @@
         "pooled_as_of.csv": "b517020148e11f54810289efdd8f00584399690b169b3e04ab0db84d013d395e",
         "single_as_of.csv": "bb61bf8ca0a7e4643b601f341b63fca0e5956117716c59ab5fec06bdcf903de9",
         "summary.json": "c5eb6a87b54ca5561721422402dd540da7b52ded6b278ba33d73c6bb937d9ce3"
+      },
+      "committed": [
+        "per_ticker_history_auc.csv",
+        "pooled_as_of.csv",
+        "summary.json"
+      ]
+    },
+    "sp100_on_sp500_ex_sp100": {
+      "input": "data/raw/sp100/ohlcv.csv",
+      "input_sha256": "6b1357c8414888cb0a467eb717df0261ff69bd3b8e9b0244ff115be820395ba6",
+      "score_input": "data/raw/sp500_ex_sp100/ohlcv.csv",
+      "score_input_sha256": "25ce913d781be92c40d261a827701c4b4f18d3aa1d9797a0bda46d6c58d77a65",
+      "pooled_as_of_dates": 113,
+      "single_ticker_dates": 30080,
+      "artifacts": {
+        "per_ticker_history_auc.csv": "fb35a8796cedce3b2c85bf4ea6f5561f5358aae8c104fdab80d9dcd75e5a9f97",
+        "pooled_as_of.csv": "f65b1bbdab868cf32e11bd5e298b251330c61fc93bcf6feafd3ddcab242ca14d",
+        "single_as_of.csv": "71bbdc89bfa23b2d4f91723370d9eddcb4095b9f9cb90c4a289952f6d07e21d5",
+        "summary.json": "8b7ceaba03b95aa8bcc2f06fa0410b0515521303dbf1c70f1ca95230338ff59f"
+      },
+      "committed": [
+        "per_ticker_history_auc.csv",
+        "pooled_as_of.csv",
+        "summary.json"
+      ]
+    },
+    "tw_large_on_tw_holdout": {
+      "input": "data/raw/tw_large/ohlcv.csv",
+      "input_sha256": "6cc6e2f8ddf2d4eed22fcad7aaf02083cff284c2c1649486c1f251f48dc4ac1d",
+      "score_input": "data/raw/tw_holdout/ohlcv.csv",
+      "score_input_sha256": "d23af64901682ccdd30f5a7ce113f626497ad5e6a066a408dbf4d27c56a7f6c7",
+      "pooled_as_of_dates": 113,
+      "single_ticker_dates": 14446,
+      "artifacts": {
+        "per_ticker_history_auc.csv": "f53b8261eeda15dbcc865a2a912ddc69374cdf1438d671d52d11aafaac66a436",
+        "pooled_as_of.csv": "55301480b28c4e9a6fb57ea34e2bd653459bd38836a8fc9761c4345c3f4dc592",
+        "single_as_of.csv": "4e8317d208f265ee871d329dffbaa868ad41694eeeab8bcf743ba8bbff872545",
+        "summary.json": "3c12d34b2dc00c4ea1aec332137282b65a7a8bb5e095415377eb69e283ae9c4a"
       },
       "committed": [
         "per_ticker_history_auc.csv",

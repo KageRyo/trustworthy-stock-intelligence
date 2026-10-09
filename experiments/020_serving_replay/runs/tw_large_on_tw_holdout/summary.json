@@ -1,0 +1,77 @@
+{
+  "input": "data/raw/tw_large/ohlcv.csv",
+  "input_sha256": "6cc6e2f8ddf2d4eed22fcad7aaf02083cff284c2c1649486c1f251f48dc4ac1d",
+  "score_input": "data/raw/tw_holdout/ohlcv.csv",
+  "score_input_sha256": "d23af64901682ccdd30f5a7ce113f626497ad5e6a066a408dbf4d27c56a7f6c7",
+  "protocol": {
+    "feature_interval": "1d",
+    "feature_set": "technical_range",
+    "feature_columns": [
+      "return_1d",
+      "return_5d",
+      "sma_5_gap",
+      "sma_10_gap",
+      "volatility_5d",
+      "volatility_10d",
+      "volume_ratio_5d",
+      "parkinson_vol_10d",
+      "garman_klass_vol_10d",
+      "atr_14_pct",
+      "volatility_20d",
+      "drawdown_from_20d_high"
+    ],
+    "horizon": 5,
+    "drawdown_threshold": -0.05,
+    "train_window": "every labeled date before calibration (serving default)",
+    "calibration_size": 63,
+    "drift_size": 21,
+    "test_size": 63,
+    "step_size": 21,
+    "min_history_dates": 400,
+    "calibrations": [
+      "platt",
+      "platt_monotone"
+    ]
+  },
+  "pooled": {
+    "as_of_dates": 113,
+    "nonpositive_slope": 0,
+    "nonpositive_share": 0.0,
+    "median_calibration_positives": 301.0,
+    "auc_raw_mean": 0.7466251355410367,
+    "auc_platt_mean": 0.7466251355410367,
+    "auc_platt_monotone_mean": 0.7466251355410367,
+    "brier_platt_mean": 0.08805777302771121,
+    "brier_platt_monotone_mean": 0.08805777302771121,
+    "ece_platt_mean": 0.04687201250221727,
+    "ece_platt_monotone_mean": 0.04687201250221727,
+    "auc_platt_mean_when_nonpositive": null,
+    "auc_platt_monotone_mean_when_nonpositive": null,
+    "nonpositive_as_of": []
+  },
+  "single_ticker": {
+    "tickers": 195,
+    "ticker_dates": 14446,
+    "tickers_ever_nonpositive": 195,
+    "nonpositive_slope": 5731,
+    "nonpositive_share": 0.3967188148968573,
+    "median_calibration_positives": 9.0,
+    "auc_raw_mean": 0.5533067744849469,
+    "auc_platt_mean": 0.5163048606522983,
+    "auc_platt_monotone_mean": 0.5533166251795445,
+    "brier_platt_mean": 0.14758791369135738,
+    "brier_platt_monotone_mean": 0.14772942848439058,
+    "ece_platt_mean": 0.10740978883029463,
+    "ece_platt_monotone_mean": 0.11432351239019688,
+    "auc_platt_mean_when_nonpositive": 0.4533631056597353,
+    "auc_platt_monotone_mean_when_nonpositive": 0.5466578099627538
+  },
+  "per_ticker_history_auc": {
+    "tickers": 194,
+    "pooled": 0.6941459381382722,
+    "pooled_median": 0.6907725890456897,
+    "single": 0.6559221272643665,
+    "single_median": 0.6510845035848056,
+    "pooled_better_share": 0.9072164948453608
+  }
+}

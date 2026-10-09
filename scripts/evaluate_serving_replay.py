@@ -9,6 +9,10 @@ next ``--test-size`` dates with raw, Platt, and monotone Platt probabilities.
 The per-ticker history AUC scores each row once, with the latest model fit before it (the next
 ``--step-size`` dates of every as-of date), and compares pooled and single-ticker rankings of one
 ticker's own dates.
+
+With ``--score-input``, the pooled model still trains on ``--input``, but single-ticker models and
+the per-ticker history AUC use the tickers in ``--score-input``, which the pooled model never saw.
+This is the on-demand case: a new ticker scored by a model fitted on a reference universe.
 """
 
 from __future__ import annotations
@@ -38,6 +42,12 @@ CALIBRATIONS = ("platt", "platt_monotone")
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--input", type=Path, required=True, help="OHLCV CSV input.")
+    parser.add_argument(
+        "--score-input",
+        type=Path,
+        default=None,
+        help="OHLCV CSV of unseen tickers on the same calendar, scored by the pooled model.",
+    )
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--output-root", type=Path, default=Path.cwd())
     parser.add_argument("--feature-set", choices=list(FEATURE_SETS), default="technical_range")
@@ -136,12 +146,13 @@ def _replay_single_tickers(
             continue
         single_model, single_calibration = single
         ticker_next = next_step[next_step["ticker"] == ticker]
-        history.append(
-            ticker_next[["ticker", "date", "risk_label"]].assign(
-                pooled=pooled_model.predict_proba(ticker_next[columns].to_numpy()),
-                single=single_model.predict_proba(ticker_next[columns].to_numpy()),
+        if not ticker_next.empty:
+            history.append(
+                ticker_next[["ticker", "date", "risk_label"]].assign(
+                    pooled=pooled_model.predict_proba(ticker_next[columns].to_numpy()),
+                    single=single_model.predict_proba(ticker_next[columns].to_numpy()),
+                )
             )
-        )
         if ticker_test["risk_label"].nunique() == 2:
             rows.append(
                 {"ticker": ticker, **_score(single_model, single_calibration, ticker_test, columns)}
@@ -165,16 +176,24 @@ def _summarize(rows: pd.DataFrame) -> dict[str, float | int]:
     return summary
 
 
-def run(args: argparse.Namespace) -> dict[str, object]:
-    output_dir = resolve_output_dir(args.output_dir, root=args.output_root)
-    columns = resolve_feature_set(args.feature_set)
+def _labeled_frame(path: Path, args: argparse.Namespace, columns: list[str]) -> pd.DataFrame:
     frame, _ = prepare_frames(
-        read_ohlcv_csv(args.input),
+        read_ohlcv_csv(path),
         horizon=args.horizon,
         drawdown_threshold=args.drawdown_threshold,
         feature_columns=columns,
     )
     frame["date"] = pd.to_datetime(frame["date"])
+    return frame
+
+
+def run(args: argparse.Namespace) -> dict[str, object]:
+    output_dir = resolve_output_dir(args.output_dir, root=args.output_root)
+    columns = resolve_feature_set(args.feature_set)
+    frame = _labeled_frame(args.input, args, columns)
+    score_frame = (
+        frame if args.score_input is None else _labeled_frame(args.score_input, args, columns)
+    )
     dates = pd.Index(sorted(frame["date"].unique()))
 
     pooled_rows: list[dict[str, object]] = []
@@ -188,9 +207,13 @@ def run(args: argparse.Namespace) -> dict[str, object]:
     )
     for position in positions:
         as_of = dates[position]
-        known = frame[frame["date"] <= dates[position - args.horizon]]
-        test = frame[(frame["date"] > as_of) & (frame["date"] <= dates[position + args.test_size])]
-        next_step = test[test["date"] <= dates[position + args.step_size]]
+        label_cutoff = dates[position - args.horizon]
+        test_end = dates[position + args.test_size]
+        known = frame[frame["date"] <= label_cutoff]
+        test = frame[(frame["date"] > as_of) & (frame["date"] <= test_end)]
+        score_known = score_frame[score_frame["date"] <= label_cutoff]
+        score_test = score_frame[(score_frame["date"] > as_of) & (score_frame["date"] <= test_end)]
+        next_step = score_test[score_test["date"] <= dates[position + args.step_size]]
         pooled = _fit(known, args, columns)
         if pooled is None or test["risk_label"].nunique() < 2:
             continue
@@ -199,7 +222,7 @@ def run(args: argparse.Namespace) -> dict[str, object]:
             {"as_of": str(as_of.date()), **_score(pooled_model, pooled_calibration, test, columns)}
         )
         ticker_rows, ticker_history = _replay_single_tickers(
-            pooled_model, known, test, next_step, args, columns
+            pooled_model, score_known, score_test, next_step, args, columns
         )
         single_rows.extend({"as_of": str(as_of.date()), **row} for row in ticker_rows)
         history.extend(ticker_history)
@@ -224,9 +247,17 @@ def run(args: argparse.Namespace) -> dict[str, object]:
     single_frame.to_csv(output_dir / "single_as_of.csv", index=False)
     history_auc.to_csv(output_dir / "per_ticker_history_auc.csv", index=False)
     reversed_pooled = pooled_frame[pooled_frame["platt_slope"] <= 0]
-    summary = {
+    summary: dict[str, object] = {
         "input": str(args.input),
         "input_sha256": file_sha256(args.input),
+        **(
+            {}
+            if args.score_input is None
+            else {
+                "score_input": str(args.score_input),
+                "score_input_sha256": file_sha256(args.score_input),
+            }
+        ),
         "protocol": {
             "feature_interval": "1d",
             "feature_set": args.feature_set,
