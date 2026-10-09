@@ -32,10 +32,6 @@ The served model is described in the [model card](model_card.md). The evidence b
 
 ## Now
 
-1. **On-demand reliability.**
-   - Replace string matching of insufficient-history errors with a typed error.
-   - Handle Yahoo's zero-volume placeholder bars on Taiwan typhoon closures in the technical
-     features.
 1. **On-demand concurrency.** Run one analysis per ticker at a time (singleflight) and cap
    concurrent analyses in the Go bridge.
 
@@ -53,13 +49,24 @@ The served model is described in the [model card](model_card.md). The evidence b
 
 ## Later or blocked
 
+- **Taiwan typhoon placeholder bars:**
+
+  - Yahoo writes flat, zero-volume bars on market-wide closures, about six days since 2015.
+  - Stock-specific no-trade days look identical and are real observations, about 1% of rows in the
+    199-stock Taiwan holdout.
+  - Removing only the closures needs an exchange calendar in serving. Removing all flat zero-volume
+    bars needs a walk-forward check, because it changes returns and labels for illiquid stocks.
+
 - **Survivorship bias (Issue #29):** needs licensed historical constituents and inactive or delisted
   OHLCV. Issues #91, #92, and #93 built the comparison machinery but do not replace that data.
+
 - **Five-minute models:** five-minute bars are ingestion and freshness coverage only. Do not build
   an interval model until the daily model's predictive value is established, and the quality audit
   has run repeatedly across real US and Taiwan provider snapshots.
+
 - **Broader Taiwan coverage:** dated membership, wider stratification, and reliable TPEx emerging
   history before any all-market claim.
+
 - **Licensed research data:** provider-revision and external-data studies on licensed, versioned
   data.
 

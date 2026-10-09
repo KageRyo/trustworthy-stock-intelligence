@@ -51,6 +51,14 @@ from tsi.trust.trust_score import TrustScoreMethod, compute_trust_score, data_qu
 from tsi.trust.uncertainty import binary_entropy_uncertainty, margin_uncertainty
 
 
+class InsufficientHistoryError(ValueError):
+    """The input has too little labeled or feature-complete history to fit and score a model.
+
+    Callers such as the on-demand bridge turn this into a typed ``insufficient_history``
+    abstention; configuration errors stay plain ``ValueError``.
+    """
+
+
 # Below this many calibration-window alerts, policy thresholds are too noisy to trust.
 MIN_RELIABLE_CALIBRATION_ALERTS = 20
 # Serving computes features from the ticker's own OHLCV only; market-relative sets need a
@@ -239,7 +247,7 @@ def split_train_calibration_recent(
     unique_dates = pd.Index(sorted(pd.to_datetime(training_frame["date"]).unique()))
     required_window_size = calibration_size + drift_size
     if len(unique_dates) <= required_window_size:
-        raise ValueError(
+        raise InsufficientHistoryError(
             "Not enough labeled dates for the requested calibration and drift windows"
         )
 
@@ -258,7 +266,7 @@ def split_train_calibration_recent(
     calibration_frame = training_frame[training_frame["date"].isin(calibration_dates)].copy()
     recent_frame = training_frame[training_frame["date"].isin(recent_dates)].copy()
     if train_frame.empty or calibration_frame.empty or (drift_size and recent_frame.empty):
-        raise ValueError("train, calibration, and drift frames must not be empty")
+        raise InsufficientHistoryError("train, calibration, and drift frames must not be empty")
     return train_frame, calibration_frame, recent_frame
 
 
@@ -276,7 +284,7 @@ def run_prediction(args: argparse.Namespace) -> pd.DataFrame:
         feature_columns=feature_columns,
     )
     if latest_frame.empty:
-        raise ValueError("No latest feature rows were created; check input data")
+        raise InsufficientHistoryError("No latest feature rows were created; check input data")
 
     drift_evaluated = args.drift_size > 0 and _has_drift_history(
         training_frame,

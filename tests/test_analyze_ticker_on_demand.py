@@ -6,6 +6,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
+from scripts.predict_latest_baseline import InsufficientHistoryError
 from scripts import analyze_ticker_on_demand as module
 from tsi.data.download import DownloadFrameResult, DownloadTicker
 
@@ -144,7 +145,7 @@ def test_run_on_demand_analysis_writes_abstain_when_history_is_insufficient(
         )
 
     def fake_run_prediction(_args: argparse.Namespace) -> pd.DataFrame:
-        raise ValueError("Not enough labeled dates for the requested calibration_size")
+        raise InsufficientHistoryError("Not enough labeled dates for the requested windows")
 
     def fake_write_prediction_batch_to_postgres(database_url, batch, *, feature_interval):
         captured_batch["database_url"] = database_url
