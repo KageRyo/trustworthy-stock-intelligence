@@ -12,6 +12,7 @@ Each record captures one decision that shapes the served system, the evidence be
 | [0006](0006-dashboard-localizes-api-codes.md)   | The dashboard localizes stable API codes, and API text is only a fallback                       | Accepted | Pull request #138                                                      |
 | [0007](0007-calibration-keeps-model-ranking.md) | Calibration keeps the model's ranking, and a reversed Platt fit falls back to a base-rate shift | Accepted | [Experiment 020](../../experiments/020_serving_replay/README.md)       |
 | [0008](0008-keep-logistic-expanding-window.md)  | Keep the logistic model and train on every earlier labeled date                                 | Accepted | [Experiment 019](../../experiments/019_nonlinear_models/README.md)     |
+| [0009](0009-on-demand-uses-pooled-bundles.md)   | On-demand analysis scores new tickers with a stored pooled model of their market                | Accepted | [Experiment 020](../../experiments/020_serving_replay/README.md)       |
 
 ## Template
 

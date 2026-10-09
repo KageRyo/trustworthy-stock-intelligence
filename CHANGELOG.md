@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Changed
+
+- On-demand analysis scores a ticker without a stored warning with the pooled bundle of its market from `TSI_MODEL_BUNDLE_DIR` (`logistic_regression_pooled`). Without a bundle it still fits the ticker alone, and those rows carry the new reason code `single_ticker_model`. A bundle more than 30 days older than the scored row adds `model_bundle_stale`. The API and dashboard explain both codes.
+
 ### Fixed
 
 - Platt calibration could reverse the model's ranking. After a regime break, the latest 63-date calibration window can fit a negative slope, which ranks the riskiest rows as the safest. Experiment 020 found one such S&P 100 batch, where test AUC fell from 0.758 to 0.242. Single-ticker on-demand models had a non-positive slope at about half of all replayed dates.
@@ -11,6 +15,10 @@
 
 ### Added
 
+- Pooled model bundles ([ADR 0009](docs/decisions/0009-on-demand-uses-pooled-bundles.md)):
+  - `predict_latest_baseline --model-bundle-output` writes the fitted serving state as schema-validated JSON (`serving_model_bundle.v1`), and `--model-bundle` scores an input with a stored bundle instead of fitting on it. Batch outputs are unchanged.
+  - `make model-bundles` builds `us.json` and `taiwan.json` in `MODEL_BUNDLE_DIR`.
+  - `tsi.models.linear` scores stored logistic parameters with numpy, and calibrators and reliability references export and restore their fitted values.
 - `scripts/evaluate_model_variants.py` compares logistic, quadratic logistic, gradient boosting, and a GPU-trained MLP across 252-date, 756-date, and expanding training windows on identical folds (Experiment 019). It records the uncalibrated AUC and the Platt slope per fold, and `--reuse-per-fold` rebuilds a summary without refitting.
 - `scripts/evaluate_serving_replay.py` replays the served training and calibration scheme for pooled and single-ticker models (Experiment 020). `--score-input` scores tickers from a second file that the pooled model never saw.
 - `tsi.trust.calibration.CALIBRATION_METHODS` lists the calibration choices, and every command-line tool uses it.

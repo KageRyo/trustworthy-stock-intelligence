@@ -69,7 +69,7 @@ Tested and not served:
 1. **Alerts.** An alert needs trust of at least 0.4.
 1. **Freshness.** At read time the Go API measures freshness from the market's session close for daily bars. Data older than 36 hours is downgraded, and data older than 5 days is blocked ([analysis API](reference/api/analysis_api.md)).
 
-Single-ticker on-demand runs have only about 63 calibration rows, so a 5% cap means about 3 alert rows. The batch `note` and the dashboard flag these thresholds as a small calibration sample.
+On-demand analysis scores a ticker without a stored warning with the pooled model of its market, loaded from a schema-validated bundle written by the batch run ([ADR 0009](decisions/0009-on-demand-uses-pooled-bundles.md)). Its thresholds, calibration, drift result, and reliability references are the batch's, and only data quality comes from the ticker itself. Without a bundle, on-demand analysis falls back to fitting the ticker alone: those runs have only about 63 calibration rows, so a 5% cap means about 3 alert rows, and they carry the reason code `single_ticker_model`.
 
 ## Performance
 
@@ -105,7 +105,7 @@ Each prediction lists up to five feature attributions. An attribution is the log
   - Taiwan evidence covers listed large caps and a 199-stock TWSE sample. TPEx and emerging coverage is thin.
 - **Regimes:** regime shifts break calibration. In Experiment 007, calibration failed in the COVID-19 fold. After a regime break, unconstrained Platt scaling can also reverse the ranking; Experiment 020 found this once in 113 pooled S&P 100 replays, and serving now falls back instead. Drift detection lowers trust but cannot prevent misses.
 - **Reliability signals:** ensemble and novelty uncertainty did not identify less reliable predictions in Experiment 015, so trust deliberately ignores them for alerts.
-- **On-demand models:** on-demand analysis trains on one ticker's history, and its thresholds rest on about 3 calibration alerts. In Experiment 020 these single-ticker models ranked the next 63 dates at AUC about 0.50 and ranked a ticker's own history at 0.566 (S&P 100) and 0.632 (Taiwan), against 0.633 and 0.672 for a model fitted on all tickers. A pooled model also ranks tickers it never saw better: 0.616 against 0.549 for 400 S&P 500 tickers and 0.694 against 0.656 for 194 TWSE holdout tickers. Treat on-demand results as weak until on-demand analysis uses a pooled model.
+- **On-demand models:** without a pooled bundle, on-demand analysis trains on one ticker's history, and its thresholds rest on about 3 calibration alerts. In Experiment 020 these single-ticker models ranked the next 63 dates at AUC about 0.50 and ranked a ticker's own history at 0.566 (S&P 100) and 0.632 (Taiwan), against 0.633 and 0.672 for a model fitted on all tickers. A pooled model also ranks tickers it never saw better: 0.616 against 0.549 for 400 S&P 500 tickers and 0.694 against 0.656 for 194 TWSE holdout tickers. On-demand analysis now uses the pooled bundle when one exists; treat results that carry `single_ticker_model` as weak. A pooled bundle is as old as its batch run, and one more than 30 days older than the scored row carries `model_bundle_stale`. The Taiwan bundle is fitted on 53 large caps, so small TPEx and emerging stocks are scored outside its training range.
 - **Scope:** the evaluation measures risk probability, not trading performance, and does not account for transaction costs.
 
 ## Reproduce and audit
