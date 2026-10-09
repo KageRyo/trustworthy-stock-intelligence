@@ -98,6 +98,61 @@ def union_columns(feature_sets: dict[str, list[str]]) -> list[str]:
     return list(dict.fromkeys(column for columns in feature_sets.values() for column in columns))
 
 
+def score_probabilities(
+    item: FoldFrames,
+    calibration_probabilities: np.ndarray,
+    test_probabilities: np.ndarray,
+    *,
+    reference_labels: np.ndarray,
+    alert_policy: AlertPolicy,
+    watch_policy: AlertPolicy,
+) -> dict[str, float]:
+    """Score calibrated test probabilities with thresholds picked on the calibration window.
+
+    Brier skill is measured against a constant forecast at the ``reference_labels`` event rate.
+    """
+
+    calibration_labels = item.calibration["risk_label"].to_numpy()
+    test_labels = item.test["risk_label"].to_numpy()
+    metrics = classification_metrics(test_labels, test_probabilities)
+    prior_brier = float(np.mean((reference_labels.mean() - test_labels) ** 2))
+    episodes = drawdown_episodes(item.test).to_numpy()
+    tickers = int(item.test["ticker"].nunique())
+    dates = int(item.test["date"].nunique())
+    alert_threshold = select_alert_threshold_by_policy(
+        calibration_labels, calibration_probabilities, alert_policy
+    ).threshold
+    watch_threshold = select_alert_threshold_by_policy(
+        calibration_labels, calibration_probabilities, watch_policy
+    ).threshold
+    alert = policy_test_metrics(
+        test_labels, test_probabilities >= alert_threshold, episodes, tickers=tickers, dates=dates
+    )
+    watch = policy_test_metrics(
+        test_labels,
+        test_probabilities >= min(alert_threshold, watch_threshold),
+        episodes,
+        tickers=tickers,
+        dates=dates,
+    )
+    return {
+        "auc": metrics["auc"],
+        "pr_auc": metrics["pr_auc"],
+        "brier_score": metrics["brier_score"],
+        "brier_skill_score": 1.0 - metrics["brier_score"] / prior_brier,
+        "ece": metrics["ece"],
+        "alert_threshold": alert_threshold,
+        "alerts": alert["alerts"],
+        "alert_rate": alert["alert_rate"],
+        "alert_precision": alert["precision"],
+        "alert_recall": alert["recall"],
+        "alert_episode_recall": alert["episode_recall"],
+        "watch_rate": watch["alert_rate"],
+        "watch_recall": watch["recall"],
+        "watch_episode_recall": watch["episode_recall"],
+    }
+
+
 def score_fold(
     item: FoldFrames,
     feature_columns: Sequence[str],
@@ -115,49 +170,14 @@ def score_fold(
         feature_columns=feature_columns,
         calibration_method=calibration_method,
     )
-    train_labels = item.train["risk_label"].to_numpy()
-    calibration_labels = item.calibration["risk_label"].to_numpy()
-    test_labels = item.test["risk_label"].to_numpy()
-    calibrated_calibration = fit.calibration_probabilities
-    calibrated_test = fit.test_probabilities
-
-    metrics = classification_metrics(test_labels, calibrated_test)
-    prior_brier = float(np.mean((train_labels.mean() - test_labels) ** 2))
-    episodes = drawdown_episodes(item.test).to_numpy()
-    tickers = int(item.test["ticker"].nunique())
-    dates = int(item.test["date"].nunique())
-    alert_threshold = select_alert_threshold_by_policy(
-        calibration_labels, calibrated_calibration, alert_policy
-    ).threshold
-    watch_threshold = select_alert_threshold_by_policy(
-        calibration_labels, calibrated_calibration, watch_policy
-    ).threshold
-    alert = policy_test_metrics(
-        test_labels, calibrated_test >= alert_threshold, episodes, tickers=tickers, dates=dates
+    row = score_probabilities(
+        item,
+        fit.calibration_probabilities,
+        fit.test_probabilities,
+        reference_labels=item.train["risk_label"].to_numpy(),
+        alert_policy=alert_policy,
+        watch_policy=watch_policy,
     )
-    watch = policy_test_metrics(
-        test_labels,
-        calibrated_test >= min(alert_threshold, watch_threshold),
-        episodes,
-        tickers=tickers,
-        dates=dates,
-    )
-    row = {
-        "auc": metrics["auc"],
-        "pr_auc": metrics["pr_auc"],
-        "brier_score": metrics["brier_score"],
-        "brier_skill_score": 1.0 - metrics["brier_score"] / prior_brier,
-        "ece": metrics["ece"],
-        "alert_threshold": alert_threshold,
-        "alerts": alert["alerts"],
-        "alert_rate": alert["alert_rate"],
-        "alert_precision": alert["precision"],
-        "alert_recall": alert["recall"],
-        "alert_episode_recall": alert["episode_recall"],
-        "watch_rate": watch["alert_rate"],
-        "watch_recall": watch["recall"],
-        "watch_episode_recall": watch["episode_recall"],
-    }
     coefficients = fit.model.pipeline.named_steps["classifier"].coef_[0]
     return row, coefficients
 
@@ -197,15 +217,16 @@ def compare_to_baseline(
     comparison: str,
     resamples: int,
     seed: int,
+    group_column: str = "feature_set",
 ) -> dict[str, object]:
     """Paired fold bootstrap deltas (comparison - baseline) plus fold win rates."""
 
     def folds(name: str) -> list[dict[str, object]]:
-        rows = per_fold[per_fold["feature_set"] == name].sort_values("fold_id")
+        rows = per_fold[per_fold[group_column] == name].sort_values("fold_id")
         return rows[["fold_id", *PAIRED_METRICS]].to_dict("records")
 
-    baseline_rows = per_fold[per_fold["feature_set"] == baseline].set_index("fold_id")
-    comparison_rows = per_fold[per_fold["feature_set"] == comparison].set_index("fold_id")
+    baseline_rows = per_fold[per_fold[group_column] == baseline].set_index("fold_id")
+    comparison_rows = per_fold[per_fold[group_column] == comparison].set_index("fold_id")
     report = paired_fold_metric_intervals(
         folds(baseline), folds(comparison), metrics=PAIRED_METRICS, seed=seed, resamples=resamples
     )
