@@ -29,11 +29,10 @@ The served model is described in the [model card](model_card.md). The evidence b
 
 ## Now
 
-1. **Nonlinear models on the Experiment 017 protocol.** Test whether a model that can use feature interactions improves discrimination over the calibrated logistic baseline.
+1. **Score on-demand tickers with a pooled model.** On-demand analysis fits one ticker's history alone. In Experiment 020 those models had no ranking signal within a 63-date window and ranked a ticker's own history worse than a model fitted on all tickers, including tickers that model never saw (0.549 against 0.616 on 400 S&P 500 tickers). A stored, schema-validated model bundle from the batch run would let on-demand analysis apply the pooled model instead.
 
 ## Next
 
-1. **Score on-demand tickers with a pooled model.** On-demand analysis fits one ticker's history alone. In Experiment 020 those models had no ranking signal within a 63-date window and ranked a ticker's own history worse than a model fitted on all tickers, including tickers that model never saw (0.549 against 0.616 on 400 S&P 500 tickers). A stored, schema-validated model bundle from the batch run would let on-demand analysis apply the pooled model instead.
 1. Move on-demand analysis onto the `prediction_jobs` queue and show progress in the dashboard.
 1. Split `frontend/stock-dashboard/src/App.tsx` (about 1,750 lines) into components with Testing Library coverage.
 1. Label research on the Experiment 017 protocol:

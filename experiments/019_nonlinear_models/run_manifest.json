@@ -1,0 +1,195 @@
+{
+  "experiment_id": "019_nonlinear_models",
+  "executed_on": "2026-10-09",
+  "base_git_commit": "1c78dcabd90ad9e925278933158c9f7286a2d939",
+  "datasets": {
+    "sp100": {
+      "universe": "sp100",
+      "provider": "Yahoo Finance via yfinance",
+      "ohlcv_sha256": "6b1357c8414888cb0a467eb717df0261ff69bd3b8e9b0244ff115be820395ba6",
+      "row_count": 283289,
+      "ticker_count": 101,
+      "downloaded_at_utc": "2026-05-08T02:50:28.018207+00:00",
+      "tickers_sha256": "3023bcc40e666c0151ac3aeb895aae9f8d1f04f9da6db01977a1f8204ef2d890"
+    },
+    "sp500_ex_sp100": {
+      "universe": "sp500_ex_sp100",
+      "provider": "Yahoo Finance via yfinance",
+      "ohlcv_sha256": "25ce913d781be92c40d261a827701c4b4f18d3aa1d9797a0bda46d6c58d77a65",
+      "row_count": 1105354,
+      "ticker_count": 402,
+      "derived_from": "data/raw/sp500/ohlcv.csv",
+      "derived_from_sha256": "cd0cb719c5145ed8538b97d6b9d02824dc05bee0ef10e0c066908bdb12b64326",
+      "excluded_tickers_sha256": "3023bcc40e666c0151ac3aeb895aae9f8d1f04f9da6db01977a1f8204ef2d890",
+      "tickers_sha256": "0faabd207c699b126efb6b051f800ee9282191523673777ffdf3d5e7e21846a2"
+    },
+    "tw_large": {
+      "universe": "tw_large",
+      "provider": "Yahoo Finance via yfinance",
+      "ohlcv_sha256": "6cc6e2f8ddf2d4eed22fcad7aaf02083cff284c2c1649486c1f251f48dc4ac1d",
+      "row_count": 150935,
+      "ticker_count": 53,
+      "downloaded_at_utc": "2026-10-07T01:45:35.369276+00:00",
+      "tickers_sha256": "3c49bdc4fb5ddf52a68831edbb1a4bf0b6155cfddbadb6a46239678c81d14006"
+    }
+  },
+  "protocol": {
+    "feature_interval": "1d",
+    "feature_columns": [
+      "return_1d",
+      "return_5d",
+      "sma_5_gap",
+      "sma_10_gap",
+      "volatility_5d",
+      "volatility_10d",
+      "volume_ratio_5d",
+      "parkinson_vol_10d",
+      "garman_klass_vol_10d",
+      "atr_14_pct",
+      "volatility_20d",
+      "drawdown_from_20d_high"
+    ],
+    "horizon": 5,
+    "drawdown_threshold": -0.05,
+    "train_size": 756,
+    "calibration_size": 63,
+    "test_size": 63,
+    "purge_size": 5,
+    "calibration_method": "platt",
+    "feature_set": "technical_range",
+    "train_windows": [
+      "252",
+      "756",
+      "all"
+    ],
+    "model_families": [
+      "logistic",
+      "logistic_quadratic",
+      "hist_gradient_boosting",
+      "mlp"
+    ],
+    "model_parameters": {
+      "logistic": {
+        "model": "tsi.models.logistic.LogisticRiskModel"
+      },
+      "logistic_quadratic": {
+        "steps": "median impute, standardize, degree-2 polynomial terms, standardize",
+        "classifier": "LogisticRegression(C=1.0, class_weight='balanced', max_iter=2000)"
+      },
+      "hist_gradient_boosting": {
+        "learning_rate": 0.05,
+        "max_iter": 200,
+        "max_leaf_nodes": 8,
+        "min_samples_leaf": 200,
+        "l2_regularization": 1.0,
+        "early_stopping": false,
+        "class_weight": "balanced"
+      },
+      "mlp": {
+        "steps": "median impute, standardize",
+        "hidden_sizes": [
+          64,
+          32
+        ],
+        "activation": "relu",
+        "dropout": 0.1,
+        "optimizer": "AdamW",
+        "learning_rate": 0.001,
+        "weight_decay": 0.0001,
+        "batch_size": 1024,
+        "loss": "binary cross-entropy with positive weight negatives / positives",
+        "early_stopping": false,
+        "epochs": 20
+      }
+    },
+    "mlp_device": "cuda",
+    "brier_skill_reference": "event rate of the longest fixed training window",
+    "alert_policy": "alert_rate:0.05",
+    "watch_policy": "alert_rate:0.2",
+    "min_alerts": 20,
+    "skipped_short_window_folds": 0,
+    "skipped_folds": 0
+  },
+  "environment": {
+    "python": "3.11.16",
+    "numpy": "2.4.6",
+    "pandas": "3.0.5",
+    "scikit-learn": "1.9.0",
+    "torch": "2.14.0+cu126",
+    "device": "CPU (20 threads) with one NVIDIA GeForce RTX 3090 for the mlp family"
+  },
+  "runs": {
+    "sp100_model_variants": {
+      "input": "data/raw/sp100/ohlcv.csv",
+      "input_sha256": "6b1357c8414888cb0a467eb717df0261ff69bd3b8e9b0244ff115be820395ba6",
+      "fold_count": 31,
+      "test_rows": 194876,
+      "variants": [
+        "logistic@252",
+        "logistic@756",
+        "logistic@all",
+        "logistic_quadratic@252",
+        "logistic_quadratic@756",
+        "logistic_quadratic@all",
+        "hist_gradient_boosting@252",
+        "hist_gradient_boosting@756",
+        "hist_gradient_boosting@all",
+        "mlp@252",
+        "mlp@756",
+        "mlp@all"
+      ],
+      "artifacts": {
+        "per_fold.csv": "b26b63f0a7fb2f69a72a0f2288e1dc86af79981b0739d54c6f05f141461c70f8",
+        "summary.json": "e93075cfae31efe74c2403d1d860cc5bccf9bdefba3e4d81e17588948c9cc6d3"
+      }
+    },
+    "sp500_ex_sp100_model_variants": {
+      "input": "data/raw/sp500_ex_sp100/ohlcv.csv",
+      "input_sha256": "25ce913d781be92c40d261a827701c4b4f18d3aa1d9797a0bda46d6c58d77a65",
+      "fold_count": 31,
+      "test_rows": 767954,
+      "variants": [
+        "logistic@252",
+        "logistic@756",
+        "logistic@all",
+        "logistic_quadratic@252",
+        "logistic_quadratic@756",
+        "logistic_quadratic@all",
+        "hist_gradient_boosting@252",
+        "hist_gradient_boosting@756",
+        "hist_gradient_boosting@all",
+        "mlp@252",
+        "mlp@756",
+        "mlp@all"
+      ],
+      "artifacts": {
+        "per_fold.csv": "b3f0fc4449cce51775241ba9eaa5f16958a5efd46ab64e3ef147c0f7324c12d5",
+        "summary.json": "2e96abec011e33809971bcc1b89713d04345a9abbebd14b17134a7824b890985"
+      }
+    },
+    "tw_large_model_variants": {
+      "input": "data/raw/tw_large/ohlcv.csv",
+      "input_sha256": "6cc6e2f8ddf2d4eed22fcad7aaf02083cff284c2c1649486c1f251f48dc4ac1d",
+      "fold_count": 31,
+      "test_rows": 103498,
+      "variants": [
+        "logistic@252",
+        "logistic@756",
+        "logistic@all",
+        "logistic_quadratic@252",
+        "logistic_quadratic@756",
+        "logistic_quadratic@all",
+        "hist_gradient_boosting@252",
+        "hist_gradient_boosting@756",
+        "hist_gradient_boosting@all",
+        "mlp@252",
+        "mlp@756",
+        "mlp@all"
+      ],
+      "artifacts": {
+        "per_fold.csv": "6a52f9317063805c213cefa73f31e88fdf20c0ad568f28ab452e765f7e028d68",
+        "summary.json": "c595fd7f9782bfff0ce2e5028c969df38ea01929530da5b2ef26c92752b3a291"
+      }
+    }
+  }
+}

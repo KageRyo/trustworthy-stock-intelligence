@@ -11,11 +11,13 @@
 
 ### Added
 
+- `scripts/evaluate_model_variants.py` compares logistic, quadratic logistic, gradient boosting, and a GPU-trained MLP across 252-date, 756-date, and expanding training windows on identical folds (Experiment 019). It records the uncalibrated AUC and the Platt slope per fold, and `--reuse-per-fold` rebuilds a summary without refitting.
 - `scripts/evaluate_serving_replay.py` replays the served training and calibration scheme for pooled and single-ticker models (Experiment 020). `--score-input` scores tickers from a second file that the pooled model never saw.
 - `tsi.trust.calibration.CALIBRATION_METHODS` lists the calibration choices, and every command-line tool uses it.
 
 ### Notes
 
+- Experiment 019 found no nonlinear model that beats logistic regression on both US samples, so serving keeps the logistic baseline. The served expanding training window ranks better than the 252-date window of earlier experiments by 0.012 to 0.018 uncalibrated AUC ([ADR 0008](docs/decisions/0008-keep-logistic-expanding-window.md)).
 - Experiment 020 found that single-ticker on-demand models carry no ranking signal within a 63-date window (AUC about 0.50) and rank a ticker's own history worse than a model fitted on all tickers: 0.566 against 0.633 on S&P 100 and 0.632 against 0.672 on Taiwan large caps. The gap holds for tickers outside the pooled model's universe: 400 S&P 500 tickers scored by the S&P 100 model rank at 0.616 against 0.549, and 194 TWSE holdout tickers scored by the Taiwan model at 0.694 against 0.656.
 
 ## 0.8.0 - 2026-10-09
