@@ -26,6 +26,9 @@ ON_DEMAND_ANALYSIS_COMMAND ?= $(PYTHON) -m scripts.analyze_ticker_on_demand
 ON_DEMAND_ANALYSIS_WORKDIR ?= $(CURDIR)
 ON_DEMAND_ANALYSIS_TIMEOUT_SECONDS ?= 120
 ON_DEMAND_MAX_CONCURRENCY ?= 2
+MODEL_BUNDLE_DIR ?= $(if $(TSI_MODEL_BUNDLE_DIR),$(TSI_MODEL_BUNDLE_DIR),data/artifacts/model_bundles)
+US_BUNDLE_INPUT ?= data/raw/sp100/ohlcv.csv
+TAIWAN_BUNDLE_INPUT ?= data/raw/tw_large/ohlcv.csv
 DOWNLOAD_INTERVAL ?= 1d
 MARKET_INTERVAL ?= 5m
 MARKET_START ?=
@@ -37,7 +40,7 @@ MARKET_END_ARG := $(if $(MARKET_END),--end $(MARKET_END),)
 PREDICT_DB_ARGS ?= --write-db --database-url $(DATABASE_URL)
 PYTHON_SYNC_EXTRAS := --extra dev --extra data --extra db --extra dashboard --extra models --extra explainability --extra viz --extra notebooks
 
-.PHONY: python-sync python-sync-gpu docs-format docs-check download-tickers ingest-market-data ingest-watchlist-data predict-latest predict-latest-baseline api dashboard stock-dashboard frontend-install frontend-build test-python test-go lint test-all
+.PHONY: python-sync python-sync-gpu docs-format docs-check download-tickers ingest-market-data ingest-watchlist-data predict-latest predict-latest-baseline model-bundles api dashboard stock-dashboard frontend-install frontend-build test-python test-go lint test-all
 
 python-sync:
 	$(UV) sync --locked $(PYTHON_SYNC_EXTRAS) --extra deep
@@ -95,6 +98,22 @@ predict-latest-baseline:
 		--json-output $(LATEST_WARNINGS) \
 		$(PREDICT_DB_ARGS)
 
+model-bundles:
+	$(PYTHON) -m scripts.predict_latest_baseline \
+		--input $(US_BUNDLE_INPUT) \
+		--output $(MODEL_BUNDLE_DIR)/batch/us_predictions.csv \
+		--json-output $(MODEL_BUNDLE_DIR)/batch/us_warnings.json \
+		--run-id model_bundle_us \
+		--model-bundle-root $(MODEL_BUNDLE_DIR) \
+		--model-bundle-output us.json
+	$(PYTHON) -m scripts.predict_latest_baseline \
+		--input $(TAIWAN_BUNDLE_INPUT) \
+		--output $(MODEL_BUNDLE_DIR)/batch/taiwan_predictions.csv \
+		--json-output $(MODEL_BUNDLE_DIR)/batch/taiwan_warnings.json \
+		--run-id model_bundle_taiwan \
+		--model-bundle-root $(MODEL_BUNDLE_DIR) \
+		--model-bundle-output taiwan.json
+
 api:
 	cd services/api-gateway-go && \
 		GOCACHE=$(GOCACHE) CGO_ENABLED=0 TSI_API_ADDR=$(API_ADDR) \
@@ -103,6 +122,7 @@ api:
 		TSI_ON_DEMAND_ANALYSIS_WORKDIR="$(ON_DEMAND_ANALYSIS_WORKDIR)" \
 		TSI_ON_DEMAND_ANALYSIS_TIMEOUT_SECONDS=$(ON_DEMAND_ANALYSIS_TIMEOUT_SECONDS) \
 		TSI_ON_DEMAND_MAX_CONCURRENCY=$(ON_DEMAND_MAX_CONCURRENCY) \
+		TSI_MODEL_BUNDLE_DIR="$(abspath $(MODEL_BUNDLE_DIR))" \
 		$(GO) run ./cmd/server
 
 dashboard:

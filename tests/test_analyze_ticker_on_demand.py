@@ -236,3 +236,92 @@ def test_run_on_demand_analysis_rethrows_non_history_prediction_errors(monkeypat
 
     with pytest.raises(ValueError, match="unexpected model failure"):
         module.run_on_demand_analysis(args)
+
+
+def _bundle_case(
+    monkeypatch, tmp_path: Path, *, market: str, bundles: tuple[str, ...]
+) -> tuple[module.OnDemandAnalysisSummary, argparse.Namespace, Path]:
+    bundle_dir = tmp_path / "bundles"
+    bundle_dir.mkdir()
+    for name in bundles:
+        (bundle_dir / f"{name}.json").write_text("{}", encoding="utf-8")
+    captured: dict[str, argparse.Namespace] = {}
+
+    def fake_download_ticker_frame(**kwargs):
+        periods = 80
+        frame = pd.DataFrame(
+            {
+                "date": pd.date_range("2026-01-01", periods=periods, freq="D"),
+                "ticker": ["5240"] * periods,
+                "open": [10.0] * periods,
+                "high": [11.0] * periods,
+                "low": [9.0] * periods,
+                "close": [10.5] * periods,
+                "adj_close": [10.5] * periods,
+                "volume": [1000] * periods,
+            }
+        )
+        return DownloadFrameResult(
+            dataset_name="on_demand_5240",
+            tickers=[DownloadTicker(ticker="5240", query_symbol="5240.TWO", market=market)],
+            ohlcv=frame,
+            start=kwargs["start"],
+            end=kwargs["end"],
+            interval=kwargs["interval"],
+            failed_batches=[],
+        )
+
+    def fake_run_prediction(args: argparse.Namespace) -> pd.DataFrame:
+        captured["args"] = args
+        Path(args.output).parent.mkdir(parents=True, exist_ok=True)
+        Path(args.output).write_text("date,ticker\n2026-03-21,5240\n", encoding="utf-8")
+        Path(args.json_output).write_text("{}", encoding="utf-8")
+        return pd.DataFrame({"date": ["2026-03-21"], "ticker": ["5240"]})
+
+    monkeypatch.setattr(module, "download_ticker_frame", fake_download_ticker_frame)
+    monkeypatch.setattr(module, "write_download_to_postgres", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(module, "run_prediction", fake_run_prediction)
+    args = module.parse_args(
+        [
+            "--ticker",
+            "5240",
+            "--database-url",
+            "postgresql://user:pass@localhost:5432/db",
+            "--output-root",
+            str(tmp_path / "artifacts"),
+            "--raw-output-root",
+            str(tmp_path / "raw"),
+            "--fresh-interval",
+            "none",
+            "--model-bundle-dir",
+            str(bundle_dir),
+        ]
+    )
+    return module.run_on_demand_analysis(args), captured["args"], bundle_dir
+
+
+@pytest.mark.parametrize(
+    ("market", "bundle"),
+    [("us", "us"), ("twse", "taiwan"), ("tpex", "taiwan"), ("emerging", "taiwan")],
+)
+def test_on_demand_scores_with_the_market_bundle(
+    monkeypatch, tmp_path: Path, market: str, bundle: str
+) -> None:
+    summary, prediction_args, bundle_dir = _bundle_case(
+        monkeypatch, tmp_path, market=market, bundles=("us", "taiwan")
+    )
+
+    assert prediction_args.model_bundle == bundle_dir / f"{bundle}.json"
+    assert summary.model_bundle == str(bundle_dir / f"{bundle}.json")
+
+
+@pytest.mark.parametrize(("market", "bundles"), [("twse", ("us",)), ("unknown", ("us", "taiwan"))])
+def test_on_demand_fits_the_ticker_alone_without_a_matching_bundle(
+    monkeypatch, tmp_path: Path, market: str, bundles: tuple[str, ...]
+) -> None:
+    summary, prediction_args, _ = _bundle_case(
+        monkeypatch, tmp_path, market=market, bundles=bundles
+    )
+
+    assert prediction_args.model_bundle is None
+    assert summary.model_bundle is None

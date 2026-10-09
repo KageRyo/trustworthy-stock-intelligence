@@ -48,7 +48,21 @@ infra/postgres/init/
 
 For an existing local database, apply any new migration files under that directory before testing a new release.
 
-## 2. Start Go API
+## 2. Build Pooled Model Bundles
+
+On-demand analysis scores a ticker that has no stored warning with the pooled model of its market. Build one bundle per market from a multi-ticker reference universe:
+
+```bash
+make model-bundles \
+  US_BUNDLE_INPUT=data/raw/sp100_current/ohlcv.csv \
+  TAIWAN_BUNDLE_INPUT=data/raw/tw_large/ohlcv.csv
+```
+
+This writes `us.json` and `taiwan.json` to `data/artifacts/model_bundles/` (`MODEL_BUNDLE_DIR` or `TSI_MODEL_BUNDLE_DIR` changes the location). Each bundle is schema-validated JSON with the fitted logistic parameters, calibrator, thresholds, drift result, and reliability references, so loading it runs no fitting and no pickle.
+
+Use a current download for the reference universe. A bundle whose data ends more than 30 days before the scored row adds the reason code `model_bundle_stale`. Without a bundle for the ticker's market, on-demand analysis fits the ticker alone and adds `single_ticker_model`; [Experiment 020](../../experiments/020_serving_replay/README.md) found such models much weaker.
+
+## 3. Start Go API
 
 ```bash
 make api API_ADDR=0.0.0.0:18080
@@ -62,6 +76,7 @@ TSI_ON_DEMAND_ANALYSIS_COMMAND=python -m scripts.analyze_ticker_on_demand
 TSI_ON_DEMAND_ANALYSIS_WORKDIR=<repo-root>
 TSI_ON_DEMAND_ANALYSIS_TIMEOUT_SECONDS=120
 TSI_ON_DEMAND_MAX_CONCURRENCY=2
+TSI_MODEL_BUNDLE_DIR=<repo-root>/data/artifacts/model_bundles
 ```
 
 Open:
@@ -75,7 +90,7 @@ http://localhost:18080/api/v1/models/current
 
 If `TSI_DATABASE_URL` is missing or PostgreSQL is unreachable, the API should fail at startup.
 
-## 3. Start TypeScript Dashboard
+## 4. Start TypeScript Dashboard
 
 ```bash
 make stock-dashboard
@@ -90,7 +105,7 @@ http://<dashboard-host>:5175
 
 The Vite dev server binds to `0.0.0.0`. It proxies API calls to `http://127.0.0.1:18080` by default through `TSI_DASHBOARD_API_BASE_URL`.
 
-## 4. Try Ticker Analysis
+## 5. Try Ticker Analysis
 
 Search for:
 
@@ -104,12 +119,12 @@ NVDA
 Expected behavior:
 
 - stored warning records return immediately
-- missing tickers trigger the configured Python on-demand command
+- missing tickers trigger the configured Python on-demand command, which scores them with the pooled bundle for their market (`logistic_regression_pooled`)
 - provider-backed but insufficient-history symbols return typed `abstain` analysis instead of an unstructured failure
 - Taiwan alphanumeric symbols remain Taiwan symbols, not US tickers
 - TPEx emerging fallback can resolve supported emerging-stock codes
 
-## 5. Verify API Directly
+## 6. Verify API Directly
 
 ```bash
 curl http://localhost:18080/api/v1/analysis/NVDA
@@ -129,7 +144,7 @@ curl -X POST http://localhost:18080/api/v1/watchlists/session-demo/tickers \
 
 The request body is a schema-owned `watchlist_add.v1` payload.
 
-## 6. Run Checks
+## 7. Run Checks
 
 ```bash
 uv run --locked --no-sync python -m pytest

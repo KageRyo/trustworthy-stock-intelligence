@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from typing import Literal, Protocol, get_args
 
 import numpy as np
+from pydantic import BaseModel, ConfigDict
 from sklearn.isotonic import IsotonicRegression
 from sklearn.linear_model import LogisticRegression
 
@@ -83,10 +84,70 @@ class MonotonePlattCalibrator:
 CALIBRATION_SLOPE_NONPOSITIVE = "calibration_slope_nonpositive"
 
 
+class CalibratorParams(BaseModel):
+    """Fitted values of a storable calibrator."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    method: Literal["none", "platt", "platt_monotone"]
+    slope: float | None = None
+    intercept: float | None = None
+    reversed: bool = False
+    offset: float = 0.0
+
+
+@dataclass(frozen=True)
+class StoredCalibrator:
+    """Apply ``CalibratorParams`` exactly as the fitted calibrator does."""
+
+    params: CalibratorParams
+
+    @property
+    def reversed(self) -> bool:
+        return self.params.reversed
+
+    def predict(self, probabilities: np.ndarray) -> np.ndarray:
+        values = np.asarray(probabilities, dtype=float)
+        if self.params.method == "none":
+            return values
+        if self.params.reversed:
+            return _sigmoid(_clipped_logit(values) + self.params.offset)
+        assert self.params.slope is not None and self.params.intercept is not None
+        return 1.0 / (1.0 + np.exp(-(self.params.slope * values + self.params.intercept)))
+
+
+def calibrator_params(calibrator: ProbabilityCalibrator) -> CalibratorParams:
+    """Export a fitted identity, Platt, or monotone Platt calibrator."""
+
+    if isinstance(calibrator, StoredCalibrator):
+        return calibrator.params
+    if isinstance(calibrator, IdentityCalibrator):
+        return CalibratorParams(method="none")
+    if isinstance(calibrator, MonotonePlattCalibrator):
+        platt = calibrator._platt.model
+        return CalibratorParams(
+            method="platt_monotone",
+            slope=float(platt.coef_[0][0]),
+            intercept=float(platt.intercept_[0]),
+            reversed=calibrator.reversed,
+            offset=calibrator.offset,
+        )
+    if isinstance(calibrator, PlattCalibrator):
+        return CalibratorParams(
+            method="platt",
+            slope=float(calibrator.model.coef_[0][0]),
+            intercept=float(calibrator.model.intercept_[0]),
+        )
+    raise ValueError(
+        f"{type(calibrator).__name__} cannot be stored; isotonic calibration is not supported"
+    )
+
+
 def calibration_reason_codes(calibrator: ProbabilityCalibrator) -> list[str]:
     """Reason codes for every row scored with ``calibrator``."""
 
-    if isinstance(calibrator, MonotonePlattCalibrator) and calibrator.reversed:
+    reversed_fit = isinstance(calibrator, (MonotonePlattCalibrator, StoredCalibrator))
+    if reversed_fit and calibrator.reversed:
         return [CALIBRATION_SLOPE_NONPOSITIVE]
     return []
 

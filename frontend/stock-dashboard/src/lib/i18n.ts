@@ -472,6 +472,14 @@ export const translations = {
         title: "Insufficient price history",
         detail: "The ticker has market data, but not enough labeled history for a calibrated risk prediction."
       },
+      single_ticker_model: {
+        title: "Fitted on this ticker alone",
+        detail: "No pooled market model was available, so this result comes from a model fitted on this ticker's own history. Such models ranked risk much worse than a pooled model in Experiment 020, so treat this result as weak."
+      },
+      model_bundle_stale: {
+        title: "Pooled model is out of date",
+        detail: "The pooled market model was fitted on data that ends more than 30 days before this row. Its thresholds and calibration may no longer match the market."
+      },
       calibration_slope_nonpositive: {
         title: "Recent ranking did not hold",
         detail: "In the calibration window, higher model scores did not mean more drawdowns. The model's ranking is kept and only its probability level is adjusted, so treat this ranking as unconfirmed."
@@ -785,6 +793,14 @@ export const translations = {
       insufficient_history: {
         title: "價格歷史不足",
         detail: "此股票有市場資料，但標註歷史不足，無法產生校準後風險預測。"
+      },
+      single_ticker_model: {
+        title: "僅以本檔資料訓練",
+        detail: "目前沒有可用的整體市場模型，這個結果來自只用這檔股票自身歷史訓練的模型。實驗 020 顯示這類模型的風險排序明顯不如整體市場模型，請把這個結果視為參考性較弱。"
+      },
+      model_bundle_stale: {
+        title: "整體市場模型已過時",
+        detail: "整體市場模型使用的資料，比這筆預測的日期早了 30 天以上，門檻與校準可能已不符合目前的市場。"
       },
       calibration_slope_nonpositive: {
         title: "近期排序未獲驗證",

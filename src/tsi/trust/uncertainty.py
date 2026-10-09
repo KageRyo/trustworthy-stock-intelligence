@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import numpy as np
+from pydantic import BaseModel, ConfigDict
 
 
 def _validate_probabilities(probabilities: np.ndarray) -> np.ndarray:
@@ -62,6 +63,26 @@ def empirical_percentile(values: np.ndarray, reference: np.ndarray) -> np.ndarra
     return np.searchsorted(ordered, query, side="right") / ordered.size
 
 
+class NoveltyParams(BaseModel):
+    """Fitted medians, location, and shrunk precision matrix of a novelty scorer."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    medians: list[float]
+    mean: list[float]
+    precision: list[list[float]]
+
+
+class ConformalParams(BaseModel):
+    """Per-class conformal thresholds; ``None`` means the threshold is infinite."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    alpha: float
+    no_drawdown_threshold: float | None
+    drawdown_threshold: float | None
+
+
 class FeatureNoveltyScorer:
     """Score how far feature rows sit from the training feature distribution.
 
@@ -90,6 +111,23 @@ class FeatureNoveltyScorer:
         self.mean_ = estimator.location_
         self.precision_ = estimator.precision_
         return self
+
+    def params(self) -> NoveltyParams:
+        if self.medians_ is None or self.mean_ is None or self.precision_ is None:
+            raise ValueError("FeatureNoveltyScorer must be fit before exporting params")
+        return NoveltyParams(
+            medians=self.medians_.tolist(),
+            mean=self.mean_.tolist(),
+            precision=self.precision_.tolist(),
+        )
+
+    @classmethod
+    def from_params(cls, params: NoveltyParams) -> "FeatureNoveltyScorer":
+        scorer = cls()
+        scorer.medians_ = np.asarray(params.medians, dtype=float)
+        scorer.mean_ = np.asarray(params.mean, dtype=float)
+        scorer.precision_ = np.asarray(params.precision, dtype=float)
+        return scorer
 
     def distance(self, features: np.ndarray) -> np.ndarray:
         if self.precision_ is None or self.mean_ is None:
@@ -134,6 +172,32 @@ class ClassConditionalConformal:
             thresholds[label] = float(scores[rank - 1]) if rank <= scores.size else np.inf
         self.thresholds_ = thresholds
         return self
+
+    def params(self) -> ConformalParams:
+        if self.thresholds_ is None:
+            raise ValueError("ClassConditionalConformal must be fit before exporting params")
+
+        def finite(value: float) -> float | None:
+            return None if np.isinf(value) else float(value)
+
+        return ConformalParams(
+            alpha=self.alpha,
+            no_drawdown_threshold=finite(self.thresholds_[0]),
+            drawdown_threshold=finite(self.thresholds_[1]),
+        )
+
+    @classmethod
+    def from_params(cls, params: ConformalParams) -> "ClassConditionalConformal":
+        conformal = cls(alpha=params.alpha)
+
+        def threshold(value: float | None) -> float:
+            return np.inf if value is None else value
+
+        conformal.thresholds_ = {
+            0: threshold(params.no_drawdown_threshold),
+            1: threshold(params.drawdown_threshold),
+        }
+        return conformal
 
     def prediction_sets(self, probabilities: np.ndarray) -> np.ndarray:
         """Return a boolean ``(n_samples, 2)`` membership matrix for labels 0 and 1."""

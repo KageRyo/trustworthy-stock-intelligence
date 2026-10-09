@@ -5,12 +5,14 @@ from __future__ import annotations
 import argparse
 import os
 from collections.abc import Sequence
+from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-from tsi.data.csv import read_ohlcv_csv
+from tsi.data.csv import file_sha256, read_ohlcv_csv
 from tsi.data.postgres import write_prediction_batch_to_postgres
 from tsi.evaluation.drift import (
     CalibrationDriftAssessment,
@@ -31,7 +33,14 @@ from tsi.labeling.warning_level import (
     select_alert_threshold,
     select_alert_threshold_by_policy,
 )
+from tsi.models.linear import LinearLogitModel, linear_logit_params
 from tsi.models.logistic import LogisticRiskModel
+from tsi.serving.bundle import (
+    ServingModelBundle,
+    load_serving_bundle,
+    resolve_bundle_path,
+    write_serving_bundle,
+)
 from tsi.serving.schema import (
     AlertPolicyMetadata,
     CalibrationDriftMetadata,
@@ -41,7 +50,10 @@ from tsi.serving.schema import (
 from tsi.trust.calibration import (
     CALIBRATION_METHODS,
     CalibrationMethod,
+    ProbabilityCalibrator,
+    StoredCalibrator,
     calibration_reason_codes,
+    calibrator_params,
     fit_probability_calibrator,
 )
 from tsi.trust.decision import (
@@ -172,6 +184,24 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         default="1d",
         help="Feature interval metadata stored with the prediction batch.",
     )
+    parser.add_argument(
+        "--model-bundle-root",
+        type=Path,
+        default=Path(os.getenv("TSI_MODEL_BUNDLE_DIR", "data/artifacts/model_bundles")),
+        help="Directory that --model-bundle and --model-bundle-output must stay inside.",
+    )
+    parser.add_argument(
+        "--model-bundle",
+        type=Path,
+        default=None,
+        help="Score --input with a stored pooled model bundle instead of fitting on it.",
+    )
+    parser.add_argument(
+        "--model-bundle-output",
+        type=Path,
+        default=None,
+        help="Write the fitted model as a bundle that on-demand analysis can score with.",
+    )
     return parser.parse_args(argv)
 
 
@@ -275,22 +305,121 @@ def split_train_calibration_recent(
     return train_frame, calibration_frame, recent_frame
 
 
-def run_prediction(args: argparse.Namespace) -> pd.DataFrame:
-    """Train a baseline on historical labels and write latest predictions."""
+@dataclass
+class ServingState:
+    """A fitted serving model with everything needed to score latest feature rows."""
 
-    if args.drift_size < 0:
-        raise ValueError("--drift-size must be non-negative")
-    ohlcv = read_ohlcv_csv(args.input)
-    feature_columns = resolve_feature_set(args.feature_set)
+    feature_columns: list[str]
+    model: LogisticRiskModel | ConstantProbabilityModel | LinearLogitModel
+    model_name: str
+    model_bundle: str
+    calibrator: ProbabilityCalibrator
+    calibration_method: str
+    calibration_drift: CalibrationDriftMetadata
+    drift_reason_codes: list[str]
+    drift_trust_multiplier: float | None
+    drift_abstain: bool
+    alert_threshold: float
+    watch_threshold: float
+    alert_policy: AlertPolicyMetadata
+    trust_threshold: float
+    uncertainty_threshold: float
+    reliability: ReliabilityAssessor | None
+    model_reason_codes: list[str]
+    bundle_data_as_of: str | None = None
+
+
+# A pooled bundle older than this, relative to the scored rows, is flagged as stale.
+MODEL_BUNDLE_MAX_AGE_DAYS = 30
+SINGLE_TICKER_MODEL = "single_ticker_model"
+MODEL_BUNDLE_STALE = "model_bundle_stale"
+
+
+def run_prediction(args: argparse.Namespace) -> pd.DataFrame:
+    """Fit a baseline on historical labels, or load a stored one, and write latest predictions."""
+
+    bundle_output = validate_bundle_args(args)
+    bundle = (
+        None
+        if args.model_bundle is None
+        else load_serving_bundle(args.model_bundle, root=args.model_bundle_root)
+    )
+    feature_columns, horizon, drawdown_threshold = label_settings(args, bundle)
     training_frame, latest_frame = prepare_frames(
-        ohlcv,
-        horizon=args.horizon,
-        drawdown_threshold=args.drawdown_threshold,
+        read_ohlcv_csv(args.input),
+        horizon=horizon,
+        drawdown_threshold=drawdown_threshold,
         feature_columns=feature_columns,
     )
     if latest_frame.empty:
         raise InsufficientHistoryError("No latest feature rows were created; check input data")
 
+    if bundle is None:
+        state = fit_serving_state(args, training_frame, feature_columns)
+    else:
+        state = serving_state_from_bundle(bundle)
+    predictions, reason_codes = score_serving_state(args, state, training_frame, latest_frame)
+    if bundle_output is not None:
+        write_serving_bundle(
+            serving_bundle(args, state, training_frame, latest_frame),
+            bundle_output,
+            root=args.model_bundle_root,
+        )
+
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    predictions.to_csv(args.output, index=False)
+    serving_frame = predictions.assign(reason_codes=reason_codes)
+    batch = build_prediction_batch(
+        serving_frame,
+        run_id=args.run_id,
+        calibration_drift=state.calibration_drift,
+        feature_interval=args.feature_interval,
+        alert_policy=state.alert_policy,
+    )
+    write_prediction_batch_json(batch, args.json_output)
+    if args.write_db:
+        if not args.database_url:
+            raise ValueError("--database-url or TSI_DATABASE_URL is required with --write-db")
+        write_prediction_batch_to_postgres(
+            args.database_url,
+            batch,
+            feature_interval=args.feature_interval,
+        )
+    return predictions
+
+
+def validate_bundle_args(args: argparse.Namespace) -> Path | None:
+    """Reject incompatible options early and return the confined bundle output path."""
+
+    if args.drift_size < 0:
+        raise ValueError("--drift-size must be non-negative")
+    if args.model_bundle is not None and args.model_bundle_output is not None:
+        raise ValueError("Pass either --model-bundle or --model-bundle-output, not both")
+    if (args.model_bundle or args.model_bundle_output) and args.trust_method != "reliability":
+        raise ValueError("Model bundles store and use --trust-method reliability only")
+    if args.model_bundle_output is None:
+        return None
+    return resolve_bundle_path(args.model_bundle_output, root=args.model_bundle_root)
+
+
+def label_settings(
+    args: argparse.Namespace, bundle: ServingModelBundle | None
+) -> tuple[list[str], int, float]:
+    """Feature columns, label horizon, and drawdown threshold from the bundle or the CLI."""
+
+    if bundle is None:
+        return resolve_feature_set(args.feature_set), args.horizon, args.drawdown_threshold
+    return list(bundle.feature_columns), bundle.horizon, bundle.drawdown_threshold
+
+
+def fit_serving_state(
+    args: argparse.Namespace,
+    training_frame: pd.DataFrame,
+    feature_columns: Sequence[str],
+) -> ServingState:
+    """Fit the model, calibrator, thresholds, drift gate, and reliability references."""
+
+    columns = list(feature_columns)
     drift_evaluated = args.drift_size > 0 and _has_drift_history(
         training_frame,
         calibration_size=args.calibration_size,
@@ -317,10 +446,8 @@ def run_prediction(args: argparse.Namespace) -> pd.DataFrame:
             train_size=args.train_size,
         )
         recent_frame = training_frame.iloc[0:0].copy()
-    model, model_name = fit_baseline_model(train_frame, feature_columns)
-    calibration_probabilities = model.predict_proba(calibration_frame[feature_columns].to_numpy())
-    probabilities = model.predict_proba(latest_frame[feature_columns].to_numpy())
-
+    model, model_name = fit_baseline_model(train_frame, columns)
+    calibration_probabilities = model.predict_proba(calibration_frame[columns].to_numpy())
     calibration_method: CalibrationMethod = args.calibration_method
     calibrator = fit_probability_calibrator(
         calibration_probabilities,
@@ -328,7 +455,6 @@ def run_prediction(args: argparse.Namespace) -> pd.DataFrame:
         method=calibration_method,
     )
     calibrated_calibration_probabilities = calibrator.predict(calibration_probabilities)
-    calibrated_probabilities = calibrator.predict(probabilities)
     drift_assessment, calibration_drift = evaluate_calibration_drift(
         model,
         calibrator,
@@ -336,26 +462,73 @@ def run_prediction(args: argparse.Namespace) -> pd.DataFrame:
         recent_frame,
         evaluated=drift_evaluated,
         note=drift_note,
-        feature_columns=feature_columns,
+        feature_columns=columns,
     )
     alert_threshold, watch_threshold, alert_policy_metadata = select_warning_thresholds(
         args,
         calibration_frame["risk_label"].to_numpy(),
         calibrated_calibration_probabilities,
     )
-    row_reason_codes: list[list[str]] | None = None
-    if args.trust_method == "reliability":
-        reliability = assess_reliability(
+    reliability = (
+        fit_reliability(
             args,
             model,
             calibrator,
             train_frame=train_frame,
             calibration_frame=calibration_frame,
+            calibrated_calibration_probabilities=calibrated_calibration_probabilities,
+            feature_columns=columns,
+        )
+        if args.trust_method == "reliability"
+        else None
+    )
+    return ServingState(
+        feature_columns=columns,
+        model=model,
+        model_name=model_name,
+        model_bundle=f"baseline_latest:{args.feature_set}:{args.input}",
+        calibrator=calibrator,
+        calibration_method=calibration_method,
+        calibration_drift=calibration_drift,
+        drift_reason_codes=calibration_drift_reason_codes(
+            drift_assessment, evaluated=drift_evaluated
+        ),
+        drift_trust_multiplier=(
+            None if drift_assessment is None else drift_assessment.trust_multiplier
+        ),
+        drift_abstain=drift_assessment is not None and drift_assessment.abstain,
+        alert_threshold=alert_threshold,
+        watch_threshold=watch_threshold,
+        alert_policy=alert_policy_metadata,
+        trust_threshold=resolve_trust_threshold(args),
+        uncertainty_threshold=args.uncertainty_threshold,
+        reliability=reliability,
+        model_reason_codes=(
+            [SINGLE_TICKER_MODEL] if training_frame["ticker"].nunique() == 1 else []
+        ),
+    )
+
+
+def score_serving_state(
+    args: argparse.Namespace,
+    state: ServingState,
+    training_frame: pd.DataFrame,
+    latest_frame: pd.DataFrame,
+) -> tuple[pd.DataFrame, list[list[str]]]:
+    """Score latest rows and return predictions with their reason codes."""
+
+    columns = state.feature_columns
+    probabilities = state.model.predict_proba(latest_frame[columns].to_numpy())
+    calibrated_probabilities = state.calibrator.predict(probabilities)
+    row_reason_codes: list[list[str]] | None = None
+    if args.trust_method == "reliability":
+        reliability = score_reliability(
+            args,
+            state.reliability,
             training_frame=training_frame,
             latest_frame=latest_frame,
-            calibrated_calibration_probabilities=calibrated_calibration_probabilities,
             calibrated_probabilities=calibrated_probabilities,
-            feature_columns=feature_columns,
+            feature_columns=columns,
         )
         uncertainty = reliability.uncertainty
         trust_scores = reliability.trust
@@ -369,13 +542,13 @@ def run_prediction(args: argparse.Namespace) -> pd.DataFrame:
             uncertainty_penalty=args.uncertainty_penalty,
             method=trust_score_method,
         )
-    if drift_assessment is not None:
-        trust_scores = np.clip(trust_scores * drift_assessment.trust_multiplier, 0.0, 1.0)
+    if state.drift_trust_multiplier is not None:
+        trust_scores = np.clip(trust_scores * state.drift_trust_multiplier, 0.0, 1.0)
     decision_config = TrustDecisionConfig(
-        alert_threshold=alert_threshold,
-        watch_threshold=watch_threshold,
-        trust_threshold=resolve_trust_threshold(args),
-        uncertainty_threshold=args.uncertainty_threshold,
+        alert_threshold=state.alert_threshold,
+        watch_threshold=state.watch_threshold,
+        trust_threshold=state.trust_threshold,
+        uncertainty_threshold=state.uncertainty_threshold,
     )
     warning_levels = assign_trust_decisions(
         calibrated_probabilities=calibrated_probabilities,
@@ -383,60 +556,122 @@ def run_prediction(args: argparse.Namespace) -> pd.DataFrame:
         trust_scores=trust_scores,
         config=decision_config,
     )
-    if drift_assessment is not None and drift_assessment.abstain:
+    if state.drift_abstain:
         warning_levels = np.full(warning_levels.shape, "abstain", dtype=object)
-    drift_reason_codes = calibration_drift_reason_codes(
-        drift_assessment,
-        evaluated=drift_evaluated,
-    )
     reason_codes = build_reason_codes(
         calibrated_probabilities=calibrated_probabilities,
         uncertainty_scores=uncertainty,
         trust_scores=trust_scores,
         warning_levels=warning_levels,
         config=decision_config,
-        extra_reason_codes=[*drift_reason_codes, *calibration_reason_codes(calibrator)],
+        extra_reason_codes=[
+            *state.drift_reason_codes,
+            *calibration_reason_codes(state.calibrator),
+            *state.model_reason_codes,
+            *bundle_age_reason_codes(state, latest_frame),
+        ],
         row_reason_codes=row_reason_codes,
     )
     feature_attributions = build_logistic_feature_attributions(
-        model,
-        latest_frame[feature_columns].to_numpy(),
-        feature_columns,
+        state.model,
+        latest_frame[columns].to_numpy(),
+        columns,
     )
     predictions = latest_frame.loc[:, ["date", "ticker"]].assign(
-        model=model_name,
+        model=state.model_name,
         risk_probability=probabilities,
         calibrated_risk_probability=calibrated_probabilities,
-        calibration_method=calibration_method,
+        calibration_method=state.calibration_method,
         uncertainty_score=uncertainty,
         trust_score=trust_scores,
-        alert_threshold=alert_threshold,
-        watch_threshold=watch_threshold,
+        alert_threshold=state.alert_threshold,
+        watch_threshold=state.watch_threshold,
         warning_level=warning_levels,
-        model_bundle=f"baseline_latest:{args.feature_set}:{args.input}",
+        model_bundle=state.model_bundle,
         feature_attributions=feature_attributions,
     )
+    return predictions, reason_codes
 
-    args.output.parent.mkdir(parents=True, exist_ok=True)
-    predictions.to_csv(args.output, index=False)
-    serving_frame = predictions.assign(reason_codes=reason_codes)
-    batch = build_prediction_batch(
-        serving_frame,
-        run_id=args.run_id,
-        calibration_drift=calibration_drift,
-        feature_interval=args.feature_interval,
-        alert_policy=alert_policy_metadata,
-    )
-    write_prediction_batch_json(batch, args.json_output)
-    if args.write_db:
-        if not args.database_url:
-            raise ValueError("--database-url or TSI_DATABASE_URL is required with --write-db")
-        write_prediction_batch_to_postgres(
-            args.database_url,
-            batch,
-            feature_interval=args.feature_interval,
+
+POOLED_MODEL_NAME = "logistic_regression_pooled"
+
+
+def serving_bundle(
+    args: argparse.Namespace,
+    state: ServingState,
+    training_frame: pd.DataFrame,
+    latest_frame: pd.DataFrame,
+) -> ServingModelBundle:
+    """Store a fitted serving state as a schema-validated bundle."""
+
+    if training_frame["ticker"].nunique() < 2:
+        raise ValueError("A model bundle needs a reference universe with more than one ticker")
+    if not isinstance(state.model, LogisticRiskModel) or state.reliability is None:
+        raise ValueError(
+            "Only a fitted logistic model with reliability references can be stored; "
+            "this input produced a constant fallback or no reliability references"
         )
-    return predictions
+    return ServingModelBundle(
+        run_id=args.run_id,
+        created_at=datetime.now(timezone.utc),
+        source_input=str(args.input),
+        source_input_sha256=file_sha256(args.input),
+        tickers=int(training_frame["ticker"].nunique()),
+        training_rows=len(training_frame),
+        data_as_of=pd.to_datetime(latest_frame["date"]).max().date().isoformat(),
+        feature_interval=args.feature_interval,
+        feature_set=args.feature_set,
+        feature_columns=state.feature_columns,
+        horizon=args.horizon,
+        drawdown_threshold=args.drawdown_threshold,
+        model=linear_logit_params(state.model),
+        calibration_method=state.calibration_method,
+        calibrator=calibrator_params(state.calibrator),
+        calibration_drift=state.calibration_drift,
+        drift_reason_codes=state.drift_reason_codes,
+        drift_trust_multiplier=state.drift_trust_multiplier,
+        drift_abstain=state.drift_abstain,
+        alert_threshold=state.alert_threshold,
+        watch_threshold=state.watch_threshold,
+        alert_policy=state.alert_policy,
+        trust_threshold=state.trust_threshold,
+        uncertainty_threshold=state.uncertainty_threshold,
+        reliability=state.reliability.params(),
+    )
+
+
+def serving_state_from_bundle(bundle: ServingModelBundle) -> ServingState:
+    """Rebuild a serving state that scores rows exactly like the batch that wrote ``bundle``."""
+
+    return ServingState(
+        feature_columns=list(bundle.feature_columns),
+        model=LinearLogitModel(bundle.model),
+        model_name=POOLED_MODEL_NAME,
+        model_bundle=f"pooled:{bundle.feature_set}:{bundle.source_input}:{bundle.run_id}",
+        calibrator=StoredCalibrator(bundle.calibrator),
+        calibration_method=bundle.calibration_method,
+        calibration_drift=bundle.calibration_drift,
+        drift_reason_codes=list(bundle.drift_reason_codes),
+        drift_trust_multiplier=bundle.drift_trust_multiplier,
+        drift_abstain=bundle.drift_abstain,
+        alert_threshold=bundle.alert_threshold,
+        watch_threshold=bundle.watch_threshold,
+        alert_policy=bundle.alert_policy,
+        trust_threshold=bundle.trust_threshold,
+        uncertainty_threshold=bundle.uncertainty_threshold,
+        reliability=ReliabilityAssessor.from_params(bundle.reliability),
+        model_reason_codes=[],
+        bundle_data_as_of=bundle.data_as_of,
+    )
+
+
+def bundle_age_reason_codes(state: ServingState, latest_frame: pd.DataFrame) -> list[str]:
+    """Flag a stored model whose data ends long before the rows it scores."""
+
+    if state.bundle_data_as_of is None:
+        return []
+    age = pd.to_datetime(latest_frame["date"]).max() - pd.Timestamp(state.bundle_data_as_of)
+    return [MODEL_BUNDLE_STALE] if age.days > MODEL_BUNDLE_MAX_AGE_DAYS else []
 
 
 def select_warning_thresholds(
@@ -517,29 +752,26 @@ def ticker_data_quality(
     return quality, stale
 
 
-def assess_reliability(
+def fit_reliability(
     args: argparse.Namespace,
     model: LogisticRiskModel | ConstantProbabilityModel,
-    calibrator: object,
+    calibrator: ProbabilityCalibrator,
     *,
     train_frame: pd.DataFrame,
     calibration_frame: pd.DataFrame,
-    training_frame: pd.DataFrame,
-    latest_frame: pd.DataFrame,
     calibrated_calibration_probabilities: np.ndarray,
-    calibrated_probabilities: np.ndarray,
     feature_columns: Sequence[str] = DEFAULT_FEATURE_COLUMNS,
-) -> ReliabilityScores:
-    """Score latest rows with model/data reliability, failing closed when unavailable."""
+) -> ReliabilityAssessor | None:
+    """Fit reliability references, or return None when they cannot be fitted."""
 
     if isinstance(model, ConstantProbabilityModel):
-        return ReliabilityAssessor.unavailable(len(latest_frame))
+        return None
     config = ReliabilityConfig(
         n_members=args.reliability_members,
         conformal_alpha=args.conformal_alpha,
     )
     try:
-        assessor = ReliabilityAssessor(config).fit(
+        return ReliabilityAssessor(config).fit(
             train_features=train_frame[list(feature_columns)].to_numpy(),
             train_labels=train_frame["risk_label"].to_numpy(),
             train_groups=pd.to_datetime(train_frame["date"]).to_numpy(),
@@ -549,6 +781,21 @@ def assess_reliability(
             calibrator=calibrator,
         )
     except ValueError:
+        return None
+
+
+def score_reliability(
+    args: argparse.Namespace,
+    assessor: ReliabilityAssessor | None,
+    *,
+    training_frame: pd.DataFrame,
+    latest_frame: pd.DataFrame,
+    calibrated_probabilities: np.ndarray,
+    feature_columns: Sequence[str] = DEFAULT_FEATURE_COLUMNS,
+) -> ReliabilityScores:
+    """Score latest rows with model/data reliability, failing closed when unavailable."""
+
+    if assessor is None:
         return ReliabilityAssessor.unavailable(len(latest_frame))
     quality, stale = ticker_data_quality(
         training_frame,
