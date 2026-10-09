@@ -8,6 +8,8 @@ import (
 	"os/exec"
 	"strings"
 	"time"
+
+	"golang.org/x/sync/singleflight"
 )
 
 type OnDemandAnalyzer interface {
@@ -80,4 +82,49 @@ func trimCommandOutput(output []byte) string {
 		return text
 	}
 	return text[:1000] + "...[truncated]"
+}
+
+// ErrOnDemandBusy reports that every on-demand analysis slot is in use.
+var ErrOnDemandBusy = errors.New("on-demand analysis capacity is full; retry shortly or queue a prediction job")
+
+// LimitedOnDemandAnalyzer runs at most one analysis per ticker at a time and caps the number of
+// tickers analyzed concurrently. Concurrent requests for the same ticker share one run. A full
+// set of slots fails fast with ErrOnDemandBusy instead of queuing requests in memory.
+type LimitedOnDemandAnalyzer struct {
+	next  OnDemandAnalyzer
+	slots chan struct{}
+	group singleflight.Group
+}
+
+func NewLimitedOnDemandAnalyzer(next OnDemandAnalyzer, maxConcurrent int) (*LimitedOnDemandAnalyzer, error) {
+	if next == nil {
+		return nil, errors.New("on-demand analyzer must not be nil")
+	}
+	if maxConcurrent < 1 {
+		return nil, errors.New("on-demand analysis concurrency must be at least 1")
+	}
+	return &LimitedOnDemandAnalyzer{next: next, slots: make(chan struct{}, maxConcurrent)}, nil
+}
+
+// Analyze joins an in-flight run for the same ticker or starts one if a slot is free. The shared
+// run is detached from any single caller's cancellation, so one disconnecting client does not
+// abort the analysis other callers are waiting for; the wrapped analyzer's own timeout still
+// applies. Each caller stops waiting when its own context ends.
+func (a *LimitedOnDemandAnalyzer) Analyze(ctx context.Context, ticker string) error {
+	key := strings.ToUpper(strings.TrimSpace(ticker))
+	results := a.group.DoChan(key, func() (any, error) {
+		select {
+		case a.slots <- struct{}{}:
+		default:
+			return nil, ErrOnDemandBusy
+		}
+		defer func() { <-a.slots }()
+		return nil, a.next.Analyze(context.WithoutCancel(ctx), ticker)
+	})
+	select {
+	case result := <-results:
+		return result.Err
+	case <-ctx.Done():
+		return ctx.Err()
+	}
 }

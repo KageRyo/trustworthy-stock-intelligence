@@ -137,6 +137,7 @@ export type DashboardCopy = {
     historyUnavailable: string;
     providerHealthUnavailable: string;
     predictionJobUnavailable: string;
+    onDemandBusy: string;
   };
   notices: {
     watchlistJoinNotRefreshed: (ticker: string) => string;
@@ -300,7 +301,8 @@ export const translations = {
         `No market data or model output could be generated for ${ticker}. Check the symbol and provider coverage.`,
       historyUnavailable: "Warning history is temporarily unavailable.",
       providerHealthUnavailable: "Provider health could not be loaded; coverage may be unknown.",
-      predictionJobUnavailable: "The prediction job could not be queued."
+      predictionJobUnavailable: "The prediction job could not be queued.",
+      onDemandBusy: "On-demand analysis is at capacity. Try again in about 15 seconds."
     },
     notices: {
       watchlistJoinNotRefreshed: (ticker: string) =>
@@ -618,7 +620,8 @@ export const translations = {
         `無法為 ${ticker} 產生市場資料或模型輸出。請確認代號與資料來源涵蓋範圍。`,
       historyUnavailable: "警示歷史暫時無法取得。",
       providerHealthUnavailable: "無法載入資料來源健康度；涵蓋狀態可能未知。",
-      predictionJobUnavailable: "預測工作無法排入佇列。"
+      predictionJobUnavailable: "預測工作無法排入佇列。",
+      onDemandBusy: "即時分析目前已滿載，請約 15 秒後再試。"
     },
     notices: {
       watchlistJoinNotRefreshed: (ticker: string) =>

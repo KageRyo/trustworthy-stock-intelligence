@@ -16,6 +16,7 @@ TSI_CORS_ALLOWED_ORIGINS=http://<dashboard-host>:5175,http://localhost:5175
 TSI_ON_DEMAND_ANALYSIS_COMMAND=python -m scripts.analyze_ticker_on_demand
 TSI_ON_DEMAND_ANALYSIS_WORKDIR=/absolute/path/to/trustworthy-stock-intelligence
 TSI_ON_DEMAND_ANALYSIS_TIMEOUT_SECONDS=120
+TSI_ON_DEMAND_MAX_CONCURRENCY=2
 PORT=8080
 ```
 

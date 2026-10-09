@@ -18,6 +18,7 @@ type Config struct {
 	OnDemandAnalysisCommand         string
 	OnDemandAnalysisWorkdir         string
 	OnDemandAnalysisTimeoutDuration time.Duration
+	OnDemandMaxConcurrency          int
 }
 
 func Load() Config {
@@ -34,6 +35,7 @@ func Load() Config {
 		OnDemandAnalysisCommand:         envOrDefault("TSI_ON_DEMAND_ANALYSIS_COMMAND", ""),
 		OnDemandAnalysisWorkdir:         envOrDefault("TSI_ON_DEMAND_ANALYSIS_WORKDIR", ""),
 		OnDemandAnalysisTimeoutDuration: secondsEnv("TSI_ON_DEMAND_ANALYSIS_TIMEOUT_SECONDS", 120),
+		OnDemandMaxConcurrency:          positiveIntEnv("TSI_ON_DEMAND_MAX_CONCURRENCY", 2),
 	}
 }
 
@@ -55,6 +57,14 @@ func splitCSV(value string) []string {
 		}
 	}
 	return values
+}
+
+func positiveIntEnv(name string, fallback int) int {
+	value, err := strconv.Atoi(strings.TrimSpace(os.Getenv(name)))
+	if err != nil || value < 1 {
+		return fallback
+	}
+	return value
 }
 
 func secondsEnv(name string, fallback int) time.Duration {
