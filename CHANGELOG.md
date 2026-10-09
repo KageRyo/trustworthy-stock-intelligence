@@ -2,15 +2,6 @@
 
 ## Unreleased
 
-### Added
-
-- On-demand analysis protects the Go API from request bursts:
-  - concurrent requests for the same ticker share one run;
-  - `TSI_ON_DEMAND_MAX_CONCURRENCY` (default 2) caps how many tickers run at once;
-  - extra tickers get `429 on_demand_analysis_busy` with `Retry-After`, and the dashboard queues a
-    prediction job for them instead of failing;
-  - a disconnecting client no longer cancels a run that other requests share.
-
 ### Fixed
 
 - On-demand analysis caught insufficient history by matching error-message text, and one of the
@@ -48,6 +39,12 @@
   - 9 institutional-flow and margin features with a default one-trading-day publication lag.
   - Feature sets `technical_range_chips`, `technical_range_flows`, and `technical_range_margin`.
   - Experiment scripts accept `--chip-archive` and `--chip-lag`.
+- On-demand analysis protects the Go API from request bursts:
+  - concurrent requests for the same ticker share one run;
+  - `TSI_ON_DEMAND_MAX_CONCURRENCY` (default 2) caps how many tickers run at once;
+  - extra tickers get `429 on_demand_analysis_busy` with `Retry-After`, and the dashboard queues a
+    prediction job for them instead of failing;
+  - a disconnecting client no longer cancels a run that other requests share.
 
 ### Security
 
