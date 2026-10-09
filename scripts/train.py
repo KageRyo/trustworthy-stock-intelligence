@@ -28,7 +28,11 @@ from tsi.labeling.warning_level import assign_warning_levels, select_alert_thres
 from tsi.models.logistic import LogisticRiskModel
 from tsi.models.tree import TreeRiskModel
 from tsi.training.dataset import build_sequence_dataset
-from tsi.trust.calibration import CalibrationMethod, fit_probability_calibrator
+from tsi.trust.calibration import (
+    CALIBRATION_METHODS,
+    CalibrationMethod,
+    fit_probability_calibrator,
+)
 from tsi.trust.decision import compute_watch_threshold
 
 
@@ -109,7 +113,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--tree-max-iter", type=int, default=200)
     parser.add_argument(
         "--calibration-method",
-        choices=["none", "platt", "isotonic"],
+        choices=CALIBRATION_METHODS,
         default="platt",
         help="Probability calibration method fit on the calibration window.",
     )

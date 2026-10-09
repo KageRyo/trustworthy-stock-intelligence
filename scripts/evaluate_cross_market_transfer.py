@@ -19,7 +19,11 @@ from tsi.features.technical import DEFAULT_FEATURE_COLUMNS, build_technical_feat
 from tsi.labeling.drawdown import add_future_drawdown_label
 from tsi.labeling.warning_level import select_alert_threshold
 from tsi.models.logistic import LogisticRiskModel
-from tsi.trust.calibration import CalibrationMethod, fit_probability_calibrator
+from tsi.trust.calibration import (
+    CALIBRATION_METHODS,
+    CalibrationMethod,
+    fit_probability_calibrator,
+)
 from tsi.trust.decision import compute_watch_threshold
 
 
@@ -59,7 +63,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--purge-size", type=int, default=None)
     parser.add_argument(
         "--calibration-method",
-        choices=["none", "platt", "isotonic"],
+        choices=CALIBRATION_METHODS,
         default="platt",
     )
     parser.add_argument(
