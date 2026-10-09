@@ -65,7 +65,7 @@ Details, limitations, and reproduction steps are in the [model card](docs/model_
 
 ## Quick start
 
-Requirements: Docker, [uv](https://docs.astral.sh/uv/), Go 1.25, and Node.js 22.
+Requirements: Docker, [uv](https://docs.astral.sh/uv/), Go 1.27, and Node.js 22.
 [`mise`](https://mise.jdx.dev/) can install the pinned Go and Node versions.
 
 ```bash

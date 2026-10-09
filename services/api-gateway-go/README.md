@@ -60,7 +60,7 @@ TSI_DATABASE_URL="postgresql://<database-user>:<local-password>@localhost:55432/
   CGO_ENABLED=0 go run ./cmd/server
 ```
 
-Install the version pinned in the repository with mise, or provide an equivalent Go `1.25.13`
+Install the version pinned in the repository with mise, or provide an equivalent Go `1.27.2`
 installation:
 
 ```bash

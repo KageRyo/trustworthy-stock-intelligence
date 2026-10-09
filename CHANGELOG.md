@@ -40,6 +40,13 @@
   - Feature sets `technical_range_chips`, `technical_range_flows`, and `technical_range_margin`.
   - Experiment scripts accept `--chip-archive` and `--chip-lag`.
 
+### Security
+
+- Moved the Go API from 1.25.13 to 1.27.2 in CI, `mise.toml`, and the Docker build image. Go 1.25 no
+  longer receives fixes, and `govulncheck` reported seven reachable standard-library advisories in
+  `net/http`, `net/textproto`, and `crypto/tls`, including GO-2026-6617. All are fixed in 1.26.9 and
+  later.
+
 ### Notes
 
 - Experiment 018 found that chip features do not improve Taiwan drawdown-risk discrimination:

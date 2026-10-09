@@ -24,7 +24,7 @@ npm ci
 cd ../..
 ```
 
-Go `1.25.13` and Node `22.23.2` match CI. On WSL2, use Docker Desktop with WSL integration or one
+Go `1.27.2` and Node `22.23.2` match CI. On WSL2, use Docker Desktop with WSL integration or one
 native Docker Engine, not both at the same time.
 
 Create local environment configuration:
