@@ -89,6 +89,11 @@
     "title": "Limited data quality",
     "detail": "The ticker has a short labeled history or stale bars, so trust was reduced."
   },
+  "model_bundle_stale": {
+    "severity": "watch",
+    "title": "Pooled model is out of date",
+    "detail": "The pooled market model was fitted on data that ends more than 30 days before this row. Its thresholds and calibration may no longer match the market."
+  },
   "probability_above_alert_threshold": {
     "severity": "alert",
     "title": "Risk probability above alert threshold",
@@ -103,6 +108,11 @@
     "severity": "watch",
     "title": "Reliability unavailable",
     "detail": "Reliability signals could not be fitted (for example single-class history), so trust was set to zero."
+  },
+  "single_ticker_model": {
+    "severity": "watch",
+    "title": "Fitted on this ticker alone",
+    "detail": "No pooled market model was available, so this result comes from a model fitted on this ticker's own history. Such models ranked risk much worse than a pooled model in Experiment 020, so treat this result as weak."
   },
   "stale_ticker_data": {
     "severity": "watch",

@@ -1325,6 +1325,18 @@ func TestExplainReasonCodeFallsBackForUnknownCodes(t *testing.T) {
 	}
 }
 
+func TestExplainReasonCodeWarnsAboutWeakOrStaleModels(t *testing.T) {
+	for _, code := range []string{"single_ticker_model", "model_bundle_stale"} {
+		reason := explainReasonCode(code)
+		if reason.Detail == "The model emitted this reason code in the latest warning batch." {
+			t.Fatalf("%s fell back to generic explanation", code)
+		}
+		if reason.Severity != "watch" {
+			t.Fatalf("%s severity = %q, want watch", code, reason.Severity)
+		}
+	}
+}
+
 func TestExplainReasonCodeWarnsWhenCalibrationSlopeIsNonpositive(t *testing.T) {
 	reason := explainReasonCode("calibration_slope_nonpositive")
 	if reason.Detail == "The model emitted this reason code in the latest warning batch." {
