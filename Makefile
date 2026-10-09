@@ -46,10 +46,10 @@ python-sync-gpu:
 	$(UV) sync --locked $(PYTHON_SYNC_EXTRAS) --extra deep-cu126
 
 docs-format:
-	$(MDFORMAT) --wrap 100 $(MARKDOWN_FILES)
+	$(MDFORMAT) --wrap no $(MARKDOWN_FILES)
 
 docs-check:
-	$(MDFORMAT) --check --wrap 100 $(MARKDOWN_FILES)
+	$(MDFORMAT) --check --wrap no $(MARKDOWN_FILES)
 	python3 -m scripts.check_markdown_links
 
 download-tickers:
