@@ -1,7 +1,6 @@
 # Recall-Oriented Trust Policy Candidates
 
-These candidates are selected from an existing threshold sweep. They are policy diagnostics, not new
-model-training results.
+These candidates are selected from an existing threshold sweep. They are policy diagnostics, not new model-training results.
 
 | trust_score_method | watch_threshold_ratio | trust_threshold | uncertainty_threshold | uncertainty_penalty | alert_rate | watch_rate | coverage | alert_precision | alert_recall | alert_false_alarm_rate | selective_risk |
 | ------------------ | --------------------- | --------------- | --------------------- | ------------------- | ---------- | ---------- | -------- | --------------- | ------------ | ---------------------- | -------------- |

@@ -24,8 +24,7 @@ npm ci
 cd ../..
 ```
 
-Go `1.27.2` and Node `22.23.2` match CI. On WSL2, use Docker Desktop with WSL integration or one
-native Docker Engine, not both at the same time.
+Go `1.27.2` and Node `22.23.2` match CI. On WSL2, use Docker Desktop with WSL integration or one native Docker Engine, not both at the same time.
 
 Create local environment configuration:
 
@@ -47,8 +46,7 @@ The database initializes schemas from:
 infra/postgres/init/
 ```
 
-For an existing local database, apply any new migration files under that directory before testing a
-new release.
+For an existing local database, apply any new migration files under that directory before testing a new release.
 
 ## 2. Start Go API
 
@@ -90,8 +88,7 @@ http://localhost:5175
 http://<dashboard-host>:5175
 ```
 
-The Vite dev server binds to `0.0.0.0`. It proxies API calls to `http://127.0.0.1:18080` by default
-through `TSI_DASHBOARD_API_BASE_URL`.
+The Vite dev server binds to `0.0.0.0`. It proxies API calls to `http://127.0.0.1:18080` by default through `TSI_DASHBOARD_API_BASE_URL`.
 
 ## 4. Try Ticker Analysis
 
@@ -108,8 +105,7 @@ Expected behavior:
 
 - stored warning records return immediately
 - missing tickers trigger the configured Python on-demand command
-- provider-backed but insufficient-history symbols return typed `abstain` analysis instead of an
-  unstructured failure
+- provider-backed but insufficient-history symbols return typed `abstain` analysis instead of an unstructured failure
 - Taiwan alphanumeric symbols remain Taiwan symbols, not US tickers
 - TPEx emerging fallback can resolve supported emerging-stock codes
 
@@ -162,5 +158,4 @@ http://localhost:8501
 
 ## Optional JSON Export
 
-`latest_warnings.json` can still be generated for debug snapshots, notifications, or report exports.
-It is not the primary serving source for the Go API in the `0.8.0` dashboard path.
+`latest_warnings.json` can still be generated for debug snapshots, notifications, or report exports. It is not the primary serving source for the Go API in the `0.8.0` dashboard path.

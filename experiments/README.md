@@ -1,15 +1,12 @@
 # Experiments
 
-Each experiment directory holds a `README.md` report and, for reproducible runs, a
-`run_manifest.json` with input and output hashes. Small aggregate outputs are committed under
-`runs/`; raw provider data and large prediction files stay outside Git.
+Each experiment directory holds a `README.md` report and, for reproducible runs, a `run_manifest.json` with input and output hashes. Small aggregate outputs are committed under `runs/`; raw provider data and large prediction files stay outside Git.
 
 Reports are research evidence for this pilot, not investment advice or trading-performance claims.
 
 ## How to read this index
 
-- **Current evidence** supports a decision that the served system still relies on. The decision
-  records in [`docs/decisions/`](../docs/decisions/README.md) link to these reports.
+- **Current evidence** supports a decision that the served system still relies on. The decision records in [`docs/decisions/`](../docs/decisions/README.md) link to these reports.
 - **Foundation** defines a protocol, label, or data asset that later experiments reuse.
 - **Pilot** is a reproducible result with explicit coverage limits that does not drive serving.
 - **Superseded** is kept for provenance. The replacement is named.
@@ -41,9 +38,6 @@ Reports are research evidence for this pilot, not investment advice or trading-p
 ## Adding an experiment
 
 1. Use the next free three-digit ID and a short snake_case name, for example `019_label_variants`.
-1. Reuse `scripts/walk_forward_experiment.py` so folds, calibration, and protocol fields match
-   earlier runs. Compare feature sets with `scripts/evaluate_feature_sets.py` when possible.
-1. Write `README.md` with these sections: Question, Data, Protocol, Result, Findings, Decision for
-   serving, Reproduce, Limitations. Record hashes in `run_manifest.json`.
-1. Add a row to this index. If the result changes serving, add or update a decision record in
-   [`docs/decisions/`](../docs/decisions/README.md).
+1. Reuse `scripts/walk_forward_experiment.py` so folds, calibration, and protocol fields match earlier runs. Compare feature sets with `scripts/evaluate_feature_sets.py` when possible.
+1. Write `README.md` with these sections: Question, Data, Protocol, Result, Findings, Decision for serving, Reproduce, Limitations. Record hashes in `run_manifest.json`.
+1. Add a row to this index. If the result changes serving, add or update a decision record in [`docs/decisions/`](../docs/decisions/README.md).

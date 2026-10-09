@@ -1,10 +1,8 @@
 # Trustworthy AI Checklist
 
-Source reviewed: `air_screen3_TAI指標互動展示.pptx`, 58 slides verified from the PPTX slide XML and
-extracted text on 2026-06-20.
+Source reviewed: `air_screen3_TAI指標互動展示.pptx`, 58 slides verified from the PPTX slide XML and extracted text on 2026-06-20.
 
-This checklist adapts the deck's pre-modeling, modeling, and post-modeling TAI dimensions to this
-stock drawdown-risk warning project.
+This checklist adapts the deck's pre-modeling, modeling, and post-modeling TAI dimensions to this stock drawdown-risk warning project.
 
 ## Dimensions
 
@@ -34,8 +32,7 @@ Before modeling:
 During modeling:
 
 - Report accuracy metrics and alert-oriented metrics under temporal validation.
-- Monitor data quality, missing fields, class imbalance, calibration quality, uncertainty, and trust
-  threshold behavior.
+- Monitor data quality, missing fields, class imbalance, calibration quality, uncertainty, and trust threshold behavior.
 - Record training data, feature columns, model bundle, calibrator, thresholds, and run metadata.
 - Test robustness against stale data, missing bars, noisy prices, and provider corrections.
 
@@ -48,20 +45,16 @@ After modeling:
 
 ## Near-Term Tasks
 
-- Schedule 5-minute watchlist ingestion into PostgreSQL with provider health, retry, and coverage
-  records.
-- Add queue-backed prediction jobs that consume fresh DB market bars and write `prediction_batches`
-  / `warning_records`.
+- Schedule 5-minute watchlist ingestion into PostgreSQL with provider health, retry, and coverage records.
+- Add queue-backed prediction jobs that consume fresh DB market bars and write `prediction_batches` / `warning_records`.
 - Add warning-change detection on top of the available history and timeline contracts.
 - Add API/dashboard freshness badges that block or downgrade stale predictions.
 - Add universe coverage metadata for US and Taiwan markets.
-- Use the available TAI audit artifact for every published model run, and keep deployment-specific
-  evidence, known limitations, and open risks explicit.
+- Use the available TAI audit artifact for every published model run, and keep deployment-specific evidence, known limitations, and open risks explicit.
 
 ## Per-Run Audit Artifact
 
-Generate a schema-first JSON audit after model training. It records supplied evidence and marks
-missing evidence as `partial` or `open`; it does not convert an unchecked control into a pass.
+Generate a schema-first JSON audit after model training. It records supplied evidence and marks missing evidence as `partial` or `open`; it does not convert an unchecked control into a pass.
 
 ```bash
 export TSI_PRIVATE_DATA_DIR=/path/to/private/tsi-data
@@ -76,7 +69,4 @@ PYTHONPATH=src python -m scripts.generate_tai_audit \
   --markdown-output "$TSI_PRIVATE_DATA_DIR/run/tai_audit.md"
 ```
 
-The artifact covers Accuracy, Reliability, Safety, Resilience, Transparency, Accountability,
-Explainability, Autonomy, Privacy, Fairness, and Security. It requires the run owner to supply
-deployment-specific evidence such as provider recovery, access controls, and user-facing
-human-control behavior.
+The artifact covers Accuracy, Reliability, Safety, Resilience, Transparency, Accountability, Explainability, Autonomy, Privacy, Fairness, and Security. It requires the run owner to supply deployment-specific evidence such as provider recovery, access controls, and user-facing human-control behavior.

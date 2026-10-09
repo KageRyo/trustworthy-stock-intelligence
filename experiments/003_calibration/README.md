@@ -2,8 +2,7 @@
 
 ## Purpose
 
-This experiment track evaluates whether calibrated probabilities improve the reliability of stock
-risk warnings.
+This experiment track evaluates whether calibrated probabilities improve the reliability of stock risk warnings.
 
 ## Methods
 
@@ -55,10 +54,8 @@ Key observation:
 
 - Calibration improved reliability metrics dramatically.
 - Discrimination changed only slightly.
-- Using the same `0.5` threshold before and after calibration is not valid for warning decisions,
-  because the calibrated probability scale becomes much more conservative.
-- Threshold tuning on the calibration window recovers useful alert behavior while preserving the
-  calibrated probability quality.
+- Using the same `0.5` threshold before and after calibration is not valid for warning decisions, because the calibrated probability scale becomes much more conservative.
+- Threshold tuning on the calibration window recovers useful alert behavior while preserving the calibrated probability quality.
 
 Immediate follow-up:
 

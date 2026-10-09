@@ -2,8 +2,7 @@
 
 ## Purpose
 
-This project uses `yfinance` only for pilot OHLCV experiments. The downloaded data is intended to
-validate the research pipeline before using higher-quality formal research data.
+This project uses `yfinance` only for pilot OHLCV experiments. The downloaded data is intended to validate the research pipeline before using higher-quality formal research data.
 
 Formal research should prefer:
 
@@ -76,13 +75,9 @@ python -m scripts.download_market_reference \
   --output-dir data/raw/market/taiwan
 ```
 
-The US reference holds SPY, ^VIX, and the Select Sector SPDR ETF for each ticker's Yahoo sector. It
-also writes `sector_map.csv`, which is a current snapshot applied to all history. The Taiwan
-reference holds the TAIEX (^TWII) only. `metadata.json` records unmapped tickers and SHA-256 hashes.
-Experiment 017 uses these artifacts; serving does not use them yet.
+The US reference holds SPY, ^VIX, and the Select Sector SPDR ETF for each ticker's Yahoo sector. It also writes `sector_map.csv`, which is a current snapshot applied to all history. The Taiwan reference holds the TAIEX (^TWII) only. `metadata.json` records unmapped tickers and SHA-256 hashes. Experiment 017 uses these artifacts; serving does not use them yet.
 
-Backfill TWSE institutional flows (T86) and margin balances (MI_MARGN) for Taiwan chip-feature
-experiments:
+Backfill TWSE institutional flows (T86) and margin balances (MI_MARGN) for Taiwan chip-feature experiments:
 
 ```bash
 python -m scripts.backfill_twse_chips \
@@ -91,27 +86,17 @@ python -m scripts.backfill_twse_chips \
   --archive-dir data/raw/twse_chips
 ```
 
-- The command requests one date per call, only on dates when the calendar file shows trading, with
-  at least `--min-interval` seconds between requests (default 2.5).
-- Each validated payload is stored gzip-compressed under
-  `data/raw/twse_chips/{institutional,margin}`. Rerunning the command resumes from that archive.
+- The command requests one date per call, only on dates when the calendar file shows trading, with at least `--min-interval` seconds between requests (default 2.5).
+- Each validated payload is stored gzip-compressed under `data/raw/twse_chips/{institutional,margin}`. Rerunning the command resumes from that archive.
 - A "no data" answer, such as a typhoon closure, is reported but not cached.
-- The command then rebuilds `institutional.csv`, `margin.csv`, and `metadata.json`. The metadata
-  records coverage, missing dates, failures, and hashes.
-- T86 renamed its foreign-investor columns on 2018-01-02. The adapter sums the two newer foreign
-  columns so `foreign_net` keeps its earlier meaning.
-- Institutional flows for a date are published after that day's close. Chip features therefore use a
-  one-trading-day publication lag by default.
+- The command then rebuilds `institutional.csv`, `margin.csv`, and `metadata.json`. The metadata records coverage, missing dates, failures, and hashes.
+- T86 renamed its foreign-investor columns on 2018-01-02. The adapter sums the two newer foreign columns so `foreign_net` keeps its earlier meaning.
+- Institutional flows for a date are published after that day's close. Chip features therefore use a one-trading-day publication lag by default.
 - Review TWSE terms before redistributing any derived data.
 
-The reproducible Taiwan baseline pilot uses the explicit six-ticker list in
-[`configs/dataset/taiwan_pilot.yaml`](../../configs/dataset/taiwan_pilot.yaml) and is documented in
-[`experiments/009_taiwan_pilot/README.md`](../../experiments/009_taiwan_pilot/README.md). It commits
-only snapshot fingerprints and aggregate metrics; raw provider data and prediction rows remain
-gitignored.
+The reproducible Taiwan baseline pilot uses the explicit six-ticker list in [`configs/dataset/taiwan_pilot.yaml`](../../configs/dataset/taiwan_pilot.yaml) and is documented in [`experiments/009_taiwan_pilot/README.md`](../../experiments/009_taiwan_pilot/README.md). It commits only snapshot fingerprints and aggregate metrics; raw provider data and prediction rows remain gitignored.
 
-For a current-company TWSE plus TPEx-listed research sample, download each market with its explicit
-resolver and then combine the compatible artifacts without losing their input fingerprints:
+For a current-company TWSE plus TPEx-listed research sample, download each market with its explicit resolver and then combine the compatible artifacts without losing their input fingerprints:
 
 ```bash
 export TSI_PRIVATE_DATA_DIR=/path/to/private/tsi-data
@@ -123,13 +108,9 @@ python -m scripts.combine_download_artifacts \
   --dataset-name taiwan_listed_tpex_stratified_current_pilot
 ```
 
-The exact sample and its coverage boundary are recorded in
-[`configs/dataset/taiwan_listed_tpex_stratified_pilot.yaml`](../../configs/dataset/taiwan_listed_tpex_stratified_pilot.yaml)
-and [`experiments/014_taiwan_listed_tpex_pilot`](../../experiments/014_taiwan_listed_tpex_pilot/).
+The exact sample and its coverage boundary are recorded in [`configs/dataset/taiwan_listed_tpex_stratified_pilot.yaml`](../../configs/dataset/taiwan_listed_tpex_stratified_pilot.yaml) and [`experiments/014_taiwan_listed_tpex_pilot`](../../experiments/014_taiwan_listed_tpex_pilot/).
 
-For intraday freshness checks, request 5-minute bars. Numeric Taiwan tickers are resolved to
-yfinance provider symbols such as `2330.TW`, while the output keeps the user-facing ticker as
-`2330`.
+For intraday freshness checks, request 5-minute bars. Numeric Taiwan tickers are resolved to yfinance provider symbols such as `2330.TW`, while the output keeps the user-facing ticker as `2330`.
 
 ```bash
 python -m scripts.download_tickers \
@@ -149,10 +130,7 @@ data/raw/<universe>/tickers.csv
 data/raw/<universe>/metadata.json
 ```
 
-`metadata.json` records the provider, download timestamp, requested interval, failed batches, and
-SHA-256 fingerprints for `ohlcv.csv` and `tickers.csv`. The hashes identify an exact snapshot so
-later provider corrections can be detected; they do not by themselves explain why a provider revised
-data.
+`metadata.json` records the provider, download timestamp, requested interval, failed batches, and SHA-256 fingerprints for `ohlcv.csv` and `tickers.csv`. The hashes identify an exact snapshot so later provider corrections can be detected; they do not by themselves explain why a provider revised data.
 
 The OHLCV schema is:
 
@@ -189,8 +167,7 @@ data/processed/
 data/artifacts/
 ```
 
-This avoids pushing large vendor-adjusted files to GitHub while preserving the exact commands needed
-to regenerate the pilot datasets.
+This avoids pushing large vendor-adjusted files to GitHub while preserving the exact commands needed to regenerate the pilot datasets.
 
 ## Reference snapshot
 
@@ -209,6 +186,4 @@ data/raw/sp100: 31M
 data/raw/sp500: 151M
 ```
 
-These values are historical reference points, not acceptance criteria. Provider revisions,
-unavailable symbols, date changes, and compression choices can make a new download differ. Record
-the generated metadata and SHA-256 fingerprints when comparing a new run.
+These values are historical reference points, not acceptance criteria. Provider revisions, unavailable symbols, date changes, and compression choices can make a new download differ. Record the generated metadata and SHA-256 fingerprints when comparing a new run.

@@ -2,10 +2,7 @@
 
 ## Historical Status
 
-This document records the original preliminary pilot. Its fold boundaries did not purge the five-day
-label horizon and it is no longer the primary calibration claim. Use
-`experiments/007_research_evidence/README.md` for the current purged result. The historical numbers
-remain here for provenance.
+This document records the original preliminary pilot. Its fold boundaries did not purge the five-day label horizon and it is no longer the primary calibration claim. Use `experiments/007_research_evidence/README.md` for the current purged result. The historical numbers remain here for provenance.
 
 ## Dataset
 
@@ -117,8 +114,7 @@ logistic regression + Platt scaling
 logistic regression + isotonic calibration
 ```
 
-Tree-based baselines use sklearn built-ins first, avoiding optional XGBoost or LightGBM dependencies
-in the core workflow:
+Tree-based baselines use sklearn built-ins first, avoiding optional XGBoost or LightGBM dependencies in the core workflow:
 
 ```bash
 python -m scripts.train \

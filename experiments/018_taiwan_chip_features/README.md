@@ -2,26 +2,18 @@
 
 ## Question
 
-Taiwan market commentary leans heavily on "chip" data: daily net buying by the three institutional
-investor groups (foreign investors, investment trusts, and dealers) and margin and short balances.
-TWSE publishes both for every listed stock after each close. Do they improve five-day drawdown-risk
-discrimination beyond the served `technical_range` feature set from Experiment 017?
+Taiwan market commentary leans heavily on "chip" data: daily net buying by the three institutional investor groups (foreign investors, investment trusts, and dealers) and margin and short balances. TWSE publishes both for every listed stock after each close. Do they improve five-day drawdown-risk discrimination beyond the served `technical_range` feature set from Experiment 017?
 
 It is pilot research evidence, not investment advice or a trading-performance claim.
 
 ## Data
 
-- **Chip history:** `scripts/backfill_twse_chips.py` fetched TWSE T86 (institutional net shares) and
-  MI_MARGN (margin and short balances in lots) for every TWSE trading date from 2015-01-05 to
-  2026-10-06:
+- **Chip history:** `scripts/backfill_twse_chips.py` fetched TWSE T86 (institutional net shares) and MI_MARGN (margin and short balances in lots) for every TWSE trading date from 2015-01-05 to 2026-10-06:
   - 2,854 dates each, with no failures or missing dates.
   - 2,981,482 institutional rows and 3,042,004 margin rows.
   - Payloads are validated with Pydantic schemas and cached per date.
-  - T86 renamed its foreign-investor columns on 2018-01-02. `foreign_net` sums the two newer foreign
-    columns so its meaning does not change.
-- **Calendar repair:** Yahoo Finance writes zero-volume placeholder bars on Taiwan typhoon closures,
-  such as 2015-07-10, 2016-09-27, and 2026-07-10. TWSE has no chip data for those days. The backfill
-  skips them, and the features treat them as no-trade days.
+  - T86 renamed its foreign-investor columns on 2018-01-02. `foreign_net` sums the two newer foreign columns so its meaning does not change.
+- **Calendar repair:** Yahoo Finance writes zero-volume placeholder bars on Taiwan typhoon closures, such as 2015-07-10, 2016-09-27, and 2026-07-10. TWSE has no chip data for those days. The backfill skips them, and the features treat them as no-trade days.
 - **Samples:**
 
 | Sample                | Role      | Tickers evaluated | Test rows | Event rate | Notes                                                                                  |
@@ -29,10 +21,7 @@ It is pilot research evidence, not investment advice or a trading-performance cl
 | `tw_large` (Exp. 017) | Discovery |                50 |   122,440 |      0.097 | The 3 TPEx stocks have no TWSE chip data and drop out.                                 |
 | `tw_holdout` (new)    | Holdout   |               199 |   488,078 |      0.122 | Seed-18 sample of 200 TWSE common stocks listed by 2014. `2227` has no margin history. |
 
-`tw_holdout` samples from the official TWSE company catalogue (OpenAPI `t187ap03_L`, captured
-2026-10-06). It keeps 4-digit common-stock codes listed on or before 2014-12-31, excludes the
-discovery tickers, and draws 200 of the remaining 747 with `numpy.random.default_rng(18)`. All 200
-had full Yahoo Finance history.
+`tw_holdout` samples from the official TWSE company catalogue (OpenAPI `t187ap03_L`, captured 2026-10-06). It keeps 4-digit common-stock codes listed on or before 2014-12-31, excludes the discovery tickers, and draws 200 of the remaining 747 with `numpy.random.default_rng(18)`. All 200 had full Yahoo Finance history.
 
 ## Features
 
@@ -57,8 +46,7 @@ Missing values:
 Timing:
 
 - Chip data for date `t` is published after the close.
-- The primary runs shift every chip feature by one trading day (`--chip-lag 1`), so a row at `t`
-  uses chip data through `t-1`.
+- The primary runs shift every chip feature by one trading day (`--chip-lag 1`), so a row at `t` uses chip data through `t-1`.
 - `--chip-lag 0` is a sensitivity check for after-publication batch scoring.
 
 Protocol, same as Experiment 017:
@@ -108,29 +96,20 @@ Every lag-0 comparison is in each run's `summary.json`.
 ## Findings
 
 - **Chip features do not improve drawdown-risk discrimination.**
-  - On the discovery sample, all 9 features lower AUC by 0.007, and the flows alone lower it by
-    0.022, beating the baseline in only 8% of folds.
-  - On the 199-stock holdout, no set moves AUC by more than 0.0011 or alert precision by more than
-    0.0044. The intervals straddle zero or show effects too small to matter for alerts.
+  - On the discovery sample, all 9 features lower AUC by 0.007, and the flows alone lower it by 0.022, beating the baseline in only 8% of folds.
+  - On the 199-stock holdout, no set moves AUC by more than 0.0011 or alert precision by more than 0.0044. The intervals straddle zero or show effects too small to matter for alerts.
 - **The flow coefficients have no stable direction.**
-  - On discovery, the 5-day foreign flow has a mean coefficient of -0.08 with a fold standard
-    deviation of 0.17, and the 20-day foreign flow is +0.08 ± 0.18.
+  - On discovery, the 5-day foreign flow has a mean coefficient of -0.08 with a fold standard deviation of 0.17, and the 20-day foreign flow is +0.08 ± 0.18.
   - The margin balance in days of volume is +0.22 on discovery but -0.07 on holdout.
-  - Only the short-to-margin ratio keeps a consistent sign (about +0.07), and it adds nothing beyond
-    `technical_range`.
-- **Timing is not the cause.** Same-day (lag 0) and next-day (lag 1) chip data give the same
-  conclusion, so the null result is not caused by the conservative publication lag.
-- **Taiwan baseline discrimination is already higher than in the US.** `technical_range` reaches an
-  AUC of 0.72 to 0.73 on both Taiwan samples, against 0.63 to 0.64 on S&P samples. Range and
-  volatility features already capture much of the drawdown-risk signal that chip flows might carry.
+  - Only the short-to-margin ratio keeps a consistent sign (about +0.07), and it adds nothing beyond `technical_range`.
+- **Timing is not the cause.** Same-day (lag 0) and next-day (lag 1) chip data give the same conclusion, so the null result is not caused by the conservative publication lag.
+- **Taiwan baseline discrimination is already higher than in the US.** `technical_range` reaches an AUC of 0.72 to 0.73 on both Taiwan samples, against 0.63 to 0.64 on S&P samples. Range and volatility features already capture much of the drawdown-risk signal that chip flows might carry.
 
 ## Decision for serving
 
-Serving stays on `technical_range`. No PostgreSQL chip tables, scheduled chip ingestion, or
-Taiwan-specific serving feature set are added.
+Serving stays on `technical_range`. No PostgreSQL chip tables, scheduled chip ingestion, or Taiwan-specific serving feature set are added.
 
-The adapters, the resumable backfill, the leakage-safe chip features, and the registered feature
-sets remain available for later research, for example:
+The adapters, the resumable backfill, the leakage-safe chip features, and the registered feature sets remain available for later research, for example:
 
 - nonlinear models that can use interactions such as foreign selling during a price decline;
 - market-relative labels;
@@ -159,21 +138,13 @@ for sample in tw_large tw_holdout; do
 done
 ```
 
-- **Run times:** the backfill makes 5,708 requests and took about 4.3 hours at a 2-second minimum
-  interval. Each discovery run takes about 15 seconds, and each holdout run about 2.5 minutes.
-  Repeated lag-1 runs reproduced every output file byte for byte.
-- **Files:** the sampled ticker list and its Yahoo coverage are in
-  `data/raw/taiwan_universe/tw_holdout_sample.csv`. Input and output hashes are in
-  [`run_manifest.json`](run_manifest.json).
+- **Run times:** the backfill makes 5,708 requests and took about 4.3 hours at a 2-second minimum interval. Each discovery run takes about 15 seconds, and each holdout run about 2.5 minutes. Repeated lag-1 runs reproduced every output file byte for byte.
+- **Files:** the sampled ticker list and its Yahoo coverage are in `data/raw/taiwan_universe/tw_holdout_sample.csv`. Input and output hashes are in [`run_manifest.json`](run_manifest.json).
 
 ## Limitations
 
-- Both samples are current-listed TWSE stocks (survivorship bias, Issue #29). TPEx and emerging
-  stocks are excluded because TPEx publishes chip data through separate endpoints.
-- Only logistic regression with linear terms was tested. The negative result applies to this model
-  family and this label.
-- Chip features cover T86 and MI_MARGN only. Foreign ownership levels, securities lending, and
-  broker-branch data were not tested.
-- Yahoo Finance supplies OHLCV and volume. Its typhoon placeholder bars also affect the technical
-  features (a zero return and zero volume ratio on those days) for every feature set.
+- Both samples are current-listed TWSE stocks (survivorship bias, Issue #29). TPEx and emerging stocks are excluded because TPEx publishes chip data through separate endpoints.
+- Only logistic regression with linear terms was tested. The negative result applies to this model family and this label.
+- Chip features cover T86 and MI_MARGN only. Foreign ownership levels, securities lending, and broker-branch data were not tested.
+- Yahoo Finance supplies OHLCV and volume. Its typhoon placeholder bars also affect the technical features (a zero return and zero volume ratio on those days) for every feature set.
 - TWSE data is used for research; review TWSE terms before redistributing derived data.

@@ -1,10 +1,6 @@
 # Supported Market and Provider Coverage
 
-This matrix describes the repository's current provider paths and the boundaries of the local
-dashboard and ingestion pipeline. It is a coverage contract, not a claim that every symbol or
-interval is available from every provider. Provider availability, exchange calendars, rate limits,
-historical retention, and licensing terms can change; recheck the provider terms before
-redistributing data or relying on a result.
+This matrix describes the repository's current provider paths and the boundaries of the local dashboard and ingestion pipeline. It is a coverage contract, not a claim that every symbol or interval is available from every provider. Provider availability, exchange calendars, rate limits, historical retention, and licensing terms can change; recheck the provider terms before redistributing data or relying on a result.
 
 ## Coverage Matrix
 
@@ -26,27 +22,15 @@ Yahoo Finance (.TW / .TWO when the market is known)
 -> official TPEx emerging historical endpoint
 ```
 
-The resolved market is retained in the ticker metadata. An official emerging response is recorded as
-`emerging`, not as `twse` or a generic Taiwan market. Ticker symbols remain strings so leading
-zeroes and suffix letters are not lost.
+The resolved market is retained in the ticker metadata. An official emerging response is recorded as `emerging`, not as `twse` or a generic Taiwan market. Ticker symbols remain strings so leading zeroes and suffix letters are not lost.
 
-Provider payloads cross an explicit schema boundary before they become OHLCV rows. A successful
-provider response does not guarantee sufficient history for a calibrated prediction; the API may
-return a typed `abstain` result instead.
+Provider payloads cross an explicit schema boundary before they become OHLCV rows. A successful provider response does not guarantee sufficient history for a calibrated prediction; the API may return a typed `abstain` result instead.
 
 ## Interval and Model Boundaries
 
-The ingestion command accepts `1m`, `5m`, and `1d` intervals. The near-real-time target is
-five-minute freshness, but the current drawdown-risk model is trained and described as a daily
-model. Until an intraday training/evaluation protocol exists, five-minute bars are an
-ingestion/freshness capability only and must not be presented as five-minute prediction validation.
+The ingestion command accepts `1m`, `5m`, and `1d` intervals. The near-real-time target is five-minute freshness, but the current drawdown-risk model is trained and described as a daily model. Until an intraday training/evaluation protocol exists, five-minute bars are an ingestion/freshness capability only and must not be presented as five-minute prediction validation.
 
-The typed freshness policy currently classifies a five-minute cutoff as `fresh` through 600 seconds,
-`stale` through 3,600 seconds with warning downgrade/abstention, and `unusable` after that with a
-serving block. These are safety thresholds, not evidence that a provider supplies complete or
-correct five-minute history. The next validation step is a provider-specific quality audit covering
-bar gaps, duplicates, timestamp/calendar alignment, OHLCV invariants, revisions, and per-ticker
-coverage before enabling any interval-trained model.
+The typed freshness policy currently classifies a five-minute cutoff as `fresh` through 600 seconds, `stale` through 3,600 seconds with warning downgrade/abstention, and `unusable` after that with a serving block. These are safety thresholds, not evidence that a provider supplies complete or correct five-minute history. The next validation step is a provider-specific quality audit covering bar gaps, duplicates, timestamp/calendar alignment, OHLCV invariants, revisions, and per-ticker coverage before enabling any interval-trained model.
 
 The repository now provides a redacted, schema-first audit for that validation boundary:
 
@@ -60,37 +44,20 @@ python -m scripts.audit_market_bar_quality \
   --expected-tickers NVDA AAPL
 ```
 
-The report fingerprints the input and records aggregate per-ticker counts for duplicates, missing
-bars, session/grid misalignment, OHLCV invariant failures, provider revisions, and coverage gaps; it
-does not copy raw rows. Invalid timestamps, malformed values, duplicate keys, and known-market
-session violations fail closed. Gaps and revisions remain warnings because a provider session or
-corporate-action boundary may explain them and requires an operator review.
+The report fingerprints the input and records aggregate per-ticker counts for duplicates, missing bars, session/grid misalignment, OHLCV invariant failures, provider revisions, and coverage gaps; it does not copy raw rows. Invalid timestamps, malformed values, duplicate keys, and known-market session violations fail closed. Gaps and revisions remain warnings because a provider session or corporate-action boundary may explain them and requires an operator review.
 
-The downloader attaches this audit to five-minute results, and PostgreSQL ingestion refuses a
-fail-closed result. A real provider run is still required before claiming that a particular market
-has complete five-minute coverage.
+The downloader attaches this audit to five-minute results, and PostgreSQL ingestion refuses a fail-closed result. A real provider run is still required before claiming that a particular market has complete five-minute coverage.
 
-The local prediction worker intentionally rejects `1m` and `5m` jobs with typed
-`unsupported_interval` until such a model and evaluation protocol exist. This keeps a five-minute
-ingestion result from being mislabeled as a five-minute risk prediction.
+The local prediction worker intentionally rejects `1m` and `5m` jobs with typed `unsupported_interval` until such a model and evaluation protocol exist. This keeps a five-minute ingestion result from being mislabeled as a five-minute risk prediction.
 
-The official TWSE, TPEx listed, and TPEx emerging fallback adapters currently provide daily data.
-Intraday availability in this repository therefore depends on the upstream Yahoo Finance query for
-the resolved symbol and its retention rules.
+The official TWSE, TPEx listed, and TPEx emerging fallback adapters currently provide daily data. Intraday availability in this repository therefore depends on the upstream Yahoo Finance query for the resolved symbol and its retention rules.
 
 ## Coverage, History, and Licensing Limits
 
-- Provider coverage is not complete market coverage. Unsupported, delisted, halted, newly listed, or
-  thinly traded symbols may have no usable response.
-- The current research pilots use current-universe or selected-symbol samples; this does not remove
-  survivorship, sector, liquidity, market-cap, or provider availability bias. See
-  [research readiness](../research/research_readiness.md) and
-  [issue #29](https://github.com/KageRyo/trustworthy-stock-intelligence/issues/29).
-- Official exchange responses and Yahoo Finance data have separate terms and redistribution
-  constraints. See [data and model licenses](../concepts/data_and_model_licenses.md) before
-  publishing raw bars or provider payloads.
-- Coverage metadata should be treated as a point-in-time observation. It must be refreshed when
-  provider adapters, symbol catalogues, or exchange rules change.
+- Provider coverage is not complete market coverage. Unsupported, delisted, halted, newly listed, or thinly traded symbols may have no usable response.
+- The current research pilots use current-universe or selected-symbol samples; this does not remove survivorship, sector, liquidity, market-cap, or provider availability bias. See [research readiness](../research/research_readiness.md) and [issue #29](https://github.com/KageRyo/trustworthy-stock-intelligence/issues/29).
+- Official exchange responses and Yahoo Finance data have separate terms and redistribution constraints. See [data and model licenses](../concepts/data_and_model_licenses.md) before publishing raw bars or provider payloads.
+- Coverage metadata should be treated as a point-in-time observation. It must be refreshed when provider adapters, symbol catalogues, or exchange rules change.
 
 ## Related Runbooks and Contracts
 

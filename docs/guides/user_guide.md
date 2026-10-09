@@ -70,11 +70,9 @@ Warning levels:
 
 ## Watchlists
 
-The dashboard uses a browser-session watchlist name stored in `sessionStorage`. There is no default
-curated stock list. Tickers are added after the user views or adds them in that browser session.
+The dashboard uses a browser-session watchlist name stored in `sessionStorage`. There is no default curated stock list. Tickers are added after the user views or adds them in that browser session.
 
-The API persists watchlist rows in PostgreSQL, so the browser session name is the link between the
-UI and DB-backed watchlist state.
+The API persists watchlist rows in PostgreSQL, so the browser session name is the link between the UI and DB-backed watchlist state.
 
 ## Taiwan Provider Behavior
 
@@ -87,19 +85,12 @@ yfinance symbol
 -> TPEx emerging-stock daily fallback
 ```
 
-Provider payloads are parsed through explicit schemas before being normalized into OHLCV rows. TPEx
-emerging daily data may not provide the same open/close semantics as exchange-listed OHLCV; the
-system marks the source through ticker metadata and should treat low-history results cautiously.
+Provider payloads are parsed through explicit schemas before being normalized into OHLCV rows. TPEx emerging daily data may not provide the same open/close semantics as exchange-listed OHLCV; the system marks the source through ticker metadata and should treat low-history results cautiously.
 
 ## Limitations
 
 - The output is a risk-warning signal, not investment advice.
 - Provider coverage is not the same as complete market coverage.
-- Five-minute ingestion supports freshness, but a model trained on daily labels remains a daily
-  warning model until intraday training is implemented.
-- `abstain` is a valid result when the system has data but cannot make a trustworthy calibrated
-  decision.
-- The analysis response reports a typed freshness assessment. Fresh data is allowed, stale data
-  remains visible only with a confidence downgrade, and unusable or missing-cutoff data is blocked
-  from actionable interpretation with an `abstain` override. Thresholds are selected by feature
-  interval (`1m`, `5m`, or `1d`) and market.
+- Five-minute ingestion supports freshness, but a model trained on daily labels remains a daily warning model until intraday training is implemented.
+- `abstain` is a valid result when the system has data but cannot make a trustworthy calibrated decision.
+- The analysis response reports a typed freshness assessment. Fresh data is allowed, stale data remains visible only with a confidence downgrade, and unusable or missing-cutoff data is blocked from actionable interpretation with an `abstain` override. Thresholds are selected by feature interval (`1m`, `5m`, or `1d`) and market.
