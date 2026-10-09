@@ -30,7 +30,6 @@ The served model is described in the [model card](model_card.md). The evidence b
 ## Now
 
 1. **Rebuild pooled model bundles on a schedule.** On-demand analysis scores new tickers with the stored pooled bundle of their market ([ADR 0009](decisions/0009-on-demand-uses-pooled-bundles.md)). The bundles are built by hand with `make model-bundles` and age until rebuilt; a scheduled job should rebuild them after daily ingestion.
-1. **Resolve TPEx-listed tickers in on-demand analysis.** With the default history from 2015, automatic market resolution returns no rows for TPEx-listed codes such as `6488` and `5274`, so on-demand analysis fails for them.
 
 ## Next
 
