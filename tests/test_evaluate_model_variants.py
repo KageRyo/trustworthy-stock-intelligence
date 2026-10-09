@@ -148,6 +148,13 @@ def test_run_scores_every_variant_on_identical_folds(tmp_path: Path) -> None:
     assert (per_fold.groupby("fold_id")["rows"].nunique() == 1).all()
     train_rows = per_fold.groupby("train_window")["train_rows"].mean()
     assert train_rows["40"] < train_rows["80"] <= train_rows["all"]
+    increasing = per_fold[per_fold["calibration_slope"] > 0]
+    assert not increasing.empty
+    np.testing.assert_allclose(increasing["auc"], increasing["raw_auc"], atol=1e-9)
+    for name, metrics in saved["variants"].items():
+        rows = per_fold[per_fold["variant"] == name]
+        assert metrics["inverted_calibration_folds"] == int((rows["calibration_slope"] < 0).sum())
+        assert metrics["raw_auc_mean"] == pytest.approx(rows["raw_auc"].mean())
     for metrics in saved["variants"].values():
         assert metrics["watch_rate"] >= metrics["alert_rate"]
         assert 0.0 <= metrics["auc_mean"] <= 1.0

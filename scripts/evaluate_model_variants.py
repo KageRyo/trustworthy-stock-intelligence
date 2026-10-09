@@ -47,8 +47,10 @@ from scripts.walk_forward_experiment import (  # noqa: E402
 )
 from tsi.data.csv import file_sha256  # noqa: E402
 from tsi.labeling.warning_level import parse_alert_policy  # noqa: E402
+from tsi.evaluation.metrics import classification_metrics  # noqa: E402
 from tsi.models.logistic import LogisticRiskModel  # noqa: E402
 from tsi.training.trainer import resolve_training_device  # noqa: E402
+from tsi.trust.calibration import PlattCalibrator, ProbabilityCalibrator  # noqa: E402
 
 RANDOM_STATE = 42
 EXPANDING_WINDOW = "all"
@@ -170,6 +172,14 @@ class MLPRiskModel:
             width = hidden
         layers.append(nn.Linear(width, 1))
         return nn.Sequential(*layers)
+
+
+def calibration_slope(calibrator: ProbabilityCalibrator) -> float:
+    """Platt slope on the raw probability; negative means calibration reverses the ranking."""
+
+    if isinstance(calibrator, PlattCalibrator):
+        return float(calibrator.model.coef_[0][0])
+    return float("nan")
 
 
 def build_model(
@@ -356,6 +366,10 @@ def run(args: argparse.Namespace) -> dict[str, object]:
                         "rows": float(len(item.test)),
                         "positives": float(item.test["risk_label"].sum()),
                         **metrics,
+                        "raw_auc": classification_metrics(
+                            item.test["risk_label"].to_numpy(), fit.raw_test_probabilities
+                        )["auc"],
+                        "calibration_slope": calibration_slope(fit.calibrator),
                     }
                 )
     if not fold_rows:
@@ -394,6 +408,8 @@ def run(args: argparse.Namespace) -> dict[str, object]:
             name: {
                 "train_rows_mean": float(rows["train_rows"].mean()),
                 **summarize_set(rows),
+                "raw_auc_mean": float(rows["raw_auc"].mean()),
+                "inverted_calibration_folds": int((rows["calibration_slope"] < 0).sum()),
             }
             for name, rows in per_fold.groupby("variant", sort=False)
         },
@@ -422,7 +438,8 @@ def main() -> None:
             f"{name:30s} AUC={metrics['auc_mean']:.4f} PR-AUC={metrics['pr_auc_mean']:.4f} "
             f"BSS={metrics['brier_skill_score_mean']:.4f} ECE={metrics['ece_mean']:.4f} "
             f"alert prec={metrics['alert_precision']:.3f} recall={metrics['alert_recall']:.3f} "
-            f"watch recall={metrics['watch_recall']:.3f}"
+            f"watch recall={metrics['watch_recall']:.3f} raw AUC={metrics['raw_auc_mean']:.4f} "
+            f"inverted folds={metrics['inverted_calibration_folds']}"
         )
 
 

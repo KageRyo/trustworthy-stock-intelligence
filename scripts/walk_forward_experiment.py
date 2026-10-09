@@ -226,6 +226,7 @@ class CalibratedFit(Generic[ModelT]):
     calibrator: ProbabilityCalibrator
     calibration_probabilities: np.ndarray
     test_probabilities: np.ndarray
+    raw_test_probabilities: np.ndarray
 
 
 def fit_calibrated_model(
@@ -245,11 +246,13 @@ def fit_calibrated_model(
     calibrator = fit_probability_calibrator(
         raw_calibration, calibration["risk_label"].to_numpy(), method=calibration_method
     )
+    raw_test = model.predict_proba(test[columns].to_numpy())
     return CalibratedFit(
         model=model,
         calibrator=calibrator,
         calibration_probabilities=calibrator.predict(raw_calibration),
-        test_probabilities=calibrator.predict(model.predict_proba(test[columns].to_numpy())),
+        test_probabilities=calibrator.predict(raw_test),
+        raw_test_probabilities=raw_test,
     )
 
 
