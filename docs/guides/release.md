@@ -1,5 +1,24 @@
 # Maintainer Release Checklist
 
+## 0.8.0 Scope
+
+`0.8.0` keeps the served model from `0.7.0` and adds research data, localization, and serving
+safeguards:
+
+- `tsi.data.twse_chips` and `tsi.features.chips` add TWSE institutional-flow and margin data.
+  Experiment 018 found no discrimination gain on 50 Taiwan large caps or a 199-stock holdout, so
+  serving stays on `technical_range` ([ADR 0005](../decisions/0005-no-taiwan-chip-features.md)).
+- The analysis API adds `trust.summary_code`, and the dashboard localizes the trust and freshness
+  cards from API codes ([ADR 0006](../decisions/0006-dashboard-localizes-api-codes.md)).
+- Daily freshness cutoffs move from 23:59:59 UTC to each market's session close.
+- On-demand analysis returns a typed `insufficient_history` abstention without matching error text.
+- The Go bridge shares one on-demand run per ticker, caps concurrent tickers with
+  `TSI_ON_DEMAND_MAX_CONCURRENCY`, and answers a full bridge with `429 on_demand_analysis_busy`. The
+  dashboard queues a prediction job for that ticker.
+- The Go API builds with Go 1.27.2 because Go 1.25 no longer receives standard-library fixes.
+
+Issue #29 remains open.
+
 ## 0.7.0 Scope
 
 `0.7.0` changes the served baseline's features:
@@ -86,8 +105,8 @@ pending-publisher setup and package boundary.
 The package-only release sequence is:
 
 ```bash
-git tag -a v0.7.0 -m "release: v0.7.0"
-git push origin v0.7.0
+git tag -a v0.8.0 -m "release: v0.8.0"
+git push origin v0.8.0
 ```
 
 ## 0.4.0 Scope
@@ -164,6 +183,6 @@ response with the frontend Zod schema. It must be green before the release merge
 1. Prepare the version and changelog changes on a release branch.
 1. Merge the release PR only after all required checks pass.
 1. Confirm the merge commit is the current `main` head and rerun all checks.
-1. Create an annotated `v0.7.0` tag on that verified commit.
+1. Create an annotated `v0.8.0` tag on that verified commit.
 1. Push the tag and create a GitHub Release with `--verify-tag`.
 1. Confirm the remote tag, release target, release notes, and downloadable source archives.

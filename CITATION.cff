@@ -7,15 +7,16 @@ authors:
 repository-code: "https://github.com/KageRyo/trustworthy-stock-intelligence"
 url: "https://github.com/KageRyo/trustworthy-stock-intelligence"
 license: "Apache-2.0"
-version: "0.7.0"
-date-released: "2026-10-07"
+version: "0.8.0"
+date-released: "2026-10-09"
 abstract: >-
   Research software for schema-first, human-in-the-loop stock drawdown-risk
   analysis with temporal validation, calibration, uncertainty, trust scores,
-  warning explanations. Version 0.7.0 adds range-based volatility features to
-  the served baseline, backed by a walk-forward feature-set experiment with a
-  ticker holdout and a Taiwan check, on top of the 0.6.0 alert-rate threshold
-  policies; it is not externally validated research or investment advice.
+  warning explanations. Version 0.8.0 adds a Taiwan institutional-flow and
+  margin data path with a walk-forward experiment that found no gain, so the
+  served baseline keeps the 0.7.0 range-volatility features; it also localizes
+  trust and freshness summaries and bounds concurrent on-demand analyses. It is
+  not externally validated research or investment advice.
 keywords:
   - stock risk
   - trustworthy AI
