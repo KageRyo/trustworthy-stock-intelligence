@@ -1,0 +1,98 @@
+{
+  "experiment_id": "020_serving_replay",
+  "executed_on": "2026-10-09",
+  "base_git_commit": "ae6421ab6eec809c7bf3fe46af4a77f61745cfb7",
+  "datasets": {
+    "sp100": {
+      "universe": "sp100",
+      "provider": "Yahoo Finance via yfinance",
+      "ohlcv_sha256": "6b1357c8414888cb0a467eb717df0261ff69bd3b8e9b0244ff115be820395ba6",
+      "row_count": 283289,
+      "ticker_count": 101,
+      "downloaded_at_utc": "2026-05-08T02:50:28.018207+00:00",
+      "tickers_sha256": "3023bcc40e666c0151ac3aeb895aae9f8d1f04f9da6db01977a1f8204ef2d890"
+    },
+    "tw_large": {
+      "universe": "tw_large",
+      "provider": "Yahoo Finance via yfinance",
+      "ohlcv_sha256": "6cc6e2f8ddf2d4eed22fcad7aaf02083cff284c2c1649486c1f251f48dc4ac1d",
+      "row_count": 150935,
+      "ticker_count": 53,
+      "downloaded_at_utc": "2026-10-07T01:45:35.369276+00:00",
+      "tickers_sha256": "3c49bdc4fb5ddf52a68831edbb1a4bf0b6155cfddbadb6a46239678c81d14006"
+    }
+  },
+  "protocol": {
+    "feature_interval": "1d",
+    "feature_set": "technical_range",
+    "feature_columns": [
+      "return_1d",
+      "return_5d",
+      "sma_5_gap",
+      "sma_10_gap",
+      "volatility_5d",
+      "volatility_10d",
+      "volume_ratio_5d",
+      "parkinson_vol_10d",
+      "garman_klass_vol_10d",
+      "atr_14_pct",
+      "volatility_20d",
+      "drawdown_from_20d_high"
+    ],
+    "horizon": 5,
+    "drawdown_threshold": -0.05,
+    "train_window": "every labeled date before calibration (serving default)",
+    "calibration_size": 63,
+    "drift_size": 21,
+    "test_size": 63,
+    "step_size": 21,
+    "min_history_dates": 400,
+    "calibrations": [
+      "platt",
+      "platt_monotone"
+    ]
+  },
+  "environment": {
+    "python": "3.11.16",
+    "numpy": "2.4.6",
+    "pandas": "3.0.5",
+    "scikit-learn": "1.9.0",
+    "device": "CPU"
+  },
+  "runs": {
+    "sp100": {
+      "input": "data/raw/sp100/ohlcv.csv",
+      "input_sha256": "6b1357c8414888cb0a467eb717df0261ff69bd3b8e9b0244ff115be820395ba6",
+      "pooled_as_of_dates": 113,
+      "single_ticker_dates": 6927,
+      "artifacts": {
+        "per_ticker_history_auc.csv": "f40d7b230e7b6f144a44c8b48188efd16a5c17fb705fbf969de949b1bcd4d95a",
+        "pooled_as_of.csv": "f65b1bbdab868cf32e11bd5e298b251330c61fc93bcf6feafd3ddcab242ca14d",
+        "single_as_of.csv": "68ae16f4a919f322facf7203e8c8c61e8a69337c7d07bedda0c7eb7ff3b50147",
+        "summary.json": "1aa5be69a72a818a0ba0c7f76e17109813df1278656be0f004e17250dc2ef6b1"
+      },
+      "committed": [
+        "per_ticker_history_auc.csv",
+        "pooled_as_of.csv",
+        "summary.json"
+      ]
+    },
+    "tw_large": {
+      "input": "data/raw/tw_large/ohlcv.csv",
+      "input_sha256": "6cc6e2f8ddf2d4eed22fcad7aaf02083cff284c2c1649486c1f251f48dc4ac1d",
+      "pooled_as_of_dates": 113,
+      "single_ticker_dates": 3355,
+      "artifacts": {
+        "per_ticker_history_auc.csv": "549a9fb3723dae6401ff7cdf3d9d33f1871a1d90fe20650d013347ecf36264bc",
+        "pooled_as_of.csv": "b517020148e11f54810289efdd8f00584399690b169b3e04ab0db84d013d395e",
+        "single_as_of.csv": "bb61bf8ca0a7e4643b601f341b63fca0e5956117716c59ab5fec06bdcf903de9",
+        "summary.json": "c5eb6a87b54ca5561721422402dd540da7b52ded6b278ba33d73c6bb937d9ce3"
+      },
+      "committed": [
+        "per_ticker_history_auc.csv",
+        "pooled_as_of.csv",
+        "summary.json"
+      ]
+    }
+  }
+}

@@ -19,6 +19,7 @@ from scripts.predict_latest_baseline import run_prediction
 from tsi.data.download import download_ticker_frame
 from tsi.data.postgres import write_download_to_postgres, write_prediction_batch_to_postgres
 from tsi.serving.schema import build_prediction_batch, write_prediction_batch_json
+from tsi.trust.calibration import CALIBRATION_METHODS
 
 SCHEMA_VERSION = "on_demand_analysis.v1"
 
@@ -90,8 +91,8 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--train-size", type=int, default=None)
     parser.add_argument(
         "--calibration-method",
-        choices=["none", "platt", "isotonic"],
-        default="platt",
+        choices=CALIBRATION_METHODS,
+        default="platt_monotone",
     )
     return parser.parse_args(argv)
 

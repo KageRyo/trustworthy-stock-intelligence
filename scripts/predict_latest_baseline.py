@@ -38,7 +38,12 @@ from tsi.serving.schema import (
     build_prediction_batch,
     write_prediction_batch_json,
 )
-from tsi.trust.calibration import CalibrationMethod, fit_probability_calibrator
+from tsi.trust.calibration import (
+    CALIBRATION_METHODS,
+    CalibrationMethod,
+    calibration_reason_codes,
+    fit_probability_calibrator,
+)
 from tsi.trust.decision import (
     TrustDecisionConfig,
     assign_trust_decisions,
@@ -93,8 +98,8 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--train-size", type=int, default=None)
     parser.add_argument(
         "--calibration-method",
-        choices=["none", "platt", "isotonic"],
-        default="platt",
+        choices=CALIBRATION_METHODS,
+        default="platt_monotone",
     )
     parser.add_argument(
         "--threshold-objective",
@@ -390,7 +395,7 @@ def run_prediction(args: argparse.Namespace) -> pd.DataFrame:
         trust_scores=trust_scores,
         warning_levels=warning_levels,
         config=decision_config,
-        extra_reason_codes=drift_reason_codes,
+        extra_reason_codes=[*drift_reason_codes, *calibration_reason_codes(calibrator)],
         row_reason_codes=row_reason_codes,
     )
     feature_attributions = build_logistic_feature_attributions(

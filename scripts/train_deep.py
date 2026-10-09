@@ -33,7 +33,11 @@ from tsi.training.trainer import (
     train_binary_sequence_model,
     transform_sequence_features,
 )
-from tsi.trust.calibration import CalibrationMethod, fit_probability_calibrator
+from tsi.trust.calibration import (
+    CALIBRATION_METHODS,
+    CalibrationMethod,
+    fit_probability_calibrator,
+)
 from tsi.trust.decision import (
     TrustDecisionConfig,
     assign_trust_decisions,
@@ -89,7 +93,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--dropout", type=float, default=0.1)
     parser.add_argument(
         "--calibration-method",
-        choices=["none", "platt", "isotonic"],
+        choices=CALIBRATION_METHODS,
         default="platt",
         help="Probability calibration method fit on the calibration window.",
     )

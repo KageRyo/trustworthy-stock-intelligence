@@ -26,7 +26,7 @@ Every result comes from a PostgreSQL-backed, schema-first pipeline that you can 
 
 ## What makes it trustworthy
 
-- **Calibrated, not just ranked.** Platt calibration on a held-out window turns scores into probabilities. Thresholds come from calibration-window alert rates, not a fixed 0.5 ([ADR 0003](docs/decisions/0003-alert-rate-threshold-policy.md)).
+- **Calibrated, not just ranked.** Platt calibration on a held-out window turns scores into probabilities, and it is never allowed to reverse the model's ranking ([ADR 0007](docs/decisions/0007-calibration-keeps-model-ranking.md)). Thresholds come from calibration-window alert rates, not a fixed 0.5 ([ADR 0003](docs/decisions/0003-alert-rate-threshold-policy.md)).
 - **Trust that is not the risk score in disguise.** Trust reflects data quality and calibration drift. Uncertainty can move a quiet row to `abstain` but never hides an alert ([ADR 0002](docs/decisions/0002-trust-independent-of-risk.md)).
 - **Fails closed.**
   - The API refuses to start without PostgreSQL.

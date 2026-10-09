@@ -1,0 +1,152 @@
+{
+  "calibrated_probability_below_watch_threshold": {
+    "severity": "info",
+    "title": "Risk probability below watch threshold",
+    "detail": "The calibrated risk probability is below the configured watch threshold."
+  },
+  "calibration_drift_abstain": {
+    "severity": "watch",
+    "title": "Calibration drift abstention",
+    "detail": "Multiple calibration-drift signals crossed threshold, so the serving decision abstains."
+  },
+  "calibration_drift_brier_increase": {
+    "severity": "watch",
+    "title": "Brier score degraded",
+    "detail": "The later window's Brier score increased beyond the configured threshold."
+  },
+  "calibration_drift_detected": {
+    "severity": "watch",
+    "title": "Calibration drift detected",
+    "detail": "Calibration reliability degraded in the later labeled window, so trust was reduced."
+  },
+  "calibration_drift_ece_increase": {
+    "severity": "watch",
+    "title": "Calibration error increased",
+    "detail": "The later window's expected calibration error increased beyond the configured threshold."
+  },
+  "calibration_drift_event_rate_shift": {
+    "severity": "watch",
+    "title": "Event-rate shift",
+    "detail": "The later labeled event rate shifted beyond the configured calibration-drift threshold."
+  },
+  "calibration_drift_not_evaluated": {
+    "severity": "watch",
+    "title": "Calibration drift not evaluated",
+    "detail": "No later labeled window was available, so serving could not check calibration drift."
+  },
+  "calibration_drift_stable": {
+    "severity": "info",
+    "title": "Calibration drift stable",
+    "detail": "The later labeled window did not cross the configured event-rate, ECE, or Brier drift thresholds."
+  },
+  "calibration_slope_nonpositive": {
+    "severity": "watch",
+    "title": "Recent ranking did not hold",
+    "detail": "In the calibration window, higher model scores did not mean more drawdowns. The model's ranking is kept and only its probability level is adjusted, so treat this ranking as unconfirmed."
+  },
+  "conformal_set_ambiguous": {
+    "severity": "info",
+    "title": "Outcomes not separable",
+    "detail": "The conformal prediction set contains both drawdown and no drawdown at the configured coverage."
+  },
+  "conformal_set_drawdown_only": {
+    "severity": "watch",
+    "title": "Conformal set: drawdown",
+    "detail": "At the configured coverage, the conformal prediction set contains only the drawdown outcome."
+  },
+  "conformal_set_empty": {
+    "severity": "watch",
+    "title": "Conformal set empty",
+    "detail": "The conformal prediction set is empty, which indicates an unusual calibrated probability for this batch."
+  },
+  "conformal_set_no_drawdown_only": {
+    "severity": "info",
+    "title": "Conformal set: no drawdown",
+    "detail": "At the configured coverage, the conformal prediction set contains only the no-drawdown outcome."
+  },
+  "conformal_set_unavailable": {
+    "severity": "info",
+    "title": "Conformal set unavailable",
+    "detail": "The calibration window did not contain both outcomes, so no conformal set was computed."
+  },
+  "ensemble_disagreement_high": {
+    "severity": "watch",
+    "title": "Model refits disagree",
+    "detail": "Models refit on resampled market days disagree more than on most recent labeled rows, so treat the probability as less stable."
+  },
+  "input_out_of_distribution": {
+    "severity": "watch",
+    "title": "Unusual market conditions",
+    "detail": "The latest features are far from the training data. Historically these periods carried higher drawdown rates, so a low reading is not reassuring."
+  },
+  "insufficient_history": {
+    "severity": "watch",
+    "title": "Insufficient price history",
+    "detail": "The ticker has market data, but not enough labeled history for a calibrated risk prediction."
+  },
+  "limited_data_quality": {
+    "severity": "watch",
+    "title": "Limited data quality",
+    "detail": "The ticker has a short labeled history or stale bars, so trust was reduced."
+  },
+  "probability_above_alert_threshold": {
+    "severity": "alert",
+    "title": "Risk probability above alert threshold",
+    "detail": "The calibrated risk probability is at or above the configured alert threshold."
+  },
+  "probability_above_watch_threshold": {
+    "severity": "watch",
+    "title": "Risk probability above watch threshold",
+    "detail": "The calibrated risk probability is at or above the configured watch threshold."
+  },
+  "reliability_unavailable": {
+    "severity": "watch",
+    "title": "Reliability unavailable",
+    "detail": "Reliability signals could not be fitted (for example single-class history), so trust was set to zero."
+  },
+  "stale_ticker_data": {
+    "severity": "watch",
+    "title": "Stale ticker data",
+    "detail": "The ticker's latest bar is older than the latest bar in this batch."
+  },
+  "trust_above_alert_threshold": {
+    "severity": "info",
+    "title": "Trust score above alert threshold",
+    "detail": "The trust score is high enough to support an alert decision."
+  },
+  "trust_below_alert_threshold": {
+    "severity": "watch",
+    "title": "Trust score below alert threshold",
+    "detail": "The trust score is not high enough to support an alert decision."
+  },
+  "uncertainty_above_threshold": {
+    "severity": "watch",
+    "title": "Uncertainty above threshold",
+    "detail": "The uncertainty score is above the configured threshold."
+  },
+  "uncertainty_below_threshold": {
+    "severity": "info",
+    "title": "Uncertainty below threshold",
+    "detail": "The uncertainty score is below the configured threshold."
+  },
+  "warning_level_abstain": {
+    "severity": "watch",
+    "title": "Abstain warning level",
+    "detail": "The final warning decision is abstain because confidence is limited."
+  },
+  "warning_level_alert": {
+    "severity": "alert",
+    "title": "Alert warning level",
+    "detail": "The final warning decision is alert."
+  },
+  "warning_level_no_alert": {
+    "severity": "info",
+    "title": "No alert warning level",
+    "detail": "The final warning decision is no alert."
+  },
+  "warning_level_watch": {
+    "severity": "watch",
+    "title": "Watch warning level",
+    "detail": "The final warning decision is watch."
+  }
+}

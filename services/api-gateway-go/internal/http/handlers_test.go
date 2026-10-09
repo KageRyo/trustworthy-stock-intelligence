@@ -1299,6 +1299,42 @@ func TestExplainReasonCodeSupportsReliabilityCodes(t *testing.T) {
 	}
 }
 
+func TestEmbeddedReasonExplanationsAreComplete(t *testing.T) {
+	if len(reasonExplanations) == 0 {
+		t.Fatal("no embedded reason explanations")
+	}
+	for code, explanation := range reasonExplanations {
+		switch explanation.Severity {
+		case "info", "watch", "alert":
+		default:
+			t.Fatalf("reason code %q has severity %q", code, explanation.Severity)
+		}
+		if explanation.Title == "" || explanation.Detail == "" {
+			t.Fatalf("reason code %q is missing a title or detail", code)
+		}
+		if got := explainReasonCode(code); got.Code != code {
+			t.Fatalf("explainReasonCode(%q).Code = %q", code, got.Code)
+		}
+	}
+}
+
+func TestExplainReasonCodeFallsBackForUnknownCodes(t *testing.T) {
+	reason := explainReasonCode("some_new_code")
+	if reason.Severity != "info" || reason.Title != "Some new code" {
+		t.Fatalf("unexpected fallback explanation: %+v", reason)
+	}
+}
+
+func TestExplainReasonCodeWarnsWhenCalibrationSlopeIsNonpositive(t *testing.T) {
+	reason := explainReasonCode("calibration_slope_nonpositive")
+	if reason.Detail == "The model emitted this reason code in the latest warning batch." {
+		t.Fatal("calibration_slope_nonpositive fell back to generic explanation")
+	}
+	if reason.Severity != "watch" {
+		t.Fatalf("calibration_slope_nonpositive severity = %q, want watch", reason.Severity)
+	}
+}
+
 func TestTrustStatusIsLimitedForDataQualityReasons(t *testing.T) {
 	for _, code := range []string{"limited_data_quality", "stale_ticker_data", "reliability_unavailable"} {
 		status := trustStatus([]string{"trust_above_alert_threshold", code})

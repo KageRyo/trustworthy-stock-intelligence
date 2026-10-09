@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+### Fixed
+
+- Platt calibration could reverse the model's ranking. After a regime break, the latest 63-date calibration window can fit a negative slope, which ranks the riskiest rows as the safest. Experiment 020 found one such S&P 100 batch, where test AUC fell from 0.758 to 0.242. Single-ticker on-demand models had a non-positive slope at about half of all replayed dates.
+  - Serving and on-demand analysis default to `--calibration-method platt_monotone`. It fits Platt scaling and, if the slope is not positive, keeps the model's ranking and shifts its log-odds to the calibration window's event rate ([ADR 0007](docs/decisions/0007-calibration-keeps-model-ranking.md)).
+  - Rows scored with the fallback carry the reason code `calibration_slope_nonpositive`, which the API and dashboard explain in English and 正體中文.
+  - `--calibration-method platt` restores the previous behavior and stays the default for research scripts.
+
+### Added
+
+- `scripts/evaluate_serving_replay.py` replays the served training and calibration scheme for pooled and single-ticker models (Experiment 020).
+- `tsi.trust.calibration.CALIBRATION_METHODS` lists the calibration choices, and every command-line tool uses it.
+
+### Notes
+
+- Experiment 020 found that single-ticker on-demand models carry no ranking signal within a 63-date window (AUC about 0.50) and rank a ticker's own history worse than a model fitted on all tickers: 0.566 against 0.633 on S&P 100 and 0.632 against 0.672 on Taiwan large caps.
+
 ## 0.8.0 - 2026-10-09
 
 ### Fixed

@@ -24,6 +24,7 @@ from tsi.features.sets import (
 )
 from tsi.models.logistic import LogisticRiskModel
 from tsi.trust.calibration import (
+    CALIBRATION_METHODS,
     CalibrationMethod,
     ProbabilityCalibrator,
     fit_probability_calibrator,
@@ -69,7 +70,7 @@ def add_walk_forward_arguments(
     parser.add_argument("--max-folds", type=int, default=None)
     parser.add_argument(
         "--calibration-method",
-        choices=["none", "platt", "isotonic"],
+        choices=CALIBRATION_METHODS,
         default="platt",
     )
     parser.add_argument(

@@ -1,0 +1,75 @@
+{
+  "input": "data/raw/tw_large/ohlcv.csv",
+  "input_sha256": "6cc6e2f8ddf2d4eed22fcad7aaf02083cff284c2c1649486c1f251f48dc4ac1d",
+  "protocol": {
+    "feature_interval": "1d",
+    "feature_set": "technical_range",
+    "feature_columns": [
+      "return_1d",
+      "return_5d",
+      "sma_5_gap",
+      "sma_10_gap",
+      "volatility_5d",
+      "volatility_10d",
+      "volume_ratio_5d",
+      "parkinson_vol_10d",
+      "garman_klass_vol_10d",
+      "atr_14_pct",
+      "volatility_20d",
+      "drawdown_from_20d_high"
+    ],
+    "horizon": 5,
+    "drawdown_threshold": -0.05,
+    "train_window": "every labeled date before calibration (serving default)",
+    "calibration_size": 63,
+    "drift_size": 21,
+    "test_size": 63,
+    "step_size": 21,
+    "min_history_dates": 400,
+    "calibrations": [
+      "platt",
+      "platt_monotone"
+    ]
+  },
+  "pooled": {
+    "as_of_dates": 113,
+    "nonpositive_slope": 0,
+    "nonpositive_share": 0.0,
+    "median_calibration_positives": 301.0,
+    "auc_raw_mean": 0.7466251355410367,
+    "auc_platt_mean": 0.7466251355410367,
+    "auc_platt_monotone_mean": 0.7466251355410367,
+    "brier_platt_mean": 0.08805777302768965,
+    "brier_platt_monotone_mean": 0.08805777302768965,
+    "ece_platt_mean": 0.046872012502182744,
+    "ece_platt_monotone_mean": 0.046872012502182744,
+    "auc_platt_mean_when_nonpositive": null,
+    "auc_platt_monotone_mean_when_nonpositive": null,
+    "nonpositive_as_of": []
+  },
+  "single_ticker": {
+    "tickers": 51,
+    "ticker_dates": 3355,
+    "tickers_ever_nonpositive": 51,
+    "nonpositive_slope": 1685,
+    "nonpositive_share": 0.5022354694485842,
+    "median_calibration_positives": 8.0,
+    "auc_raw_mean": 0.5089148168192842,
+    "auc_platt_mean": 0.5046105710737122,
+    "auc_platt_monotone_mean": 0.5089148168192842,
+    "brier_platt_mean": 0.13761711357357234,
+    "brier_platt_monotone_mean": 0.13930710975998542,
+    "ece_platt_mean": 0.09993104135204409,
+    "ece_platt_monotone_mean": 0.10977191499137261,
+    "auc_platt_mean_when_nonpositive": 0.49571491261828077,
+    "auc_platt_monotone_mean_when_nonpositive": 0.5042850873817192
+  },
+  "per_ticker_history_auc": {
+    "tickers": 51,
+    "pooled": 0.6721388506509939,
+    "pooled_median": 0.6578286452353617,
+    "single": 0.6322365199286676,
+    "single_median": 0.6258253159781174,
+    "pooled_better_share": 0.803921568627451
+  }
+}

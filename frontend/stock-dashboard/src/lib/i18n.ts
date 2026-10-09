@@ -472,6 +472,10 @@ export const translations = {
         title: "Insufficient price history",
         detail: "The ticker has market data, but not enough labeled history for a calibrated risk prediction."
       },
+      calibration_slope_nonpositive: {
+        title: "Recent ranking did not hold",
+        detail: "In the calibration window, higher model scores did not mean more drawdowns. The model's ranking is kept and only its probability level is adjusted, so treat this ranking as unconfirmed."
+      },
       ensemble_disagreement_high: {
         title: "Model refits disagree",
         detail: "Models refit on resampled market days disagree more than on most recent labeled rows, so treat the probability as less stable."
@@ -781,6 +785,10 @@ export const translations = {
       insufficient_history: {
         title: "價格歷史不足",
         detail: "此股票有市場資料，但標註歷史不足，無法產生校準後風險預測。"
+      },
+      calibration_slope_nonpositive: {
+        title: "近期排序未獲驗證",
+        detail: "在校準期間，模型分數較高的情況並沒有較常出現回撤。系統保留模型原本的排序，只調整機率水準，因此這個排序尚未獲得近期資料支持。"
       },
       ensemble_disagreement_high: {
         title: "模型重訓結果分歧",
