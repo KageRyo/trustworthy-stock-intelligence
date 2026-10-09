@@ -44,6 +44,7 @@ class OnDemandAnalysisSummary(BaseModel):
     input_path: str
     predictions_path: str
     warnings_path: str
+    model_bundle: str | None = None
 
 
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
@@ -94,7 +95,34 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         choices=CALIBRATION_METHODS,
         default="platt_monotone",
     )
+    parser.add_argument(
+        "--model-bundle-dir",
+        type=Path,
+        default=Path(os.getenv("TSI_MODEL_BUNDLE_DIR", "data/artifacts/model_bundles")),
+        help="Directory of pooled model bundles (us.json, taiwan.json). Without a bundle for the "
+        "ticker's market, the ticker is fitted alone.",
+    )
     return parser.parse_args(argv)
+
+
+# Pooled bundle file stem for each resolved provider market.
+MARKET_BUNDLES = {
+    "us": "us",
+    "twse": "taiwan",
+    "tpex": "taiwan",
+    "emerging": "taiwan",
+    "taiwan": "taiwan",
+}
+
+
+def resolve_model_bundle(bundle_dir: Path, market: str) -> Path | None:
+    """The pooled bundle for ``market``, or None when none is configured."""
+
+    stem = MARKET_BUNDLES.get(market)
+    if stem is None:
+        return None
+    path = Path(bundle_dir) / f"{stem}.json"
+    return path if path.is_file() else None
 
 
 def run_on_demand_analysis(args: argparse.Namespace) -> OnDemandAnalysisSummary:
@@ -180,6 +208,10 @@ def run_on_demand_analysis(args: argparse.Namespace) -> OnDemandAnalysisSummary:
     ]
     if args.train_size is not None:
         prediction_args.extend(["--train-size", str(args.train_size)])
+    resolved_market = result.tickers[0].market if result.tickers else "unknown"
+    model_bundle = resolve_model_bundle(args.model_bundle_dir, resolved_market)
+    if model_bundle is not None:
+        prediction_args.extend(["--model-bundle", str(model_bundle)])
 
     try:
         predictions = run_prediction(parse_prediction_args(prediction_args))
@@ -211,6 +243,7 @@ def run_on_demand_analysis(args: argparse.Namespace) -> OnDemandAnalysisSummary:
         input_path=str(input_path),
         predictions_path=str(predictions_path),
         warnings_path=str(warnings_path),
+        model_bundle=None if model_bundle is None else str(model_bundle),
     )
 
 
