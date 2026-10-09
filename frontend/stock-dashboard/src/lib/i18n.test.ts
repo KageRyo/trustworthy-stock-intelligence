@@ -27,6 +27,7 @@ describe("dashboard i18n", () => {
 
 describe("reliability reason codes", () => {
   const codes = [
+    "calibration_slope_nonpositive",
     "ensemble_disagreement_high",
     "input_out_of_distribution",
     "limited_data_quality",
