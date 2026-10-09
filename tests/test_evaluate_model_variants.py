@@ -176,3 +176,14 @@ def test_run_is_deterministic(tmp_path: Path) -> None:
     first.pop("input")
     second.pop("input")
     assert first == second
+
+
+def test_rebuilding_the_summary_from_saved_folds_matches_the_fitted_run(tmp_path: Path) -> None:
+    extra = ("--models", "logistic,hist_gradient_boosting", "--max-folds", "2")
+    fitted = run(_run_args(tmp_path, *extra))
+
+    rebuilt = run(_run_args(tmp_path, *extra, "--reuse-per-fold"))
+
+    assert rebuilt == fitted
+    comparison = next(iter(fitted["paired_comparisons"].values()))
+    assert "raw_auc" in comparison["metrics"]

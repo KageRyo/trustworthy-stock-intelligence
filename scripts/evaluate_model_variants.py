@@ -32,6 +32,7 @@ import torch  # noqa: E402
 from torch import nn  # noqa: E402
 
 from scripts.evaluate_feature_sets import (  # noqa: E402
+    PAIRED_METRICS,
     compare_to_baseline,
     score_probabilities,
     summarize_set,
@@ -39,6 +40,7 @@ from scripts.evaluate_feature_sets import (  # noqa: E402
 from scripts.walk_forward_experiment import (  # noqa: E402
     FoldFrames,
     RiskModel,
+    WalkForwardFolds,
     add_walk_forward_arguments,
     fit_calibrated_model,
     load_walk_forward_folds,
@@ -46,7 +48,7 @@ from scripts.walk_forward_experiment import (  # noqa: E402
     walk_forward_protocol,
 )
 from tsi.data.csv import file_sha256  # noqa: E402
-from tsi.labeling.warning_level import parse_alert_policy  # noqa: E402
+from tsi.labeling.warning_level import AlertPolicy, parse_alert_policy  # noqa: E402
 from tsi.evaluation.metrics import classification_metrics  # noqa: E402
 from tsi.models.logistic import LogisticRiskModel  # noqa: E402
 from tsi.training.trainer import resolve_training_device  # noqa: E402
@@ -252,6 +254,11 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         help="Allow CPU training for the mlp family; for tests only.",
     )
     parser.add_argument("--mlp-epochs", type=int, default=20)
+    parser.add_argument(
+        "--reuse-per-fold",
+        action="store_true",
+        help="Rebuild summary.json from the per_fold.csv in --output-dir without refitting.",
+    )
     return parser.parse_args(argv)
 
 
@@ -312,29 +319,26 @@ def variant_pairs(families: Sequence[str], windows: Sequence[str]) -> list[tuple
     return list(dict.fromkeys(pairs))
 
 
-def run(args: argparse.Namespace) -> dict[str, object]:
-    output_dir = resolve_output_dir(args.output_dir, root=args.output_root)
-    windows = parse_train_windows(args.train_windows, train_size=args.train_size)
-    families = parse_model_families(args.models)
-    device = (
-        resolve_training_device(args.device, allow_cpu=args.allow_cpu)
-        if "mlp" in families
-        else None
-    )
-    alert_policy = parse_alert_policy(args.alert_policy, min_alerts=args.min_alerts)
-    watch_policy = parse_alert_policy(args.watch_policy, min_alerts=args.min_alerts)
-    walk_forward = load_walk_forward_folds(args)
+def fit_variants(
+    args: argparse.Namespace,
+    walk_forward: WalkForwardFolds,
+    *,
+    windows: Sequence[str],
+    families: Sequence[str],
+    device: torch.device | None,
+    alert_policy: AlertPolicy,
+    watch_policy: AlertPolicy,
+) -> pd.DataFrame:
+    """Fit and score every variant on every fold whose training windows hold both classes."""
+
     assert walk_forward.frame is not None
     columns = walk_forward.feature_columns
-
     fold_rows: list[dict[str, object]] = []
-    skipped_short_window = 0
     for item in walk_forward.folds:
         train_by_window = {
             window: train_rows_for_window(item, window, walk_forward.frame) for window in windows
         }
         if any(train["risk_label"].nunique() < 2 for train in train_by_window.values()):
-            skipped_short_window += 1
             continue
         reference_labels = item.train["risk_label"].to_numpy()
         for family in families:
@@ -374,10 +378,41 @@ def run(args: argparse.Namespace) -> dict[str, object]:
                 )
     if not fold_rows:
         raise ValueError("No fold had both classes in every training window")
-    per_fold = pd.DataFrame(fold_rows)
+    return pd.DataFrame(fold_rows)
 
+
+def run(args: argparse.Namespace) -> dict[str, object]:
+    output_dir = resolve_output_dir(args.output_dir, root=args.output_root)
+    windows = parse_train_windows(args.train_windows, train_size=args.train_size)
+    families = parse_model_families(args.models)
+    device = (
+        resolve_training_device(args.device, allow_cpu=args.allow_cpu)
+        if "mlp" in families
+        else None
+    )
+    alert_policy = parse_alert_policy(args.alert_policy, min_alerts=args.min_alerts)
+    watch_policy = parse_alert_policy(args.watch_policy, min_alerts=args.min_alerts)
+    walk_forward = load_walk_forward_folds(args)
+
+    if args.reuse_per_fold:
+        per_fold = pd.read_csv(
+            output_dir / "per_fold.csv",
+            dtype={"train_window": str},
+            float_precision="round_trip",
+        )
+    else:
+        per_fold = fit_variants(
+            args,
+            walk_forward,
+            windows=windows,
+            families=families,
+            device=device,
+            alert_policy=alert_policy,
+            watch_policy=watch_policy,
+        )
     output_dir.mkdir(parents=True, exist_ok=True)
     per_fold.to_csv(output_dir / "per_fold.csv", index=False)
+    skipped_short_window = len(walk_forward.folds) - int(per_fold["fold_id"].nunique())
     baseline = variant_name(BASELINE_FAMILY, windows[0])
     first_variant = per_fold[per_fold["variant"] == baseline]
     parameters = {family: dict(MODEL_PARAMETERS[family]) for family in families}
@@ -421,6 +456,7 @@ def run(args: argparse.Namespace) -> dict[str, object]:
                 resamples=args.bootstrap_resamples,
                 seed=args.seed,
                 group_column="variant",
+                metrics=(*PAIRED_METRICS, "raw_auc"),
             )
             for comparison, reference in variant_pairs(families, windows)
         },

@@ -218,17 +218,18 @@ def compare_to_baseline(
     resamples: int,
     seed: int,
     group_column: str = "feature_set",
+    metrics: Sequence[str] = PAIRED_METRICS,
 ) -> dict[str, object]:
     """Paired fold bootstrap deltas (comparison - baseline) plus fold win rates."""
 
     def folds(name: str) -> list[dict[str, object]]:
         rows = per_fold[per_fold[group_column] == name].sort_values("fold_id")
-        return rows[["fold_id", *PAIRED_METRICS]].to_dict("records")
+        return rows[["fold_id", *metrics]].to_dict("records")
 
     baseline_rows = per_fold[per_fold[group_column] == baseline].set_index("fold_id")
     comparison_rows = per_fold[per_fold[group_column] == comparison].set_index("fold_id")
     report = paired_fold_metric_intervals(
-        folds(baseline), folds(comparison), metrics=PAIRED_METRICS, seed=seed, resamples=resamples
+        folds(baseline), folds(comparison), metrics=metrics, seed=seed, resamples=resamples
     )
     report["fold_win_rate"] = {
         metric: float((comparison_rows[metric] > baseline_rows[metric]).mean())
