@@ -15,15 +15,13 @@ It focuses on calibration, uncertainty, abstention, transparency, auditability, 
 
 ## Current state
 
-Version `0.8.0` is an operational prototype. It adds to `0.7.0`:
+Version `0.9.0` is an operational prototype. It adds to `0.8.0`:
 
-- the Taiwan chip-data research path (Experiment 018, no serving change);
-- dashboard localization of trust and freshness summaries, and layout fixes;
-- daily freshness cutoffs at each market's session close;
-- a typed insufficient-history abstention for on-demand analysis;
-- on-demand concurrency limits: one run per ticker, a cap on concurrent tickers, and a `429` that the dashboard turns into a queued prediction job;
-- Go 1.27.2 and a Go dependency security update;
-- reorganized documentation with decision records, an experiment index, and a model card.
+- monotone Platt calibration that never reverses the model's ranking ([ADR 0007](decisions/0007-calibration-keeps-model-ranking.md));
+- on-demand scoring with a stored pooled model of the ticker's market ([ADR 0009](decisions/0009-on-demand-uses-pooled-bundles.md));
+- resolution of TPEx-listed and emerging codes through Yahoo Finance `.TWO`;
+- Experiment 019, which kept the logistic model and the expanding training window ([ADR 0008](decisions/0008-keep-logistic-expanding-window.md)), and Experiment 020, a replay of the served scheme;
+- Markdown paragraphs on one line.
 
 The served model is described in the [model card](model_card.md). The evidence behind it is in the [experiment index](../experiments/README.md) and the decision records.
 
@@ -62,13 +60,14 @@ Automated trading, investment-recommendation wording, LLM-based advice, full mul
 
 ## Completed milestones
 
-| Version | Highlights                                                                                                                                                                                         |
-| ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 0.3.x   | Public release hardening: citation, contribution guide, CodeQL, Gitleaks, required CI                                                                                                              |
-| 0.4.x   | Scheduled five-minute ingestion, provider health, market-bar quality audit, prediction jobs, warning transitions, dashboard states                                                                 |
-| 0.5.0   | Reliability-based trust and uncertainty ([ADR 0002](decisions/0002-trust-independent-of-risk.md)), Tailwind CSS v4                                                                                 |
-| 0.6.0   | Calibration-window alert-rate policies ([ADR 0003](decisions/0003-alert-rate-threshold-policy.md))                                                                                                 |
-| 0.7.0   | Range-volatility serving features ([ADR 0004](decisions/0004-range-volatility-features.md))                                                                                                        |
-| 0.8.0   | Taiwan chip-data research ([ADR 0005](decisions/0005-no-taiwan-chip-features.md)), localized summaries ([ADR 0006](decisions/0006-dashboard-localizes-api-codes.md)), on-demand concurrency limits |
+| Version | Highlights                                                                                                                                                                                                       |
+| ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0.3.x   | Public release hardening: citation, contribution guide, CodeQL, Gitleaks, required CI                                                                                                                            |
+| 0.4.x   | Scheduled five-minute ingestion, provider health, market-bar quality audit, prediction jobs, warning transitions, dashboard states                                                                               |
+| 0.5.0   | Reliability-based trust and uncertainty ([ADR 0002](decisions/0002-trust-independent-of-risk.md)), Tailwind CSS v4                                                                                               |
+| 0.6.0   | Calibration-window alert-rate policies ([ADR 0003](decisions/0003-alert-rate-threshold-policy.md))                                                                                                               |
+| 0.7.0   | Range-volatility serving features ([ADR 0004](decisions/0004-range-volatility-features.md))                                                                                                                      |
+| 0.8.0   | Taiwan chip-data research ([ADR 0005](decisions/0005-no-taiwan-chip-features.md)), localized summaries ([ADR 0006](decisions/0006-dashboard-localizes-api-codes.md)), on-demand concurrency limits               |
+| 0.9.0   | Monotone calibration ([ADR 0007](decisions/0007-calibration-keeps-model-ranking.md)), pooled on-demand model bundles ([ADR 0009](decisions/0009-on-demand-uses-pooled-bundles.md)), TPEx and emerging resolution |
 
 See [`CHANGELOG.md`](../CHANGELOG.md) for full release notes. Engineering rules are in the [development guide](guides/development.md).

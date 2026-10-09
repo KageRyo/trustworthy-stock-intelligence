@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.9.0 - 2026-10-09
+
 ### Changed
 
 - On-demand analysis scores a ticker without a stored warning with the pooled bundle of its market from `TSI_MODEL_BUNDLE_DIR` (`logistic_regression_pooled`). Without a bundle it still fits the ticker alone, and those rows carry the new reason code `single_ticker_model`. A bundle more than 30 days older than the scored row adds `model_bundle_stale`. The API and dashboard explain both codes.
