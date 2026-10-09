@@ -1,8 +1,6 @@
 # Baseline vs Transformer Comparison
 
-This report compares model and decision variants. Interpret calibration metrics separately from
-warning-decision metrics: a calibrated model can still need a conservative or recall-oriented
-warning policy.
+This report compares model and decision variants. Interpret calibration metrics separately from warning-decision metrics: a calibrated model can still need a conservative or recall-oriented warning policy.
 
 | run                               | model                | variant        | auc    | brier_score | ece    | precision | recall | f1     | alert_precision | false_alarm_rate | coverage |
 | --------------------------------- | -------------------- | -------------- | ------ | ----------- | ------ | --------- | ------ | ------ | --------------- | ---------------- | -------- |
@@ -18,5 +16,4 @@ warning policy.
 
 - `raw`, `calibrated`, and `tuned` rows are probability-threshold model variants.
 - `trust_decision` rows use the warning-level evaluation artifact when present.
-- A useful v1 claim is improved reliability or more conservative alerting, not guaranteed drawdown
-  prediction.
+- A useful v1 claim is improved reliability or more conservative alerting, not guaranteed drawdown prediction.

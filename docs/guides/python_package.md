@@ -2,8 +2,7 @@
 
 ## Scope
 
-`trustworthy-stock-intelligence` is distributed on PyPI as the reusable Python and ML core of this
-repository. The wheel contains `tsi` modules for:
+`trustworthy-stock-intelligence` is distributed on PyPI as the reusable Python and ML core of this repository. The wheel contains `tsi` modules for:
 
 - leakage-aware OHLCV feature and future-drawdown label construction
 - baseline logistic and tree risk models
@@ -11,8 +10,7 @@ repository. The wheel contains `tsi` modules for:
 - uncertainty, trust-score, reason, and decision utilities
 - Pydantic serving schemas and freshness metadata
 
-The Go API, PostgreSQL schema and workers, TypeScript dashboard, Docker Compose stack, and
-downloaded market data are not bundled into the wheel.
+The Go API, PostgreSQL schema and workers, TypeScript dashboard, Docker Compose stack, and downloaded market data are not bundled into the wheel.
 
 ## Install
 
@@ -36,11 +34,7 @@ python -m pip install "trustworthy-stock-intelligence[models]"  # tree/boosting 
 python -m pip install "trustworthy-stock-intelligence[deep]"    # PyTorch model bundles/training
 ```
 
-The published `deep` extra records the pinned compatible matrix `torch==2.13.0`,
-`torchvision==0.28.0`, and `torchaudio==2.11.0`. TorchAudio 2.11 uses the stable PyTorch ABI and
-supports PyTorch 2.11 and later. In a uv checkout, `deep` selects CPU wheels for CI and `deep-cu126`
-selects CUDA 12.6 wheels; they cannot be enabled together. GPU users should follow the explicit
-profile and driver guidance in [`environment.md`](environment.md).
+The published `deep` extra records the pinned compatible matrix `torch==2.13.0`, `torchvision==0.28.0`, and `torchaudio==2.11.0`. TorchAudio 2.11 uses the stable PyTorch ABI and supports PyTorch 2.11 and later. In a uv checkout, `deep` selects CPU wheels for CI and `deep-cu126` selects CUDA 12.6 wheels; they cannot be enabled together. GPU users should follow the explicit profile and driver guidance in [`environment.md`](environment.md).
 
 ## Python API
 
@@ -68,13 +62,11 @@ model = LogisticRiskModel().fit(
 )
 ```
 
-The package functions do not claim causal explanations or investment advice. Labels use future
-observations by design and must only be used after a leakage-aware temporal split in an experiment.
+The package functions do not claim causal explanations or investment advice. Labels use future observations by design and must only be used after a leakage-aware temporal split in an experiment.
 
 ## CLI
 
-The CLI is deterministic and local; it does not start the API or silently call a market-data
-provider:
+The CLI is deterministic and local; it does not start the API or silently call a market-data provider:
 
 ```bash
 tsi --version
@@ -87,9 +79,7 @@ tsi evaluate predictions.csv \
   --json
 ```
 
-The full ticker-driven lookup path remains the Go API's local on-demand bridge and the
-production-oriented ingestion/worker flow; see the main README and `docs/concepts/architecture.md`
-for those boundaries.
+The full ticker-driven lookup path remains the Go API's local on-demand bridge and the production-oriented ingestion/worker flow; see the main README and `docs/concepts/architecture.md` for those boundaries.
 
 ## Local package checks
 
@@ -104,13 +94,11 @@ uv run --locked --no-sync python -m twine check dist/*
 uv run --locked --no-sync python -m tsi --version
 ```
 
-The release workflow repeats the build and metadata checks on a `vX.Y.Z` tag, then publishes the
-exact wheel and sdist through PyPI Trusted Publishing before creating the GitHub Release.
+The release workflow repeats the build and metadata checks on a `vX.Y.Z` tag, then publishes the exact wheel and sdist through PyPI Trusted Publishing before creating the GitHub Release.
 
 ## Trusted Publishing setup
 
-Before the first tag-triggered release, configure a PyPI Trusted Publisher for the project name
-`trustworthy-stock-intelligence`:
+Before the first tag-triggered release, configure a PyPI Trusted Publisher for the project name `trustworthy-stock-intelligence`:
 
 ```text
 owner:       KageRyo
@@ -119,15 +107,9 @@ workflow:    release.yml
 environment: pypi
 ```
 
-In the repository, the workflow is stored at `.github/workflows/release.yml`; PyPI's **Workflow
-name** field expects only the filename `release.yml`. If the project does not exist on PyPI, choose
-**Publishing → Add a new pending publisher** and also enter the project name
-`trustworthy-stock-intelligence`. If the project already exists, add the same values under that
-project's **Publishing** settings instead.
+In the repository, the workflow is stored at `.github/workflows/release.yml`; PyPI's **Workflow name** field expects only the filename `release.yml`. If the project does not exist on PyPI, choose **Publishing → Add a new pending publisher** and also enter the project name `trustworthy-stock-intelligence`. If the project already exists, add the same values under that project's **Publishing** settings instead.
 
-Use the `pypi` GitHub environment named by the workflow. No long-lived PyPI token belongs in
-repository secrets. If the project does not exist on PyPI yet, use PyPI's pending-publisher flow for
-the initial release, then verify the project publisher configuration before pushing the release tag.
+Use the `pypi` GitHub environment named by the workflow. No long-lived PyPI token belongs in repository secrets. If the project does not exist on PyPI yet, use PyPI's pending-publisher flow for the initial release, then verify the project publisher configuration before pushing the release tag.
 
 The release command is intentionally separate from ordinary CI:
 
@@ -136,5 +118,4 @@ git tag -a v0.8.0 -m "release: v0.8.0"
 git push origin v0.8.0
 ```
 
-Only tag a verified commit after the pull request/branch checks are green. A failed PyPI publish
-stops the workflow before a GitHub Release is created.
+Only tag a verified commit after the pull request/branch checks are green. A failed PyPI publish stops the workflow before a GitHub Release is created.

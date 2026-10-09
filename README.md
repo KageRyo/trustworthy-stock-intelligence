@@ -1,15 +1,8 @@
 # Trustworthy Stock Intelligence
 
-[![CI](https://github.com/KageRyo/trustworthy-stock-intelligence/actions/workflows/ci.yml/badge.svg)](https://github.com/KageRyo/trustworthy-stock-intelligence/actions/workflows/ci.yml)
-[![CodeQL](https://github.com/KageRyo/trustworthy-stock-intelligence/actions/workflows/codeql.yml/badge.svg)](https://github.com/KageRyo/trustworthy-stock-intelligence/actions/workflows/codeql.yml)
-[![Secret scan](https://github.com/KageRyo/trustworthy-stock-intelligence/actions/workflows/secret-scan.yml/badge.svg)](https://github.com/KageRyo/trustworthy-stock-intelligence/actions/workflows/secret-scan.yml)
-[![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=KageRyo_trustworthy-stock-intelligence&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=KageRyo_trustworthy-stock-intelligence)
-[![PyPI](https://img.shields.io/pypi/v/trustworthy-stock-intelligence)](https://pypi.org/project/trustworthy-stock-intelligence/)
-[![Python](https://img.shields.io/pypi/pyversions/trustworthy-stock-intelligence)](https://pypi.org/project/trustworthy-stock-intelligence/)
-[![License](https://img.shields.io/github/license/KageRyo/trustworthy-stock-intelligence)](LICENSE)
+[![CI](https://github.com/KageRyo/trustworthy-stock-intelligence/actions/workflows/ci.yml/badge.svg)](https://github.com/KageRyo/trustworthy-stock-intelligence/actions/workflows/ci.yml) [![CodeQL](https://github.com/KageRyo/trustworthy-stock-intelligence/actions/workflows/codeql.yml/badge.svg)](https://github.com/KageRyo/trustworthy-stock-intelligence/actions/workflows/codeql.yml) [![Secret scan](https://github.com/KageRyo/trustworthy-stock-intelligence/actions/workflows/secret-scan.yml/badge.svg)](https://github.com/KageRyo/trustworthy-stock-intelligence/actions/workflows/secret-scan.yml) [![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=KageRyo_trustworthy-stock-intelligence&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=KageRyo_trustworthy-stock-intelligence) [![PyPI](https://img.shields.io/pypi/v/trustworthy-stock-intelligence)](https://pypi.org/project/trustworthy-stock-intelligence/) [![Python](https://img.shields.io/pypi/pyversions/trustworthy-stock-intelligence)](https://pypi.org/project/trustworthy-stock-intelligence/) [![License](https://img.shields.io/github/license/KageRyo/trustworthy-stock-intelligence)](LICENSE)
 
-Trustworthy Stock Intelligence analyzes short-horizon drawdown risk for US and Taiwan stocks. Enter
-a ticker, and the system returns:
+Trustworthy Stock Intelligence analyzes short-horizon drawdown risk for US and Taiwan stocks. Enter a ticker, and the system returns:
 
 - a calibrated risk probability;
 - a warning level from an explicit threshold policy;
@@ -20,9 +13,7 @@ a ticker, and the system returns:
 
 Every result comes from a PostgreSQL-backed, schema-first pipeline that you can audit and reproduce.
 
-> **Not investment advice.** This is an operational prototype and a public portfolio project for
-> trustworthy ML. It does not trade, recommend positions, or predict prices, and its pilot evidence
-> is not externally validated.
+> **Not investment advice.** This is an operational prototype and a public portfolio project for trustworthy ML. It does not trade, recommend positions, or predict prices, and its pilot evidence is not externally validated.
 
 ![Stock risk dashboard in English, showing calibrated risk, trust, freshness, and threshold policy for PANW](docs/assets/dashboard-en.png)
 
@@ -35,20 +26,14 @@ Every result comes from a PostgreSQL-backed, schema-first pipeline that you can 
 
 ## What makes it trustworthy
 
-- **Calibrated, not just ranked.** Platt calibration on a held-out window turns scores into
-  probabilities. Thresholds come from calibration-window alert rates, not a fixed 0.5
-  ([ADR 0003](docs/decisions/0003-alert-rate-threshold-policy.md)).
-- **Trust that is not the risk score in disguise.** Trust reflects data quality and calibration
-  drift. Uncertainty can move a quiet row to `abstain` but never hides an alert
-  ([ADR 0002](docs/decisions/0002-trust-independent-of-risk.md)).
+- **Calibrated, not just ranked.** Platt calibration on a held-out window turns scores into probabilities. Thresholds come from calibration-window alert rates, not a fixed 0.5 ([ADR 0003](docs/decisions/0003-alert-rate-threshold-policy.md)).
+- **Trust that is not the risk score in disguise.** Trust reflects data quality and calibration drift. Uncertainty can move a quiet row to `abstain` but never hides an alert ([ADR 0002](docs/decisions/0002-trust-independent-of-risk.md)).
 - **Fails closed.**
   - The API refuses to start without PostgreSQL.
   - Stale or still-open daily bars are downgraded or blocked.
   - Small calibration samples are flagged.
-- **Evidence before features.** Every model change is tested on identical purged walk-forward folds,
-  with a held-out sample. Negative results are recorded too ([experiments](experiments/README.md)).
-- **Explained in two languages.** Stable API codes are localized in English and 正體中文
-  ([ADR 0006](docs/decisions/0006-dashboard-localizes-api-codes.md)).
+- **Evidence before features.** Every model change is tested on identical purged walk-forward folds, with a held-out sample. Negative results are recorded too ([experiments](experiments/README.md)).
+- **Explained in two languages.** Stable API codes are localized in English and 正體中文 ([ADR 0006](docs/decisions/0006-dashboard-localizes-api-codes.md)).
 
 ## The served model at a glance
 
@@ -65,8 +50,7 @@ Details, limitations, and reproduction steps are in the [model card](docs/model_
 
 ## Quick start
 
-Requirements: Docker, [uv](https://docs.astral.sh/uv/), Go 1.27, and Node.js 22.
-[`mise`](https://mise.jdx.dev/) can install the pinned Go and Node versions.
+Requirements: Docker, [uv](https://docs.astral.sh/uv/), Go 1.27, and Node.js 22. [`mise`](https://mise.jdx.dev/) can install the pinned Go and Node versions.
 
 ```bash
 cp .env.example .env            # fill in local PostgreSQL values; never commit .env
@@ -80,8 +64,7 @@ make stock-dashboard            # dashboard on http://localhost:5175
 ```
 
 - **GPU:** use `--extra deep-cu126` instead of `--extra deep` on a CUDA 12.6 workstation.
-- **Missing tickers:** searching for a ticker that is not in the database runs the on-demand Python
-  analysis, writes the result to PostgreSQL, and returns it.
+- **Missing tickers:** searching for a ticker that is not in the database runs the on-demand Python analysis, writes the result to PostgreSQL, and returns it.
 - **Full walkthrough:** see the [local demo guide](docs/guides/local_demo.md).
 
 ## Tickers
@@ -100,10 +83,7 @@ Ticker symbols are strings. Taiwan codes keep leading zeros and suffix letters.
 curl http://localhost:18080/api/v1/analysis/2330
 ```
 
-The response schema is documented in the
-[analysis API reference](docs/reference/api/analysis_api.md) and in
-[`openapi.yaml`](docs/reference/api/openapi.yaml). A ticker without enough labeled history returns a
-typed `abstain` analysis with an `insufficient_history` reason, not an error.
+The response schema is documented in the [analysis API reference](docs/reference/api/analysis_api.md) and in [`openapi.yaml`](docs/reference/api/openapi.yaml). A ticker without enough labeled history returns a typed `abstain` analysis with an `insufficient_history` reason, not an error.
 
 ## Architecture
 
@@ -115,8 +95,7 @@ yfinance / TWSE / TPEx
 -> TypeScript dashboard (Zod-validated, English and 正體中文)
 ```
 
-See [architecture](docs/concepts/architecture.md) and the
-[PostgreSQL serving decision](docs/decisions/0001-postgresql-serving-source.md).
+See [architecture](docs/concepts/architecture.md) and the [PostgreSQL serving decision](docs/decisions/0001-postgresql-serving-source.md).
 
 ## Python package
 
@@ -128,8 +107,7 @@ tsi --version
 tsi inspect-csv path/to/ohlcv.csv --json
 ```
 
-The Go API, dashboard, and PostgreSQL schema are not part of the wheel; see the
-[Python package guide](docs/guides/python_package.md).
+The Go API, dashboard, and PostgreSQL schema are not part of the wheel; see the [Python package guide](docs/guides/python_package.md).
 
 ## Documentation
 
@@ -156,13 +134,10 @@ uv run --locked --no-sync python -m ruff check src tests scripts dashboard
 (cd frontend/stock-dashboard && npm test && npm run build)
 ```
 
-- **CI:** runs these checks, plus Go vulnerability and race tests, `npm audit`, a PostgreSQL
-  watchlist-to-warning E2E pipeline, CodeQL, and full-history Gitleaks.
+- **CI:** runs these checks, plus Go vulnerability and race tests, `npm audit`, a PostgreSQL watchlist-to-warning E2E pipeline, CodeQL, and full-history Gitleaks.
 - **Repository settings:** see [`.github/REPOSITORY_SETTINGS.md`](.github/REPOSITORY_SETTINGS.md).
 - **Tool versions:** see the [environment guide](docs/guides/environment.md).
 
 ## License
 
-Source code and documentation are licensed under the [Apache License 2.0](LICENSE). The license does
-not grant rights to Yahoo Finance, TWSE, or TPEx data. Raw data and model artifacts are not
-distributed; see [data and model licenses](docs/concepts/data_and_model_licenses.md).
+Source code and documentation are licensed under the [Apache License 2.0](LICENSE). The license does not grant rights to Yahoo Finance, TWSE, or TPEx data. Raw data and model artifacts are not distributed; see [data and model licenses](docs/concepts/data_and_model_licenses.md).

@@ -1,8 +1,6 @@
 # Experiment Comparison Report
 
-This report compares risk-warning experiment runs as a trust-aware conservative alerting demo. It
-should not be read as an investment recommendation, a precise price forecast, or an automated
-trading result.
+This report compares risk-warning experiment runs as a trust-aware conservative alerting demo. It should not be read as an investment recommendation, a precise price forecast, or an automated trading result.
 
 ## Runs
 
@@ -14,8 +12,6 @@ trading result.
 ## Interpretation
 
 - Prefer language such as `trust-aware conservative risk alerting demo` when describing these runs.
-- Compare alert precision, false alarm rate, and coverage together; a low alert rate can be useful
-  for triage but usually implies low recall.
+- Compare alert precision, false alarm rate, and coverage together; a low alert rate can be useful for triage but usually implies low recall.
 - Use calibrated ECE and Brier score to discuss reliability, not directional trading performance.
-- In these runs, at least one policy emitted no alerts while another emitted a non-zero alert rate;
-  this supports the subtractive-versus-multiplicative trust-score comparison story.
+- In these runs, at least one policy emitted no alerts while another emitted a non-zero alert rate; this supports the subtractive-versus-multiplicative trust-score comparison story.

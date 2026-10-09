@@ -2,9 +2,7 @@
 
 ## Goal
 
-The repository should support reproducible research experiments for stock risk early-warning.
-Reproducibility is especially important because financial results can change due to data vendor
-adjustments, survivorship bias, split choices, and leakage.
+The repository should support reproducible research experiments for stock risk early-warning. Reproducibility is especially important because financial results can change due to data vendor adjustments, survivorship bias, split choices, and leakage.
 
 ## Required Experiment Metadata
 
@@ -35,8 +33,7 @@ known limitations
 
 ## Data Versioning
 
-Pilot experiments may use Yahoo Finance. Reports must state that Yahoo Finance data is used for
-pilot research only.
+Pilot experiments may use Yahoo Finance. Reports must state that Yahoo Finance data is used for pilot research only.
 
 Formal research should prefer:
 
@@ -47,8 +44,7 @@ Tiingo
 official exchange data
 ```
 
-Because adjusted historical data can change, experiments should record the data download date and
-vendor.
+Because adjusted historical data can change, experiments should record the data download date and vendor.
 
 ## Randomness
 
@@ -75,8 +71,7 @@ No transform should be fit on the full dataset before temporal splitting.
 
 ## Environment
 
-`pyproject.toml` defines dependency constraints, `.python-version` selects the maintainer/CI Python,
-and `uv.lock` records the exact resolution. Reproduce the CPU environment with:
+`pyproject.toml` defines dependency constraints, `.python-version` selects the maintainer/CI Python, and `uv.lock` records the exact resolution. Reproduce the CPU environment with:
 
 ```bash
 uv sync --locked \
@@ -89,10 +84,7 @@ uv sync --locked \
   --extra deep
 ```
 
-For a CUDA 12.6 experiment, replace `--extra deep` with `--extra deep-cu126`. Never enable both
-profiles. Record `torch.__version__`, `torch.version.cuda`, device names and device count in every
-GPU run. Historical CUDA 12.8 results retain their original environment metadata rather than being
-silently reclassified as CUDA 12.6 runs.
+For a CUDA 12.6 experiment, replace `--extra deep` with `--extra deep-cu126`. Never enable both profiles. Record `torch.__version__`, `torch.version.cuda`, device names and device count in every GPU run. Historical CUDA 12.8 results retain their original environment metadata rather than being silently reclassified as CUDA 12.6 runs.
 
 ## Reporting Standard
 
@@ -105,5 +97,4 @@ formal v1 result
 benchmark comparison
 ```
 
-Pilot results are useful for debugging the research workflow, but they should not be overstated as
-final evidence.
+Pilot results are useful for debugging the research workflow, but they should not be overstated as final evidence.

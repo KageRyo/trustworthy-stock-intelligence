@@ -1,7 +1,6 @@
 # Development and Runtime Environment
 
-This document separates portable project requirements from maintainer hardware and historical
-experiment provenance. A listed workstation is never a hardware requirement for contributors.
+This document separates portable project requirements from maintainer hardware and historical experiment provenance. A listed workstation is never a hardware requirement for contributors.
 
 ## Supported project baseline
 
@@ -15,14 +14,11 @@ experiment provenance. A listed workstation is never a hardware requirement for 
 | PostgreSQL                | `17-alpine` container                   |
 | Container runtime         | Docker with Compose                     |
 
-General package, API, dashboard, and CPU test work does not require an NVIDIA GPU. Deep-training
-results must use a compatible accelerator and record the actual runtime, device count, model
-configuration, and data provenance.
+General package, API, dashboard, and CPU test work does not require an NVIDIA GPU. Deep-training results must use a compatible accelerator and record the actual runtime, device count, model configuration, and data provenance.
 
 ## Python environment with uv
 
-`pyproject.toml` defines dependency ranges and `uv.lock` records the exact cross-platform
-resolution. Do not commit `.venv`, and do not install project packages into the system Python.
+`pyproject.toml` defines dependency ranges and `uv.lock` records the exact cross-platform resolution. Do not commit `.venv`, and do not install project packages into the system Python.
 
 Install uv, then create the CPU development environment used by CI:
 
@@ -46,8 +42,7 @@ uv run --locked --no-sync python -m pytest
 uv run --locked --no-sync python -m ruff check src tests scripts dashboard
 ```
 
-The `deep` extra selects CPU-only PyTorch wheels in uv. On a CUDA 12.6 workstation, replace
-`--extra deep` with `--extra deep-cu126`:
+The `deep` extra selects CPU-only PyTorch wheels in uv. On a CUDA 12.6 workstation, replace `--extra deep` with `--extra deep-cu126`:
 
 ```bash
 uv sync --locked \
@@ -62,18 +57,13 @@ uv sync --locked \
   --extra deep-cu126
 ```
 
-The two deep-learning extras conflict intentionally and cannot be enabled together. Both profiles
-pin the tested compatible matrix `torch==2.13.0`, `torchvision==0.28.0`, and `torchaudio==2.11.0`;
-TorchAudio 2.11 uses the stable PyTorch ABI and supports PyTorch 2.11 and later. uv selects CPU or
-CUDA 12.6 wheels from the corresponding explicit index.
+The two deep-learning extras conflict intentionally and cannot be enabled together. Both profiles pin the tested compatible matrix `torch==2.13.0`, `torchvision==0.28.0`, and `torchaudio==2.11.0`; TorchAudio 2.11 uses the stable PyTorch ABI and supports PyTorch 2.11 and later. uv selects CPU or CUDA 12.6 wheels from the corresponding explicit index.
 
-Miniforge or Conda is not required. Reconsider it only when a future dependency needs a native
-library unavailable from PyPI/PyTorch wheels.
+Miniforge or Conda is not required. Reconsider it only when a future dependency needs a native library unavailable from PyPI/PyTorch wheels.
 
 ## Node.js and Go
 
-`mise.toml` pins the maintainer toolchain. mise is optional for contributors; equivalent
-installations of the exact versions are valid.
+`mise.toml` pins the maintainer toolchain. mise is optional for contributors; equivalent installations of the exact versions are valid.
 
 ```bash
 mise install
@@ -82,17 +72,13 @@ npm --version
 go version
 ```
 
-Node.js 22 is in Maintenance LTS. Migrate the project and CI to Node.js 24 LTS before Node.js 22
-reaches end of life; perform that migration as a separately tested maintenance change.
+Node.js 22 is in Maintenance LTS. Migrate the project and CI to Node.js 24 LTS before Node.js 22 reaches end of life; perform that migration as a separately tested maintenance change.
 
 ## Docker and PostgreSQL
 
-On native Linux, use one Docker Engine. On Windows with WSL2, prefer Docker Desktop with WSL
-integration and do not also run a second `docker.service` inside the same distribution. Keeping one
-daemon avoids separate image stores, volumes, networks, and conflicting published ports.
+On native Linux, use one Docker Engine. On Windows with WSL2, prefer Docker Desktop with WSL integration and do not also run a second `docker.service` inside the same distribution. Keeping one daemon avoids separate image stores, volumes, networks, and conflicting published ports.
 
-Create `.env` from `.env.example`, provide local-only PostgreSQL credentials, then start the
-database:
+Create `.env` from `.env.example`, provide local-only PostgreSQL credentials, then start the database:
 
 ```bash
 cp .env.example .env
@@ -100,17 +86,13 @@ docker compose up -d postgres
 docker compose ps
 ```
 
-PostgreSQL remains required for the Go API. The service must fail fast when the database URL is
-absent or unreachable.
+PostgreSQL remains required for the Go API. The service must fail fast when the database URL is absent or unreachable.
 
 ## CUDA on WSL2
 
-WSL2 uses the NVIDIA driver installed on Windows. Do not install a Linux NVIDIA display driver,
-`cuda-drivers`, or a driver-bearing `cuda` meta-package inside WSL. PyTorch wheels include the CUDA
-runtime needed by this project; a system `nvcc` compiler is not required for normal training.
+WSL2 uses the NVIDIA driver installed on Windows. Do not install a Linux NVIDIA display driver, `cuda-drivers`, or a driver-bearing `cuda` meta-package inside WSL. PyTorch wheels include the CUDA runtime needed by this project; a system `nvcc` compiler is not required for normal training.
 
-Install a WSL-safe CUDA Toolkit only if future work must compile custom CUDA extensions. In that
-case, choose a toolkit-only package and record its exact version.
+Install a WSL-safe CUDA Toolkit only if future work must compile custom CUDA extensions. In that case, choose a toolkit-only package and record its exact version.
 
 Verify the active PyTorch environment:
 
@@ -121,8 +103,7 @@ uv run --locked --no-sync python -c \
 
 ## Current maintainer workstation snapshot
 
-Snapshot recorded on `2026-09-09`; these values describe one development machine and are not project
-requirements:
+Snapshot recorded on `2026-09-09`; these values describe one development machine and are not project requirements:
 
 ```text
 Host: Windows with WSL2
@@ -142,9 +123,7 @@ Docker Desktop: 29.7.2
 Docker Compose: 5.3.1
 ```
 
-Single-GPU training must not be described as multi-GPU training. Detect device count at runtime and
-enable `DataParallel` or `DistributedDataParallel` only when more than one usable device is actually
-present.
+Single-GPU training must not be described as multi-GPU training. Detect device count at runtime and enable `DataParallel` or `DistributedDataParallel` only when more than one usable device is actually present.
 
 ## Historical GPU experiment provenance
 
@@ -160,6 +139,4 @@ GPU 1: NVIDIA GeForce RTX 4090
 uv: 0.11.11
 ```
 
-Those values remain attached to the historical results for auditability. They do not describe the
-current maintainer workstation and are not requirements for installing or contributing to the
-project.
+Those values remain attached to the historical results for auditability. They do not describe the current maintainer workstation and are not requirements for installing or contributing to the project.

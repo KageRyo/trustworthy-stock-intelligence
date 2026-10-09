@@ -1,12 +1,8 @@
 # Ticker Analysis API Contract
 
-The ticker analysis API is a schema-first read model built on top of the Python-generated warning
-records in PostgreSQL. When configured, the API can delegate a missing ticker to the Python
-on-demand analysis command, refresh the store, and then convert the resulting PostgreSQL
-`warning_records` row into a typed, dashboard-oriented analysis response.
+The ticker analysis API is a schema-first read model built on top of the Python-generated warning records in PostgreSQL. When configured, the API can delegate a missing ticker to the Python on-demand analysis command, refresh the store, and then convert the resulting PostgreSQL `warning_records` row into a typed, dashboard-oriented analysis response.
 
-JSON examples and field tables in this document describe the owned response schema. They should stay
-aligned with Go structs, OpenAPI, and frontend Zod schemas.
+JSON examples and field tables in this document describe the owned response schema. They should stay aligned with Go structs, OpenAPI, and frontend Zod schemas.
 
 ## Endpoint
 
@@ -14,16 +10,11 @@ aligned with Go structs, OpenAPI, and frontend Zod schemas.
 GET /api/v1/analysis/{ticker}
 ```
 
-Ticker lookup is case-insensitive. Missing tickers trigger on-demand analysis when
-`TSI_ON_DEMAND_ANALYSIS_COMMAND` is configured. If the provider or model pipeline cannot produce a
-record, the endpoint returns the standard API error envelope.
+Ticker lookup is case-insensitive. Missing tickers trigger on-demand analysis when `TSI_ON_DEMAND_ANALYSIS_COMMAND` is configured. If the provider or model pipeline cannot produce a record, the endpoint returns the standard API error envelope.
 
-If market data exists but the ticker does not have enough labeled history for a calibrated
-prediction, the endpoint returns an `abstain` analysis with the `insufficient_history` reason code.
-This keeps the response schema stable while making the trust limitation explicit.
+If market data exists but the ticker does not have enough labeled history for a calibrated prediction, the endpoint returns an `abstain` analysis with the `insufficient_history` reason code. This keeps the response schema stable while making the trust limitation explicit.
 
-Taiwan local tickers are string symbols. Numeric and alphanumeric inputs such as `0050`, `2330`,
-`00981A`, `02001L`, and TPEx emerging symbols such as `5240` should not be coerced to numbers.
+Taiwan local tickers are string symbols. Numeric and alphanumeric inputs such as `0050`, `2330`, `00981A`, `02001L`, and TPEx emerging symbols such as `5240` should not be coerced to numbers.
 
 ## Response Schema
 
@@ -70,12 +61,9 @@ Taiwan local tickers are string symbols. Numeric and alphanumeric inputs such as
 | `summary_code`       | string | Stable trust summary code, for example `limited_data_quality` or `calibration_drift_abstain`. The dashboard localizes it. |
 | `summary`            | string | English trust summary for `summary_code`; clients fall back to it for unknown codes.                                      |
 
-The Go API picks `summary_code` from the record's reason codes with one ordered rule table. The
-dashboard translates the code with its i18n dictionary, and translates the freshness message by
-`freshness.reason_code`, so neither card shows the English API text in 正體中文.
+The Go API picks `summary_code` from the record's reason codes with one ordered rule table. The dashboard translates the code with its i18n dictionary, and translates the freshness message by `freshness.reason_code`, so neither card shows the English API text in 正體中文.
 
-Batches produced with `--trust-method legacy` derive both scores from the risk probability. See
-[Experiment 015](../../../experiments/015_reliability_trust/README.md) for why the default changed.
+Batches produced with `--trust-method legacy` derive both scores from the risk probability. See [Experiment 015](../../../experiments/015_reliability_trust/README.md) for why the default changed.
 
 ### `AlertPolicyMetadata`
 
@@ -90,17 +78,11 @@ Batches produced with `--trust-method legacy` derive both scores from the risk p
 | `calibration_alert_precision` | number \| null | Precision of alerts on the calibration window.                                                              |
 | `note`                        | string         | Set when too few calibration rows alert for the thresholds to be stable.                                    |
 
-Calibration-drift and alert-policy metadata come from the batch that produced the ticker's record,
-not from the latest batch. See [Experiment 016](../../../experiments/016_alert_policy/README.md) for
-the policy evaluation.
+Calibration-drift and alert-policy metadata come from the batch that produced the ticker's record, not from the latest batch. See [Experiment 016](../../../experiments/016_alert_policy/README.md) for the policy evaluation.
 
 ### `CalibrationDriftMetadata`
 
-The serving command compares the fitted calibration reference window with a later labeled window
-when enough history exists. Drift detection does not fit on the later window. A degraded assessment
-reduces trust; two or more signals trigger `abstain`. If no later labeled window is available, the
-response marks the gate `not_evaluated` and emits a reason code rather than presenting the
-prediction as equally trustworthy.
+The serving command compares the fitted calibration reference window with a later labeled window when enough history exists. Drift detection does not fit on the later window. A degraded assessment reduces trust; two or more signals trigger `abstain`. If no later labeled window is available, the response marks the gate `not_evaluated` and emits a reason code rather than presenting the prediction as equally trustworthy.
 
 | Field              | Type           | Description                                                |
 | ------------------ | -------------- | ---------------------------------------------------------- |
@@ -137,20 +119,16 @@ prediction as equally trustworthy.
 
 ### `FreshnessAssessment`
 
-Freshness is evaluated at API read time against the prediction's feature interval and ticker market.
-`fresh` permits normal display, `stale` retains the result for context while requiring a confidence
-downgrade, and `unusable` blocks an actionable interpretation and supplies an `abstain` override.
+Freshness is evaluated at API read time against the prediction's feature interval and ticker market. `fresh` permits normal display, `stale` retains the result for context while requiring a confidence downgrade, and `unusable` blocks an actionable interpretation and supplies an `abstain` override.
 
-A date-only `data_as_of` names a daily bar. The bar counts as complete at the market's regular
-session close:
+A date-only `data_as_of` names a daily bar. The bar counts as complete at the market's regular session close:
 
 - US: 16:00 New York.
 - TWSE and TPEx: 13:30 Taipei.
 - Emerging stocks: 15:00 Taipei.
 - Unknown markets: 00:00 UTC on that date.
 
-Age is measured from that instant. A query made before the close on the same date gets
-`freshness_future_data_as_of`, because that daily bar is still open.
+Age is measured from that instant. A query made before the close on the same date gets `freshness_future_data_as_of`, because that daily bar is still open.
 
 | Field                    | Type              | Description                                                                                    |
 | ------------------------ | ----------------- | ---------------------------------------------------------------------------------------------- |
@@ -187,10 +165,7 @@ Age is measured from that instant. A query made before the close on the same dat
 | `direction`    | string         | `positive`, `negative`, or `neutral` relative to drawdown-risk log-odds. |
 | `method`       | string         | Versioned attribution method identifier.                                 |
 
-The current logistic baseline emits `standardized_logit_v1`: the fitted positive-class coefficient
-multiplied by the imputed and standardized feature value. This is a reproducible model diagnostic,
-not a causal explanation and not investment advice. Tree and deep model attribution methods remain
-separate because their stability and semantics differ.
+The current logistic baseline emits `standardized_logit_v1`: the fitted positive-class coefficient multiplied by the imputed and standardized feature value. This is a reproducible model diagnostic, not a causal explanation and not investment advice. Tree and deep model attribution methods remain separate because their stability and semantics differ.
 
 ## Error Schema
 
@@ -209,11 +184,7 @@ Known analysis endpoint errors:
 | `429`       | `on_demand_analysis_busy`   | Every on-demand analysis slot is in use. Retry after `Retry-After` seconds or queue a prediction job. |
 | `503`       | `on_demand_analysis_failed` | The configured on-demand analysis command failed or timed out.                                        |
 
-On-demand analysis runs one analysis per ticker at a time. Concurrent requests for the same ticker
-share one run. `TSI_ON_DEMAND_MAX_CONCURRENCY` caps how many different tickers run at once (default
-2). A request for another ticker while every slot is busy gets `429` immediately instead of waiting,
-and the dashboard then queues a prediction job. A client that disconnects stops waiting but does not
-cancel a run other requests share. The command timeout still applies.
+On-demand analysis runs one analysis per ticker at a time. Concurrent requests for the same ticker share one run. `TSI_ON_DEMAND_MAX_CONCURRENCY` caps how many different tickers run at once (default 2). A request for another ticker while every slot is busy gets `429` immediately instead of waiting, and the dashboard then queues a prediction job. A client that disconnects stops waiting but does not cancel a run other requests share. The command timeout still applies.
 
 ## Schema Ownership
 
@@ -223,8 +194,7 @@ The schema is implemented by Go structs in:
 services/api-gateway-go/internal/http/analysis.go
 ```
 
-Frontend clients should validate this response with a runtime schema before rendering. The
-TypeScript dashboard uses Zod schemas under:
+Frontend clients should validate this response with a runtime schema before rendering. The TypeScript dashboard uses Zod schemas under:
 
 ```text
 frontend/stock-dashboard/src/lib/schemas.ts

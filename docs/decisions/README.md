@@ -1,8 +1,6 @@
 # Decision Records
 
-Each record captures one decision that shapes the served system, the evidence behind it, and when to
-revisit it. Records are short and stable. When a decision changes, add a new record that supersedes
-the old one, and mark the old one `Superseded by NNNN` instead of rewriting it.
+Each record captures one decision that shapes the served system, the evidence behind it, and when to revisit it. Records are short and stable. When a decision changes, add a new record that supersedes the old one, and mark the old one `Superseded by NNNN` instead of rewriting it.
 
 | ID                                            | Decision                                                                              | Status   | Evidence                                                               |
 | --------------------------------------------- | ------------------------------------------------------------------------------------- | -------- | ---------------------------------------------------------------------- |

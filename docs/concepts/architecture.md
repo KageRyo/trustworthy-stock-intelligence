@@ -1,7 +1,6 @@
 # System Architecture
 
-Trustworthy Stock Intelligence v1 is a production-like reference deployment with a clear Python/Go
-split. The repository also supports running the stack locally for development and evaluation.
+Trustworthy Stock Intelligence v1 is a production-like reference deployment with a clear Python/Go split. The repository also supports running the stack locally for development and evaluation.
 
 ```mermaid
 flowchart TD
@@ -26,8 +25,7 @@ flowchart TD
 
 ## Data Layer
 
-Provider APIs are ingestion sources. The project should preserve snapshots for trustworthy ML runs
-instead of relying on request-time provider calls.
+Provider APIs are ingestion sources. The project should preserve snapshots for trustworthy ML runs instead of relying on request-time provider calls.
 
 The chosen medium-term store is PostgreSQL:
 
@@ -43,9 +41,7 @@ The schema supports:
 1d
 ```
 
-The near-real-time freshness target is 5-minute bars. Go serving is DB-backed and requires
-PostgreSQL. JSON exports are optional artifacts for debugging, notifications, or compatibility
-scripts.
+The near-real-time freshness target is 5-minute bars. Go serving is DB-backed and requires PostgreSQL. JSON exports are optional artifacts for debugging, notifications, or compatibility scripts.
 
 ## Python ML Core
 
@@ -77,8 +73,7 @@ prediction_batches
 warning_records
 ```
 
-The optional `latest_warnings.json` export is a `PredictionBatch` containing `PredictionRecord`
-items. Batch-level metadata includes:
+The optional `latest_warnings.json` export is a `PredictionBatch` containing `PredictionRecord` items. Batch-level metadata includes:
 
 ```text
 schema_version
@@ -101,8 +96,7 @@ warning_level
 reason_codes
 ```
 
-When JSON export is enabled, the file is written through a temporary file and `os.replace`, so
-readers do not observe partial writes.
+When JSON export is enabled, the file is written through a temporary file and `os.replace`, so readers do not observe partial writes.
 
 ## Go API Gateway
 
@@ -114,8 +108,7 @@ Go owns user-facing API serving:
 - serve latest warnings, ticker lookup, model metadata, health, status, and metrics
 - serve typed ticker analysis responses for dashboard use
 - support `level`, `limit`, `sort`, and `order` query filters
-- optionally delegate missing ticker analysis to a configured local Python command, then reload
-  PostgreSQL-backed warnings
+- optionally delegate missing ticker analysis to a configured local Python command, then reload PostgreSQL-backed warnings
 
 Go does not:
 
@@ -127,8 +120,7 @@ Go does not:
 
 ## Dashboards
 
-The TypeScript stock dashboard is the primary ticker analysis UI. It reads the Go API and validates
-response payloads with Zod schemas before rendering.
+The TypeScript stock dashboard is the primary ticker analysis UI. It reads the Go API and validates response payloads with Zod schemas before rendering.
 
 Primary endpoints:
 
@@ -143,14 +135,11 @@ GET /api/v1/status
 GET /api/v1/models/current
 ```
 
-The analysis endpoint is schema-owned by Go structs in
-`services/api-gateway-go/internal/http/analysis.go` and documented in
-`docs/reference/api/analysis_api.md`.
+The analysis endpoint is schema-owned by Go structs in `services/api-gateway-go/internal/http/analysis.go` and documented in `docs/reference/api/analysis_api.md`.
 
 Streamlit has two views:
 
-- artifact tabs for experiment summaries, diagnostics, threshold sweeps, and optional ticker-level
-  prediction CSVs
+- artifact tabs for experiment summaries, diagnostics, threshold sweeps, and optional ticker-level prediction CSVs
 - Live API tab that reads the Go gateway for current warning output
 
 ## Reference Demo Flow

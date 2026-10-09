@@ -17,8 +17,7 @@ Start here to find the right document. Documents are grouped by what the reader 
 
 ## Model card
 
-The [model card](model_card.md) describes the model served today: task, data, label, features,
-training and serving steps, performance, explanations, and limitations.
+The [model card](model_card.md) describes the model served today: task, data, label, features, training and serving steps, performance, explanations, and limitations.
 
 ## Guides
 
@@ -78,16 +77,12 @@ training and serving steps, performance, explanations, and limitations.
 
 ## Writing and maintaining docs
 
-- **Placement.** Put each document in the one folder that matches its reader's question, and add it
-  to the table above in the same pull request.
+- **Placement.** Put each document in the one folder that matches its reader's question, and add it to the table above in the same pull request.
 - **Names.** Use lowercase `snake_case.md`. Decision records use `NNNN-short-title.md`.
-- **Opening.** Start with a title and one or two sentences saying what the document covers and who
-  it is for.
+- **Opening.** Start with a title and one or two sentences saying what the document covers and who it is for.
 - **Single source.**
   - Link to a fact instead of copying it.
   - Plans go in the roadmap, and decisions go in decision records.
   - Experiment numbers go in experiment reports. Other documents summarize them and link back.
-- **Checks.** `make docs-check` runs mdformat (`--wrap 100`) and `scripts/check_markdown_links.py`.
-  The link checker fails on a relative link or an inline repository path (such as `docs/roadmap.md`)
-  that Git does not track. Python CI runs the same check through `tests/test_markdown_links.py`.
+- **Checks.** `make docs-check` runs mdformat (`--wrap no`, so each paragraph stays on one line) and `scripts/check_markdown_links.py`. The link checker fails on a relative link or an inline repository path (such as `docs/roadmap.md`) that Git does not track. Python CI runs the same check through `tests/test_markdown_links.py`.
 - **Moves.** Use `git mv` so history follows the file, then run `make docs-check`.

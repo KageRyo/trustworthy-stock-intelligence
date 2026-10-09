@@ -2,8 +2,7 @@
 
 ## Overview
 
-This report summarizes a Temporal Transformer risk model with calibration, uncertainty scoring,
-trust scoring, and warning-level decisions.
+This report summarizes a Temporal Transformer risk model with calibration, uncertainty scoring, trust scoring, and warning-level decisions.
 
 ## Model Config
 
@@ -97,8 +96,7 @@ trust scoring, and warning-level decisions.
 
 - Interpret `alert` as the strongest warning and `watch` as lower-intensity monitoring.
 
-- The current subtractive trust score is overly conservative under entropy uncertainty when trust
-  thresholds are high; compare multiplicative trust scoring before dashboard presentation.
+- The current subtractive trust score is overly conservative under entropy uncertainty when trust thresholds are high; compare multiplicative trust scoring before dashboard presentation.
 
 - Use threshold sweep candidates to choose a policy before dashboard presentation.
 
@@ -110,5 +108,4 @@ trust scoring, and warning-level decisions.
 
 - Threshold policies should be validated across more folds and market regimes.
 
-- Watch decisions are weaker than alerts and should not be interpreted as positive predictions
-  without context.
+- Watch decisions are weaker than alerts and should not be interpreted as positive predictions without context.
