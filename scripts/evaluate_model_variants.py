@@ -118,7 +118,8 @@ class MLPRiskModel:
 
     def fit(self, features: np.ndarray, labels: np.ndarray) -> MLPRiskModel:
         self._preprocess = Pipeline(
-            steps=[("imputer", SimpleImputer(strategy="median")), ("scaler", StandardScaler())]
+            steps=[("imputer", SimpleImputer(strategy="median")), ("scaler", StandardScaler())],
+            memory=None,
         )
         inputs = self._tensor(self._preprocess.fit_transform(features))
         targets = torch.as_tensor(labels.astype(np.float32), device=self.device)
@@ -197,7 +198,10 @@ def build_model(
                 steps=[
                     ("imputer", SimpleImputer(strategy="median")),
                     ("scaler", StandardScaler()),
-                    ("terms", PolynomialFeatures(degree=2, include_bias=False)),
+                    (
+                        "terms",
+                        PolynomialFeatures(degree=2, interaction_only=False, include_bias=False),
+                    ),
                     ("term_scaler", StandardScaler()),
                     (
                         "classifier",
@@ -205,23 +209,30 @@ def build_model(
                             class_weight="balanced", max_iter=2000, random_state=RANDOM_STATE
                         ),
                     ),
-                ]
+                ],
+                memory=None,
             )
         )
     if family == "hist_gradient_boosting":
+        tree = HIST_GRADIENT_BOOSTING_PARAMETERS
         return SklearnRiskModel(
             Pipeline(
                 steps=[
                     (
                         "classifier",
                         HistGradientBoostingClassifier(
-                            **HIST_GRADIENT_BOOSTING_PARAMETERS,
+                            learning_rate=tree["learning_rate"],
+                            max_iter=int(tree["max_iter"]),
+                            max_leaf_nodes=int(tree["max_leaf_nodes"]),
+                            min_samples_leaf=int(tree["min_samples_leaf"]),
+                            l2_regularization=tree["l2_regularization"],
                             early_stopping=False,
                             class_weight="balanced",
                             random_state=RANDOM_STATE,
                         ),
                     )
-                ]
+                ],
+                memory=None,
             )
         )
     if family == "mlp":
