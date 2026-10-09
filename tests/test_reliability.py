@@ -151,5 +151,7 @@ def test_assessor_restored_from_params_scores_identically() -> None:
 
 
 def test_assessor_params_require_a_fitted_assessor() -> None:
+    assessor = ReliabilityAssessor()
+
     with pytest.raises(ValueError, match="fit"):
-        ReliabilityAssessor().params()
+        assessor.params()

@@ -16,7 +16,7 @@
 ### Added
 
 - Pooled model bundles ([ADR 0009](docs/decisions/0009-on-demand-uses-pooled-bundles.md)):
-  - `predict_latest_baseline --model-bundle-output` writes the fitted serving state as schema-validated JSON (`serving_model_bundle.v1`), and `--model-bundle` scores an input with a stored bundle instead of fitting on it. Batch outputs are unchanged.
+  - `predict_latest_baseline --model-bundle-output` writes the fitted serving state as schema-validated JSON (`serving_model_bundle.v1`), and `--model-bundle` scores an input with a stored bundle instead of fitting on it. Both paths must stay inside `--model-bundle-root` (default `TSI_MODEL_BUNDLE_DIR`). Batch outputs are unchanged.
   - `make model-bundles` builds `us.json` and `taiwan.json` in `MODEL_BUNDLE_DIR`.
   - `tsi.models.linear` scores stored logistic parameters with numpy, and calibrators and reliability references export and restore their fitted values.
 - `scripts/evaluate_model_variants.py` compares logistic, quadratic logistic, gradient boosting, and a GPU-trained MLP across 252-date, 756-date, and expanding training windows on identical folds (Experiment 019). It records the uncalibrated AUC and the Platt slope per fold, and `--reuse-per-fold` rebuilds a summary without refitting.
