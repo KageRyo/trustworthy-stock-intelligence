@@ -703,6 +703,23 @@ def download_ticker_frame(
             if resolved_ticker.market == "us":
                 failed_batches.append([query_symbol])
                 continue
+            if market == "auto" and resolved_ticker.market == "twse":
+                tpex_frame, tpex_health = _download_yfinance_tpex(
+                    resolved_ticker.ticker,
+                    start=start,
+                    end=end,
+                    interval=interval,
+                    policy=policy,
+                )
+                provider_health.append(tpex_health)
+                if not tpex_frame.empty:
+                    all_frames.append(tpex_frame)
+                    resolved_by_ticker[resolved_ticker.ticker] = DownloadTicker(
+                        ticker=resolved_ticker.ticker,
+                        query_symbol=tpex_health.query_symbol,
+                        market=tpex_health.market,
+                    )
+                    continue
             fallback_started = time.perf_counter()
             fallback_outcome = run_with_retry(
                 lambda: download_taiwan_daily_fallback(
@@ -783,6 +800,72 @@ def _fallback_provider_name(market: ResolvedTickerMarket) -> str:
         "tpex": "tpex",
         "emerging": "tpex_emerging",
     }.get(market, "taiwan_fallback")
+
+
+def _download_yfinance_tpex(
+    ticker: str,
+    *,
+    start: str,
+    end: str | None,
+    interval: str,
+    policy: RetryPolicy,
+) -> tuple[pd.DataFrame, ProviderHealthSnapshot]:
+    """Retry an auto-resolved Taiwan code as a TPEx-listed yfinance symbol.
+
+    Auto mode first queries ``<code>.TW``. TPEx-listed and emerging stocks only exist as
+    ``<code>.TWO`` on yfinance, and the official monthly fallbacks need one request per month, which
+    fails for long histories. Trying ``.TWO`` first keeps the TWSE, TPEx listed, TPEx emerging order.
+    When ``.TWO`` has data, one official check of the emerging board labels the market.
+    """
+
+    query_symbol = f"{ticker}.TWO"
+    started = time.perf_counter()
+    outcome = run_with_retry(
+        lambda: yf.download(
+            tickers=[query_symbol],
+            start=start,
+            end=end,
+            interval=interval,
+            group_by="ticker",
+            auto_adjust=False,
+            actions=False,
+            threads=True,
+            progress=False,
+        ),
+        policy=policy,
+        is_success=lambda frame: isinstance(frame, pd.DataFrame) and not frame.empty,
+    )
+    latency_ms = (time.perf_counter() - started) * 1000
+    raw = outcome.value if isinstance(outcome.value, pd.DataFrame) else pd.DataFrame()
+    frame = _normalize_download_frame(
+        raw,
+        [query_symbol],
+        {query_symbol: ticker},
+        preserve_timestamp=interval != "1d",
+    )
+    health = make_provider_health_snapshot(
+        provider="yfinance",
+        market=_tpex_board(ticker) if not frame.empty else "tpex",
+        ticker=ticker,
+        query_symbol=query_symbol,
+        outcome=outcome,
+        coverage="available" if not frame.empty else "unavailable",
+        latency_ms=latency_ms,
+        error_code="" if not frame.empty else "no_coverage",
+    )
+    return frame, health
+
+
+def _tpex_board(ticker: str) -> Literal["tpex", "emerging"]:
+    """Board of a code that yfinance serves as ``.TWO``: emerging if it trades there recently."""
+
+    month_start = pd.Timestamp.today().normalize().replace(day=1)
+    recent = (month_start - pd.DateOffset(months=1)).strftime("%Y-%m-%d")
+    try:
+        emerging = download_tpex_emerging_daily_frame(ticker, start=recent, end=None)
+    except Exception:  # noqa: BLE001 - an unreachable board check keeps the listed label
+        return "tpex"
+    return "emerging" if not emerging.empty else "tpex"
 
 
 def download_taiwan_daily_fallback(

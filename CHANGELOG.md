@@ -8,6 +8,7 @@
 
 ### Fixed
 
+- On-demand analysis failed for TPEx-listed and emerging codes such as `6488`, `5274`, and `5240`. Automatic resolution queried only `<code>.TW` on Yahoo Finance and then the official monthly endpoints, which cannot fetch the default history from 2015. It now tries `<code>.TWO` first and labels the result `tpex` or `emerging` with one official emerging-board check. Emerging stocks resolved this way use Yahoo Finance prices instead of the official volume-weighted closes.
 - Platt calibration could reverse the model's ranking. After a regime break, the latest 63-date calibration window can fit a negative slope, which ranks the riskiest rows as the safest. Experiment 020 found one such S&P 100 batch, where test AUC fell from 0.758 to 0.242. Single-ticker on-demand models had a non-positive slope at about half of all replayed dates.
   - Serving and on-demand analysis default to `--calibration-method platt_monotone`. It fits Platt scaling and, if the slope is not positive, keeps the model's ranking and shifts its log-odds to the calibration window's event rate ([ADR 0007](docs/decisions/0007-calibration-keeps-model-ranking.md)).
   - Rows scored with the fallback carry the reason code `calibration_slope_nonpositive`, which the API and dashboard explain in English and 正體中文.

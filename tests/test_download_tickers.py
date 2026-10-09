@@ -7,6 +7,7 @@ import pandas as pd
 import pytest
 
 from tsi.data import download as download_module
+from tsi.data.provider_health import RetryPolicy
 from tsi.data.download import (
     TPEXEmergingHistoricalResponse,
     TPEXEmergingHistoricalTable,
@@ -19,6 +20,9 @@ from tsi.data.download import (
     resolve_yfinance_ticker,
 )
 
+
+# One attempt and no backoff, so fallback tests do not sleep between retries.
+NO_WAIT = RetryPolicy(max_attempts=1, initial_backoff_seconds=0.0, max_backoff_seconds=0.0)
 
 def test_resolve_yfinance_ticker_maps_numeric_auto_to_twse_symbol() -> None:
     resolved = resolve_yfinance_ticker("2330")
@@ -326,6 +330,7 @@ def test_download_ticker_frame_falls_back_to_twse_daily_for_taiwan_code(monkeypa
         end="2026-06-02",
         interval="1d",
         market="auto",
+        retry_policy=NO_WAIT,
     )
 
     assert result.tickers[0].query_symbol == "00981A.TW"
@@ -392,6 +397,7 @@ def test_download_ticker_frame_falls_back_to_tpex_emerging_daily_for_taiwan_code
         end="2026-06-02",
         interval="1d",
         market="auto",
+        retry_policy=NO_WAIT,
     )
 
     assert result.tickers[0].query_symbol == "5240.EMERGING"
@@ -407,5 +413,142 @@ def test_download_ticker_frame_falls_back_to_tpex_emerging_daily_for_taiwan_code
         snapshot.provider == "tpex_emerging"
         and snapshot.status == "healthy"
         and snapshot.coverage == "available"
+        for snapshot in result.provider_health
+    )
+
+
+def test_download_ticker_frame_tries_tpex_yfinance_symbol_before_official_fallbacks(
+    monkeypatch,
+) -> None:
+    requested: list[list[str]] = []
+
+    def fake_yfinance_download(**kwargs):
+        requested.append(list(kwargs["tickers"]))
+        if kwargs["tickers"] != ["6488.TWO"]:
+            return pd.DataFrame()
+        index = pd.DatetimeIndex(["2015-01-05", "2026-10-08"], name="Date")
+        columns = pd.MultiIndex.from_product(
+            [["6488.TWO"], ["Open", "High", "Low", "Close", "Adj Close", "Volume"]]
+        )
+        return pd.DataFrame(
+            [
+                [300.0, 305.0, 298.0, 301.0, 301.0, 1000.0],
+                [400.0, 410.0, 395.0, 405.0, 405.0, 2000.0],
+            ],
+            index=index,
+            columns=columns,
+        )
+
+    def fail_official_fallback(*_args, **_kwargs):
+        raise AssertionError("official monthly fallbacks must not run when yfinance has .TWO data")
+
+    monkeypatch.setattr(download_module.yf, "download", fake_yfinance_download)
+    monkeypatch.setattr(download_module, "fetch_json", fail_official_fallback)
+    monkeypatch.setattr(
+        download_module,
+        "fetch_json_post",
+        lambda _url, _params: TPEXEmergingHistoricalResponse(stat="查無資料").model_dump(),
+    )
+
+    result = download_ticker_frame(
+        ["6488"], start="2015-01-01", interval="1d", market="auto", retry_policy=NO_WAIT
+    )
+
+    assert requested[0] == ["6488.TW"]
+    assert requested[-1] == ["6488.TWO"]
+    assert result.tickers[0].query_symbol == "6488.TWO"
+    assert result.tickers[0].market == "tpex"
+    assert result.failed_batches == []
+    assert result.ohlcv["ticker"].tolist() == ["6488", "6488"]
+    assert result.ohlcv["close"].tolist() == [301.0, 405.0]
+    assert any(
+        snapshot.provider == "yfinance"
+        and snapshot.market == "tpex"
+        and snapshot.coverage == "available"
+        for snapshot in result.provider_health
+    )
+
+
+def test_download_ticker_frame_keeps_official_fallbacks_when_tpex_symbol_misses(
+    monkeypatch,
+) -> None:
+    requested: list[list[str]] = []
+
+    def fake_yfinance_download(**kwargs):
+        requested.append(list(kwargs["tickers"]))
+        return pd.DataFrame()
+
+    monkeypatch.setattr(download_module.yf, "download", fake_yfinance_download)
+    monkeypatch.setattr(
+        download_module,
+        "fetch_json",
+        lambda _url, _params: TWSEStockDayResponse(stat="很抱歉，沒有符合條件的資料!").model_dump(),
+    )
+    monkeypatch.setattr(
+        download_module,
+        "fetch_json_post",
+        lambda _url, _params: TPEXEmergingHistoricalResponse(stat="查無資料").model_dump(),
+    )
+
+    with pytest.raises(download_module.DownloadUnavailableError):
+        download_ticker_frame(
+            ["7583"], start="2026-06-01", end="2026-06-02", market="auto", retry_policy=NO_WAIT
+        )
+
+    assert ["7583.TWO"] in requested
+
+
+def test_download_ticker_frame_labels_emerging_stocks_found_under_the_tpex_symbol(
+    monkeypatch,
+) -> None:
+    def fake_yfinance_download(**kwargs):
+        if kwargs["tickers"] != ["5240.TWO"]:
+            return pd.DataFrame()
+        index = pd.DatetimeIndex(["2026-10-08"], name="Date")
+        columns = pd.MultiIndex.from_product(
+            [["5240.TWO"], ["Open", "High", "Low", "Close", "Adj Close", "Volume"]]
+        )
+        return pd.DataFrame([[17.5, 18.2, 17.4, 17.9, 17.9, 5000.0]], index=index, columns=columns)
+
+    def fake_fetch_json_post(_url, _params):
+        return TPEXEmergingHistoricalResponse(
+            stat="ok",
+            date="20261008",
+            tables=[
+                TPEXEmergingHistoricalTable(
+                    title="興櫃個股歷史行情",
+                    data=[
+                        [
+                            "115/10/08",
+                            "5,000",
+                            "89,500",
+                            "18.20",
+                            "17.40",
+                            "17.90",
+                            "6",
+                            "0",
+                            "0",
+                            "0.00",
+                            "0.00",
+                            "0.00",
+                            "0",
+                        ]
+                    ],
+                )
+            ],
+        ).model_dump()
+
+    monkeypatch.setattr(download_module.yf, "download", fake_yfinance_download)
+    monkeypatch.setattr(download_module, "fetch_json_post", fake_fetch_json_post)
+
+    result = download_ticker_frame(
+        ["5240"], start="2015-01-01", interval="1d", market="auto", retry_policy=NO_WAIT
+    )
+
+    assert result.tickers[0].market == "emerging"
+    assert result.tickers[0].query_symbol == "5240.TWO"
+    assert result.ohlcv["close"].tolist() == [17.9]
+    assert any(
+        snapshot.provider == "yfinance" and snapshot.market == "emerging"
         for snapshot in result.provider_health
     )
