@@ -113,6 +113,42 @@ def _score(
     return row
 
 
+def _replay_single_tickers(
+    pooled_model: LogisticRiskModel,
+    known: pd.DataFrame,
+    test: pd.DataFrame,
+    next_step: pd.DataFrame,
+    args: argparse.Namespace,
+    columns: list[str],
+) -> tuple[list[dict[str, object]], list[pd.DataFrame]]:
+    """Fit one model per ticker; score its test window and its next-step history rows."""
+
+    rows: list[dict[str, object]] = []
+    history: list[pd.DataFrame] = []
+    for ticker, ticker_test in test.groupby("ticker", sort=True):
+        ticker_known = known[known["ticker"] == ticker]
+        single = (
+            _fit(ticker_known, args, columns)
+            if ticker_known["date"].nunique() >= args.min_history_dates
+            else None
+        )
+        if single is None:
+            continue
+        single_model, single_calibration = single
+        ticker_next = next_step[next_step["ticker"] == ticker]
+        history.append(
+            ticker_next[["ticker", "date", "risk_label"]].assign(
+                pooled=pooled_model.predict_proba(ticker_next[columns].to_numpy()),
+                single=single_model.predict_proba(ticker_next[columns].to_numpy()),
+            )
+        )
+        if ticker_test["risk_label"].nunique() == 2:
+            rows.append(
+                {"ticker": ticker, **_score(single_model, single_calibration, ticker_test, columns)}
+            )
+    return rows, history
+
+
 def _summarize(rows: pd.DataFrame) -> dict[str, float | int]:
     nonpositive = rows["platt_slope"] <= 0
     summary: dict[str, float | int] = {
@@ -162,30 +198,11 @@ def run(args: argparse.Namespace) -> dict[str, object]:
         pooled_rows.append(
             {"as_of": str(as_of.date()), **_score(pooled_model, pooled_calibration, test, columns)}
         )
-        for ticker, ticker_test in test.groupby("ticker", sort=True):
-            ticker_known = known[known["ticker"] == ticker]
-            if ticker_known["date"].nunique() < args.min_history_dates:
-                continue
-            single = _fit(ticker_known, args, columns)
-            if single is None:
-                continue
-            single_model, single_calibration = single
-            ticker_next = next_step[next_step["ticker"] == ticker]
-            history.append(
-                ticker_next[["ticker", "date", "risk_label"]].assign(
-                    pooled=pooled_model.predict_proba(ticker_next[columns].to_numpy()),
-                    single=single_model.predict_proba(ticker_next[columns].to_numpy()),
-                )
-            )
-            if ticker_test["risk_label"].nunique() < 2:
-                continue
-            single_rows.append(
-                {
-                    "as_of": str(as_of.date()),
-                    "ticker": ticker,
-                    **_score(single_model, single_calibration, ticker_test, columns),
-                }
-            )
+        ticker_rows, ticker_history = _replay_single_tickers(
+            pooled_model, known, test, next_step, args, columns
+        )
+        single_rows.extend({"as_of": str(as_of.date()), **row} for row in ticker_rows)
+        history.extend(ticker_history)
     if not pooled_rows or not single_rows:
         raise ValueError("No as-of date had enough labeled history in every window")
     pooled_frame = pd.DataFrame(pooled_rows)
