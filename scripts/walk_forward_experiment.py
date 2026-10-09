@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import argparse
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Generic, Protocol, TypeVar
 
 import numpy as np
 import pandas as pd
@@ -118,6 +119,7 @@ class WalkForwardFolds:
     feature_columns: list[str]
     market_reference_dir: Path | None = None
     chip_archive_dir: Path | None = None
+    frame: pd.DataFrame | None = field(default=None, repr=False, compare=False)
 
 
 def load_args_market_reference(
@@ -201,17 +203,57 @@ def load_walk_forward_folds(
         feature_columns=columns,
         market_reference_dir=args.market_reference if market_reference is not None else None,
         chip_archive_dir=args.chip_archive if chip_tables is not None else None,
+        frame=frame,
     )
 
 
-@dataclass(frozen=True)
-class CalibratedLogisticFit:
-    """Logistic baseline fit on train rows and calibrated on calibration rows."""
+class RiskModel(Protocol):
+    """Binary risk model that returns the positive-class probability per row."""
 
-    model: LogisticRiskModel
+    def fit(self, features: np.ndarray, labels: np.ndarray) -> object: ...
+
+    def predict_proba(self, features: np.ndarray) -> np.ndarray: ...
+
+
+ModelT = TypeVar("ModelT", bound=RiskModel)
+
+
+@dataclass(frozen=True)
+class CalibratedFit(Generic[ModelT]):
+    """Model fit on train rows and calibrated on calibration rows."""
+
+    model: ModelT
     calibrator: ProbabilityCalibrator
     calibration_probabilities: np.ndarray
     test_probabilities: np.ndarray
+    raw_test_probabilities: np.ndarray
+
+
+def fit_calibrated_model(
+    model: ModelT,
+    train: pd.DataFrame,
+    calibration: pd.DataFrame,
+    test: pd.DataFrame,
+    *,
+    feature_columns: Sequence[str],
+    calibration_method: CalibrationMethod,
+) -> CalibratedFit[ModelT]:
+    """Fit ``model`` and a calibrator; probabilities are calibrated for both windows."""
+
+    columns = list(feature_columns)
+    model.fit(train[columns].to_numpy(), train["risk_label"].to_numpy())
+    raw_calibration = model.predict_proba(calibration[columns].to_numpy())
+    calibrator = fit_probability_calibrator(
+        raw_calibration, calibration["risk_label"].to_numpy(), method=calibration_method
+    )
+    raw_test = model.predict_proba(test[columns].to_numpy())
+    return CalibratedFit(
+        model=model,
+        calibrator=calibrator,
+        calibration_probabilities=calibrator.predict(raw_calibration),
+        test_probabilities=calibrator.predict(raw_test),
+        raw_test_probabilities=raw_test,
+    )
 
 
 def fit_calibrated_logistic(
@@ -221,20 +263,16 @@ def fit_calibrated_logistic(
     *,
     feature_columns: Sequence[str],
     calibration_method: CalibrationMethod,
-) -> CalibratedLogisticFit:
-    """Fit the baseline and calibrator; probabilities are calibrated for both windows."""
+) -> CalibratedFit[LogisticRiskModel]:
+    """Fit the logistic baseline and calibrator."""
 
-    columns = list(feature_columns)
-    model = LogisticRiskModel().fit(train[columns].to_numpy(), train["risk_label"].to_numpy())
-    raw_calibration = model.predict_proba(calibration[columns].to_numpy())
-    calibrator = fit_probability_calibrator(
-        raw_calibration, calibration["risk_label"].to_numpy(), method=calibration_method
-    )
-    return CalibratedLogisticFit(
-        model=model,
-        calibrator=calibrator,
-        calibration_probabilities=calibrator.predict(raw_calibration),
-        test_probabilities=calibrator.predict(model.predict_proba(test[columns].to_numpy())),
+    return fit_calibrated_model(
+        LogisticRiskModel(),
+        train,
+        calibration,
+        test,
+        feature_columns=feature_columns,
+        calibration_method=calibration_method,
     )
 
 

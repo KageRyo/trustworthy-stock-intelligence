@@ -83,6 +83,8 @@ Ranking and calibration, `technical_range` ([Experiment 017](../experiments/017_
 | S&P 500 excluding S&P 100 (holdout) |     402 | 0.632 |  0.190 | 0.052 | +0.023 [0.015, 0.031]               |
 | Taiwan large caps                   |      53 | 0.738 |  0.221 | 0.051 | +0.029 [0.019, 0.039]               |
 
+These numbers train each fold on 252 dates. Serving trains on every earlier labeled date, which ranked better on the same later folds by 0.018 (S&P 100), 0.012 (S&P 500 holdout), and 0.012 (Taiwan) in uncalibrated AUC ([Experiment 019](../experiments/019_nonlinear_models/README.md)). The table is therefore conservative for ranking. Gradient boosting, a quadratic logistic model, and a GPU-trained MLP did not beat the logistic model on both US samples in that experiment.
+
 Served thresholds on S&P 100 with `technical_range` (rerun of Experiment 016, recorded in Experiment 017):
 
 | Policy            | Alert rate | Precision | Recall | Fold-median precision | Alert days per ticker-month |
@@ -108,6 +110,6 @@ Each prediction lists up to five feature attributions. An attribution is the log
 
 ## Reproduce and audit
 
-- Evidence: Experiments [007](../experiments/007_research_evidence/README.md) (protocol), [013](../experiments/013_aligned_model_family_benchmark/README.md) (model family), [015](../experiments/015_reliability_trust/README.md) (trust), [016](../experiments/016_alert_policy/README.md) (thresholds), [017](../experiments/017_feature_sets/README.md) (features), [018](../experiments/018_taiwan_chip_features/README.md) (Taiwan chip data), and [020](../experiments/020_serving_replay/README.md) (serving replay and calibration reversal).
+- Evidence: Experiments [007](../experiments/007_research_evidence/README.md) (protocol), [013](../experiments/013_aligned_model_family_benchmark/README.md) and [019](../experiments/019_nonlinear_models/README.md) (model family and training window), [015](../experiments/015_reliability_trust/README.md) (trust), [016](../experiments/016_alert_policy/README.md) (thresholds), [017](../experiments/017_feature_sets/README.md) (features), [018](../experiments/018_taiwan_chip_features/README.md) (Taiwan chip data), and [020](../experiments/020_serving_replay/README.md) (serving replay and calibration reversal).
 - Serving code: `scripts/predict_latest_baseline.py`, `src/tsi/features/sets.py`, `src/tsi/trust/calibration.py`, and `src/tsi/trust/reliability.py`.
 - Every batch stores its run ID, `data_as_of`, `generated_at`, feature interval, model bundle, calibration-drift metadata, and alert-policy metadata in PostgreSQL.
