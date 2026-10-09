@@ -15,7 +15,7 @@ from tsi.serving.schema import PredictionBatch, PredictionRecord, build_predicti
 from tsi.trust.trust_score import compute_trust_score
 from tsi.trust.uncertainty import binary_entropy_uncertainty, margin_uncertainty
 
-__version__ = "0.8.0"
+__version__ = "0.9.0"
 
 __all__ = [
     "DEFAULT_FEATURE_COLUMNS",
