@@ -6,6 +6,7 @@ from collections.abc import Sequence
 
 import numpy as np
 
+from tsi.models.linear import LinearLogitModel
 from tsi.serving.schema import FeatureAttribution
 
 
@@ -37,23 +38,11 @@ def build_logistic_feature_attributions(
     if values.shape[1] != len(names):
         raise ValueError("feature_names must match the number of feature columns")
 
-    pipeline = getattr(model, "pipeline", None)
-    if pipeline is None:
+    terms = _standardized_terms(model, values)
+    if terms is None:
         return [[] for _ in range(values.shape[0])]
-    try:
-        imputer = pipeline.named_steps["imputer"]
-        scaler = pipeline.named_steps["scaler"]
-        classifier = pipeline.named_steps["classifier"]
-        coefficients = np.asarray(classifier.coef_, dtype=float)
-    except (AttributeError, KeyError):
-        return [[] for _ in range(values.shape[0])]
-    if coefficients.ndim != 2 or coefficients.shape[0] != 1:
-        return [[] for _ in range(values.shape[0])]
-    if coefficients.shape[1] != values.shape[1]:
-        raise ValueError("fitted classifier coefficients do not match features")
-
-    standardized = scaler.transform(imputer.transform(values))
-    contributions = standardized * coefficients[0]
+    standardized, coefficients = terms
+    contributions = standardized * coefficients
     attributions: list[list[FeatureAttribution]] = []
     for raw_row, contribution_row in zip(values, contributions, strict=True):
         order = np.argsort(-np.abs(contribution_row), kind="stable")[:top_k]
@@ -78,3 +67,27 @@ def build_logistic_feature_attributions(
             )
         attributions.append(row_attributions)
     return attributions
+
+
+def _standardized_terms(model: object, values: np.ndarray) -> tuple[np.ndarray, np.ndarray] | None:
+    """Standardized features and coefficients, or None for models without logistic terms."""
+
+    if isinstance(model, LinearLogitModel):
+        if len(model.params.coefficients) != values.shape[1]:
+            raise ValueError("fitted classifier coefficients do not match features")
+        return model.standardize(values), model.coefficients
+    pipeline = getattr(model, "pipeline", None)
+    if pipeline is None:
+        return None
+    try:
+        imputer = pipeline.named_steps["imputer"]
+        scaler = pipeline.named_steps["scaler"]
+        classifier = pipeline.named_steps["classifier"]
+        coefficients = np.asarray(classifier.coef_, dtype=float)
+    except (AttributeError, KeyError):
+        return None
+    if coefficients.ndim != 2 or coefficients.shape[0] != 1:
+        return None
+    if coefficients.shape[1] != values.shape[1]:
+        raise ValueError("fitted classifier coefficients do not match features")
+    return scaler.transform(imputer.transform(values)), coefficients[0]
