@@ -1,7 +1,7 @@
 package apihttp
 
 import (
-	_ "embed"
+	_ "embed" // Enables the go:embed directive for reasonExplanationsJSON.
 	"encoding/json"
 	"fmt"
 	"strings"
