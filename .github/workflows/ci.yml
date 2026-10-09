@@ -60,7 +60,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: "1.25.13"
+          go-version: "1.27.2"
           cache-dependency-path: services/api-gateway-go/go.mod
 
       - name: Run Go vet
@@ -147,7 +147,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: "1.25.13"
+          go-version: "1.27.2"
           cache-dependency-path: services/api-gateway-go/go.mod
 
       - name: Build Go API binary
