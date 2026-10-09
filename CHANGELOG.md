@@ -13,9 +13,17 @@
 
 ### Fixed
 
+- On-demand analysis caught insufficient history by matching error-message text, and one of the
+  three messages never matched.
+
+  - `predict_latest_baseline` now raises `InsufficientHistoryError`, a `ValueError` subclass, for
+    too few labeled dates, empty train or calibration windows, and no feature-complete latest row.
+  - The on-demand bridge catches that type and returns its typed `insufficient_history` abstention.
+
 - Freshness treated a date-only `data_as_of` as 23:59:59 UTC. As a result, every daily prediction
   made on the same day was marked unusable as "in the future" until 08:00 the next morning, Taipei
   time.
+
   - The daily cutoff is now the market's regular session close: 16:00 New York for US stocks, 13:30
     Taipei for TWSE and TPEx stocks, and 15:00 Taipei for emerging stocks.
   - An intraday query on a still-open daily bar is blocked until the close.
