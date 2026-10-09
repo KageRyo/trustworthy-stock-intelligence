@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.8.0 - 2026-10-09
+
 ### Fixed
 
 - On-demand analysis caught insufficient history by matching error-message text, and one of the

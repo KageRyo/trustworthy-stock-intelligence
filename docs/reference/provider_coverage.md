@@ -97,4 +97,4 @@ the resolved symbol and its retention rules.
 - [User guide](../guides/user_guide.md) for ticker input and Taiwan fallback behavior.
 - [Data store](data_store.md) for PostgreSQL market-bar persistence.
 - [Local demo](../guides/local_demo.md) for running the DB-backed serving path.
-- [Roadmap](../roadmap.md) for the current `v0.7.0` operational-prototype priorities.
+- [Roadmap](../roadmap.md) for the current `v0.8.0` operational-prototype priorities.
