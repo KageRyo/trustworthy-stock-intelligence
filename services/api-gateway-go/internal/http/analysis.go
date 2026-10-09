@@ -406,6 +406,13 @@ func explainReasonCode(code string) ReasonExplanation {
 			Title:    "Calibration drift abstention",
 			Detail:   "Multiple calibration-drift signals crossed threshold, so the serving decision abstains.",
 		}
+	case "calibration_slope_nonpositive":
+		return ReasonExplanation{
+			Code:     code,
+			Severity: "watch",
+			Title:    "Recent ranking did not hold",
+			Detail:   "In the calibration window, higher model scores did not mean more drawdowns. The model's ranking is kept and only its probability level is adjusted, so treat this ranking as unconfirmed.",
+		}
 	case "ensemble_disagreement_high":
 		return ReasonExplanation{
 			Code:     code,

@@ -1299,6 +1299,16 @@ func TestExplainReasonCodeSupportsReliabilityCodes(t *testing.T) {
 	}
 }
 
+func TestExplainReasonCodeWarnsWhenCalibrationSlopeIsNonpositive(t *testing.T) {
+	reason := explainReasonCode("calibration_slope_nonpositive")
+	if reason.Detail == "The model emitted this reason code in the latest warning batch." {
+		t.Fatal("calibration_slope_nonpositive fell back to generic explanation")
+	}
+	if reason.Severity != "watch" {
+		t.Fatalf("calibration_slope_nonpositive severity = %q, want watch", reason.Severity)
+	}
+}
+
 func TestTrustStatusIsLimitedForDataQualityReasons(t *testing.T) {
 	for _, code := range []string{"limited_data_quality", "stale_ticker_data", "reliability_unavailable"} {
 		status := trustStatus([]string{"trust_above_alert_threshold", code})
