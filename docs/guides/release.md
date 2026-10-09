@@ -1,5 +1,17 @@
 # Maintainer Release Checklist
 
+## 0.9.0 Scope
+
+`0.9.0` changes how served probabilities are calibrated and how on-demand tickers are scored. The logistic model and its features are unchanged.
+
+- `platt_monotone` is the serving default. When the Platt slope is not positive, it keeps the model's ranking, shifts its log-odds to the calibration window's event rate, and tags rows with `calibration_slope_nonpositive` ([ADR 0007](../decisions/0007-calibration-keeps-model-ranking.md)). Experiment 020 found one reversed pooled S&P 100 replay, where test AUC fell from 0.758 to 0.242.
+- On-demand analysis scores a ticker with the stored pooled bundle of its market (`serving_model_bundle.v1`, built by `make model-bundles`). Without a bundle it fits the ticker alone and tags `single_ticker_model`; a bundle more than 30 days older than the scored row tags `model_bundle_stale` ([ADR 0009](../decisions/0009-on-demand-uses-pooled-bundles.md)).
+- TPEx-listed and emerging codes resolve through Yahoo Finance `.TWO`, labeled by one official emerging-board check.
+- Experiment 019 kept the logistic model and the expanding training window ([ADR 0008](../decisions/0008-keep-logistic-expanding-window.md)).
+- `--calibration-method platt` restores the previous calibration, and removing the bundles restores single-ticker on-demand fits.
+
+Issue #29 remains open.
+
 ## 0.8.0 Scope
 
 `0.8.0` keeps the served model from `0.7.0` and adds research data, localization, and serving safeguards:
@@ -74,8 +86,8 @@ Configure PyPI's Trusted Publisher with owner `KageRyo`, repository `trustworthy
 The package-only release sequence is:
 
 ```bash
-git tag -a v0.8.0 -m "release: v0.8.0"
-git push origin v0.8.0
+git tag -a v0.9.0 -m "release: v0.9.0"
+git push origin v0.9.0
 ```
 
 ## 0.4.0 Scope
@@ -145,6 +157,6 @@ The CI `Watchlist-to-warning E2E` job additionally starts PostgreSQL 17, applies
 1. Prepare the version and changelog changes on a release branch.
 1. Merge the release PR only after all required checks pass.
 1. Confirm the merge commit is the current `main` head and rerun all checks.
-1. Create an annotated `v0.8.0` tag on that verified commit.
+1. Create an annotated `v0.9.0` tag on that verified commit.
 1. Push the tag and create a GitHub Release with `--verify-tag`.
 1. Confirm the remote tag, release target, release notes, and downloadable source archives.
