@@ -7,8 +7,12 @@ import pytest
 
 from tsi.trust.calibration import (
     CALIBRATION_METHODS,
+    CalibratorParams,
     IdentityCalibrator,
     MonotonePlattCalibrator,
+    StoredCalibrator,
+    calibration_reason_codes,
+    calibrator_params,
     fit_probability_calibrator,
 )
 
@@ -101,3 +105,33 @@ def test_monotone_platt_single_class_falls_back_to_identity() -> None:
     )
 
     assert isinstance(calibrator, IdentityCalibrator)
+
+
+@pytest.mark.parametrize("method", ["none", "platt", "platt_monotone"])
+@pytest.mark.parametrize("reversed_window", [False, True])
+def test_stored_calibrator_reproduces_the_fitted_calibrator(
+    method: str, reversed_window: bool
+) -> None:
+    if reversed_window:
+        scores, labels = _reversed_window()
+    else:
+        rng = np.random.default_rng(3)
+        scores = rng.uniform(0.05, 0.95, size=300)
+        labels = (rng.uniform(size=300) < scores * 0.4).astype(int)
+    fitted = fit_probability_calibrator(scores, labels, method=method)
+    grid = np.linspace(0.0, 1.0, 41)
+
+    params = calibrator_params(fitted)
+    stored = StoredCalibrator(CalibratorParams.model_validate_json(params.model_dump_json()))
+
+    np.testing.assert_allclose(stored.predict(grid), fitted.predict(grid), rtol=0, atol=1e-12)
+    assert calibration_reason_codes(stored) == calibration_reason_codes(fitted)
+
+
+def test_isotonic_calibration_cannot_be_stored() -> None:
+    calibrator = fit_probability_calibrator(
+        np.array([0.1, 0.2, 0.6, 0.9]), np.array([0, 0, 1, 1]), method="isotonic"
+    )
+
+    with pytest.raises(ValueError, match="isotonic"):
+        calibrator_params(calibrator)

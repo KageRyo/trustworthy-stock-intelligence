@@ -7,7 +7,7 @@ import pytest
 
 from tsi.models.logistic import LogisticRiskModel
 from tsi.trust.calibration import fit_probability_calibrator
-from tsi.trust.reliability import ReliabilityAssessor, ReliabilityConfig
+from tsi.trust.reliability import ReliabilityAssessor, ReliabilityConfig, ReliabilityParams
 
 
 def _fitted_assessor(
@@ -124,3 +124,32 @@ def test_epistemic_trust_weight_lowers_trust_for_novel_rows() -> None:
     )
 
     assert scores.trust[1] < scores.trust[0]
+
+
+def test_assessor_restored_from_params_scores_identically() -> None:
+    assessor, calibrated_calibration = _fitted_assessor()
+    rng = np.random.default_rng(5)
+    query = np.vstack([rng.normal(size=(40, 3)), rng.normal(loc=4.0, size=(5, 3))])
+    query[3, 1] = np.nan
+    probabilities = np.clip(rng.uniform(size=45), 0.0, 1.0)
+    quality = np.linspace(0.5, 1.0, 45)
+
+    params = assessor.params()
+    restored = ReliabilityAssessor.from_params(
+        ReliabilityParams.model_validate_json(params.model_dump_json())
+    )
+    expected = assessor.score(query, calibrated_probabilities=probabilities, data_quality=quality)
+    actual = restored.score(query, calibrated_probabilities=probabilities, data_quality=quality)
+
+    np.testing.assert_allclose(actual.disagreement, expected.disagreement, rtol=0, atol=1e-12)
+    np.testing.assert_array_equal(actual.disagreement_percentile, expected.disagreement_percentile)
+    np.testing.assert_array_equal(actual.novelty_percentile, expected.novelty_percentile)
+    np.testing.assert_array_equal(actual.uncertainty, expected.uncertainty)
+    np.testing.assert_array_equal(actual.trust, expected.trust)
+    assert actual.reason_codes == expected.reason_codes
+    assert len(params.members) == 6
+
+
+def test_assessor_params_require_a_fitted_assessor() -> None:
+    with pytest.raises(ValueError, match="fit"):
+        ReliabilityAssessor().params()

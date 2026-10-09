@@ -22,18 +22,28 @@ function of the calibrated probability, so they stay out of the trust score.
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
+from typing import Protocol
 
 import numpy as np
+from pydantic import BaseModel, ConfigDict
 
 from tsi.models.ensemble import DateBootstrapEnsemble, ProbabilityModel
+from tsi.models.linear import LinearLogitModel, LinearLogitParams, linear_logit_params
 from tsi.models.logistic import LogisticRiskModel
-from tsi.trust.calibration import ProbabilityCalibrator
+from tsi.trust.calibration import (
+    CalibratorParams,
+    ProbabilityCalibrator,
+    StoredCalibrator,
+    calibrator_params,
+)
 from tsi.trust.trust_score import combine_epistemic_uncertainty, compute_reliability_trust
 from tsi.trust.uncertainty import (
     ClassConditionalConformal,
+    ConformalParams,
     FeatureNoveltyScorer,
+    NoveltyParams,
     empirical_percentile,
     ensemble_disagreement,
 )
@@ -50,6 +60,47 @@ class ReliabilityConfig:
     high_disagreement_percentile: float = 0.9
     out_of_distribution_percentile: float = 0.95
     limited_data_quality: float = 0.75
+
+
+class ReliabilityParams(BaseModel):
+    """Everything a fitted ``ReliabilityAssessor`` needs to score new rows."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    n_members: int
+    random_state: int
+    conformal_alpha: float
+    epistemic_trust_weight: float
+    high_disagreement_percentile: float
+    out_of_distribution_percentile: float
+    limited_data_quality: float
+    members: list[LinearLogitParams]
+    calibrator: CalibratorParams
+    novelty: NoveltyParams
+    disagreement_reference: list[float]
+    novelty_reference: list[float]
+    conformal: ConformalParams | None = None
+
+
+class _MemberEnsemble(Protocol):
+    def predict_member_proba(self, features: np.ndarray) -> np.ndarray: ...
+
+
+@dataclass(frozen=True)
+class _StoredEnsemble:
+    members: Sequence[LinearLogitModel]
+
+    def predict_member_proba(self, features: np.ndarray) -> np.ndarray:
+        values = np.asarray(features, dtype=float)
+        return np.vstack([member.predict_proba(values) for member in self.members])
+
+
+def _member_params(member: object) -> LinearLogitParams:
+    if isinstance(member, LinearLogitModel):
+        return member.params
+    if isinstance(member, LogisticRiskModel):
+        return linear_logit_params(member)
+    raise ValueError(f"{type(member).__name__} ensemble members cannot be stored")
 
 
 @dataclass(frozen=True)
@@ -76,7 +127,7 @@ class ReliabilityAssessor:
     ) -> None:
         self.config = config or ReliabilityConfig()
         self.model_factory = model_factory
-        self._ensemble: DateBootstrapEnsemble | None = None
+        self._ensemble: _MemberEnsemble | None = None
         self._calibrator: ProbabilityCalibrator | None = None
         self._novelty = FeatureNoveltyScorer()
         self._conformal = ClassConditionalConformal(alpha=self.config.conformal_alpha)
@@ -116,6 +167,65 @@ class ReliabilityAssessor:
         if self._conformal_ready:
             self._conformal.fit(calibrated_calibration_probabilities, labels)
         return self
+
+    def params(self) -> ReliabilityParams:
+        """Export the fitted references so the assessor can be stored and restored."""
+
+        if (
+            self._ensemble is None
+            or self._calibrator is None
+            or self._disagreement_reference is None
+            or self._novelty_reference is None
+        ):
+            raise ValueError("ReliabilityAssessor must be fit before exporting params")
+        members = (
+            self._ensemble.members_
+            if isinstance(self._ensemble, DateBootstrapEnsemble)
+            else getattr(self._ensemble, "members", [])
+        )
+        config = self.config
+        return ReliabilityParams(
+            n_members=config.n_members,
+            random_state=config.random_state,
+            conformal_alpha=config.conformal_alpha,
+            epistemic_trust_weight=config.epistemic_trust_weight,
+            high_disagreement_percentile=config.high_disagreement_percentile,
+            out_of_distribution_percentile=config.out_of_distribution_percentile,
+            limited_data_quality=config.limited_data_quality,
+            members=[_member_params(member) for member in members],
+            calibrator=calibrator_params(self._calibrator),
+            novelty=self._novelty.params(),
+            disagreement_reference=self._disagreement_reference.tolist(),
+            novelty_reference=self._novelty_reference.tolist(),
+            conformal=self._conformal.params() if self._conformal_ready else None,
+        )
+
+    @classmethod
+    def from_params(cls, params: ReliabilityParams) -> "ReliabilityAssessor":
+        """Rebuild a fitted assessor from exported references, without refitting."""
+
+        assessor = cls(
+            ReliabilityConfig(
+                n_members=params.n_members,
+                random_state=params.random_state,
+                conformal_alpha=params.conformal_alpha,
+                epistemic_trust_weight=params.epistemic_trust_weight,
+                high_disagreement_percentile=params.high_disagreement_percentile,
+                out_of_distribution_percentile=params.out_of_distribution_percentile,
+                limited_data_quality=params.limited_data_quality,
+            )
+        )
+        assessor._ensemble = _StoredEnsemble(
+            [LinearLogitModel(member) for member in params.members]
+        )
+        assessor._calibrator = StoredCalibrator(params.calibrator)
+        assessor._novelty = FeatureNoveltyScorer.from_params(params.novelty)
+        assessor._disagreement_reference = np.asarray(params.disagreement_reference, dtype=float)
+        assessor._novelty_reference = np.asarray(params.novelty_reference, dtype=float)
+        if params.conformal is not None:
+            assessor._conformal = ClassConditionalConformal.from_params(params.conformal)
+            assessor._conformal_ready = True
+        return assessor
 
     def score(
         self,
