@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from scripts import predict_latest_baseline
 from scripts.predict_latest_baseline import (
     parse_args,
     run_prediction,
@@ -16,6 +17,7 @@ from scripts.predict_latest_baseline import (
 )
 from tsi.features.sets import resolve_feature_set
 from tsi.features.technical import DEFAULT_FEATURE_COLUMNS, build_technical_features
+from tsi.trust.calibration import MonotonePlattCalibrator
 
 
 def _ohlcv_frame(days: int = 90) -> pd.DataFrame:
@@ -405,3 +407,44 @@ def test_configuration_errors_are_not_insufficient_history() -> None:
     with pytest.raises(ValueError, match="calibration_size") as raised:
         split_train_calibration(frame, calibration_size=0, train_size=None)
     assert not isinstance(raised.value, InsufficientHistoryError)
+
+
+def test_serving_defaults_to_monotone_platt_and_records_it(tmp_path: Path) -> None:
+    defaults = parse_args(["--input", "in.csv", "--output", "out.csv", "--json-output", "out.json"])
+    predictions = run_prediction(
+        _serving_args(tmp_path, "--calibration-method", "platt_monotone")
+    )
+
+    assert defaults.calibration_method == "platt_monotone"
+    assert (predictions["calibration_method"] == "platt_monotone").all()
+
+
+def test_reversed_calibration_keeps_ranking_and_flags_every_row(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    rng = np.random.default_rng(7)
+    window_scores = rng.uniform(0.05, 0.95, size=400)
+    window_labels = (rng.uniform(size=400) < 0.4 - 0.3 * window_scores).astype(int)
+    reversed_calibrator = MonotonePlattCalibrator().fit(window_scores, window_labels)
+    assert reversed_calibrator.reversed
+    monkeypatch.setattr(
+        predict_latest_baseline,
+        "fit_probability_calibrator",
+        lambda *_args, **_kwargs: reversed_calibrator,
+    )
+
+    predictions = run_prediction(_serving_args(tmp_path))
+    payload = json.loads((tmp_path / "latest_warnings.json").read_text(encoding="utf-8"))
+
+    ordered = predictions.sort_values("risk_probability")
+    assert ordered["calibrated_risk_probability"].is_monotonic_increasing
+    for record in payload["records"]:
+        assert "calibration_slope_nonpositive" in record["reason_codes"]
+
+
+def test_positive_calibration_slope_adds_no_reversal_code(tmp_path: Path) -> None:
+    run_prediction(_serving_args(tmp_path))
+    payload = json.loads((tmp_path / "latest_warnings.json").read_text(encoding="utf-8"))
+
+    for record in payload["records"]:
+        assert "calibration_slope_nonpositive" not in record["reason_codes"]
