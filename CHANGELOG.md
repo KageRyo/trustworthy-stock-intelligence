@@ -11,12 +11,12 @@
 
 ### Added
 
-- `scripts/evaluate_serving_replay.py` replays the served training and calibration scheme for pooled and single-ticker models (Experiment 020).
+- `scripts/evaluate_serving_replay.py` replays the served training and calibration scheme for pooled and single-ticker models (Experiment 020). `--score-input` scores tickers from a second file that the pooled model never saw.
 - `tsi.trust.calibration.CALIBRATION_METHODS` lists the calibration choices, and every command-line tool uses it.
 
 ### Notes
 
-- Experiment 020 found that single-ticker on-demand models carry no ranking signal within a 63-date window (AUC about 0.50) and rank a ticker's own history worse than a model fitted on all tickers: 0.566 against 0.633 on S&P 100 and 0.632 against 0.672 on Taiwan large caps.
+- Experiment 020 found that single-ticker on-demand models carry no ranking signal within a 63-date window (AUC about 0.50) and rank a ticker's own history worse than a model fitted on all tickers: 0.566 against 0.633 on S&P 100 and 0.632 against 0.672 on Taiwan large caps. The gap holds for tickers outside the pooled model's universe: 400 S&P 500 tickers scored by the S&P 100 model rank at 0.616 against 0.549, and 194 TWSE holdout tickers scored by the Taiwan model at 0.694 against 0.656.
 
 ## 0.8.0 - 2026-10-09
 
