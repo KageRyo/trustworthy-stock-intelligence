@@ -21,15 +21,16 @@ The [model card](model_card.md) describes the model served today: task, data, la
 
 ## Guides
 
-| Document                                   | Purpose                                                                |
-| ------------------------------------------ | ---------------------------------------------------------------------- |
-| [User guide](guides/user_guide.md)         | Dashboard use: ticker input, analysis output, watchlists, limitations. |
-| [Local demo](guides/local_demo.md)         | End-to-end local run of PostgreSQL, the Go API, and the dashboard.     |
-| [Development](guides/development.md)       | Development rules, tests, schema-first policy, and commit workflow.    |
-| [Environment](guides/environment.md)       | Python, Go, Node, CUDA, and local tool versions.                       |
-| [Python package](guides/python_package.md) | PyPI package API, extras, CLI, and build checks.                       |
-| [Data download](guides/data_download.md)   | Market data, reference series, and TWSE chip-history downloads.        |
-| [Release](guides/release.md)               | Maintainer release checklist and per-release scope notes.              |
+| Document                                       | Purpose                                                                |
+| ---------------------------------------------- | ---------------------------------------------------------------------- |
+| [User guide](guides/user_guide.md)             | Dashboard use: ticker input, analysis output, watchlists, limitations. |
+| [Local demo](guides/local_demo.md)             | End-to-end local run of PostgreSQL, the Go API, and the dashboard.     |
+| [Local operations](guides/local_operations.md) | Daily model refresh, Docker Desktop recovery, timers and run evidence. |
+| [Development](guides/development.md)           | Development rules, tests, schema-first policy, and commit workflow.    |
+| [Environment](guides/environment.md)           | Python, Go, Node, CUDA, and local tool versions.                       |
+| [Python package](guides/python_package.md)     | PyPI package API, extras, CLI, and build checks.                       |
+| [Data download](guides/data_download.md)       | Market data, reference series, and TWSE chip-history downloads.        |
+| [Release](guides/release.md)                   | Maintainer release checklist and per-release scope notes.              |
 
 ## Reference
 
@@ -57,14 +58,15 @@ The [model card](model_card.md) describes the model served today: task, data, la
 
 ## Operations
 
-| Document                                                   | Purpose                                                            |
-| ---------------------------------------------------------- | ------------------------------------------------------------------ |
-| [Dashboard operations](operations/dashboard_operations.md) | Freshness, trust, coverage, and job states shown in the dashboard. |
-| [Prediction jobs](operations/prediction_jobs.md)           | Queue lifecycle, idempotency, worker claims, and recovery.         |
-| [Warning transitions](operations/warning_transitions.md)   | Warning-change semantics and deduplication.                        |
-| [Watchlist grouping](operations/watchlist_grouping.md)     | Session watchlist groups, filters, and cleanup.                    |
-| [Observability](operations/observability.md)               | Health probes, metrics, and structured logs.                       |
-| [End-to-end pipeline](operations/e2e.md)                   | PostgreSQL watchlist-to-warning pipeline and its CI smoke test.    |
+| Document                                                           | Purpose                                                            |
+| ------------------------------------------------------------------ | ------------------------------------------------------------------ |
+| [Dashboard operations](operations/dashboard_operations.md)         | Freshness, trust, coverage, and job states shown in the dashboard. |
+| [Local refresh validation](operations/local_refresh_validation.md) | Local daily runs, model hashes, integration and recovery evidence. |
+| [Prediction jobs](operations/prediction_jobs.md)                   | Queue lifecycle, idempotency, worker claims, and recovery.         |
+| [Warning transitions](operations/warning_transitions.md)           | Warning-change semantics and deduplication.                        |
+| [Watchlist grouping](operations/watchlist_grouping.md)             | Session watchlist groups, filters, and cleanup.                    |
+| [Observability](operations/observability.md)                       | Health probes, metrics, and structured logs.                       |
+| [End-to-end pipeline](operations/e2e.md)                           | PostgreSQL watchlist-to-warning pipeline and its CI smoke test.    |
 
 ## Research
 

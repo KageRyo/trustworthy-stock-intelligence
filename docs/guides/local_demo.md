@@ -24,7 +24,7 @@ npm ci
 cd ../..
 ```
 
-Go `1.27.2` and Node `22.23.2` match CI. On WSL2, use Docker Desktop with WSL integration or one native Docker Engine, not both at the same time.
+Go `1.27.2` and Node `22.23.2` match CI. On this WSL2 workstation, use Docker Desktop with integration enabled for the current distro. The managed local services require Docker Desktop and refuse a native Docker Engine.
 
 Create local environment configuration:
 
@@ -47,6 +47,8 @@ infra/postgres/init/
 ```
 
 For an existing local database, apply any new migration files under that directory before testing a new release.
+
+The named volume is pinned to `trustworthy-stock-intelligence_postgres-data`, including when the checkout directory is renamed. Never remove or replace a populated volume to repair startup. For automatic daily updates and service recovery, follow the [local operations guide](local_operations.md).
 
 ## 2. Build Pooled Model Bundles
 
