@@ -552,3 +552,26 @@ def test_download_ticker_frame_labels_emerging_stocks_found_under_the_tpex_symbo
         snapshot.provider == "yfinance" and snapshot.market == "emerging"
         for snapshot in result.provider_health
     )
+
+
+@pytest.mark.parametrize("market", ["twse", "tpex"])
+def test_opt_in_price_repair_keeps_provider_corrected_ohlc(monkeypatch, market):
+    query = "6147.TW" if market == "twse" else "6147.TWO"
+
+    def provider(**kwargs):
+        if market == "tpex" and kwargs["tickers"] == ["6147.TW"]:
+            return pd.DataFrame()
+        close = 50.0 if kwargs.get("repair") else 47.4
+        return pd.DataFrame({
+            (query, "Open"): [50.8], (query, "High"): [51.5],
+            (query, "Low"): [49.5], (query, "Close"): [close],
+            (query, "Adj Close"): [25.6], (query, "Volume"): [7923877],
+        }, index=pd.DatetimeIndex(["2015-07-22"], name="Date"))
+
+    monkeypatch.setattr(download_module.yf, "download", provider)
+    monkeypatch.setattr(download_module, "_tpex_board", lambda ticker: "tpex")
+    result = download_ticker_frame(
+        ["6147"], start="2015-01-01", repair_prices=True, retry_policy=NO_WAIT,
+    )
+    assert result.ohlcv.iloc[0].close == 50.0
+    assert result.ohlcv.iloc[0].low <= result.ohlcv.iloc[0].close <= result.ohlcv.iloc[0].high

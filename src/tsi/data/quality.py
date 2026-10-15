@@ -257,11 +257,9 @@ def audit_market_bars(
     }
     expected = sorted({_normalized_ticker(ticker) for ticker in (expected_tickers or []) if _normalized_ticker(ticker)})
     observed = sorted(
-        {
-            ticker
-            for ticker in working["__ticker"]
-            if ticker and not bool(pd.isna(working.loc[working["__ticker"] == ticker, "__timestamp"]).all())
-        }
+        working.loc[
+            working["__ticker"].ne("") & working["__timestamp"].notna(), "__ticker"
+        ].unique().tolist()
     )
     missing_tickers = sorted(set(expected).difference(observed))
 
