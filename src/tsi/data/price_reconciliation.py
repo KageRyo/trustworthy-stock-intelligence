@@ -50,36 +50,8 @@ def reconcile_tpex_closes(
         if markets.get(str(row.ticker)) != "tpex":
             continue
         day = str(row.date)[:10]
-        official = download_tpex_daily_frame(str(row.ticker), start=day, end=day)
-        official = official[official.date.astype(str).str[:10] == day]
-        if len(official) != 1:
-            raise ValueError("No unique official TPEx row for close reconciliation")
-        reference = official.iloc[0]
-        original_ohl = np.array([row.open, row.high, row.low], dtype=float)
-        reference_ohl = np.array([reference.open, reference.high, reference.low], dtype=float)
-        if not np.isfinite(reference_ohl).all() or (reference_ohl <= 0).any():
-            raise ValueError("Invalid official TPEx price evidence")
-        ratios = original_ohl / reference_ohl
-        scale = float(np.median(ratios))
-        if not all(isclose(float(r), scale, rel_tol=1e-6) for r in ratios):
-            raise ValueError("Official TPEx OHL scale agreement failed")
-        new_close = float(reference.close) * scale
-        if not (float(row.low) <= new_close <= float(row.high)):
-            raise ValueError("Official TPEx close does not satisfy provider OHL bounds")
-        if not np.isfinite([row.close, row.adj_close]).all() or float(row.close) <= 0:
-            raise ValueError("Provider adjustment ratio is unavailable")
-        history = result.ohlcv[
-            (result.ohlcv.ticker == row.ticker) & (result.ohlcv.date.astype(str).str[:10] < day)
-        ].sort_values("date")
-        if history.empty:
-            raise ValueError("No preceding adjustment factor evidence")
-        previous = history.iloc[-1]
-        gap = (pd.Timestamp(day) - pd.Timestamp(previous.date)).days
-        ratio = float(row.adj_close) / float(row.close)
-        previous_ratio = float(previous.adj_close) / float(previous.close)
-        if not (0 < gap <= 7 and np.isfinite(previous_ratio) and previous_ratio > 0
-                and isclose(ratio, previous_ratio, rel_tol=1e-5)):
-            raise ValueError("Preceding adjustment factor agreement failed")
+        reference, scale, new_close = _official_close(row, day)
+        previous, previous_ratio = _adjustment_reference(result.ohlcv, row, day)
         adjusted = float(row.adj_close) * new_close / float(row.close)
         corrections.append(OfficialCloseCorrection(
             ticker=str(row.ticker), date=day, original_close=float(row.close),
@@ -92,3 +64,45 @@ def reconcile_tpex_closes(
         ))
         frame.loc[index, ["close", "adj_close"]] = [new_close, adjusted]
     return frame, corrections
+
+
+def _official_close(row: pd.Series, day: str) -> tuple[pd.Series, float, float]:
+    """Require official OHL corroboration on the provider's split-adjusted scale."""
+    official = download_tpex_daily_frame(str(row.ticker), start=day, end=day)
+    official = official[official.date.astype(str).str.startswith(day)]
+    if len(official) != 1:
+        raise ValueError("No unique official TPEx row for close reconciliation")
+    reference = official.iloc[0]
+    original_ohl = np.array([row.open, row.high, row.low], dtype=float)
+    reference_ohl = np.array([reference.open, reference.high, reference.low], dtype=float)
+    if not np.isfinite(reference_ohl).all() or (reference_ohl <= 0).any():
+        raise ValueError("Invalid official TPEx price evidence")
+    ratios = original_ohl / reference_ohl
+    scale = float(np.median(ratios))
+    if not all(isclose(float(r), scale, rel_tol=1e-6) for r in ratios):
+        raise ValueError("Official TPEx OHL scale agreement failed")
+    new_close = float(reference.close) * scale
+    if not (float(row.low) <= new_close <= float(row.high)):
+        raise ValueError("Official TPEx close does not satisfy provider OHL bounds")
+    return reference, scale, new_close
+
+
+def _adjustment_reference(
+    frame: pd.DataFrame, row: pd.Series, day: str,
+) -> tuple[pd.Series, float]:
+    """Require a nearby prior trading row to corroborate the adjustment ratio."""
+    if not np.isfinite([row.close, row.adj_close]).all() or float(row.close) <= 0:
+        raise ValueError("Provider adjustment ratio is unavailable")
+    history = frame[
+        (frame.ticker == row.ticker) & (frame.date.astype(str).str[:10] < day)
+    ].sort_values("date")
+    if history.empty:
+        raise ValueError("No preceding adjustment factor evidence")
+    previous = history.iloc[-1]
+    gap = (pd.Timestamp(day) - pd.Timestamp(previous.date)).days
+    ratio = float(row.adj_close) / float(row.close)
+    previous_ratio = float(previous.adj_close) / float(previous.close)
+    if not (0 < gap <= 7 and np.isfinite(previous_ratio) and previous_ratio > 0
+            and isclose(ratio, previous_ratio, rel_tol=1e-5)):
+        raise ValueError("Preceding adjustment factor agreement failed")
+    return previous, previous_ratio

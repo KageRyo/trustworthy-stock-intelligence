@@ -4,7 +4,6 @@ from __future__ import annotations
 from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import UTC, date, datetime, time, timedelta
-from dataclasses import replace
 import fcntl
 from pathlib import Path
 from typing import Literal
@@ -15,7 +14,7 @@ import pandas as pd
 from pydantic import BaseModel, ConfigDict, Field
 
 from tsi.data.csv import file_sha256, read_ohlcv_csv
-from tsi.data.download import download_ticker_frame, is_taiwan_local_ticker
+from tsi.data.download import DownloadFrameResult, download_ticker_frame, is_taiwan_local_ticker
 from tsi.data.postgres import (
     read_market_bars_from_postgres,
     read_prediction_batch_id,
@@ -176,7 +175,11 @@ def _refresh(
     report.stage = "reconcile_official_prices"
     _save_report(report, run_dir)
     frame, report.official_close_corrections = reconcile_tpex_closes(result)
-    result = replace(result, ohlcv=frame)
+    result = DownloadFrameResult(
+        dataset_name=result.dataset_name, tickers=result.tickers, ohlcv=frame,
+        start=result.start, end=result.end, interval=result.interval,
+        failed_batches=result.failed_batches, provider_health=result.provider_health,
+    )
     report.stage = "validate_download"
     _save_report(report, run_dir)
     if result.failed_batches:

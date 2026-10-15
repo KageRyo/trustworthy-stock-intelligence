@@ -49,8 +49,9 @@ def test_official_disagreement_blocks_any_correction(monkeypatch):
         "high": 80.0, "low": 74.7, "close": 74.8,
     }])
     monkeypatch.setattr(daily, "download_tpex_daily_frame", lambda *a, **kw: official)
+    result = _snapshot()
     with pytest.raises(ValueError, match="agreement"):
-        daily.reconcile_tpex_closes(_snapshot())
+        daily.reconcile_tpex_closes(result)
 
 
 def test_bad_close_with_correct_adjusted_close_is_not_rescaled(monkeypatch):
