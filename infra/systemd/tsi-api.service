@@ -1,0 +1,21 @@
+[Unit]
+Description=TSI PostgreSQL-backed Go API
+Wants=tsi-postgres.service
+After=tsi-postgres.service
+StartLimitIntervalSec=0
+
+[Service]
+WorkingDirectory=@ROOT@
+Environment="PATH=@PATH@"
+EnvironmentFile=@ROOT@/.env
+Environment=GOCACHE=/tmp/tsi-go-build-cache
+Environment=CGO_ENABLED=0
+ExecStartPre="@ROOT@/.venv/bin/python" -m scripts.local_services check-db
+ExecStart=/usr/bin/make api
+Restart=always
+RestartSec=15
+TimeoutStopSec=30
+KillMode=control-group
+
+[Install]
+WantedBy=default.target

@@ -1,6 +1,7 @@
 services:
   postgres:
     image: postgres:17-alpine
+    restart: unless-stopped
     environment:
       POSTGRES_DB: "${TSI_POSTGRES_DB:?set TSI_POSTGRES_DB in .env}"
       POSTGRES_USER: "${TSI_POSTGRES_USER:?set TSI_POSTGRES_USER in .env}"
@@ -52,3 +53,4 @@ services:
 
 volumes:
   postgres-data:
+    name: trustworthy-stock-intelligence_postgres-data
