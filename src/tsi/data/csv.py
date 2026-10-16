@@ -25,3 +25,18 @@ def file_sha256(path: Path | str) -> str:
         for chunk in iter(lambda: artifact.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def portable_path_label(path: Path | str) -> str:
+    """Name an input in published provenance without exposing host directories.
+
+    Relative paths are kept. An absolute path becomes relative to the working directory when it
+    is inside it; otherwise only the file name is kept.
+    """
+
+    candidate = Path(path)
+    if not candidate.is_absolute():
+        return candidate.as_posix()
+    if candidate.is_relative_to(Path.cwd()):
+        return candidate.relative_to(Path.cwd()).as_posix()
+    return candidate.name

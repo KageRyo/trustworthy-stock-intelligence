@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from tsi.data.csv import read_ohlcv_csv
+import pytest
+
+from tsi.data.csv import portable_path_label, read_ohlcv_csv
 
 
 def test_read_ohlcv_csv_preserves_leading_zero_tickers(tmp_path: Path) -> None:
@@ -16,3 +18,21 @@ def test_read_ohlcv_csv_preserves_leading_zero_tickers(tmp_path: Path) -> None:
     frame = read_ohlcv_csv(path)
 
     assert frame["ticker"].tolist() == ["00878"]
+
+
+@pytest.mark.parametrize(
+    ("path", "label"),
+    [
+        ("data/raw/sp100/ohlcv.csv", "data/raw/sp100/ohlcv.csv"),
+        ("work/data/raw/ohlcv.csv", "data/raw/ohlcv.csv"),
+        ("elsewhere/ohlcv.csv", "ohlcv.csv"),
+    ],
+)
+def test_portable_path_label_never_includes_host_directories(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, path: str, label: str
+) -> None:
+    (tmp_path / "work").mkdir()
+    monkeypatch.chdir(tmp_path / "work")
+    given = Path(path) if path.startswith("data/") else tmp_path / path
+
+    assert portable_path_label(given) == label
