@@ -199,3 +199,53 @@ def test_bundle_paths_must_stay_inside_the_bundle_root(tmp_path: Path, option: s
 
     with pytest.raises(ValueError, match="must stay inside"):
         run_prediction(args)
+
+
+def test_published_provenance_omits_host_directories(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    universe = tmp_path / "runs" / "r1" / "universe.csv"
+    universe.parent.mkdir(parents=True)
+    _write_ohlcv(universe)
+    batch = run_prediction(_args(tmp_path, universe, "batch", "--model-bundle-output", "us.json"))
+    bundle_path = tmp_path / "bundles" / "us.json"
+
+    scored = run_prediction(
+        _args(tmp_path, universe, "scored", "--model-bundle", str(bundle_path))
+    )
+
+    assert set(batch["model_bundle"]) == {"baseline_latest:technical_range:runs/r1/universe.csv"}
+    assert load_serving_bundle(bundle_path, root=bundle_path.parent).source_input == (
+        "runs/r1/universe.csv"
+    )
+    assert set(scored["model_bundle"]) == {"pooled:technical_range:runs/r1/universe.csv:batch"}
+    for name in ("batch.json", "scored.json"):
+        assert str(tmp_path) not in (tmp_path / name).read_text(encoding="utf-8")
+
+
+def test_input_outside_the_working_directory_is_labeled_by_file_name(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    (tmp_path / "work").mkdir()
+    monkeypatch.chdir(tmp_path / "work")
+    universe = tmp_path / "elsewhere" / "universe.csv"
+    universe.parent.mkdir()
+    _write_ohlcv(universe)
+
+    batch = run_prediction(_args(tmp_path, universe, "batch"))
+
+    assert set(batch["model_bundle"]) == {"baseline_latest:technical_range:universe.csv"}
+
+
+def test_a_bundle_recorded_with_an_absolute_input_is_scored_without_it(tmp_path: Path) -> None:
+    _, bundle_path = _batch_with_bundle(tmp_path)
+    payload = json.loads(bundle_path.read_text(encoding="utf-8"))
+    payload["source_input"] = str(tmp_path / "private" / "universe.csv")
+    bundle_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    scored = run_prediction(
+        _args(tmp_path, tmp_path / "universe.csv", "scored", "--model-bundle", str(bundle_path))
+    )
+
+    assert set(scored["model_bundle"]) == {"pooled:technical_range:universe.csv:batch"}

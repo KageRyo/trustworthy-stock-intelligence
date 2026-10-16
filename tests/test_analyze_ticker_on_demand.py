@@ -185,6 +185,7 @@ def test_run_on_demand_analysis_writes_abstain_when_history_is_insufficient(
     assert batch.run_id == "test_short_history"
     assert batch.records[0].warning_level == "abstain"
     assert "insufficient_history" in batch.records[0].reason_codes
+    assert batch.records[0].model_bundle == "insufficient_history:ohlcv.csv"
     assert Path(summary.warnings_path).exists()
 
 

@@ -189,3 +189,16 @@ def test_old_pending_publication_also_refreshes_new_market_cutoff(refresh_setup,
     assert report.status == "published"
     assert downloads == ["2021-01-03"]
     assert report.started_at == NOW.replace(day=2)
+
+
+def test_published_model_provenance_is_relative_to_the_checkout(refresh_setup, monkeypatch):
+    config, _, _ = refresh_setup
+    monkeypatch.chdir(config.runs_root.parent)
+
+    report = daily.refresh_daily(config, "postgresql://unused", now=NOW)
+
+    batch = (config.runs_root / report.run_id / "warnings.json").read_text()
+    bundle = load_serving_bundle(Path("taiwan.json"), root=config.bundle_root)
+    assert f'"baseline_latest:technical_range:runs/{report.run_id}/ohlcv.csv"' in batch
+    assert str(config.runs_root.parent) not in batch
+    assert bundle.source_input == f"runs/{report.run_id}/ohlcv.csv"
