@@ -15,23 +15,23 @@ It focuses on calibration, uncertainty, abstention, transparency, auditability, 
 
 ## Current state
 
-Version `0.9.0` is an operational prototype. It adds to `0.8.0`:
+Version `0.10.0` is an operational prototype. It keeps the `0.9.0` model and adds:
 
-- monotone Platt calibration that never reverses the model's ranking ([ADR 0007](decisions/0007-calibration-keeps-model-ranking.md));
-- on-demand scoring with a stored pooled model of the ticker's market ([ADR 0009](decisions/0009-on-demand-uses-pooled-bundles.md));
-- resolution of TPEx-listed and emerging codes through Yahoo Finance `.TWO`;
-- Experiment 019, which kept the logistic model and the expanding training window ([ADR 0008](decisions/0008-keep-logistic-expanding-window.md)), and Experiment 020, a replay of the served scheme;
-- Markdown paragraphs on one line.
+- a guarded daily refresh per market that validates provider history, stores it in PostgreSQL, trains the pooled model on the stored copy, and atomically publishes the bundle used by on-demand analysis, with recoverable publication and a bounded run history;
+- audited TPEx close corrections backed by official prices;
+- systemd user units and weekday timers for the local PostgreSQL, Go API, dashboard, and refreshes (see [local operations](guides/local_operations.md));
+- model provenance without host paths, and a dashboard trust panel that shows the selected ticker's own model.
+
+Both timers have fired and published on schedule; recovery after a full Windows or WSL restart has not been observed yet.
 
 The served model is described in the [model card](model_card.md). The evidence behind it is in the [experiment index](../experiments/README.md) and the decision records.
 
 ## Now
 
-1. **Rebuild pooled model bundles on a schedule.** On-demand analysis scores new tickers with the stored pooled bundle of their market ([ADR 0009](decisions/0009-on-demand-uses-pooled-bundles.md)). The unreleased local daily refresh now validates provider history, persists market bars, trains from PostgreSQL and publishes bundles through market-specific systemd timers; see [local operations](guides/local_operations.md). Verify real runs and service recovery before treating the schedule as operational.
+1. **Move on-demand analysis onto the `prediction_jobs` queue** and show progress in the dashboard. Pooled bundles now refresh daily, so queued jobs can score new tickers with a current model of their market ([ADR 0009](decisions/0009-on-demand-uses-pooled-bundles.md)).
 
 ## Next
 
-1. Move on-demand analysis onto the `prediction_jobs` queue and show progress in the dashboard.
 1. Split `frontend/stock-dashboard/src/App.tsx` (about 1,750 lines) into components with Testing Library coverage.
 1. Label research on the Experiment 017 protocol:
    - a market-relative drawdown label;
@@ -69,5 +69,6 @@ Automated trading, investment-recommendation wording, LLM-based advice, full mul
 | 0.7.0   | Range-volatility serving features ([ADR 0004](decisions/0004-range-volatility-features.md))                                                                                                                      |
 | 0.8.0   | Taiwan chip-data research ([ADR 0005](decisions/0005-no-taiwan-chip-features.md)), localized summaries ([ADR 0006](decisions/0006-dashboard-localizes-api-codes.md)), on-demand concurrency limits               |
 | 0.9.0   | Monotone calibration ([ADR 0007](decisions/0007-calibration-keeps-model-ranking.md)), pooled on-demand model bundles ([ADR 0009](decisions/0009-on-demand-uses-pooled-bundles.md)), TPEx and emerging resolution |
+| 0.10.0  | Daily pooled-model refresh with recoverable publication, audited TPEx close corrections, local service timers                                                                                                    |
 
 See [`CHANGELOG.md`](../CHANGELOG.md) for full release notes. Engineering rules are in the [development guide](guides/development.md).

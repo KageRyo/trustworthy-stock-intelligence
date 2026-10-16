@@ -1,5 +1,19 @@
 # Maintainer Release Checklist
 
+## 0.10.0 Scope
+
+`0.10.0` keeps the served model from `0.9.0` (the `technical_range` logistic model with monotone Platt calibration) and refreshes it automatically:
+
+- `scripts.refresh_daily_models` refreshes one market: it downloads full daily history for the reference universe, checks coverage, freshness and OHLCV quality, persists `market_bars`, trains on the stored copy of exactly that download, commits warnings, and atomically publishes the pooled bundle. Failed runs keep the active bundle; a committed candidate whose publication failed is completed on the next run.
+- Daily downloads use yfinance price repair. A remaining TPEx close outside its high and low is corrected only when official TPEx open, high and low prices agree on the scale, and each correction is recorded in the run report.
+- `make local-services-install` renders systemd user units for the existing Docker Desktop PostgreSQL container, the Go API, the dashboard, and weekday refresh timers (Taiwan 19:15 Taipei, US 18:15 New York). See the [local operations guide](local_operations.md).
+- Each market keeps its newest five run directories (`--keep-runs`); PostgreSQL batches and warnings remain the durable history.
+- `model_bundle` provenance names inputs relative to the working directory, never by absolute host path.
+- The dashboard trust panel shows the selected ticker's own model and timestamps.
+- torch 2.14.1 and torchvision 0.29.1.
+
+Issue #29 remains open.
+
 ## 0.9.0 Scope
 
 `0.9.0` changes how served probabilities are calibrated and how on-demand tickers are scored. The logistic model and its features are unchanged.
@@ -86,8 +100,8 @@ Configure PyPI's Trusted Publisher with owner `KageRyo`, repository `trustworthy
 The package-only release sequence is:
 
 ```bash
-git tag -a v0.9.0 -m "release: v0.9.0"
-git push origin v0.9.0
+git tag -a v0.10.0 -m "release: v0.10.0"
+git push origin v0.10.0
 ```
 
 ## 0.4.0 Scope
@@ -157,6 +171,6 @@ The CI `Watchlist-to-warning E2E` job additionally starts PostgreSQL 17, applies
 1. Prepare the version and changelog changes on a release branch.
 1. Merge the release PR only after all required checks pass.
 1. Confirm the merge commit is the current `main` head and rerun all checks.
-1. Create an annotated `v0.9.0` tag on that verified commit.
+1. Create an annotated `v0.10.0` tag on that verified commit.
 1. Push the tag and create a GitHub Release with `--verify-tag`.
 1. Confirm the remote tag, release target, release notes, and downloadable source archives.
