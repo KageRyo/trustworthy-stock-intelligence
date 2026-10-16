@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.10.0 - 2026-10-16
+
 ### Added
 
 - Daily pooled-model refresh for US and Taiwan: validate full adjusted daily history, ingest PostgreSQL, train from the stored copy of exactly the validated download (older stored bars the provider no longer returns are excluded and counted), commit warnings, and atomically publish a validated bundle. Per-market locks, freshness and coverage gates, typed run reports and a recoverable publication journal preserve usable models on failure. Daily downloads opt into yfinance price repair; remaining TPEx close errors require official OHLC and preceding adjustment-factor corroboration before an audited correction.
