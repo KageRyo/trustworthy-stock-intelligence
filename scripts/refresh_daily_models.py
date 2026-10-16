@@ -15,12 +15,17 @@ def main() -> None:
     parser.add_argument("--runs-root", type=Path, default=Path("data/artifacts/daily_refresh"))
     parser.add_argument("--bundle-root", type=Path, default=Path(
         os.getenv("TSI_MODEL_BUNDLE_DIR", "data/artifacts/model_bundles")))
+    parser.add_argument(
+        "--keep-runs", type=int,
+        default=DailyRefreshConfig.model_fields["keep_runs"].default,
+        help="Run directories kept per market; the active and pending runs are always kept.",
+    )
     args = parser.parse_args()
     env_name = "TSI_US_BUNDLE_INPUT" if args.market == "us" else "TSI_TAIWAN_BUNDLE_INPUT"
     default_seed = "data/raw/sp100/ohlcv.csv" if args.market == "us" else "data/raw/tw_large/ohlcv.csv"
     config = DailyRefreshConfig(
         market=args.market, seed_input=args.seed_input or Path(os.getenv(env_name, default_seed)),
-        bundle_root=args.bundle_root, runs_root=args.runs_root,
+        bundle_root=args.bundle_root, runs_root=args.runs_root, keep_runs=args.keep_runs,
     )
     try:
         report = refresh_daily(config, os.getenv("TSI_DATABASE_URL", ""))

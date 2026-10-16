@@ -5,6 +5,7 @@
 ### Added
 
 - Daily pooled-model refresh for US and Taiwan: validate full adjusted daily history, ingest PostgreSQL, train from persisted bars, commit warnings, and atomically publish a validated bundle. Per-market locks, freshness and coverage gates, typed run reports and a recoverable publication journal preserve usable models on failure. Daily downloads opt into yfinance price repair; remaining TPEx close errors require official OHLC and preceding adjustment-factor corroboration before an audited correction.
+- Daily refresh keeps the newest five run directories per market (`--keep-runs`), never removing the current, active-bundle or pending run, and records removals in the run report. Failed retries no longer accumulate run directories without bound.
 - Docker Desktop-only local PostgreSQL recovery and systemd user units for the Go API, Vite dashboard, and market-specific persistent daily timers. The database service checks the existing volume identity before starting it.
 
 ### Changed

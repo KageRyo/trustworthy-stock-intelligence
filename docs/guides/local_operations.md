@@ -54,7 +54,7 @@ Reports live under `data/artifacts/daily_refresh/<run_id>/`:
 - `download.csv` preserves the provider snapshot before official reconciliation; `download_quality.json` and `persisted_quality.json`: schema-validated quality audits.
 - `ohlcv.csv`, `predictions.csv`, `warnings.json` and `candidate/`: local reproducibility artifacts; PostgreSQL remains the serving data layer.
 
-These paths are gitignored. The full training snapshots can grow substantially; retain the evidence needed for your runs and include it in your local backup/retention policy. No automatic deletion of historical evidence is enabled.
+These paths are gitignored. A full run directory holds tens of megabytes, so every refresh, successful or failed, keeps only the newest five run directories of its market (`--keep-runs`). The current run, the run behind the active bundle and a pending publication are always kept, and links or other files in the directory are never touched. `status.json` lists the removed runs in `pruned_runs`; a removal problem is recorded as `retention_error_type` and does not change the refresh result. PostgreSQL `prediction_batches` and `warning_records` remain the durable history. Back up run directories you need beyond that window.
 
 ```bash
 systemctl --user status tsi-postgres tsi-api tsi-dashboard

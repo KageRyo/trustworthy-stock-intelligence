@@ -6,6 +6,8 @@ from contextlib import contextmanager
 from datetime import UTC, date, datetime, time, timedelta
 import fcntl
 from pathlib import Path
+import re
+import shutil
 from typing import Literal
 from uuid import uuid4
 from zoneinfo import ZoneInfo
@@ -27,6 +29,7 @@ from tsi.serving.bundle import load_serving_bundle, write_serving_bundle
 from tsi.serving.schema import PredictionBatch
 
 Market = Literal["us", "taiwan"]
+RUN_ID_PATTERN = r"daily_(us|taiwan)_[0-9]{8}T[0-9]{6}_[a-f0-9]{12}"
 
 
 class DailyRefreshConfig(BaseModel):
@@ -38,6 +41,7 @@ class DailyRefreshConfig(BaseModel):
     bundle_root: Path
     runs_root: Path
     max_age_days: int = Field(default=7, ge=1, le=14)
+    keep_runs: int = Field(default=5, ge=1, le=60)
 
 
 class DailyRefreshReport(BaseModel):
@@ -60,6 +64,8 @@ class DailyRefreshReport(BaseModel):
     provider_price_repair: bool = False
     official_close_corrections: list[OfficialCloseCorrection] = Field(default_factory=list)
     error_type: str | None = None
+    pruned_runs: list[str] = Field(default_factory=list)
+    retention_error_type: str | None = None
 
 
 def completed_daily_end(market: Market, now: datetime) -> date:
@@ -142,13 +148,60 @@ def refresh_daily(
             )
             report.error_type = type(exc).__name__
             report.finished_at = datetime.now(UTC)
+            _apply_retention(config, report)
             _save_report(report, run_dir)
             raise
         report.status = "published"
         report.finished_at = datetime.now(UTC)
         _save_report(report, run_dir)
         _pending_path(config).unlink(missing_ok=True)
+        _apply_retention(config, report)
+        _save_report(report, run_dir)
         return report
+
+
+def stale_runs(config: DailyRefreshConfig, current_run_id: str) -> list[Path]:
+    """Select this market's run directories beyond the newest ``keep_runs``.
+
+    The current run, the active bundle's run and a pending publication are never selected. Only
+    real directories with generated run names count; links and other files are left alone.
+    PostgreSQL keeps the durable batch and warning history.
+    """
+    root = config.runs_root.resolve()
+    if not root.is_dir():
+        return []
+    protected = {current_run_id, *_referenced_runs(config)}
+    runs = sorted(
+        (
+            path for path in root.iterdir()
+            if path.name.startswith(f"daily_{config.market}_")
+            and re.fullmatch(RUN_ID_PATTERN, path.name)
+            and path.is_dir() and not path.is_symlink()
+        ),
+        key=lambda path: path.name, reverse=True,
+    )
+    return [path for path in runs[config.keep_runs:] if path.name not in protected]
+
+
+def _referenced_runs(config: DailyRefreshConfig) -> set[str]:
+    referenced = set()
+    active_path = config.bundle_root / f"{config.market}.json"
+    if active_path.exists():
+        referenced.add(load_serving_bundle(Path(active_path.name), root=config.bundle_root).run_id)
+    marker = _pending_path(config)
+    if marker.exists():
+        referenced.add(PendingPublication.model_validate_json(marker.read_text()).run_id)
+    return referenced
+
+
+def _apply_retention(config: DailyRefreshConfig, report: DailyRefreshReport) -> None:
+    """Record pruned runs; a retention problem never changes the refresh outcome."""
+    try:
+        for path in stale_runs(config, report.run_id):
+            shutil.rmtree(path)
+            report.pruned_runs.append(path.name)
+    except (OSError, ValueError) as exc:
+        report.retention_error_type = type(exc).__name__
 
 
 def _refresh(
@@ -245,7 +298,7 @@ class PendingPublication(BaseModel):
     """Only a generated run identifier may locate a recoverable candidate."""
 
     model_config = ConfigDict(extra="forbid")
-    run_id: str = Field(pattern=r"^daily_(us|taiwan)_[0-9]{8}T[0-9]{6}_[a-f0-9]{12}$")
+    run_id: str = Field(pattern=rf"^{RUN_ID_PATTERN}$")
 
 
 def _pending_path(config: DailyRefreshConfig) -> Path:
