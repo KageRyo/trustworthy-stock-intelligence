@@ -1,0 +1,15 @@
+[Unit]
+Description=TSI existing PostgreSQL on Docker Desktop
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+WorkingDirectory=@ROOT@
+Environment="PATH=@PATH@"
+ExecStart="@ROOT@/.venv/bin/python" -m scripts.local_services supervise-postgres
+Restart=on-failure
+RestartSec=30
+TimeoutStartSec=180
+
+[Install]
+WantedBy=default.target

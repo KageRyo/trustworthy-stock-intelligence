@@ -41,6 +41,16 @@ PREDICT_DB_ARGS ?= --write-db --database-url $(DATABASE_URL)
 PYTHON_SYNC_EXTRAS := --extra dev --extra data --extra db --extra dashboard --extra models --extra explainability --extra viz --extra notebooks
 
 .PHONY: python-sync python-sync-gpu docs-format docs-check download-tickers ingest-market-data ingest-watchlist-data predict-latest predict-latest-baseline model-bundles api dashboard stock-dashboard frontend-install frontend-build test-python test-go lint test-all
+.PHONY: local-services-install refresh-daily-us refresh-daily-taiwan
+
+local-services-install:
+	$(PYTHON) -m scripts.local_services install
+
+refresh-daily-us:
+	$(PYTHON) -m scripts.refresh_daily_models --market us
+
+refresh-daily-taiwan:
+	$(PYTHON) -m scripts.refresh_daily_models --market taiwan
 
 python-sync:
 	$(UV) sync --locked $(PYTHON_SYNC_EXTRAS) --extra deep

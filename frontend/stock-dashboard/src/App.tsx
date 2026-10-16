@@ -1,3 +1,4 @@
+import { resolveModelMetadata } from "./lib/modelMetadata";
 import {
   Activity,
   AlertTriangle,
@@ -934,13 +935,14 @@ function TrustPanel({
   status: APIStatus | null;
   copy: DashboardCopy;
 }) {
+  const metadata = resolveModelMetadata(analysis, model, status);
   return (
     <section className="min-w-0 rounded-lg border border-line bg-white p-5 shadow-panel">
       <div className="flex items-center justify-between border-b border-line pb-4">
         <div>
           <h2 className="text-lg font-semibold tracking-normal">{copy.panels.trustAndModel}</h2>
           <p className="mt-1 text-sm text-slate-500">
-            {model?.model || analysis?.model.name || copy.common.na}
+            {metadata.modelName || copy.common.na}
           </p>
         </div>
         <ShieldCheck className="text-trust" size={24} aria-hidden="true" />
@@ -1000,16 +1002,16 @@ function TrustPanel({
         />
         <ValueRow
           label={copy.labels.dataAsOf}
-          value={status?.data_as_of || analysis?.data_as_of || copy.common.na}
+          value={metadata.dataAsOf || copy.common.na}
         />
         <ValueRow
           label={copy.labels.generatedAt}
-          value={status?.generated_at || analysis?.generated_at || copy.common.na}
+          value={metadata.generatedAt || copy.common.na}
         />
         {analysis ? <FreshnessPanel freshness={analysis.data_freshness.freshness} copy={copy} /> : null}
         <ValueRow
           label={copy.labels.modelBundle}
-          value={model?.model_bundle || analysis?.model.model_bundle || copy.common.na}
+          value={metadata.modelBundle || copy.common.na}
         />
       </div>
       {analysis ? (

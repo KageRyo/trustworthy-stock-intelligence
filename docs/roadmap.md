@@ -27,7 +27,7 @@ The served model is described in the [model card](model_card.md). The evidence b
 
 ## Now
 
-1. **Rebuild pooled model bundles on a schedule.** On-demand analysis scores new tickers with the stored pooled bundle of their market ([ADR 0009](decisions/0009-on-demand-uses-pooled-bundles.md)). The bundles are built by hand with `make model-bundles` and age until rebuilt; a scheduled job should rebuild them after daily ingestion.
+1. **Rebuild pooled model bundles on a schedule.** On-demand analysis scores new tickers with the stored pooled bundle of their market ([ADR 0009](decisions/0009-on-demand-uses-pooled-bundles.md)). The unreleased local daily refresh now validates provider history, persists market bars, trains from PostgreSQL and publishes bundles through market-specific systemd timers; see [local operations](guides/local_operations.md). Verify real runs and service recovery before treating the schedule as operational.
 
 ## Next
 

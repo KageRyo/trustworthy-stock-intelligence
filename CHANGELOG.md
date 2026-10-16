@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+### Added
+
+- Daily pooled-model refresh for US and Taiwan: validate full adjusted daily history, ingest PostgreSQL, train from persisted bars, commit warnings, and atomically publish a validated bundle. Per-market locks, freshness and coverage gates, typed run reports and a recoverable publication journal preserve usable models on failure. Daily downloads opt into yfinance price repair; remaining TPEx close errors require official OHLC and preceding adjustment-factor corroboration before an audited correction.
+- Docker Desktop-only local PostgreSQL recovery and systemd user units for the Go API, Vite dashboard, and market-specific persistent daily timers. The database service checks the existing volume identity before starting it.
+
+### Fixed
+
+- The dashboard trust/model panel now takes model provenance and timestamps from the selected ticker analysis instead of mixing in the latest global batch from another market.
+- Market-bar quality audits repeatedly scanned the entire input for every row when finding observed tickers. The same coverage check now uses one valid-timestamp filter, making full daily histories practical.
+
 ## 0.9.0 - 2026-10-09
 
 ### Changed
