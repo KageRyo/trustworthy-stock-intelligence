@@ -14,7 +14,7 @@ This card describes the model the system serves today. It covers what the model 
 | Calibration  | Monotone Platt scaling on the latest 63 labeled dates; a reversed fit keeps the model's ranking ([ADR 0007](decisions/0007-calibration-keeps-model-ranking.md)) |
 | Thresholds   | Alert: top 5% of calibration-window risk. Watch: top 20% ([ADR 0003](decisions/0003-alert-rate-threshold-policy.md))                                            |
 | Trust        | Data quality × calibration-drift multiplier, independent of risk ([ADR 0002](decisions/0002-trust-independent-of-risk.md))                                      |
-| Model bundle | Recorded per batch as `baseline_latest:<feature_set>:<input>`                                                                                                   |
+| Model bundle | Recorded per batch as `baseline_latest:<feature_set>:<input>`; `<input>` is relative to the working directory, or only the file name for an input outside it    |
 
 ## Intended use
 

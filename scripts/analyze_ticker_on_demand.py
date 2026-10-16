@@ -16,6 +16,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from scripts.predict_latest_baseline import InsufficientHistoryError
 from scripts.predict_latest_baseline import parse_args as parse_prediction_args
 from scripts.predict_latest_baseline import run_prediction
+from tsi.data.csv import portable_path_label
 from tsi.data.download import download_ticker_frame
 from tsi.data.postgres import write_download_to_postgres, write_prediction_batch_to_postgres
 from tsi.serving.schema import build_prediction_batch, write_prediction_batch_json
@@ -295,7 +296,7 @@ def write_insufficient_history_prediction(
         alert_threshold=1.0,
         watch_threshold=1.0,
         warning_level="abstain",
-        model_bundle=f"insufficient_history:{input_path}",
+        model_bundle=f"insufficient_history:{portable_path_label(input_path)}",
         reason_codes=[
             [
                 "insufficient_history",

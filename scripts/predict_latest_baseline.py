@@ -12,7 +12,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from tsi.data.csv import file_sha256, read_ohlcv_csv
+from tsi.data.csv import file_sha256, portable_path_label, read_ohlcv_csv
 from tsi.data.postgres import write_prediction_batch_to_postgres
 from tsi.evaluation.drift import (
     CalibrationDriftAssessment,
@@ -486,7 +486,7 @@ def fit_serving_state(
         feature_columns=columns,
         model=model,
         model_name=model_name,
-        model_bundle=f"baseline_latest:{args.feature_set}:{args.input}",
+        model_bundle=f"baseline_latest:{args.feature_set}:{portable_path_label(args.input)}",
         calibrator=calibrator,
         calibration_method=calibration_method,
         calibration_drift=calibration_drift,
@@ -614,7 +614,7 @@ def serving_bundle(
     return ServingModelBundle(
         run_id=args.run_id,
         created_at=datetime.now(timezone.utc),
-        source_input=str(args.input),
+        source_input=portable_path_label(args.input),
         source_input_sha256=file_sha256(args.input),
         tickers=int(training_frame["ticker"].nunique()),
         training_rows=len(training_frame),
@@ -647,7 +647,9 @@ def serving_state_from_bundle(bundle: ServingModelBundle) -> ServingState:
         feature_columns=list(bundle.feature_columns),
         model=LinearLogitModel(bundle.model),
         model_name=POOLED_MODEL_NAME,
-        model_bundle=f"pooled:{bundle.feature_set}:{bundle.source_input}:{bundle.run_id}",
+        model_bundle=(
+            f"pooled:{bundle.feature_set}:{portable_path_label(bundle.source_input)}:{bundle.run_id}"
+        ),
         calibrator=StoredCalibrator(bundle.calibrator),
         calibration_method=bundle.calibration_method,
         calibration_drift=bundle.calibration_drift,

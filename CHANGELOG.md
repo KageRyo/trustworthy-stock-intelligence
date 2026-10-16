@@ -15,6 +15,7 @@
 
 - The dashboard trust/model panel now takes model provenance and timestamps from the selected ticker analysis instead of mixing in the latest global batch from another market.
 - Market-bar quality audits repeatedly scanned the entire input for every row when finding observed tickers. The same coverage check now uses one valid-timestamp filter, making full daily histories practical.
+- Model provenance no longer exposes absolute host paths. Daily refresh passed resolved run paths, so `model_bundle` in warnings, pooled scores and the dashboard showed directories such as the user's home. Inputs are now recorded relative to the working directory, or by file name when outside it; existing bundles are relabeled when scored.
 
 ## 0.9.0 - 2026-10-09
 
