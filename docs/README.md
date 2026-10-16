@@ -58,15 +58,14 @@ The [model card](model_card.md) describes the model served today: task, data, la
 
 ## Operations
 
-| Document                                                           | Purpose                                                            |
-| ------------------------------------------------------------------ | ------------------------------------------------------------------ |
-| [Dashboard operations](operations/dashboard_operations.md)         | Freshness, trust, coverage, and job states shown in the dashboard. |
-| [Local refresh validation](operations/local_refresh_validation.md) | Local daily runs, model hashes, integration and recovery evidence. |
-| [Prediction jobs](operations/prediction_jobs.md)                   | Queue lifecycle, idempotency, worker claims, and recovery.         |
-| [Warning transitions](operations/warning_transitions.md)           | Warning-change semantics and deduplication.                        |
-| [Watchlist grouping](operations/watchlist_grouping.md)             | Session watchlist groups, filters, and cleanup.                    |
-| [Observability](operations/observability.md)                       | Health probes, metrics, and structured logs.                       |
-| [End-to-end pipeline](operations/e2e.md)                           | PostgreSQL watchlist-to-warning pipeline and its CI smoke test.    |
+| Document                                                   | Purpose                                                            |
+| ---------------------------------------------------------- | ------------------------------------------------------------------ |
+| [Dashboard operations](operations/dashboard_operations.md) | Freshness, trust, coverage, and job states shown in the dashboard. |
+| [Prediction jobs](operations/prediction_jobs.md)           | Queue lifecycle, idempotency, worker claims, and recovery.         |
+| [Warning transitions](operations/warning_transitions.md)   | Warning-change semantics and deduplication.                        |
+| [Watchlist grouping](operations/watchlist_grouping.md)     | Session watchlist groups, filters, and cleanup.                    |
+| [Observability](operations/observability.md)               | Health probes, metrics, and structured logs.                       |
+| [End-to-end pipeline](operations/e2e.md)                   | PostgreSQL watchlist-to-warning pipeline and its CI smoke test.    |
 
 ## Research
 
