@@ -1,5 +1,6 @@
 """Daily refresh must publish only complete, persisted, validated candidates."""
 from datetime import UTC, datetime
+import json
 from pathlib import Path
 
 import pandas as pd
@@ -297,3 +298,55 @@ def test_retention_ignores_links_that_look_like_runs(refresh_setup, tmp_path):
     assert report.pruned_runs == []
     assert link.is_symlink()
     assert (outside / "keep.txt").exists()
+
+
+def test_recovery_compares_data_dates_like_a_fresh_publication(refresh_setup, monkeypatch):
+    config, _, _ = refresh_setup
+    daily.refresh_daily(config, "postgresql://unused", now=NOW)
+    publish = daily.write_serving_bundle
+
+    def disk_failure(*a, **kw):
+        raise OSError("disk full")
+
+    monkeypatch.setattr(daily, "write_serving_bundle", disk_failure)
+    with pytest.raises(OSError):
+        daily.refresh_daily(config, "postgresql://unused", now=NOW)
+    active_path = config.bundle_root / "taiwan.json"
+    active = json.loads(active_path.read_text())
+    active["data_as_of"] += "T00:00:00+00:00"
+    active_path.write_text(json.dumps(active))
+    monkeypatch.setattr(daily, "write_serving_bundle", publish)
+    monkeypatch.setattr(daily, "read_prediction_batch_id", lambda *a: "persisted-batch")
+
+    recovered = daily.refresh_daily(config, "postgresql://unused", now=NOW)
+
+    assert recovered.status == "published"
+
+
+def _stored(monkeypatch, stored):
+    monkeypatch.setattr(daily, "read_market_bars_from_postgres", lambda url, ticker, **kw:
+                        stored[stored.ticker == ticker].copy())
+
+
+def test_training_excludes_stored_bars_the_download_no_longer_has(refresh_setup, monkeypatch):
+    config, result, _ = refresh_setup
+    phantom = result.ohlcv[result.ohlcv.ticker == "2330"].iloc[[0]].assign(date="2020-06-13")
+    _stored(monkeypatch, pd.concat([result.ohlcv, phantom], ignore_index=True))
+
+    report = daily.refresh_daily(config, "postgresql://unused", now=NOW)
+
+    snapshot = pd.read_csv(config.runs_root / report.run_id / "ohlcv.csv", dtype={"ticker": str})
+    assert len(snapshot) == len(result.ohlcv)
+    assert not snapshot.date.astype(str).str.startswith("2020-06-13").any()
+    assert report.excluded_persisted_bars == 1
+
+
+def test_reject_persisted_bars_that_lose_downloaded_rows(refresh_setup, monkeypatch):
+    config, result, calls = refresh_setup
+    _stored(monkeypatch, result.ohlcv.drop(index=result.ohlcv.index[5]))
+
+    with pytest.raises(ValueError, match="Persisted"):
+        daily.refresh_daily(config, "postgresql://unused", now=NOW)
+
+    assert calls == ["bars"]
+    assert not (config.bundle_root / "taiwan.json").exists()
