@@ -202,3 +202,98 @@ def test_published_model_provenance_is_relative_to_the_checkout(refresh_setup, m
     assert f'"baseline_latest:technical_range:runs/{report.run_id}/ohlcv.csv"' in batch
     assert str(config.runs_root.parent) not in batch
     assert bundle.source_input == f"runs/{report.run_id}/ohlcv.csv"
+
+
+def _old_run(config, market, stamp):
+    run = config.runs_root / f"daily_{market}_{stamp}_{'0' * 12}"
+    run.mkdir(parents=True)
+    (run / "download.csv").write_text("evidence")
+    return run
+
+
+def _saved_report(config, run_id):
+    return daily.DailyRefreshReport.model_validate_json(
+        (config.runs_root / run_id / "status.json").read_text()
+    )
+
+
+def test_refresh_keeps_only_the_newest_runs_of_its_market(refresh_setup):
+    config, _, _ = refresh_setup
+    config.keep_runs = 2
+    older = _old_run(config, "taiwan", "20201230T120000")
+    newer = _old_run(config, "taiwan", "20201231T120000")
+    other_market = _old_run(config, "us", "20201201T120000")
+    notes = config.runs_root / "taiwan_provider_diagnostic.csv"
+    notes.write_text("kept")
+
+    report = daily.refresh_daily(config, "postgresql://unused", now=NOW)
+
+    assert not older.exists()
+    assert newer.exists() and other_market.exists() and notes.exists()
+    assert report.pruned_runs == [older.name]
+    assert _saved_report(config, report.run_id).pruned_runs == [older.name]
+
+
+def test_failed_refresh_keeps_the_run_of_the_active_bundle(refresh_setup):
+    config, result, _ = refresh_setup
+    config.keep_runs = 1
+    active = daily.refresh_daily(config, "postgresql://unused", now=NOW)
+    abandoned = _old_run(config, "taiwan", "20210101T130000")
+    result.ohlcv["date"] = "2010-01-01"
+
+    with pytest.raises(ValueError):
+        daily.refresh_daily(config, "postgresql://unused", now=NOW.replace(day=2))
+
+    remaining = sorted(path.name for path in config.runs_root.iterdir())
+    assert len(remaining) == 2
+    assert active.run_id in remaining
+    failed = _saved_report(config, remaining[1])
+    assert failed.status == "failed"
+    assert failed.pruned_runs == [abandoned.name]
+
+
+def test_retention_failure_does_not_fail_a_published_refresh(refresh_setup, monkeypatch):
+    config, _, _ = refresh_setup
+    config.keep_runs = 1
+    older = _old_run(config, "taiwan", "20201230T120000")
+
+    def deny(path):
+        raise PermissionError("denied")
+
+    monkeypatch.setattr(daily.shutil, "rmtree", deny)
+    report = daily.refresh_daily(config, "postgresql://unused", now=NOW)
+
+    assert report.status == "published"
+    assert report.retention_error_type == "PermissionError"
+    assert report.pruned_runs == []
+    assert older.exists()
+
+
+def test_retention_never_removes_a_pending_publication(refresh_setup):
+    config, _, _ = refresh_setup
+    config.keep_runs = 1
+    pending = _old_run(config, "taiwan", "20201230T120000")
+    current = _old_run(config, "taiwan", "20201231T120000")
+    config.bundle_root.mkdir(parents=True)
+    daily._pending_path(config).write_text(
+        daily.PendingPublication(run_id=pending.name).model_dump_json()
+    )
+
+    assert daily.stale_runs(config, current.name) == []
+
+
+def test_retention_ignores_links_that_look_like_runs(refresh_setup, tmp_path):
+    config, _, _ = refresh_setup
+    config.keep_runs = 1
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "keep.txt").write_text("not a run")
+    config.runs_root.mkdir(parents=True)
+    link = config.runs_root / f"daily_taiwan_20201230T120000_{'0' * 12}"
+    link.symlink_to(outside, target_is_directory=True)
+
+    report = daily.refresh_daily(config, "postgresql://unused", now=NOW)
+
+    assert report.pruned_runs == []
+    assert link.is_symlink()
+    assert (outside / "keep.txt").exists()
