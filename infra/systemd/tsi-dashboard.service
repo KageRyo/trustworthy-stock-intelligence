@@ -1,0 +1,17 @@
+[Unit]
+Description=TSI TypeScript dashboard with Vite API proxy
+Wants=tsi-api.service
+After=tsi-api.service
+StartLimitIntervalSec=0
+
+[Service]
+WorkingDirectory=@ROOT@
+Environment="PATH=@PATH@"
+ExecStart=/usr/bin/make stock-dashboard
+Restart=always
+RestartSec=10
+TimeoutStopSec=30
+KillMode=control-group
+
+[Install]
+WantedBy=default.target

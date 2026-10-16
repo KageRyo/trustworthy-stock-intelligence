@@ -1,0 +1,20 @@
+[Unit]
+Description=TSI daily pooled model refresh (%i)
+Wants=tsi-postgres.service
+After=tsi-postgres.service
+StartLimitIntervalSec=0
+
+[Service]
+Type=oneshot
+WorkingDirectory=@ROOT@
+Environment="PATH=@PATH@"
+EnvironmentFile=@ROOT@/.env
+Environment=OMP_NUM_THREADS=4
+Environment=OPENBLAS_NUM_THREADS=4
+ExecStartPre="@ROOT@/.venv/bin/python" -m scripts.local_services check-db
+ExecStart="@ROOT@/.venv/bin/python" -m scripts.refresh_daily_models --market %i
+Restart=on-failure
+RestartSec=900
+RestartPreventExitStatus=65
+TimeoutStartSec=2h
+UMask=0077

@@ -1,0 +1,11 @@
+[Unit]
+Description=Refresh US daily model after market close
+
+[Timer]
+OnCalendar=Mon..Fri *-*-* 18:15:00 America/New_York
+Persistent=true
+RandomizedDelaySec=120
+Unit=tsi-daily-refresh@us.service
+
+[Install]
+WantedBy=timers.target

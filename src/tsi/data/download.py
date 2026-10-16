@@ -616,6 +616,7 @@ def download_ticker_frame(
     batch_size: int = 80,
     dataset_name: str = "custom",
     retry_policy: RetryPolicy | None = None,
+    repair_prices: bool = False,
 ) -> DownloadFrameResult:
     """Download OHLCV data for explicit tickers and return it in memory."""
 
@@ -656,6 +657,7 @@ def download_ticker_frame(
                     actions=False,
                     threads=True,
                     progress=False,
+                    **({"repair": True} if repair_prices else {}),
                 ),
                 policy=policy,
                 is_success=lambda frame: isinstance(frame, pd.DataFrame) and not frame.empty,
@@ -710,6 +712,7 @@ def download_ticker_frame(
                     end=end,
                     interval=interval,
                     policy=policy,
+                    repair_prices=repair_prices,
                 )
                 provider_health.append(tpex_health)
                 if not tpex_frame.empty:
@@ -809,6 +812,7 @@ def _download_yfinance_tpex(
     end: str | None,
     interval: str,
     policy: RetryPolicy,
+    repair_prices: bool = False,
 ) -> tuple[pd.DataFrame, ProviderHealthSnapshot]:
     """Retry an auto-resolved Taiwan code as a TPEx-listed yfinance symbol.
 
@@ -831,6 +835,7 @@ def _download_yfinance_tpex(
             actions=False,
             threads=True,
             progress=False,
+            **({"repair": True} if repair_prices else {}),
         ),
         policy=policy,
         is_success=lambda frame: isinstance(frame, pd.DataFrame) and not frame.empty,

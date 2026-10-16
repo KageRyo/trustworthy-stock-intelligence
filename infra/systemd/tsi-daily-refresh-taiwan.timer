@@ -1,0 +1,11 @@
+[Unit]
+Description=Refresh Taiwan daily model after market close
+
+[Timer]
+OnCalendar=Mon..Fri *-*-* 19:15:00 Asia/Taipei
+Persistent=true
+RandomizedDelaySec=120
+Unit=tsi-daily-refresh@taiwan.service
+
+[Install]
+WantedBy=timers.target
