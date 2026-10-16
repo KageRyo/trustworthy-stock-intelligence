@@ -350,3 +350,29 @@ def test_reject_persisted_bars_that_lose_downloaded_rows(refresh_setup, monkeypa
 
     assert calls == ["bars"]
     assert not (config.bundle_root / "taiwan.json").exists()
+
+
+def test_module_imports_where_posix_file_locks_are_unavailable(monkeypatch):
+    import importlib.util
+    import sys
+
+    monkeypatch.setitem(sys.modules, "fcntl", None)
+    spec = importlib.util.spec_from_file_location("daily_refresh_without_fcntl", daily.__file__)
+    module = importlib.util.module_from_spec(spec)
+
+    spec.loader.exec_module(module)
+
+    assert module.refresh_daily.__name__ == "refresh_daily"
+
+
+def test_refresh_outside_a_checkout_fails_before_any_io(refresh_setup, monkeypatch):
+    import sys
+
+    config, _, calls = refresh_setup
+    monkeypatch.setitem(sys.modules, "scripts.predict_latest_baseline", None)
+
+    with pytest.raises(RuntimeError, match="repository checkout"):
+        daily.refresh_daily(config, "postgresql://unused", now=NOW)
+
+    assert calls == []
+    assert not config.runs_root.exists()

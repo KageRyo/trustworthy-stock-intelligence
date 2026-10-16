@@ -12,6 +12,8 @@
 
 The Go API, PostgreSQL schema and workers, TypeScript dashboard, Docker Compose stack, and downloaded market data are not bundled into the wheel.
 
+`tsi.data.prediction_jobs` and `tsi.data.daily_refresh` ship in the wheel but orchestrate the repository's local services. They train through `scripts/predict_latest_baseline.py`, so they run only from a repository checkout. Daily refresh also needs POSIX file locks (Linux or WSL); outside a checkout it stops with a clear error before any provider or database I/O.
+
 ## Install
 
 The base package supports offline artifact work and core model/evaluation use:

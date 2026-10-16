@@ -1,10 +1,14 @@
-"""Fail-closed daily pooled-model refresh, with PostgreSQL as the training source."""
+"""Fail-closed daily pooled-model refresh, with PostgreSQL as the training source.
+
+This orchestrates the repository's local services: it trains through
+``scripts/predict_latest_baseline.py`` and locks with POSIX ``fcntl``, so it runs from a
+repository checkout on Linux or WSL, not from the installed package alone.
+"""
 from __future__ import annotations
 
 from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import UTC, date, datetime, time, timedelta
-import fcntl
 from pathlib import Path
 import re
 import shutil
@@ -78,6 +82,8 @@ def completed_daily_end(market: Market, now: datetime) -> date:
 @contextmanager
 def refresh_lock(root: Path, market: Market) -> Iterator[None]:
     """Hold one market's nonblocking lock throughout refresh and publication."""
+    import fcntl
+
     root.mkdir(parents=True, exist_ok=True)
     with (root / f".{market}.refresh.lock").open("a") as stream:
         try:
@@ -88,6 +94,20 @@ def refresh_lock(root: Path, market: Market) -> Iterator[None]:
             yield
         finally:
             fcntl.flock(stream, fcntl.LOCK_UN)
+
+
+def _training_cli():
+    """Load the repository training CLI lazily, so ingestion-only callers never import it."""
+    try:
+        from scripts.predict_latest_baseline import parse_args, run_prediction
+    except ModuleNotFoundError as exc:
+        if exc.name not in {"scripts", "scripts.predict_latest_baseline"}:
+            raise
+        raise RuntimeError(
+            "Daily refresh runs from a repository checkout; the installed package does not "
+            "include scripts/predict_latest_baseline.py"
+        ) from exc
+    return parse_args, run_prediction
 
 
 def _save_report(report: DailyRefreshReport, run_dir: Path) -> None:
@@ -124,6 +144,7 @@ def refresh_daily(
     """Validate, persist, train and publish a daily model; retain active model on failure."""
     if not database_url.strip():
         raise ValueError("A database URL is required")
+    _training_cli()
     now = now or datetime.now(UTC)
     if now.tzinfo is None:
         raise ValueError("now must be timezone aware")
@@ -209,8 +230,7 @@ def _refresh(
     config: DailyRefreshConfig, database_url: str, now: datetime, run_dir: Path,
     report: DailyRefreshReport,
 ) -> None:
-    # Imports stay here to avoid pulling the training CLI into ingestion-only callers.
-    from scripts.predict_latest_baseline import parse_args, run_prediction
+    parse_args, run_prediction = _training_cli()
 
     seed = read_ohlcv_csv(config.seed_input)
     tickers = sorted(seed.ticker.unique().tolist())
