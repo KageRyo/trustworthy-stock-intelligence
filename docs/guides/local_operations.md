@@ -1,6 +1,6 @@
 # Local daily updates and service recovery
 
-This workstation uses Docker Desktop for PostgreSQL and WSL systemd user services for the Go API, Vite dashboard and daily model updates. These are local development services, not a production deployment. Daily models predict five-trading-day drawdown risk; five-minute ingestion does not turn them into five-minute models.
+The optional local services run PostgreSQL on Docker Desktop, and the Go API, Vite dashboard and daily model updates as systemd user services under WSL2. They are for local development, not a production deployment. Daily models predict five-trading-day drawdown risk; five-minute ingestion does not turn them into five-minute models.
 
 ## Prerequisites and installation
 
