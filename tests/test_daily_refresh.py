@@ -1,5 +1,6 @@
 """Daily refresh must publish only complete, persisted, validated candidates."""
 from datetime import UTC, datetime
+import json
 from pathlib import Path
 
 import pandas as pd
@@ -297,3 +298,27 @@ def test_retention_ignores_links_that_look_like_runs(refresh_setup, tmp_path):
     assert report.pruned_runs == []
     assert link.is_symlink()
     assert (outside / "keep.txt").exists()
+
+
+def test_recovery_compares_data_dates_like_a_fresh_publication(refresh_setup, monkeypatch):
+    config, _, _ = refresh_setup
+    daily.refresh_daily(config, "postgresql://unused", now=NOW)
+    publish = daily.write_serving_bundle
+
+    def disk_failure(*a, **kw):
+        raise OSError("disk full")
+
+    monkeypatch.setattr(daily, "write_serving_bundle", disk_failure)
+    with pytest.raises(OSError):
+        daily.refresh_daily(config, "postgresql://unused", now=NOW)
+    active_path = config.bundle_root / "taiwan.json"
+    active = json.loads(active_path.read_text())
+    active["data_as_of"] += "T00:00:00+00:00"
+    active_path.write_text(json.dumps(active))
+    monkeypatch.setattr(daily, "write_serving_bundle", publish)
+    monkeypatch.setattr(daily, "read_prediction_batch_id", lambda *a: "persisted-batch")
+
+    recovered = daily.refresh_daily(config, "postgresql://unused", now=NOW)
+
+    assert recovered.status == "published"
+

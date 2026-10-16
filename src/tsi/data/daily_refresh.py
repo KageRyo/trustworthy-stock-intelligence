@@ -25,7 +25,7 @@ from tsi.data.postgres import (
 )
 from tsi.data.quality import audit_market_bars
 from tsi.data.price_reconciliation import OfficialCloseCorrection, reconcile_tpex_closes
-from tsi.serving.bundle import load_serving_bundle, write_serving_bundle
+from tsi.serving.bundle import ServingModelBundle, load_serving_bundle, write_serving_bundle
 from tsi.serving.schema import PredictionBatch
 
 Market = Literal["us", "taiwan"]
@@ -278,7 +278,7 @@ def _refresh(
     active_path = config.bundle_root / f"{config.market}.json"
     if active_path.exists():
         active = load_serving_bundle(Path(active_path.name), root=config.bundle_root)
-        if date.fromisoformat(bundle.data_as_of[:10]) < date.fromisoformat(active.data_as_of[:10]):
+        if _data_date(bundle) < _data_date(active):
             raise ValueError("Candidate model would move data_as_of backwards")
     report.data_as_of = bundle.data_as_of
     pending = PendingPublication(run_id=report.run_id)
@@ -292,6 +292,10 @@ def _refresh(
     _save_report(report, run_dir)
     write_serving_bundle(bundle, Path(active_path.name), root=config.bundle_root)
     report.bundle_sha256 = file_sha256(active_path)
+
+
+def _data_date(bundle: ServingModelBundle) -> date:
+    return date.fromisoformat(bundle.data_as_of[:10])
 
 
 class PendingPublication(BaseModel):
@@ -325,7 +329,7 @@ def _recover_pending(
     active_path = config.bundle_root / f"{config.market}.json"
     if active_path.exists():
         active = load_serving_bundle(Path(active_path.name), root=config.bundle_root)
-        if bundle.data_as_of < active.data_as_of:
+        if _data_date(bundle) < _data_date(active):
             raise ValueError("Pending publication would move data_as_of backwards")
     write_serving_bundle(bundle, Path(active_path.name), root=config.bundle_root)
     report.status = "published"
