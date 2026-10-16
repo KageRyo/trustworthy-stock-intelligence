@@ -322,3 +322,31 @@ def test_recovery_compares_data_dates_like_a_fresh_publication(refresh_setup, mo
 
     assert recovered.status == "published"
 
+
+def _stored(monkeypatch, stored):
+    monkeypatch.setattr(daily, "read_market_bars_from_postgres", lambda url, ticker, **kw:
+                        stored[stored.ticker == ticker].copy())
+
+
+def test_training_excludes_stored_bars_the_download_no_longer_has(refresh_setup, monkeypatch):
+    config, result, _ = refresh_setup
+    phantom = result.ohlcv[result.ohlcv.ticker == "2330"].iloc[[0]].assign(date="2020-06-13")
+    _stored(monkeypatch, pd.concat([result.ohlcv, phantom], ignore_index=True))
+
+    report = daily.refresh_daily(config, "postgresql://unused", now=NOW)
+
+    snapshot = pd.read_csv(config.runs_root / report.run_id / "ohlcv.csv", dtype={"ticker": str})
+    assert len(snapshot) == len(result.ohlcv)
+    assert not snapshot.date.astype(str).str.startswith("2020-06-13").any()
+    assert report.excluded_persisted_bars == 1
+
+
+def test_reject_persisted_bars_that_lose_downloaded_rows(refresh_setup, monkeypatch):
+    config, result, calls = refresh_setup
+    _stored(monkeypatch, result.ohlcv.drop(index=result.ohlcv.index[5]))
+
+    with pytest.raises(ValueError, match="Persisted"):
+        daily.refresh_daily(config, "postgresql://unused", now=NOW)
+
+    assert calls == ["bars"]
+    assert not (config.bundle_root / "taiwan.json").exists()
