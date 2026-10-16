@@ -7,6 +7,10 @@
 - Daily pooled-model refresh for US and Taiwan: validate full adjusted daily history, ingest PostgreSQL, train from persisted bars, commit warnings, and atomically publish a validated bundle. Per-market locks, freshness and coverage gates, typed run reports and a recoverable publication journal preserve usable models on failure. Daily downloads opt into yfinance price repair; remaining TPEx close errors require official OHLC and preceding adjustment-factor corroboration before an audited correction.
 - Docker Desktop-only local PostgreSQL recovery and systemd user units for the Go API, Vite dashboard, and market-specific persistent daily timers. The database service checks the existing volume identity before starting it.
 
+### Changed
+
+- Updated torch to 2.14.1 and torchvision to 0.29.1 (CPU and cu126).
+
 ### Fixed
 
 - The dashboard trust/model panel now takes model provenance and timestamps from the selected ticker analysis instead of mixing in the latest global batch from another market.
