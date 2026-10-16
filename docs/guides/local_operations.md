@@ -6,7 +6,7 @@ The optional local services run PostgreSQL on Docker Desktop, and the Go API, Vi
 
 1. Start Docker Desktop on Windows and enable WSL integration for the current distro. Do not enable the native `docker.service` or `docker.socket`.
 1. Configure `.env` as described in [the demo guide](local_demo.md). Set `TSI_MODEL_BUNDLE_DIR`, `TSI_US_BUNDLE_INPUT` and `TSI_TAIWAN_BUNDLE_INPUT` to absolute paths. Seed OHLCV snapshots provide the reference universe's string ticker identifiers; their historical rows are not the daily training input and remain unchanged. Keep at least two tickers per market. The daily schedule refreshes these reference universes and their warning records; it does not silently combine session watchlists into the training universe or claim all-market refresh coverage. Other tickers continue to use the existing on-demand/job flow.
-1. Install the Python data, DB and development extras, Go and Node dependencies. For example: `uv sync --locked --extra dev --extra data --extra db` and `make frontend-install`.
+1. Install the Python `dev`, `data` and `db` extras plus the Go and Node dependencies (`make frontend-install`). `uv sync` uninstalls packages from extras it is not given, so list these together with the extras the environment already uses, such as the [environment guide](environment.md) profile with `deep-cu126`.
 1. Provision PostgreSQL once with `docker compose up -d postgres`. The recovery service subsequently starts only the existing `trustworthy-stock-intelligence-postgres-1` container, and verifies its mounted `trustworthy-stock-intelligence_postgres-data` volume. It deliberately refuses to create a replacement database automatically. Apply missing migrations to an existing database before use.
 1. Install and verify units:
 
