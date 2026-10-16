@@ -101,10 +101,10 @@ The serving command compares the fitted calibration reference window with a late
 
 ### `ModelAnalysis`
 
-| Field          | Type   | Description                                                                                                  |
-| -------------- | ------ | ------------------------------------------------------------------------------------------------------------ |
-| `name`         | string | Model family, for example `temporal_transformer`.                                                            |
-| `model_bundle` | string | Model bundle from the prediction record. Daily baseline batches use `baseline_latest:<feature_set>:<input>`. |
+| Field          | Type   | Description                                                                                                                                                                                                                                                                                                       |
+| -------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`         | string | Model family, for example `temporal_transformer`.                                                                                                                                                                                                                                                                 |
+| `model_bundle` | string | Model bundle from the prediction record. Daily baseline batches use `baseline_latest:<feature_set>:<input>`, and pooled scores use `pooled:<feature_set>:<input>:<run_id>`. `<input>` is relative to the working directory, or only the file name for an input outside it, so host directories are never exposed. |
 
 ### `DataFreshness`
 
