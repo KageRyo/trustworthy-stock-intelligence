@@ -9,7 +9,7 @@ This document separates portable project requirements from maintainer hardware a
 | Python package            | Python `>=3.10`                         |
 | Maintainer and CI Python  | `3.11`, selected by `.python-version`   |
 | Python dependency manager | uv `0.12.5` or compatible newer release |
-| Go API                    | Go `1.27.2`                             |
+| Go API                    | Go `1.27.3`                             |
 | TypeScript dashboard      | Node.js `22.23.2`, npm `10.9.x`         |
 | PostgreSQL                | `17-alpine` container                   |
 | Container runtime         | Docker with Compose                     |
@@ -118,7 +118,7 @@ PyTorch: 2.13.0+cu126
 uv: 0.12.5
 Node.js: 22.23.2
 npm: 10.9.8
-Go: 1.27.2
+Go: 1.27.3
 Docker Desktop: 29.7.2
 Docker Compose: 5.3.1
 ```

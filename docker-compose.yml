@@ -31,6 +31,7 @@ services:
         condition: service_healthy
 
   streamlit-dashboard:
+    profiles: [research]
     build:
       context: .
       dockerfile: dashboard/Dockerfile
