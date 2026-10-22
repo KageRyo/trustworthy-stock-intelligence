@@ -4,6 +4,14 @@ Streamlit dashboard for local trust experiment artifacts and the Go warning API.
 
 ## Run
 
+Docker Compose starts the primary TypeScript dashboard by default. To also start the research dashboard at `http://localhost:8501`, enable the research profile:
+
+```bash
+docker compose --profile research up -d
+```
+
+For native development, use the commands below.
+
 Install the optional dashboard dependency:
 
 ```bash
