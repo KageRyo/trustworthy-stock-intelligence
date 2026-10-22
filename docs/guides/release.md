@@ -35,7 +35,7 @@ Issue #29 remains open.
 - Daily freshness cutoffs move from 23:59:59 UTC to each market's session close.
 - On-demand analysis returns a typed `insufficient_history` abstention without matching error text.
 - The Go bridge shares one on-demand run per ticker, caps concurrent tickers with `TSI_ON_DEMAND_MAX_CONCURRENCY`, and answers a full bridge with `429 on_demand_analysis_busy`. The dashboard queues a prediction job for that ticker.
-- The Go API builds with Go 1.27.2 because Go 1.25 no longer receives standard-library fixes.
+- The Go API builds with Go 1.27.3 because Go 1.25 no longer receives standard-library fixes.
 
 Issue #29 remains open.
 
