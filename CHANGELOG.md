@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## 0.10.1 - 2026-10-23
+
+### Fixed
+
+- Use patched Node/Go deployment baselines and refresh certificate/parser dependencies.
+- Require the corrected CA bundle for data ingestion and patched Pillow in supported deep-learning environments.
+- Preserve package/CLI version checks without freezing a release number.
+
 ## 0.10.0 - 2026-10-16
 
 ### Added
