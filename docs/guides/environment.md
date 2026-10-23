@@ -115,7 +115,7 @@ Windows/WSL NVIDIA driver: 560.94
 WSL CUDA capability: 12.6
 Python: 3.11.16
 PyTorch: 2.13.0+cu126
-uv: 0.13.5
+uv: 0.12.5
 Node.js: 22.23.2
 npm: 10.9.8
 Go: 1.27.3
