@@ -7,17 +7,14 @@ authors:
 repository-code: "https://github.com/KageRyo/trustworthy-stock-intelligence"
 url: "https://github.com/KageRyo/trustworthy-stock-intelligence"
 license: "Apache-2.0"
-version: "0.10.1"
+version: "0.11.0"
 date-released: "2026-10-23"
 abstract: >-
-  Research software for schema-first, human-in-the-loop stock drawdown-risk
-  analysis with temporal validation, calibration, uncertainty, trust scores,
-  warning explanations. Version 0.10.1 refreshes each market's pooled model
-  daily from validated provider history stored in PostgreSQL, publishes it
-  atomically with recoverable failure handling and audited TPEx close
-  corrections, supervises the local services, and keeps host paths out of model
-  provenance. The served model is unchanged. It is not externally validated
-  research or investment advice.
+  Research software for stock drawdown-risk analysis with temporal validation,
+  calibration, uncertainty, trust scores and warning explanations. Version
+  0.11.0 requires Python 3.11 or newer and updates image, notebook and installer
+  security dependencies. The served model is unchanged. It is not externally
+  validated research or investment advice.
 keywords:
   - stock risk
   - trustworthy AI

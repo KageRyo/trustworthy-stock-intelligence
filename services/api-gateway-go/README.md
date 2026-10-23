@@ -1,6 +1,6 @@
 # TSI Go API Gateway
 
-Version: `0.10.1`
+Version: `0.11.0`
 
 REST API for serving trustworthy stock warning outputs and user-managed watchlists generated/stored by the Python ML core and PostgreSQL.
 

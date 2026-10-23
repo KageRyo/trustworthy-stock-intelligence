@@ -1,5 +1,9 @@
 # Maintainer Release Checklist
 
+## 0.11.0 Scope
+
+Require Python 3.11 or newer so all supported environments can use patched Pillow 13. Update nbconvert and uv security baselines. The serving model and database schemas are unchanged; Python 3.10 users must upgrade their interpreter before installing this release.
+
 ## 0.10.1 Scope
 
 Security maintenance for the existing serving/model contracts: patched deployment runtimes, updated CA trust and image dependency floors. No retraining or database migration is included.
@@ -104,8 +108,8 @@ Configure PyPI's Trusted Publisher with owner `KageRyo`, repository `trustworthy
 The package-only release sequence is:
 
 ```bash
-git tag -a v0.10.1 -m "release: v0.10.1"
-git push origin v0.10.1
+git tag -a v0.11.0 -m "release: v0.11.0"
+git push origin v0.11.0
 ```
 
 ## 0.4.0 Scope
@@ -175,6 +179,6 @@ The CI `Watchlist-to-warning E2E` job additionally starts PostgreSQL 17, applies
 1. Prepare the version and changelog changes on a release branch.
 1. Merge the release PR only after all required checks pass.
 1. Confirm the merge commit is the current `main` head and rerun all checks.
-1. Create an annotated `v0.10.1` tag on that verified commit.
+1. Create an annotated `v0.11.0` tag on that verified commit.
 1. Push the tag and create a GitHub Release with `--verify-tag`.
 1. Confirm the remote tag, release target, release notes, and downloadable source archives.
