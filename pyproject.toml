@@ -128,6 +128,7 @@ select = ["E4", "E7", "E9", "F"]
 testpaths = ["tests"]
 
 [tool.uv]
+constraint-dependencies = ["Pillow>=13; python_version >= '3.11'"]
 conflicts = [
   [
     { extra = "deep" },
