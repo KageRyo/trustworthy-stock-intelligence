@@ -8,7 +8,7 @@ This document separates portable project requirements from maintainer hardware a
 | ------------------------- | --------------------------------------- |
 | Python package            | Python `>=3.11`                         |
 | Maintainer and CI Python  | `3.11`, selected by `.python-version`   |
-| Python dependency manager | uv `0.12.5` or compatible newer release |
+| Python dependency manager | uv `0.13.5` or compatible newer release |
 | Go API                    | Go `1.27.3`                             |
 | TypeScript dashboard      | Node.js `22.23.2`, npm `10.9.x`         |
 | PostgreSQL                | `17-alpine` container                   |
@@ -115,7 +115,7 @@ Windows/WSL NVIDIA driver: 560.94
 WSL CUDA capability: 12.6
 Python: 3.11.16
 PyTorch: 2.13.0+cu126
-uv: 0.12.5
+uv: 0.13.5
 Node.js: 22.23.2
 npm: 10.9.8
 Go: 1.27.3
