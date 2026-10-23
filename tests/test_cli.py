@@ -1,6 +1,12 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
+
+try:
+    import tomllib
+except ModuleNotFoundError:
+    import tomli as tomllib
 
 import pytest
 
@@ -15,7 +21,8 @@ from tsi.cli import main
 
 
 def test_public_package_api_exposes_version_and_reusable_primitives() -> None:
-    assert __version__ == "0.10.0"
+    pyproject = Path(__file__).resolve().parents[1] / "pyproject.toml"
+    assert __version__ == tomllib.loads(pyproject.read_text(encoding="utf-8"))["project"]["version"]
     assert DEFAULT_FEATURE_COLUMNS
     assert LogisticRiskModel
     assert callable(build_technical_features)
@@ -27,7 +34,7 @@ def test_cli_version_is_available(capsys: pytest.CaptureFixture[str]) -> None:
         main(["--version"])
 
     assert raised.value.code == 0
-    assert capsys.readouterr().out.strip() == "tsi 0.10.0"
+    assert capsys.readouterr().out.strip() == f"tsi {__version__}"
 
 
 def test_cli_inspect_csv_preserves_numeric_ticker_symbols(tmp_path, capsys) -> None:
