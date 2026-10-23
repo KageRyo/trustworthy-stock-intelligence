@@ -116,8 +116,8 @@ Use the `pypi` GitHub environment named by the workflow. No long-lived PyPI toke
 The release command is intentionally separate from ordinary CI:
 
 ```bash
-git tag -a v0.10.0 -m "release: v0.10.0"
-git push origin v0.10.0
+git tag -a v0.10.1 -m "release: v0.10.1"
+git push origin v0.10.1
 ```
 
 Only tag a verified commit after the pull request/branch checks are green. A failed PyPI publish stops the workflow before a GitHub Release is created.

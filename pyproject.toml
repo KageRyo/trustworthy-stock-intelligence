@@ -1,6 +1,6 @@
 [project]
 name = "trustworthy-stock-intelligence"
-version = "0.10.0"
+version = "0.10.1"
 description = "Leakage-aware and trust-aware tools for stock drawdown-risk analysis."
 readme = "README.pypi.md"
 requires-python = ">=3.10"
@@ -62,6 +62,7 @@ notebooks = [
   "ipykernel>=6.29",
 ]
 data = [
+  "certifi>=2026.10.19",
   "lxml>=5.0",
   "pandas-market-calendars>=4.4",
   "requests>=2.31",
@@ -72,12 +73,16 @@ db = [
   "psycopg[binary]>=3.2",
 ]
 deep = [
+  "Pillow>=13; python_version >= '3.11'",
+  "Pillow>=12.3; python_version < '3.11'",
   "torch==2.14.1",
   "torchvision==0.29.1",
   "torchaudio==2.11.0",
   "tensorboard>=2.16",
 ]
 deep-cu126 = [
+  "Pillow>=13; python_version >= '3.11'",
+  "Pillow>=12.3; python_version < '3.11'",
   "torch==2.14.1",
   "torchvision==0.29.1",
   "torchaudio==2.11.0",
