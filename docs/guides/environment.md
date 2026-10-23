@@ -6,9 +6,9 @@ This document separates portable project requirements from maintainer hardware a
 
 | Component                 | Supported baseline                      |
 | ------------------------- | --------------------------------------- |
-| Python package            | Python `>=3.10`                         |
+| Python package            | Python `>=3.11`                         |
 | Maintainer and CI Python  | `3.11`, selected by `.python-version`   |
-| Python dependency manager | uv `0.12.5` or compatible newer release |
+| Python dependency manager | uv `0.13.5` or compatible newer release |
 | Go API                    | Go `1.27.3`                             |
 | TypeScript dashboard      | Node.js `22.23.2`, npm `10.9.x`         |
 | PostgreSQL                | `17-alpine` container                   |
