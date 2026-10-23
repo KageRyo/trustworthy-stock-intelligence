@@ -6,6 +6,7 @@
 
 - Require Python 3.11 or newer so every supported deep-learning environment can use patched Pillow 13; remove the Python 3.10 dependency branch.
 - Update the notebook conversion dependency to a patched nbconvert release.
+- Use uv 0.13.5 in CI and require it for the development extra to remove the compromised CA trust root.
 
 ## 0.10.1 - 2026-10-23
 
