@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.11.0 - 2026-10-23
+
 ### Security
 
 - Require Python 3.11 or newer so every supported deep-learning environment can use patched Pillow 13; remove the Python 3.10 dependency branch.

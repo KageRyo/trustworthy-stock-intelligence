@@ -15,7 +15,7 @@ It focuses on calibration, uncertainty, abstention, transparency, auditability, 
 
 ## Current state
 
-Version `0.10.1` is an operational prototype. It keeps the `0.9.0` model and adds:
+Version `0.11.0` is an operational prototype. It keeps the `0.9.0` model and adds:
 
 - a guarded daily refresh per market that validates provider history, stores it in PostgreSQL, trains the pooled model on the stored copy, and atomically publishes the bundle used by on-demand analysis, with recoverable publication and a bounded run history;
 - audited TPEx close corrections backed by official prices;
