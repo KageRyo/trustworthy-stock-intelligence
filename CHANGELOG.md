@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.11.1 - 2026-10-25
+
+- Require patched setuptools for source builds and refresh the locked filelock dependency.
+
 ## 0.11.0 - 2026-10-23
 
 ### Security
