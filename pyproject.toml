@@ -93,7 +93,7 @@ dev = [
   "build>=1.2",
   "pytest>=8.0",
   "ruff>=0.15,<0.18",
-  "setuptools>=83.0.0",
+  "setuptools>=84.1.0",
   "twine>=6.0",
   "uv>=0.13.5",
 ]
@@ -109,7 +109,7 @@ Changelog = "https://github.com/KageRyo/trustworthy-stock-intelligence/blob/main
 tsi = "tsi.cli:main"
 
 [build-system]
-requires = ["setuptools>=83.0.0", "wheel"]
+requires = ["setuptools>=84.1.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
