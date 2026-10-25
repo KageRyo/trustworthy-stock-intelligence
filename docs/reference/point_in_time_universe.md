@@ -118,3 +118,9 @@ PYTHONPATH=src python -m scripts.train_deep \
   --train-size 252 --calibration-size 63 --test-size 63 --purge-size 5 \
   --device cuda
 ```
+
+## Public-snapshot pilot and remaining evidence
+
+[Experiment 021](../../experiments/021_public_snapshot_proxy/README.md) now records a bounded 2024–2025 real-data comparison using weekly observed historical Wikipedia snapshots. Both arms use the same purged logistic protocol. This is an explicitly labelled public-information proxy, not a reviewed effective-date constituent archive. Source revisions contained temporary ticker errors and premature membership edits; observation timing cannot certify historical composition.
+
+Issue #29 remains open for reviewed historical membership, inactive/delisted price coverage and the corresponding formal paired benchmark. The report records feasible institutional/vendor routes and source constraints; neither a working schema nor the new proxy results justify claiming survivorship bias is resolved.

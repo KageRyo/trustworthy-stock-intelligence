@@ -43,3 +43,7 @@ Reports are research evidence for this pilot, not investment advice or trading-p
 1. Reuse `scripts/walk_forward_experiment.py` so folds, calibration, and protocol fields match earlier runs. Compare feature sets with `scripts/evaluate_feature_sets.py` when possible.
 1. Write `README.md` with these sections: Question, Data, Protocol, Result, Findings, Decision for serving, Reproduce, Limitations. Record hashes in `run_manifest.json`.
 1. Add a row to this index. If the result changes serving, add or update a decision record in [`docs/decisions/`](../docs/decisions/README.md).
+
+## Additional source-limited pilots
+
+- [021: public-snapshot universe sensitivity](021_public_snapshot_proxy/README.md) records a two-fold real-data comparison, source-quality findings, and the remaining Issue #29 evidence boundary. It does not certify historical index membership or change serving.
