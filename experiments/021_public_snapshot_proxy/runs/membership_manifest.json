@@ -1,0 +1,14 @@
+{
+  "interval_semantics": "[valid_from, valid_to); known_at must be <= evaluation date",
+  "membership_count": 106,
+  "membership_sha256": "404fa5d9b5d4a75c5a839caf51cd62bb6c2105b8649980aa4fa317432b780f4b",
+  "name": "sp100_weekly_public_observation_proxy_2024_2025",
+  "provider_symbol_count": 106,
+  "schema_version": "point_in_time_universe.v2",
+  "security_count": 106,
+  "source": "Wikipedia revision history; weekly Monday 00:00 UTC observation",
+  "source_license": "Wikipedia CC-BY-SA-4.0; revision attribution in observation manifest; weekly observed proxy, not official effective-date PIT; private pilot only, price data not redistributed.",
+  "ticker_count": 106,
+  "valid_from": "2024-01-01",
+  "valid_to": "2026-01-01"
+}
