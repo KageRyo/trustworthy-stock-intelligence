@@ -46,4 +46,4 @@ Reports are research evidence for this pilot, not investment advice or trading-p
 
 ## Additional source-limited pilots
 
-- [021: public-snapshot universe sensitivity](021_public_snapshot_proxy/README.md) records a two-fold real-data comparison, source-quality findings, and the remaining Issue #29 evidence boundary. It does not certify historical index membership or change serving.
+- [021: public-snapshot universe sensitivity](021_public_snapshot_proxy/README.md) records a two-fold real-data comparison, source-quality findings, and the accepted universe-data limitation ([ADR 0010](../docs/decisions/0010-accept-universe-data-limitations.md)). It does not certify historical index membership or change serving.

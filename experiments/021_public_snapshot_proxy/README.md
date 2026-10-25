@@ -1,6 +1,6 @@
 # 021 — Public-snapshot universe sensitivity pilot
 
-**Status: partial research evidence for [Issue #29](https://github.com/KageRyo/trustworthy-stock-intelligence/issues/29). This is a weekly observed public-information proxy, not an authoritative historical S&P 100 membership benchmark. Issue #29 remains open. No serving model, database or dashboard behavior was changed.**
+**Status: partial research evidence for [Issue #29](https://github.com/KageRyo/trustworthy-stock-intelligence/issues/29). This is a weekly observed public-information proxy, not an authoritative historical S&P 100 membership benchmark. The formal benchmark is deferred as an accepted limitation under [ADR 0010](../../docs/decisions/0010-accept-universe-data-limitations.md); this evidence remains partial. No serving model, database or dashboard behavior was changed.**
 
 ## Question and result
 
@@ -101,7 +101,7 @@ python -m scripts.compare_universe_benchmarks \
 
 The published [comparison](runs/comparison.json) is the existing typed aggregate report with additional source limitations. Its `claim_status: comparable` refers only to protocol comparability. [The membership manifest](runs/membership_manifest.json) records counts, bounds and a fingerprint without raw rows. Repeating from newer provider responses is a new run, not reproduction of these fixed hashes.
 
-## Remaining Issue #29 acceptance evidence
+## Deferred formal-benchmark acceptance evidence
 
 A reviewed historical constituent archive with actual effective dates, defensible historical security identities, inactive/delisted OHLCV coverage and the corresponding bounded paired benchmark is still required. Weekly observations, successful schema validation and source-local data coverage do not establish that evidence.
 
