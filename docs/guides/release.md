@@ -1,5 +1,7 @@
 # Maintainer Release Checklist
 
+Historical release scopes below retain the issue status at each release. The current universe-data decision is [ADR 0010](../decisions/0010-accept-universe-data-limitations.md): accept the disclosed limitation and defer the formal historical benchmark; Issue #29 is retired as not planned, not as completed research.
+
 ## 0.11.0 Scope
 
 Require Python 3.11 or newer so all supported environments can use patched Pillow 13. Update nbconvert and uv security baselines. The serving model and database schemas are unchanged; Python 3.10 users must upgrade their interpreter before installing this release.

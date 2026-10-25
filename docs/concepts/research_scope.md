@@ -57,6 +57,14 @@ Trust layer: Calibration + uncertainty-aware warning levels
 Evaluation: walk-forward validation, false alarm rate, miss rate, lead time, ECE
 ```
 
+## Accepted universe-data limitation
+
+Historical results apply to the selected securities, supplied snapshots and evaluated dates. The main current-constituent pilots retain survivorship bias; authoritative historical membership and independently verified inactive/delisted OHLCV coverage are not available for the formal paired benchmark.
+
+[Experiment 021](../../experiments/021_public_snapshot_proxy/README.md) adds a bounded weekly public-information proxy comparison. It does not certify effective-date index membership or quantify pure survivorship bias. Model comparisons within the same sample and protocol remain sample-conditional; they cannot establish full historical-index, whole-market or investment performance.
+
+[ADR 0010](../decisions/0010-accept-universe-data-limitations.md) accepts this limitation and defers the formal benchmark. Issue #29 is retired from active delivery as not planned under that scope, not as completed research. Revisit it when usable historical membership, identities, usage rights and matching inactive/delisted prices can support a coverage audit and protocol-matched paired evaluation. The [Model Card](../model_card.md) carries the same boundary.
+
 ## Formal Research Deferred Work
 
 The following topics are deferred for the formal research milestone until the core risk warning protocol is stable:

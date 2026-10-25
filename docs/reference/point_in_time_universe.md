@@ -46,7 +46,7 @@ python -m scripts.validate_universe_membership \
   --source-license "research-only; redistribution prohibited"
 ```
 
-The v1 loader remains available for existing experiments. `migrate_v1_to_v2` is an explicit compatibility bridge that derives `legacy:<ticker>` identities and uses `valid_from` as a conservative `known_at`; it is not a historical identity repair and does not close Issue #29. Training entrypoints accept `--universe-schema-version v1|v2`, and the v2 importer in `tsi.data.universe_import` additionally records mapping version, retrieval time, snapshot date, and input SHA-256 for arbitrary external column layouts.
+The v1 loader remains available for existing experiments. `migrate_v1_to_v2` is an explicit compatibility bridge that derives `legacy:<ticker>` identities and uses `valid_from` as a conservative `known_at`; it is not a historical identity repair or evidence that survivorship bias is resolved. Training entrypoints accept `--universe-schema-version v1|v2`, and the v2 importer in `tsi.data.universe_import` additionally records mapping version, retrieval time, snapshot date, and input SHA-256 for arbitrary external column layouts.
 
 The import command writes only a redacted manifest; the licensed input remains local:
 
@@ -103,7 +103,7 @@ The summary carries the membership manifest, making it possible to compare a poi
 
 For the paired current-vs-PIT report, use `python -m scripts.compare_universe_benchmarks` after both runs have identical fold schedules, date windows, labels/features, calibration, threshold, and model configuration. The report emits only aggregate row/member deltas, fingerprints, paired fold-level uncertainty intervals, and coverage audit counts. It fails closed on protocol mismatch and does not claim that unavailable delisted data are equivalent to nonmembership.
 
-The engineering sequence is tracked in [Issue #91](https://github.com/KageRyo/trustworthy-stock-intelligence/issues/91), [Issue #92](https://github.com/KageRyo/trustworthy-stock-intelligence/issues/92), and [Issue #93](https://github.com/KageRyo/trustworthy-stock-intelligence/issues/93). The parent [Issue #29](https://github.com/KageRyo/trustworthy-stock-intelligence/issues/29) remains open until a licensed historical constituent source, inactive/delisted OHLCV coverage, and a completed paired benchmark are available.
+The engineering sequence is tracked in [Issue #91](https://github.com/KageRyo/trustworthy-stock-intelligence/issues/91), [Issue #92](https://github.com/KageRyo/trustworthy-stock-intelligence/issues/92), and [Issue #93](https://github.com/KageRyo/trustworthy-stock-intelligence/issues/93). The parent [Issue #29](https://github.com/KageRyo/trustworthy-stock-intelligence/issues/29) is retired as not planned under [ADR 0010](../decisions/0010-accept-universe-data-limitations.md). The formal benchmark is deferred; its original historical-source, inactive/delisted coverage and paired-evaluation criteria remain unmet.
 
 Use the same membership input and metadata for the deep trainer. This is required before comparing deep and baseline metrics:
 
@@ -123,4 +123,4 @@ PYTHONPATH=src python -m scripts.train_deep \
 
 [Experiment 021](../../experiments/021_public_snapshot_proxy/README.md) now records a bounded 2024–2025 real-data comparison using weekly observed historical Wikipedia snapshots. Both arms use the same purged logistic protocol. This is an explicitly labelled public-information proxy, not a reviewed effective-date constituent archive. Source revisions contained temporary ticker errors and premature membership edits; observation timing cannot certify historical composition.
 
-Issue #29 remains open for reviewed historical membership, inactive/delisted price coverage and the corresponding formal paired benchmark. The report records feasible institutional/vendor routes and source constraints; neither a working schema nor the new proxy results justify claiming survivorship bias is resolved.
+Reviewed historical membership, inactive/delisted price coverage and the corresponding formal paired benchmark remain requirements for revisiting the accepted limitation under [ADR 0010](../decisions/0010-accept-universe-data-limitations.md). The report records feasible institutional/vendor routes and source constraints; neither a working schema nor the new proxy results justify claiming survivorship bias is resolved.

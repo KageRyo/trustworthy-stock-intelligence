@@ -32,7 +32,7 @@ This card describes the model the system serves today. It covers what the model 
 - **History:** on-demand analysis downloads each ticker from 2015-01-01. Batch runs use the supplied OHLCV file.
 - **Known data issues:**
   - Yahoo writes zero-volume placeholder bars on Taiwan typhoon closures. The technical features still see a zero return and zero volume ratio on those days.
-  - Universes are current constituents, which brings survivorship bias (Issue #29).
+  - Main evaluation universes use current constituents, which brings survivorship bias. The formal historical-universe benchmark is deferred as an accepted limitation ([ADR 0010](decisions/0010-accept-universe-data-limitations.md)).
 
 ## Label
 
@@ -101,7 +101,9 @@ Each prediction lists up to five feature attributions. An attribution is the log
 ## Limitations and risks
 
 - **Data:**
-  - Results come from current-constituent pilots on Yahoo data. They are not externally validated and carry survivorship and provider-revision risk.
+  - Results come from current-constituent pilots on Yahoo data. They are not externally validated and carry survivorship and provider-revision risk. Authoritative historical membership and matching inactive/delisted OHLCV coverage remain unverified; missing coverage is unknown, not zero.
+  - Metrics describe the selected samples, snapshots and evaluation dates. Matched within-sample comparisons do not establish full historical-index or whole-market performance, and cannot establish investment performance.
+  - [Experiment 021](../experiments/021_public_snapshot_proxy/README.md) provides a two-fold weekly public-snapshot sensitivity comparison. It does not remove or quantify survivorship bias. This limitation is accepted under [ADR 0010](decisions/0010-accept-universe-data-limitations.md); the formal benchmark is deferred.
   - Taiwan evidence covers listed large caps and a 199-stock TWSE sample. TPEx and emerging coverage is thin.
 - **Regimes:** regime shifts break calibration. In Experiment 007, calibration failed in the COVID-19 fold. After a regime break, unconstrained Platt scaling can also reverse the ranking; Experiment 020 found this once in 113 pooled S&P 100 replays, and serving now falls back instead. Drift detection lowers trust but cannot prevent misses.
 - **Reliability signals:** ensemble and novelty uncertainty did not identify less reliable predictions in Experiment 015, so trust deliberately ignores them for alerts.

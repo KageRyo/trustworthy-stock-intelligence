@@ -1,6 +1,6 @@
 # Research Readiness and Data Boundaries
 
-This document sets the evidence boundary for open research Issues #21, #23, and #29. It prevents an incomplete pilot, a current constituent list, or a different vendor snapshot from being presented as a like-for-like benchmark. It is project guidance, not legal advice.
+This document sets the evidence boundary for research Issues #21, #23, and #29, including deferred work. It prevents an incomplete pilot, a current constituent list, or a different vendor snapshot from being presented as a like-for-like benchmark. It is project guidance, not legal advice.
 
 ## Issue #21: Deep Model Benchmark
 
@@ -35,9 +35,11 @@ This is intentionally a *current* catalogue. It cannot establish historical memb
 
 The first multi-market evidence is the 39-fold current-company pilot in [`experiments/014_taiwan_listed_tpex_pilot`](../../experiments/014_taiwan_listed_tpex_pilot/). It covers an explicit three-TWSE / three-TPEx-listed sample, uses only calibration-window fitting, and records both the input and shared-row fingerprints. It is deliberately partial: the TPEx emerging long-horizon fallback did not complete reliably in the recorded pilot run, so no emerging-market coverage claim is made.
 
-## Issue #29: Point-in-Time S&P Membership
+## Issue #29: Point-in-Time S&P Membership — deferred
 
-The current S&P 100 list cannot solve survivorship bias, even if its rows have listing dates. The required source must provide historical effective dates, additions/removals, security-identifier changes, and its usage constraints. An S&P data licence or a user-supplied research-vendor archive is therefore a prerequisite; use the current index webpage only for an operational current catalogue, never historical membership.
+[ADR 0010](../decisions/0010-accept-universe-data-limitations.md) accepts the current universe-data limitation and defers this formal benchmark. Issue #29 is retired as not planned for the current scope; its original data/benchmark acceptance criteria are not complete. [Experiment 021](../../experiments/021_public_snapshot_proxy/README.md) is partial sensitivity evidence only. The requirements below apply if the formal benchmark is resumed; they are not a current delivery gate.
+
+The current S&P 100 list cannot solve survivorship bias, even if its rows have listing dates. The required source must provide historical effective dates, additions/removals, security-identifier changes, and its usage constraints. A source with verified coverage and permitted use is therefore a prerequisite, whether public, institutional or vendor-supplied; use the current index webpage only for an operational current catalogue, never historical membership.
 
 After receiving a legally usable archive, validate it without committing its raw rows:
 

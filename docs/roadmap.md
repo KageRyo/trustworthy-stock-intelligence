@@ -46,8 +46,6 @@ The served model is described in the [model card](model_card.md). The evidence b
   - Stock-specific no-trade days look identical and are real observations, about 1% of rows in the 199-stock Taiwan holdout.
   - Removing only the closures needs an exchange calendar in serving. Removing all flat zero-volume bars needs a walk-forward check, because it changes returns and labels for illiquid stocks.
 
-- **Survivorship bias (Issue #29):** needs licensed historical constituents and inactive or delisted OHLCV. Issues #91, #92, and #93 built the comparison machinery but do not replace that data.
-
 - **Five-minute models:** five-minute bars are ingestion and freshness coverage only. Do not build an interval model until the daily model's predictive value is established, and the quality audit has run repeatedly across real US and Taiwan provider snapshots.
 
 - **Broader Taiwan coverage:** dated membership, wider stratification, and reliable TPEx emerging history before any all-market claim.
@@ -55,6 +53,8 @@ The served model is described in the [model card](model_card.md). The evidence b
 - **Licensed research data:** provider-revision and external-data studies on licensed, versioned data.
 
 ## Deferred
+
+- **Formal historical-universe benchmark (Issue #29):** survivorship bias and unverified inactive/delisted coverage are accepted limitations of the current scope ([ADR 0010](decisions/0010-accept-universe-data-limitations.md)). The comparison machinery and [Experiment 021](../experiments/021_public_snapshot_proxy/README.md) remain available, but do not establish that the bias is resolved. Revisit when historical membership, identities, usage rights and matching prices can support the formal paired evaluation.
 
 Automated trading, investment-recommendation wording, LLM-based advice, full multimodal learning, and production authentication or paid plans.
 
