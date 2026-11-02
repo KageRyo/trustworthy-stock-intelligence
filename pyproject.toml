@@ -74,16 +74,16 @@ db = [
 ]
 deep = [
   "Pillow>=13",
-  "torch==2.14.1",
-  "torchvision==0.29.1",
-  "torchaudio==2.11.0",
+  "torch==2.15.0",
+  "torchvision==0.29.2",
+  "torchaudio==2.11.1",
   "tensorboard>=2.16",
 ]
 deep-cu126 = [
   "Pillow>=13",
-  "torch==2.14.1",
-  "torchvision==0.29.1",
-  "torchaudio==2.11.0",
+  "torch==2.15.0",
+  "torchvision==0.29.2",
+  "torchaudio==2.11.1",
   "tensorboard>=2.16",
 ]
 dashboard = [
