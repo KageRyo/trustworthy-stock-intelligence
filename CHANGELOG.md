@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.11.2 - 2026-11-05
+
+- Require patched Pydantic 2.14.2 or later for installed packages.
+- Update the CPU deep-learning extra to Torch 2.15.0, TorchVision 0.29.2 and TorchAudio 2.11.1 with a consistent lock; retain the compatible CUDA 12.6 versions because newer wheels are unavailable on that index.
+
 ## 0.11.1 - 2026-10-25
 
 - Require patched setuptools for source builds and refresh the locked filelock dependency.
