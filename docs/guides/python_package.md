@@ -16,7 +16,7 @@ The Go API, PostgreSQL schema and workers, TypeScript dashboard, Docker Compose 
 
 ## Install
 
-The base package supports offline artifact work and core model/evaluation use:
+The package requires Python 3.11.5 or newer. The base package supports offline artifact work and core model/evaluation use:
 
 ```bash
 python -m pip install trustworthy-stock-intelligence
@@ -36,7 +36,7 @@ python -m pip install "trustworthy-stock-intelligence[models]"  # tree/boosting 
 python -m pip install "trustworthy-stock-intelligence[deep]"    # PyTorch model bundles/training
 ```
 
-The published `deep` extra records the pinned compatible matrix `torch==2.14.1`, `torchvision==0.29.1`, and `torchaudio==2.11.0`. TorchAudio 2.11 uses the stable PyTorch ABI and supports PyTorch 2.11 and later. In a uv checkout, `deep` selects CPU wheels for CI and `deep-cu126` selects CUDA 12.6 wheels; they cannot be enabled together. GPU users should follow the explicit profile and driver guidance in [`environment.md`](environment.md).
+The published `deep` extra records the pinned compatible matrix `torch==2.15.0`, `torchvision==0.29.2`, and `torchaudio==2.11.1`. TorchAudio 2.11 uses the stable PyTorch ABI and supports PyTorch 2.11 and later. In a uv checkout, `deep` selects CPU wheels for CI, while `deep-cu126` retains the available CUDA 12.6 matrix `torch==2.14.1`, `torchvision==0.29.1`, and `torchaudio==2.11.0`; the two extras cannot be enabled together. GPU users should follow the explicit profile and driver guidance in [`environment.md`](environment.md).
 
 ## Python API
 

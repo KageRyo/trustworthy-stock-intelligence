@@ -1,9 +1,9 @@
 [project]
 name = "trustworthy-stock-intelligence"
-version = "0.11.2"
+version = "0.11.3"
 description = "Leakage-aware and trust-aware tools for stock drawdown-risk analysis."
 readme = "README.pypi.md"
-requires-python = ">=3.11"
+requires-python = ">=3.11.5"
 license = "Apache-2.0"
 license-files = ["LICENSE"]
 authors = [
@@ -57,12 +57,14 @@ viz = [
 ]
 notebooks = [
   "nbconvert>=7.17.2",
+  "soupsieve>=4.1.1",
   "jupyterlab>=4.2",
   "notebook>=7.2",
   "ipykernel>=6.29",
 ]
 data = [
   "certifi>=2026.10.19",
+  "soupsieve>=4.1.1",
   "lxml>=5.0",
   "pandas-market-calendars>=4.4",
   "requests>=2.31",

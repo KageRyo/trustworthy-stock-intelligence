@@ -1,42 +1,42 @@
 version = 1
 revision = 5
-requires-python = ">=3.11"
+requires-python = ">=3.11.5"
 resolution-markers = [
     "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version >= '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "(python_full_version >= '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126') or (python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126')",
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "python_full_version >= '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "python_full_version >= '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "python_full_version >= '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "(python_full_version >= '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126') or (python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126')",
     "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'emscripten' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "(python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126') or (python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126')",
-    "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'win32' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'emscripten' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'emscripten' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "(python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126') or (python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126')",
     "python_full_version < '3.12' and sys_platform == 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version < '3.12' and sys_platform == 'emscripten' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version < '3.12' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "(python_full_version < '3.12' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126') or (python_full_version < '3.12' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126')",
+    "python_full_version >= '3.14' and sys_platform == 'win32' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'win32' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'emscripten' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version < '3.12' and sys_platform == 'win32' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version < '3.12' and sys_platform == 'emscripten' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version < '3.12' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "python_full_version >= '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "python_full_version >= '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version < '3.12' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version < '3.12' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "python_full_version >= '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "(python_full_version >= '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126') or (python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126')",
+    "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'emscripten' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "(python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126') or (python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126')",
     "python_full_version < '3.12' and sys_platform == 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version < '3.12' and sys_platform == 'emscripten' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version < '3.12' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
@@ -703,7 +703,7 @@ name = "cuda-bindings"
 version = "12.9.7"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "cuda-pathfinder", marker = "(platform_machine != 'x86_64' and sys_platform == 'darwin') or (sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32')" },
+    { name = "cuda-pathfinder" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/40/f3/f9d1095f90d2a4df24cfcafe7487fd9444c6dacb94e3722be6fedd8ac26c/cuda_bindings-12.9.7-cp311-cp311-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:16043ef5b15ab88fe9954c5c2061b1d8007591b27f2c916331056de0ebc6187e", size = 7114834, upload-time = "2026-05-27T18:44:07.746Z" },
@@ -744,34 +744,34 @@ wheels = [
 
 [package.optional-dependencies]
 cublas = [
-    { name = "nvidia-cublas-cu12", marker = "sys_platform == 'linux'" },
+    { name = "nvidia-cublas-cu12", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
 ]
 cudart = [
-    { name = "nvidia-cuda-runtime-cu12", marker = "sys_platform == 'linux'" },
+    { name = "nvidia-cuda-runtime-cu12", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
 ]
 cufft = [
-    { name = "nvidia-cufft-cu12", marker = "sys_platform == 'linux'" },
+    { name = "nvidia-cufft-cu12", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
 ]
 cufile = [
     { name = "nvidia-cufile-cu12", marker = "sys_platform == 'linux'" },
 ]
 cupti = [
-    { name = "nvidia-cuda-cupti-cu12", marker = "sys_platform == 'linux'" },
+    { name = "nvidia-cuda-cupti-cu12", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
 ]
 curand = [
-    { name = "nvidia-curand-cu12", marker = "sys_platform == 'linux'" },
+    { name = "nvidia-curand-cu12", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
 ]
 cusolver = [
-    { name = "nvidia-cusolver-cu12", marker = "sys_platform == 'linux'" },
+    { name = "nvidia-cusolver-cu12", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
 ]
 cusparse = [
-    { name = "nvidia-cusparse-cu12", marker = "sys_platform == 'linux'" },
+    { name = "nvidia-cusparse-cu12", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
 ]
 nvrtc = [
-    { name = "nvidia-cuda-nvrtc-cu12", marker = "sys_platform == 'linux'" },
+    { name = "nvidia-cuda-nvrtc-cu12", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
 ]
 nvtx = [
-    { name = "nvidia-nvtx-cu12", marker = "sys_platform == 'linux'" },
+    { name = "nvidia-nvtx-cu12", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
 ]
 
 [[package]]
@@ -1747,30 +1747,30 @@ resolution-markers = [
     "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "(python_full_version >= '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126') or (python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126')",
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "python_full_version >= '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "(python_full_version >= '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126') or (python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126')",
     "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'emscripten' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "(python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126') or (python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126')",
-    "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'win32' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'emscripten' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'emscripten' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "(python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126') or (python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126')",
     "python_full_version < '3.12' and sys_platform == 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version < '3.12' and sys_platform == 'emscripten' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "(python_full_version < '3.12' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126') or (python_full_version < '3.12' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126')",
+    "python_full_version >= '3.14' and sys_platform == 'win32' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'win32' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'emscripten' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version < '3.12' and sys_platform == 'win32' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version < '3.12' and sys_platform == 'emscripten' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version < '3.12' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "python_full_version >= '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version < '3.12' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "(python_full_version >= '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126') or (python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126')",
+    "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'emscripten' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "(python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126') or (python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126')",
     "python_full_version < '3.12' and sys_platform == 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version < '3.12' and sys_platform == 'emscripten' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "(python_full_version < '3.12' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126') or (python_full_version < '3.12' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126')",
@@ -2301,30 +2301,30 @@ resolution-markers = [
     "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "(python_full_version >= '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126') or (python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126')",
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "python_full_version >= '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "(python_full_version >= '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126') or (python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126')",
     "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'emscripten' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "(python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126') or (python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126')",
-    "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'win32' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'emscripten' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'emscripten' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "(python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126') or (python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126')",
     "python_full_version < '3.12' and sys_platform == 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version < '3.12' and sys_platform == 'emscripten' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "(python_full_version < '3.12' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126') or (python_full_version < '3.12' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126')",
+    "python_full_version >= '3.14' and sys_platform == 'win32' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'win32' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'emscripten' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version < '3.12' and sys_platform == 'win32' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version < '3.12' and sys_platform == 'emscripten' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version < '3.12' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "python_full_version >= '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version < '3.12' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "(python_full_version >= '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126') or (python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126')",
+    "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'emscripten' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "(python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126') or (python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126')",
     "python_full_version < '3.12' and sys_platform == 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version < '3.12' and sys_platform == 'emscripten' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "(python_full_version < '3.12' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126') or (python_full_version < '3.12' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126')",
@@ -2462,24 +2462,24 @@ resolution-markers = [
     "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version >= '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "(python_full_version >= '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126') or (python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126')",
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "python_full_version >= '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "python_full_version >= '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "python_full_version >= '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "(python_full_version >= '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126') or (python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126')",
     "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'emscripten' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "(python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126') or (python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126')",
+    "python_full_version >= '3.14' and sys_platform == 'win32' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'win32' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'emscripten' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "python_full_version >= '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "python_full_version >= '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "python_full_version >= '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "(python_full_version >= '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126') or (python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126')",
     "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'emscripten' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
@@ -2603,7 +2603,7 @@ name = "nvidia-cudnn-cu12"
 version = "9.10.2.21"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-cublas-cu12", marker = "(platform_machine != 'x86_64' and sys_platform == 'darwin') or (sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32')" },
+    { name = "nvidia-cublas-cu12" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/fa/41/e79269ce215c857c935fd86bcfe91a451a584dfc27f1e068f568b9ad1ab7/nvidia_cudnn_cu12-9.10.2.21-py3-none-manylinux_2_27_aarch64.whl", hash = "sha256:c9132cc3f8958447b4910a1720036d9eff5928cc3179b0a51fb6d167c6cc87d8", size = 705026878, upload-time = "2025-06-06T21:52:51.348Z" },
@@ -2616,7 +2616,7 @@ name = "nvidia-cufft-cu12"
 version = "11.3.0.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-nvjitlink-cu12", marker = "(platform_machine != 'x86_64' and sys_platform == 'darwin') or (sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32')" },
+    { name = "nvidia-nvjitlink-cu12" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/1f/37/c50d2b2f2c07e146776389e3080f4faf70bcc4fa6e19d65bb54ca174ebc3/nvidia_cufft_cu12-11.3.0.4-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:d16079550df460376455cba121db6564089176d9bac9e4f360493ca4741b22a6", size = 200164144, upload-time = "2024-11-20T17:40:58.288Z" },
@@ -2652,9 +2652,9 @@ name = "nvidia-cusolver-cu12"
 version = "11.7.1.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-cublas-cu12", marker = "(platform_machine != 'x86_64' and sys_platform == 'darwin') or (sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32')" },
-    { name = "nvidia-cusparse-cu12", marker = "(platform_machine != 'x86_64' and sys_platform == 'darwin') or (sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32')" },
-    { name = "nvidia-nvjitlink-cu12", marker = "(platform_machine != 'x86_64' and sys_platform == 'darwin') or (sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32')" },
+    { name = "nvidia-cublas-cu12" },
+    { name = "nvidia-cusparse-cu12" },
+    { name = "nvidia-nvjitlink-cu12" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/93/17/dbe1aa865e4fdc7b6d4d0dd308fdd5aaab60f939abfc0ea1954eac4fb113/nvidia_cusolver_cu12-11.7.1.2-py3-none-manylinux2014_aarch64.whl", hash = "sha256:0ce237ef60acde1efc457335a2ddadfd7610b892d94efee7b776c64bb1cac9e0", size = 157833628, upload-time = "2024-10-01T17:05:05.591Z" },
@@ -2669,7 +2669,7 @@ name = "nvidia-cusparse-cu12"
 version = "12.5.4.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-nvjitlink-cu12", marker = "(platform_machine != 'x86_64' and sys_platform == 'darwin') or (sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32')" },
+    { name = "nvidia-nvjitlink-cu12" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/eb/eb/6681efd0aa7df96b4f8067b3ce7246833dd36830bb4cec8896182773db7d/nvidia_cusparse_cu12-12.5.4.2-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:d25b62fb18751758fe3c93a4a08eff08effedfe4edf1c6bb5afd0890fe88f887", size = 216451147, upload-time = "2024-11-20T17:44:18.055Z" },
@@ -4025,24 +4025,24 @@ resolution-markers = [
     "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version >= '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "(python_full_version >= '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126') or (python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126')",
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "python_full_version >= '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "python_full_version >= '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "python_full_version >= '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "(python_full_version >= '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126') or (python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126')",
     "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'emscripten' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "(python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126') or (python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126')",
+    "python_full_version >= '3.14' and sys_platform == 'win32' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'win32' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'emscripten' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "python_full_version >= '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "python_full_version >= '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "python_full_version >= '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "(python_full_version >= '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126') or (python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126')",
     "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'emscripten' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
@@ -4219,24 +4219,24 @@ resolution-markers = [
     "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version >= '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "(python_full_version >= '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126') or (python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126')",
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "python_full_version >= '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "python_full_version >= '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "python_full_version >= '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "(python_full_version >= '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126') or (python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126')",
     "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'emscripten' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "(python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126') or (python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126')",
+    "python_full_version >= '3.14' and sys_platform == 'win32' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'win32' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'emscripten' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "python_full_version >= '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "python_full_version >= '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "python_full_version >= '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "(python_full_version >= '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126') or (python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126')",
     "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'emscripten' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
@@ -4303,11 +4303,11 @@ wheels = [
 
 [[package]]
 name = "soupsieve"
-version = "2.9.2"
+version = "4.1.1"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/69/99/a6ca3beb3ccacb41fb3321d8a60e5566f9e6467601ef8eba6a17e1b89778/soupsieve-2.9.2.tar.gz", hash = "sha256:4a55d8cf158a9c2e587fa4922f1bbb91d68ac829e2d6f25403a85747c71daf74", size = 122445, upload-time = "2026-08-07T00:57:24.801Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/1f/52/ee5646b65d98a252e807ccc37725363942372a4113072e0bce7ed22f8b84/soupsieve-4.1.1.tar.gz", hash = "sha256:b296bd2d2f65b1a78149f3d7bf6736a147d2c9e2dfbde0e4404639d748a02e03", size = 169784, upload-time = "2026-11-14T17:23:32.467Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/eb/dc/ad025c1ee131eba60c69f4dd5779b18fcf1e6b21a343e2162a84d5d133c7/soupsieve-2.9.2-py3-none-any.whl", hash = "sha256:8089a26fd974ca7a1f30276d3d8492ab266ab15af581642dfe8aa162e0c1c823", size = 37370, upload-time = "2026-08-07T00:57:23.524Z" },
+    { url = "https://files.pythonhosted.org/packages/cd/65/7fae69a095696195334a934eab23aeb12e2715e6c3f08025d2f91942750e/soupsieve-4.1.1-py3-none-any.whl", hash = "sha256:8ff3422dab0b720fb667ee79864d80531a0e57994a13eb701697719ffcb751f6", size = 55089, upload-time = "2026-11-14T17:23:31.001Z" },
 ]
 
 [[package]]
@@ -4612,18 +4612,21 @@ name = "torch"
 version = "2.15.0"
 source = { registry = "https://download.pytorch.org/whl/cpu" }
 resolution-markers = [
+    "python_full_version >= '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin'",
     "python_full_version >= '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin'",
+    "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin'",
+    "python_full_version < '3.12' and platform_machine == 'x86_64' and sys_platform == 'darwin'",
     "python_full_version < '3.12' and platform_machine != 'x86_64' and sys_platform == 'darwin'",
 ]
 dependencies = [
-    { name = "filelock", marker = "platform_machine != 'x86_64' and sys_platform == 'darwin'" },
-    { name = "fsspec", marker = "platform_machine != 'x86_64' and sys_platform == 'darwin'" },
-    { name = "jinja2", marker = "platform_machine != 'x86_64' and sys_platform == 'darwin'" },
-    { name = "networkx", marker = "platform_machine != 'x86_64' and sys_platform == 'darwin'" },
-    { name = "setuptools", marker = "platform_machine != 'x86_64' and sys_platform == 'darwin'" },
-    { name = "sympy", marker = "platform_machine != 'x86_64' and sys_platform == 'darwin'" },
-    { name = "typing-extensions", marker = "platform_machine != 'x86_64' and sys_platform == 'darwin'" },
+    { name = "filelock", marker = "sys_platform == 'darwin'" },
+    { name = "fsspec", marker = "sys_platform == 'darwin'" },
+    { name = "jinja2", marker = "sys_platform == 'darwin'" },
+    { name = "networkx", marker = "sys_platform == 'darwin'" },
+    { name = "setuptools", marker = "sys_platform == 'darwin'" },
+    { name = "sympy", marker = "sys_platform == 'darwin'" },
+    { name = "typing-extensions", marker = "sys_platform == 'darwin'" },
 ]
 wheels = [
     { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.15.0-cp311-cp311-macosx_14_0_arm64.whl", hash = "sha256:e808b63d616a43b326e1a5677d45a2e5babe7a8ce27edb03ddb48e7dd9b6d663", upload-time = "2026-10-28T13:16:57Z" },
@@ -4643,24 +4646,21 @@ resolution-markers = [
     "python_full_version >= '3.14' and sys_platform == 'win32'",
     "python_full_version >= '3.14' and sys_platform == 'emscripten'",
     "python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32'",
-    "python_full_version >= '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'win32'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'emscripten'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32'",
-    "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin'",
     "python_full_version < '3.12' and sys_platform == 'win32'",
     "python_full_version < '3.12' and sys_platform == 'emscripten'",
     "python_full_version < '3.12' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32'",
-    "python_full_version < '3.12' and platform_machine == 'x86_64' and sys_platform == 'darwin'",
 ]
 dependencies = [
-    { name = "filelock", marker = "platform_machine == 'x86_64' or sys_platform != 'darwin'" },
-    { name = "fsspec", marker = "platform_machine == 'x86_64' or sys_platform != 'darwin'" },
-    { name = "jinja2", marker = "platform_machine == 'x86_64' or sys_platform != 'darwin'" },
-    { name = "networkx", marker = "platform_machine == 'x86_64' or sys_platform != 'darwin'" },
-    { name = "setuptools", marker = "platform_machine == 'x86_64' or sys_platform != 'darwin'" },
-    { name = "sympy", marker = "platform_machine == 'x86_64' or sys_platform != 'darwin'" },
-    { name = "typing-extensions", marker = "platform_machine == 'x86_64' or sys_platform != 'darwin'" },
+    { name = "filelock", marker = "sys_platform != 'darwin'" },
+    { name = "fsspec", marker = "sys_platform != 'darwin'" },
+    { name = "jinja2", marker = "sys_platform != 'darwin'" },
+    { name = "networkx", marker = "sys_platform != 'darwin'" },
+    { name = "setuptools", marker = "sys_platform != 'darwin'" },
+    { name = "sympy", marker = "sys_platform != 'darwin'" },
+    { name = "typing-extensions", marker = "sys_platform != 'darwin'" },
 ]
 wheels = [
     { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.15.0%2Bcpu-cp311-cp311-linux_s390x.whl", hash = "sha256:ef0bd617c9439a54d698d95fb7c3f63efcc48c29efdd42b177e87d862cb574fa", upload-time = "2026-10-28T13:17:54Z" },
@@ -4738,12 +4738,15 @@ name = "torchaudio"
 version = "2.11.1"
 source = { registry = "https://download.pytorch.org/whl/cpu" }
 resolution-markers = [
+    "python_full_version >= '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin'",
     "python_full_version >= '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin'",
+    "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin'",
+    "python_full_version < '3.12' and platform_machine == 'x86_64' and sys_platform == 'darwin'",
     "python_full_version < '3.12' and platform_machine != 'x86_64' and sys_platform == 'darwin'",
 ]
 dependencies = [
-    { name = "torch", version = "2.15.0", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "platform_machine != 'x86_64' and sys_platform == 'darwin'" },
+    { name = "torch", version = "2.15.0", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform == 'darwin'" },
 ]
 wheels = [
     { url = "https://download-r2.pytorch.org/whl/cpu/torchaudio-2.11.1-py3-none-macosx_14_0_arm64.whl", hash = "sha256:917667ab3e357d286b0e2405a33dc538e4344d554b72e1b2b03382a4352ca857", upload-time = "2026-10-28T14:19:39Z" },
@@ -4757,18 +4760,15 @@ resolution-markers = [
     "python_full_version >= '3.14' and sys_platform == 'win32'",
     "python_full_version >= '3.14' and sys_platform == 'emscripten'",
     "python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32'",
-    "python_full_version >= '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'win32'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'emscripten'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32'",
-    "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin'",
     "python_full_version < '3.12' and sys_platform == 'win32'",
     "python_full_version < '3.12' and sys_platform == 'emscripten'",
     "python_full_version < '3.12' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32'",
-    "python_full_version < '3.12' and platform_machine == 'x86_64' and sys_platform == 'darwin'",
 ]
 dependencies = [
-    { name = "torch", version = "2.15.0+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "platform_machine == 'x86_64' or sys_platform != 'darwin'" },
+    { name = "torch", version = "2.15.0+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform != 'darwin'" },
 ]
 wheels = [
     { url = "https://download-r2.pytorch.org/whl/cpu/torchaudio-2.11.1%2Bcpu-py3-none-manylinux_2_28_aarch64.whl", hash = "sha256:684d418d5aa2c98a8dff9a4e8911825da1109cda9b9e757eaf58ff9428c4577b", upload-time = "2026-10-28T14:19:39Z" },
@@ -4829,15 +4829,18 @@ name = "torchvision"
 version = "0.29.2"
 source = { registry = "https://download.pytorch.org/whl/cpu" }
 resolution-markers = [
+    "python_full_version >= '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin'",
     "python_full_version >= '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin'",
+    "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin'",
+    "python_full_version < '3.12' and platform_machine == 'x86_64' and sys_platform == 'darwin'",
     "python_full_version < '3.12' and platform_machine != 'x86_64' and sys_platform == 'darwin'",
 ]
 dependencies = [
-    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.12' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-30-trustworthy-stock-intelligence-deep') or (extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126')" },
-    { name = "numpy", version = "2.5.2", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.12' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-30-trustworthy-stock-intelligence-deep') or (extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126')" },
-    { name = "pillow", marker = "platform_machine != 'x86_64' and sys_platform == 'darwin'" },
-    { name = "torch", version = "2.15.0", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "platform_machine != 'x86_64' and sys_platform == 'darwin'" },
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.12' and sys_platform == 'darwin' and extra == 'extra-30-trustworthy-stock-intelligence-deep') or (extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126')" },
+    { name = "numpy", version = "2.5.2", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.12' and sys_platform == 'darwin' and extra == 'extra-30-trustworthy-stock-intelligence-deep') or (extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126')" },
+    { name = "pillow", marker = "sys_platform == 'darwin'" },
+    { name = "torch", version = "2.15.0", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform == 'darwin'" },
 ]
 wheels = [
     { url = "https://download-r2.pytorch.org/whl/cpu/torchvision-0.29.2-py3-none-macosx_14_0_arm64.whl", hash = "sha256:d412494ff011f24c884a3cffd33eba1cb45a0299d4e26c1e175113f9d3b3ebc7", upload-time = "2026-10-28T14:18:50Z" },
@@ -4851,21 +4854,18 @@ resolution-markers = [
     "python_full_version >= '3.14' and sys_platform == 'win32'",
     "python_full_version >= '3.14' and sys_platform == 'emscripten'",
     "python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32'",
-    "python_full_version >= '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'win32'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'emscripten'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32'",
-    "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin'",
     "python_full_version < '3.12' and sys_platform == 'win32'",
     "python_full_version < '3.12' and sys_platform == 'emscripten'",
     "python_full_version < '3.12' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32'",
-    "python_full_version < '3.12' and platform_machine == 'x86_64' and sys_platform == 'darwin'",
 ]
 dependencies = [
-    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.12' and platform_machine == 'x86_64' and extra == 'extra-30-trustworthy-stock-intelligence-deep') or (python_full_version < '3.12' and sys_platform != 'darwin' and extra == 'extra-30-trustworthy-stock-intelligence-deep') or (extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126')" },
-    { name = "numpy", version = "2.5.2", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-30-trustworthy-stock-intelligence-deep') or (python_full_version >= '3.12' and sys_platform != 'darwin' and extra == 'extra-30-trustworthy-stock-intelligence-deep') or (extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126')" },
-    { name = "pillow", marker = "platform_machine == 'x86_64' or sys_platform != 'darwin'" },
-    { name = "torch", version = "2.15.0+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "platform_machine == 'x86_64' or sys_platform != 'darwin'" },
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.12' and sys_platform != 'darwin' and extra == 'extra-30-trustworthy-stock-intelligence-deep') or (extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126')" },
+    { name = "numpy", version = "2.5.2", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.12' and sys_platform != 'darwin' and extra == 'extra-30-trustworthy-stock-intelligence-deep') or (extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126')" },
+    { name = "pillow", marker = "sys_platform != 'darwin'" },
+    { name = "torch", version = "2.15.0+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform != 'darwin'" },
 ]
 wheels = [
     { url = "https://download-r2.pytorch.org/whl/cpu/torchvision-0.29.2%2Bcpu-py3-none-manylinux_2_28_aarch64.whl", hash = "sha256:0be2f85933012cb487f844c7483665191653ee8684da89d6d0e34fd63c3a0a88", upload-time = "2026-10-28T14:18:50Z" },
@@ -4963,7 +4963,7 @@ wheels = [
 
 [[package]]
 name = "trustworthy-stock-intelligence"
-version = "0.11.2"
+version = "0.11.3"
 source = { editable = "." }
 dependencies = [
     { name = "joblib" },
@@ -4983,6 +4983,7 @@ data = [
     { name = "lxml" },
     { name = "pandas-market-calendars" },
     { name = "requests" },
+    { name = "soupsieve" },
     { name = "ta" },
     { name = "yfinance" },
 ]
@@ -4992,12 +4993,12 @@ db = [
 deep = [
     { name = "pillow" },
     { name = "tensorboard" },
-    { name = "torch", version = "2.15.0", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-30-trustworthy-stock-intelligence-deep') or (extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126')" },
-    { name = "torch", version = "2.15.0+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(platform_machine == 'x86_64' and extra == 'extra-30-trustworthy-stock-intelligence-deep') or (sys_platform != 'darwin' and extra == 'extra-30-trustworthy-stock-intelligence-deep') or (extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126')" },
-    { name = "torchaudio", version = "2.11.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-30-trustworthy-stock-intelligence-deep') or (extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126')" },
-    { name = "torchaudio", version = "2.11.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(platform_machine == 'x86_64' and extra == 'extra-30-trustworthy-stock-intelligence-deep') or (sys_platform != 'darwin' and extra == 'extra-30-trustworthy-stock-intelligence-deep') or (extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126')" },
-    { name = "torchvision", version = "0.29.2", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-30-trustworthy-stock-intelligence-deep') or (extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126')" },
-    { name = "torchvision", version = "0.29.2+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(platform_machine == 'x86_64' and extra == 'extra-30-trustworthy-stock-intelligence-deep') or (sys_platform != 'darwin' and extra == 'extra-30-trustworthy-stock-intelligence-deep') or (extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126')" },
+    { name = "torch", version = "2.15.0", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform == 'darwin' and extra == 'extra-30-trustworthy-stock-intelligence-deep') or (extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126')" },
+    { name = "torch", version = "2.15.0+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform != 'darwin' and extra == 'extra-30-trustworthy-stock-intelligence-deep') or (extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126')" },
+    { name = "torchaudio", version = "2.11.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform == 'darwin' and extra == 'extra-30-trustworthy-stock-intelligence-deep') or (extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126')" },
+    { name = "torchaudio", version = "2.11.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform != 'darwin' and extra == 'extra-30-trustworthy-stock-intelligence-deep') or (extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126')" },
+    { name = "torchvision", version = "0.29.2", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform == 'darwin' and extra == 'extra-30-trustworthy-stock-intelligence-deep') or (extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126')" },
+    { name = "torchvision", version = "0.29.2+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform != 'darwin' and extra == 'extra-30-trustworthy-stock-intelligence-deep') or (extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126')" },
 ]
 deep-cu126 = [
     { name = "pillow" },
@@ -5031,6 +5032,7 @@ notebooks = [
     { name = "jupyterlab" },
     { name = "nbconvert" },
     { name = "notebook" },
+    { name = "soupsieve" },
 ]
 viz = [
     { name = "matplotlib" },
@@ -5067,6 +5069,8 @@ requires-dist = [
     { name = "seaborn", marker = "extra == 'viz'", specifier = ">=0.13" },
     { name = "setuptools", marker = "extra == 'dev'", specifier = ">=84.1.0" },
     { name = "shap", marker = "extra == 'explainability'", specifier = ">=0.45" },
+    { name = "soupsieve", marker = "extra == 'data'", specifier = ">=4.1.1" },
+    { name = "soupsieve", marker = "extra == 'notebooks'", specifier = ">=4.1.1" },
     { name = "statsmodels", marker = "extra == 'models'", specifier = ">=0.14" },
     { name = "streamlit", marker = "extra == 'dashboard'", specifier = ">=1.36" },
     { name = "ta", marker = "extra == 'data'", specifier = ">=0.11" },
@@ -5399,24 +5403,24 @@ resolution-markers = [
     "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version >= '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "(python_full_version >= '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126') or (python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126')",
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "python_full_version >= '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "python_full_version >= '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "python_full_version >= '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
-    "(python_full_version >= '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126') or (python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126')",
     "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'emscripten' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "(python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126') or (python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra == 'extra-30-trustworthy-stock-intelligence-deep-cu126')",
+    "python_full_version >= '3.14' and sys_platform == 'win32' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'win32' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'emscripten' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "python_full_version >= '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "python_full_version >= '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "python_full_version >= '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
+    "(python_full_version >= '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126') or (python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126')",
     "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'win32' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'emscripten' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-30-trustworthy-stock-intelligence-deep' and extra != 'extra-30-trustworthy-stock-intelligence-deep-cu126'",
