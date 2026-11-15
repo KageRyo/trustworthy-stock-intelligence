@@ -7,6 +7,8 @@
 - Build the Go API with Go 1.27.4 to include the standard-library security fix.
 - Refresh Go database dependencies and frontend dependencies.
 - Update locked Tornado to 6.6.1; retain the existing model, schema and CUDA 12.6 contracts.
+- Require patched Soup Sieve for data ingestion and notebook extras to fix the reported selector denial-of-service issues.
+- Require Python 3.11.5 or newer, matching the patched Soup Sieve interpreter requirement.
 
 ## 0.11.2 - 2026-11-05
 

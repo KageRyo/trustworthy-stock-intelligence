@@ -6,7 +6,7 @@ This document separates portable project requirements from maintainer hardware a
 
 | Component                 | Supported baseline                      |
 | ------------------------- | --------------------------------------- |
-| Python package            | Python `>=3.11`                         |
+| Python package            | Python `>=3.11.5`                       |
 | Maintainer and CI Python  | `3.11`, selected by `.python-version`   |
 | Python dependency manager | uv `0.13.5` or compatible newer release |
 | Go API                    | Go `1.27.4`                             |
@@ -57,7 +57,7 @@ uv sync --locked \
   --extra deep-cu126
 ```
 
-The two deep-learning extras conflict intentionally and cannot be enabled together. Both profiles pin the tested compatible matrix `torch==2.14.1`, `torchvision==0.29.1`, and `torchaudio==2.11.0`; TorchAudio 2.11 uses the stable PyTorch ABI and supports PyTorch 2.11 and later. uv selects CPU or CUDA 12.6 wheels from the corresponding explicit index.
+The two deep-learning extras conflict intentionally and cannot be enabled together. The CPU profile pins `torch==2.15.0`, `torchvision==0.29.2`, and `torchaudio==2.11.1`. The CUDA 12.6 profile retains `torch==2.14.1`, `torchvision==0.29.1`, and `torchaudio==2.11.0` because the newer matrix is unavailable on that index. TorchAudio 2.11 uses the stable PyTorch ABI and supports PyTorch 2.11 and later. uv selects the wheels from the corresponding explicit index.
 
 Miniforge or Conda is not required. Reconsider it only when a future dependency needs a native library unavailable from PyPI/PyTorch wheels.
 
