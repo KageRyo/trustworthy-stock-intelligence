@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.11.3 - 2026-11-15
+
+- Build the Go API with Go 1.27.4 to include the standard-library security fix.
+- Refresh Go database dependencies and frontend dependencies.
+- Update locked Tornado to 6.6.1; retain the existing model, schema and CUDA 12.6 contracts.
+
 ## 0.11.2 - 2026-11-05
 
 - Require patched Pydantic 2.14.2 or later for installed packages.
