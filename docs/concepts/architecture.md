@@ -1,6 +1,6 @@
 # System Architecture
 
-Trustworthy Stock Intelligence v1 is a production-like reference deployment with a clear Python/Go split. The repository also supports running the stack locally for development and evaluation.
+Trustworthy Stock Intelligence v1 uses Python for data processing and ML, PostgreSQL for storage, and Go for the dashboard API. You can run the stack locally for development and evaluation.
 
 ```mermaid
 flowchart TD
