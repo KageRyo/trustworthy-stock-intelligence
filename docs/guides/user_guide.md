@@ -70,9 +70,9 @@ Warning levels:
 
 ## Watchlists
 
-The dashboard uses a browser-session watchlist name stored in `sessionStorage`. There is no default curated stock list. Tickers are added after the user views or adds them in that browser session.
+Each browser session starts with an empty watchlist. Stocks you view or add appear in that session's list.
 
-The API persists watchlist rows in PostgreSQL, so the browser session name is the link between the UI and DB-backed watchlist state.
+See [watchlist grouping and storage](../operations/watchlist_grouping.md) for filtering, sorting, removing tickers, and how the list is stored.
 
 ## Taiwan Provider Behavior
 

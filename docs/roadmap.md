@@ -17,7 +17,7 @@ It focuses on calibration, uncertainty, abstention, transparency, auditability, 
 
 Version `0.11.0` is an operational prototype. It keeps the `0.9.0` model and adds:
 
-- a guarded daily refresh per market that validates provider history, stores it in PostgreSQL, trains the pooled model on the stored copy, and atomically publishes the bundle used by on-demand analysis, with recoverable publication and a bounded run history;
+- daily pooled-model refreshes for each market, with validated bundles published for on-demand analysis (see [local operations](guides/local_operations.md));
 - audited TPEx close corrections backed by official prices;
 - systemd user units and weekday timers for the local PostgreSQL, Go API, dashboard, and refreshes (see [local operations](guides/local_operations.md));
 - model provenance without host paths, and a dashboard trust panel that shows the selected ticker's own model.

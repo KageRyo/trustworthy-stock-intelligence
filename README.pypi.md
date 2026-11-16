@@ -1,8 +1,8 @@
 # Trustworthy Stock Intelligence
 
-`trustworthy-stock-intelligence` is a Python package for leakage-aware stock drawdown-risk research. It provides reusable feature, labeling, baseline-model, evaluation, uncertainty, trust-score, and serving-schema primitives.
+`trustworthy-stock-intelligence` provides Python tools for stock drawdown-risk research. You can build features and labels, fit baseline models, evaluate predictions, and calculate uncertainty and trust scores. The package also includes leakage-aware temporal splits and Pydantic prediction schemas.
 
-This distribution is the Python/ML core of the larger [Trustworthy Stock Intelligence repository](https://github.com/KageRyo/trustworthy-stock-intelligence). The Go API, PostgreSQL workers, TypeScript dashboard, Docker Compose stack, and market-data artifacts are separate surfaces and are not included in this wheel.
+This is the Python/ML part of the [Trustworthy Stock Intelligence repository](https://github.com/KageRyo/trustworthy-stock-intelligence). The Go API, PostgreSQL workers, TypeScript dashboard, Docker Compose stack, and market-data artifacts are not included in the wheel.
 
 ## Install
 
