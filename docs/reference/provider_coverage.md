@@ -1,6 +1,6 @@
 # Supported Market and Provider Coverage
 
-This matrix describes the repository's current provider paths and the boundaries of the local dashboard and ingestion pipeline. It is a coverage contract, not a claim that every symbol or interval is available from every provider. Provider availability, exchange calendars, rate limits, historical retention, and licensing terms can change; recheck the provider terms before redistributing data or relying on a result.
+This matrix describes the repository's current provider paths and the boundaries of the local dashboard and ingestion pipeline. For each market, it lists the primary and fallback provider paths and the supported intervals. Provider availability, exchange calendars, rate limits, historical retention, and licensing terms can change; recheck the provider terms before redistributing data or relying on a result.
 
 ## Coverage Matrix
 

@@ -115,7 +115,7 @@ baseline model + calibration + selective warning
 baseline model + calibration + uncertainty-aware warning
 ```
 
-The goal is not only to improve predictive metrics. The key question is whether warnings become more reliable under calibration and selective decision rules.
+The key question is whether calibration and selective decision rules make warnings more reliable.
 
 ## Reporting Template
 

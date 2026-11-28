@@ -39,7 +39,7 @@ Metrics are means across 39 evaluated folds. `Target calibrated` uses the source
 | US → Taiwan              |                0.6397 |        0.1288 |       0.0676 |     0.0655 |   0.1462 |    0.8988 | -0.0162 | +0.0608 |
 | Taiwan → US              |                0.5557 |        0.1395 |       0.0961 |     0.0582 |   0.1799 |    0.8621 | +0.0341 | +0.0534 |
 
-The transfer result is not a claim that a US-trained model generalizes safely to Taiwan: both cross-market directions retain high false-discovery rates and show ECE degradation. A lower Brier score in US → Taiwan does not override the calibration and coverage limitations.
+Both cross-market directions retain high false-discovery rates and show ECE degradation. US → Taiwan has a lower Brier score, but its calibration and coverage limitations still apply.
 
 ## Reproduce
 

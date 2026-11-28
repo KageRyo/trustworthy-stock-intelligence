@@ -103,7 +103,7 @@ Returns the latest persisted provider health and per-ticker coverage observation
 }
 ```
 
-The endpoint is read-only and returns `503` when the PostgreSQL provider-health store cannot be read. It reports coverage for the configured provider paths; it is not a claim that every stock or interval is available.
+The endpoint is read-only and returns `503` when the PostgreSQL provider-health store cannot be read. It reports coverage only for the configured provider paths.
 
 ### `GET /api/v1/warnings/latest`
 
